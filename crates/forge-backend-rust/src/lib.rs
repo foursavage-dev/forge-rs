@@ -1,63 +1,27 @@
-//! `forge-backend-rust`: turn a Cargo workspace into Forge build tasks.
-//!
-//! The backend reads the workspace with `cargo metadata`, maps every package
-//! into a `forge-graph` node (edges follow `resolve` dependencies), and
-//! produces a [`Task`] graph whose commands are `cargo build --package X` /
-//! `cargo check --package X` (or your `$CARGO` override) run from the
-//! workspace root.
-//!
-//! When caching is enabled, each task carries a fingerprint combining the
-//! package's own inputs (see [`fingerprint`]) with the fingerprints of its
-//! direct dependencies, so a change in `core` invalidates `core` *and* every
-//! package that depends on it.
-
 use std::collections::HashMap;
 use std::path::PathBuf;
+use thiserror::Error;
 
 use cargo_metadata::PackageId;
+use forge_core::BuildBackend;
 use forge_core::project::Project;
 use forge_executor::{CacheEntry, CommandSpec, Task};
 use forge_graph::{BuildGraph, NodeId};
 
 pub mod fingerprint;
+pub mod rustc;
 
-/// The Cargo profile all Forge tasks build with.
-pub const PROFILE: &str = "dev";
+pub use rustc::RustcCompiler;
 
-/// Build-mode errors: metadata/IO problems and toolchain issues.
-#[derive(Debug, thiserror::Error)]
-pub enum BackendError {
-    /// A file could not be read while fingerprinting.
-    #[error("cannot read `{}`: {source}", path.display())]
-    Read {
-        path: PathBuf,
-        #[source]
-        source: std::io::Error,
-    },
-    /// A build tool (cargo/rustc) could not be queried.
-    #[error("toolchain query failed: {0}")]
-    Toolchain(String),
-    /// The package graph was not structurally valid.
-    #[error("invalid package graph: {0}")]
-    InvalidGraph(#[from] forge_graph::GraphError),
-    /// Anything else (e.g. a package listed by metadata but missing).
-    #[error("{0}")]
-    Message(String),
-}
-
-/// What kind of task graph to produce.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BuildMode {
-    /// `cargo build` — full compilation, produces artifacts.
     Build,
-    /// `cargo check` — type-check only, no artifacts.
     Check,
-    /// `cargo test --package X` — compile and run each package's tests.
     Test,
 }
 
 impl BuildMode {
-    pub fn cargo_subcommand(&self) -> &'static str {
+    pub fn as_str(&self) -> &'static str {
         match self {
             Self::Build => "build",
             Self::Check => "check",
@@ -65,36 +29,51 @@ impl BuildMode {
         }
     }
 
-    pub fn as_str(&self) -> &'static str {
-        self.cargo_subcommand()
+    pub fn cargo_subcommand(&self) -> &'static str {
+        match self {
+            Self::Build => "build",
+            Self::Check => "check",
+            Self::Test => "test",
+        }
     }
 }
 
-/// The Rust/Cargo backend.
+#[derive(Debug, Error)]
+pub enum BackendError {
+    #[error("toolchain error: {0}")]
+    Toolchain(String),
+    #[error("graph error: {0}")]
+    Graph(#[from] forge_graph::GraphError),
+    #[error("failed to read `{}`: {source}", path.display())]
+    Read {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+    #[error("{0}")]
+    Message(String),
+    #[error("io error: {0}")]
+    Io(#[from] std::io::Error),
+}
+
 #[derive(Debug, Clone)]
 pub struct RustBackend {
-    /// Concatenated tool versions, folded into every fingerprint so a
-    /// toolchain upgrade invalidates the cache.
-    toolchain: String,
+    pub toolchain: String,
+    pub rustc: RustcCompiler,
+}
+
+impl BuildBackend for RustBackend {
+    fn name(&self) -> &'static str {
+        "rust"
+    }
 }
 
 impl RustBackend {
-    /// Detect the toolchain (cargo + rustc versions) at creation time.
     pub fn new() -> Result<Self, BackendError> {
-        let cargo = tool_version("cargo", &["--version"])?;
-        let rustc = tool_version("rustc", &["--version"])
-            .unwrap_or_else(|_| "rustc:unavailable".to_string());
-        Ok(Self {
-            toolchain: format!("{cargo}|{rustc}"),
-        })
+        let toolchain = tool_version("rustc", &["--version"])?;
+        let rustc = RustcCompiler::detect().map_err(BackendError::Toolchain)?;
+        Ok(Self { toolchain, rustc })
     }
 
-    /// Build a task graph from the project's package graph.
-    ///
-    /// Node order and edge structure mirror `package_graph` exactly (via
-    /// `map_nodes`). Task ordering is therefore identical to the package
-    /// graph's topological ordering, with `cargo build --package <name>`
-    /// as the leaf command and dependencies pre-built.
     pub fn create_tasks(
         &self,
         project: &Project,
@@ -111,8 +90,6 @@ impl RustBackend {
             hasher.finalize().to_hex().to_string()[..12].to_string()
         };
 
-        // 1. Compute per-package fingerprints in topological order so
-        //    dependency fingerprints are always available.
         let mut fingerprints: HashMap<NodeId, String> = HashMap::new();
         for level in package_graph.levels() {
             for id in level {
@@ -154,22 +131,28 @@ impl RustBackend {
             }
         }
 
-        // 2. Map the package graph onto a task graph.
+        let out_dir = workspace_root.join("target").join("forge_artifacts");
+        let _ = std::fs::create_dir_all(&out_dir);
+
         let cargo = std::env::var_os("CARGO")
             .map(PathBuf::from)
             .unwrap_or_else(|| PathBuf::from("cargo"));
         let cargo = cargo.to_string_lossy().into_owned();
+
         let task_graph = package_graph.map_nodes(|id, package_id| {
             let package = project
                 .package(package_id)
                 .expect("map_nodes only visits metadata packages");
+
             let spec = CommandSpec::new(&cargo)
                 .arg(mode.cargo_subcommand())
                 .arg("--package")
                 .arg(package.name.to_string())
                 .cwd(&workspace_root);
+
             let description = spec.command_line();
             let mut task = Task::new(package.name.to_string(), description, spec);
+
             if caching {
                 let fingerprint = fingerprints
                     .get(&id)
@@ -186,7 +169,6 @@ impl RustBackend {
     }
 }
 
-/// Run a tool with arguments and return its first output line, trimmed.
 fn tool_version(tool: &str, args: &[&str]) -> Result<String, BackendError> {
     let output = std::process::Command::new(tool)
         .args(args)
@@ -200,4 +182,15 @@ fn tool_version(tool: &str, args: &[&str]) -> Result<String, BackendError> {
     }
     let stdout = String::from_utf8_lossy(&output.stdout);
     Ok(stdout.lines().next().unwrap_or_default().trim().to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_rust_backend_name() {
+        let backend = RustBackend::new().expect("backend created");
+        assert_eq!(backend.name(), "rust");
+    }
 }

@@ -291,6 +291,38 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "26b73573e6edcd2af0cdf47bd6cb58f0b3839491263c314eaad1ccf24430e1de"
 
 [[package]]
+name = "forge-backend-cc"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "forge-cache",
+ "forge-core",
+ "forge-executor",
+ "forge-graph",
+ "forge-scheduler",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "forge-backend-go"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "forge-cache",
+ "forge-core",
+ "forge-executor",
+ "forge-graph",
+ "forge-scheduler",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
 name = "forge-backend-rust"
 version = "0.1.0"
 dependencies = [
@@ -324,13 +356,18 @@ dependencies = [
  "anstyle",
  "cargo_metadata",
  "clap",
+ "forge-backend-cc",
+ "forge-backend-go",
  "forge-backend-rust",
  "forge-cache",
  "forge-core",
  "forge-executor",
  "forge-graph",
  "forge-scheduler",
+ "serde",
+ "serde_json",
  "tempfile",
+ "toml",
 ]
 
 [[package]]
@@ -354,6 +391,18 @@ dependencies = [
 name = "forge-graph"
 version = "0.1.0"
 dependencies = [
+ "thiserror",
+]
+
+[[package]]
+name = "forge-remote-cache"
+version = "0.1.0"
+dependencies = [
+ "forge-cache",
+ "forge-executor",
+ "serde",
+ "serde_json",
+ "tempfile",
  "thiserror",
 ]
 

@@ -1,0 +1,21 @@
+[package]
+name = "forge-backend-cc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "C/C++ build backend for the forge build system"
+
+[dependencies]
+blake3 = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = { workspace = true }
+forge-core = { workspace = true }
+forge-executor = { workspace = true }
+forge-graph = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+forge-cache = { workspace = true }
+forge-scheduler = { workspace = true }
+tempfile = { workspace = true }

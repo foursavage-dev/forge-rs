@@ -23,6 +23,12 @@ impl std::fmt::Display for NodeId {
     }
 }
 
+impl From<usize> for NodeId {
+    fn from(index: usize) -> Self {
+        Self(index)
+    }
+}
+
 /// A node in the build graph: one unit of work.
 #[derive(Debug)]
 pub struct Node<T> {

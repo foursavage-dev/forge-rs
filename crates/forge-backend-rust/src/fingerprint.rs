@@ -114,8 +114,7 @@ pub fn package_input_fingerprint(
     hash_string(
         &mut hasher,
         &format!(
-            "profile={};toolchain={};mode={}",
-            crate::PROFILE,
+            "profile=debug;toolchain={};mode={}",
             toolchain,
             mode.as_str()
         ),

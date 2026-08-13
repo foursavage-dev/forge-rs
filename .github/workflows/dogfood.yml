@@ -1,0 +1,36 @@
+name: dogfood
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  forge:
+    name: Forge builds Forge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Bootstrap forge
+        run: cargo build --locked
+
+      - name: forge build
+        run: ./target/debug/forge build
+
+      - name: forge check
+        run: ./target/debug/forge check --no-cache
+
+      - name: forge test
+        run: ./target/debug/forge test --no-cache
+
+      - name: forge graph
+        run: ./target/debug/forge graph --format dot
+
+      - name: forge run
+        run: ./target/debug/forge run -p forge-cli --bin forge -- --version

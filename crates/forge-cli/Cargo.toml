@@ -17,7 +17,12 @@ forge-executor = { workspace = true }
 forge-scheduler = { workspace = true }
 forge-cache = { workspace = true }
 forge-backend-rust = { workspace = true }
+forge-backend-cc = { workspace = true }
+forge-backend-go = { workspace = true }
 cargo_metadata = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
 
 clap = { workspace = true }
 anstream = { workspace = true }

@@ -8,6 +8,7 @@
 //! [`TaskExecutor`] trait, so cached wrappers and test doubles plug in
 //! seamlessly.
 
+use std::collections::HashMap;
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
@@ -27,38 +28,32 @@ pub enum SchedulerError {
     Stalled,
 }
 
-/// A task that failed, and why.
+#[derive(Debug, Clone)]
+pub struct TaskTiming {
+    pub label: String,
+    pub duration: Duration,
+    pub node_id: NodeId,
+}
+
 #[derive(Debug, Clone)]
 pub struct FailureRecord {
-    /// The failing task's label.
     pub label: String,
-    /// The command line that failed.
     pub description: String,
-    /// Captured stdout of the failed task (e.g. test results).
     pub stdout: String,
-    /// Captured stderr of the failed task (or an executor error message).
     pub stderr: String,
 }
 
-/// Aggregate results of one `Scheduler::run` invocation.
 #[derive(Debug, Clone)]
 pub struct BuildSummary {
-    /// Total tasks in the graph.
     pub total: usize,
-    /// Tasks that actually executed and succeeded.
     pub executed: usize,
-    /// Tasks satisfied by the cache without executing.
     pub cached: usize,
-    /// Tasks that failed.
     pub failed: usize,
-    /// Tasks cancelled because a dependency failed.
     pub cancelled: usize,
-    /// Wall-clock time of the whole run.
     pub duration: Duration,
-    /// Number of worker threads used.
     pub workers: usize,
-    /// Failure details, in order of occurrence.
     pub failures: Vec<FailureRecord>,
+    pub timings: Vec<TaskTiming>,
 }
 
 impl BuildSummary {
@@ -67,6 +62,7 @@ impl BuildSummary {
         duration: Duration,
         workers: usize,
         failures: Vec<FailureRecord>,
+        timings: Vec<TaskTiming>,
     ) -> Self {
         let mut executed = 0;
         let mut cached = 0;
@@ -91,12 +87,53 @@ impl BuildSummary {
             duration,
             workers,
             failures,
+            timings,
         }
     }
 
-    /// True when every task succeeded (either by executing or from cache).
     pub fn succeeded(&self) -> bool {
         self.failed == 0
+    }
+
+    pub fn critical_path(&self, graph: &BuildGraph<Task>) -> (Duration, Vec<String>) {
+        let timing_map: HashMap<NodeId, Duration> = self
+            .timings
+            .iter()
+            .map(|t| (t.node_id, t.duration))
+            .collect();
+
+        let topo = graph.topological_order();
+        let mut longest_to: HashMap<NodeId, Duration> = HashMap::new();
+        let mut predecessor: HashMap<NodeId, Option<NodeId>> = HashMap::new();
+
+        for &id in &topo {
+            let own = timing_map.get(&id).copied().unwrap_or(Duration::ZERO);
+            let (best_pred, best_cost) = graph
+                .deps(id)
+                .unwrap_or_default()
+                .iter()
+                .filter_map(|dep| longest_to.get(dep).map(|cost| (Some(*dep), *cost)))
+                .max_by_key(|(_, cost)| *cost)
+                .unwrap_or((None, Duration::ZERO));
+            longest_to.insert(id, best_cost + own);
+            predecessor.insert(id, best_pred);
+        }
+
+        let (&end, &total) = longest_to
+            .iter()
+            .max_by_key(|(_, cost)| *cost)
+            .unwrap_or((&NodeId::from(0), &Duration::ZERO));
+
+        let mut path = Vec::new();
+        let mut current = Some(end);
+        while let Some(id) = current {
+            if let Some(node) = graph.node(id) {
+                path.push(node.payload.label.clone());
+            }
+            current = predecessor.get(&id).copied().flatten();
+        }
+        path.reverse();
+        (total, path)
     }
 }
 
@@ -109,6 +146,7 @@ fn process_completion<G>(
     graph: &mut BuildGraph<Task>,
     in_flight: &mut usize,
     failures: &mut Vec<FailureRecord>,
+    timings: &mut Vec<TaskTiming>,
     on_progress: &mut G,
     id: NodeId,
     outcome: TaskOutcome,
@@ -118,6 +156,13 @@ where
 {
     *in_flight -= 1;
     let task = graph.node(id).map(|node| node.payload.clone());
+    if let Some(task) = &task {
+        timings.push(TaskTiming {
+            label: task.label.clone(),
+            duration: outcome.duration,
+            node_id: id,
+        });
+    }
     match outcome.status {
         TaskStatus::Executed => graph.set_state(id, TaskState::Succeeded)?,
         TaskStatus::Cached => graph.set_state(id, TaskState::Cached)?,
@@ -178,6 +223,7 @@ impl Scheduler {
         let (tx, rx): (mpsc::Sender<Outcome>, mpsc::Receiver<Outcome>) = mpsc::channel();
         let mut in_flight: usize = 0;
         let mut failures: Vec<FailureRecord> = Vec::new();
+        let mut timings: Vec<TaskTiming> = Vec::new();
 
         let result = thread::scope(|scope| -> Result<(), SchedulerError> {
             let mut ready: Vec<NodeId> = Vec::new();
@@ -238,6 +284,7 @@ impl Scheduler {
                     graph,
                     &mut in_flight,
                     &mut failures,
+                    &mut timings,
                     &mut on_progress,
                     id,
                     outcome,
@@ -247,6 +294,7 @@ impl Scheduler {
                         graph,
                         &mut in_flight,
                         &mut failures,
+                        &mut timings,
                         &mut on_progress,
                         id,
                         outcome,
@@ -262,6 +310,7 @@ impl Scheduler {
             start.elapsed(),
             self.workers,
             failures,
+            timings,
         ))
     }
 }
@@ -302,6 +351,56 @@ mod tests {
                 .expect("fanout edges are acyclic");
         }
         graph
+    }
+
+    #[test]
+    fn critical_path_reports_the_longest_dependency_chain() {
+        let mut graph = BuildGraph::new();
+        let a = graph.add_node(Task::new(
+            "a".to_string(),
+            "a".to_string(),
+            CommandSpec::new("echo").arg("a"),
+        ));
+        let b = graph.add_node(Task::new(
+            "b".to_string(),
+            "b".to_string(),
+            CommandSpec::new("echo").arg("b"),
+        ));
+        let c = graph.add_node(Task::new(
+            "c".to_string(),
+            "c".to_string(),
+            CommandSpec::new("echo").arg("c"),
+        ));
+        graph.add_dependency(a, b).expect("edge a -> b");
+        graph.add_dependency(a, c).expect("edge a -> c");
+        graph.add_dependency(b, c).expect("edge b -> c");
+
+        let timings = vec![
+            TaskTiming {
+                label: "a".to_string(),
+                duration: Duration::from_secs(1),
+                node_id: a,
+            },
+            TaskTiming {
+                label: "b".to_string(),
+                duration: Duration::from_secs(3),
+                node_id: b,
+            },
+            TaskTiming {
+                label: "c".to_string(),
+                duration: Duration::from_secs(1),
+                node_id: c,
+            },
+        ];
+        let summary = BuildSummary::from_graph(&graph, Duration::ZERO, 2, vec![], timings);
+
+        let (total, path) = summary.critical_path(&graph);
+        assert_eq!(
+            total,
+            Duration::from_secs(5),
+            "a + b + c dominates the diamond"
+        );
+        assert_eq!(path, vec!["a", "b", "c"]);
     }
 
     /// Deterministic test executor: records execution order, max concurrency,

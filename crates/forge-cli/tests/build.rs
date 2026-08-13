@@ -183,7 +183,7 @@ fn build_fails_in_non_cargo_directory() {
     let output = run(forge().arg("build").current_dir(dir.path()));
 
     assert!(!output.status.success());
-    assert!(stderr(&output).contains("no Cargo project found"));
+    assert!(stderr(&output).contains("no Cargo, C/C++, or Go project found"));
     assert!(stderr(&output).contains("hint:"));
 }
 
@@ -262,4 +262,57 @@ fn build_rejects_a_file_path() {
 
     assert!(!output.status.success());
     assert!(stderr(&output).contains("is a file; expected a project directory"));
+}
+
+#[test]
+fn graph_tree_prints_workspace_graph() {
+    let dir = workspace_fixture();
+    let output = run(forge().arg("graph").current_dir(dir.path()));
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+
+    let text = stdout(&output);
+    assert!(text.contains("app"));
+    assert!(text.contains("└── core"));
+    assert!(text.contains("    └── network"));
+}
+
+#[test]
+fn forge_toml_sets_worker_count_and_disable_flag_wins() {
+    let dir = workspace_fixture();
+    fs::write(
+        dir.path().join("forge.toml"),
+        "backend = \"rust\"\njobs = 1\nno_cache = true\n",
+    )
+    .expect("write forge.toml");
+
+    let output = run(forge().arg("build").current_dir(dir.path()));
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let text = stdout(&output);
+    assert!(
+        text.contains("Workers:   1"),
+        "forge.toml jobs=1 is applied: {text}"
+    );
+    assert!(
+        text.contains("Cached:    0"),
+        "forge.toml no_cache=true disables the cache: {text}"
+    );
+
+    // A rebuild with the file present stays cache-free.
+    let second = run(forge().arg("build").current_dir(dir.path()));
+    assert!(second.status.success());
+    assert!(stdout(&second).contains("Cached:    0"));
+}
+
+#[test]
+fn invalid_forge_toml_is_a_clear_error() {
+    let dir = workspace_fixture();
+    fs::write(dir.path().join("forge.toml"), "not = [valid toml").expect("write forge.toml");
+
+    let output = run(forge().arg("build").current_dir(dir.path()));
+    assert!(!output.status.success());
+    assert!(
+        stderr(&output).contains("invalid `"),
+        "stderr: {}",
+        stderr(&output)
+    );
 }

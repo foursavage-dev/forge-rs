@@ -236,3 +236,136 @@ pub fn print_failures(summary: &forge_scheduler::BuildSummary) {
         }
     }
 }
+
+pub fn print_graph_tree(project: &Project, graph: &BuildGraph<PackageId>) {
+    let mut roots: Vec<forge_graph::NodeId> = Vec::new();
+    for node in graph.nodes() {
+        if graph.dependents(node.id).unwrap_or(&[]).is_empty() {
+            roots.push(node.id);
+        }
+    }
+
+    roots.sort_by_key(|&id| {
+        graph
+            .node(id)
+            .map(|n| package_name(project, &n.payload))
+            .unwrap_or_default()
+    });
+
+    for (i, &root) in roots.iter().enumerate() {
+        print_tree_node(project, graph, root, "", i == roots.len() - 1, true);
+    }
+}
+
+fn print_tree_node(
+    project: &Project,
+    graph: &BuildGraph<PackageId>,
+    node_id: forge_graph::NodeId,
+    prefix: &str,
+    is_last: bool,
+    is_root: bool,
+) {
+    let node = graph.node(node_id).unwrap();
+    let name = package_name(project, &node.payload);
+
+    let connector = if is_root {
+        ""
+    } else if is_last {
+        "└── "
+    } else {
+        "├── "
+    };
+
+    println!("{}{}{}", prefix, connector, name);
+
+    let deps_slice = graph.deps(node_id).unwrap_or_default();
+    let mut deps_vec: Vec<forge_graph::NodeId> = deps_slice.to_vec();
+    deps_vec.sort_by_key(|&id| {
+        graph
+            .node(id)
+            .map(|n| package_name(project, &n.payload))
+            .unwrap_or_default()
+    });
+
+    let child_prefix = if is_root {
+        "".to_string()
+    } else if is_last {
+        format!("{}    ", prefix)
+    } else {
+        format!("{}│   ", prefix)
+    };
+
+    for (i, dep) in deps_vec.iter().enumerate() {
+        print_tree_node(
+            project,
+            graph,
+            *dep,
+            &child_prefix,
+            i == deps_vec.len() - 1,
+            false,
+        );
+    }
+}
+
+pub fn print_graph_json(project: &Project, graph: &BuildGraph<PackageId>) {
+    let mut nodes_json = vec![];
+    for node in graph.nodes() {
+        let node_id = node.id;
+        let name = package_name(project, &node.payload);
+
+        let mut deps_names = vec![];
+        for &dep in graph.deps(node_id).unwrap_or(&[]) {
+            if let Some(dep_node) = graph.node(dep) {
+                deps_names.push(package_name(project, &dep_node.payload));
+            }
+        }
+        deps_names.sort();
+
+        nodes_json.push(serde_json::json!({
+            "name": name,
+            "deps": deps_names,
+        }));
+    }
+    nodes_json.sort_by_key(|v| v["name"].as_str().unwrap_or_default().to_string());
+
+    let mut levels_json = Vec::new();
+    for level in graph.levels() {
+        let mut level_names: Vec<_> = level
+            .iter()
+            .filter_map(|&id| graph.node(id).map(|n| package_name(project, &n.payload)))
+            .collect();
+        level_names.sort();
+        levels_json.push(level_names);
+    }
+
+    let output = serde_json::json!({
+        "nodes": nodes_json,
+        "levels": levels_json,
+    });
+
+    println!("{}", serde_json::to_string_pretty(&output).unwrap());
+}
+
+pub fn print_graph_dot(project: &Project, graph: &BuildGraph<PackageId>) {
+    println!("digraph forge {{");
+    println!("    rankdir=BT;");
+
+    let mut edges = vec![];
+    for node in graph.nodes() {
+        let node_id = node.id;
+        let name = package_name(project, &node.payload);
+        for &dep in graph.deps(node_id).unwrap_or(&[]) {
+            if let Some(dep_node) = graph.node(dep) {
+                let dep_name = package_name(project, &dep_node.payload);
+                edges.push((dep_name, name.clone()));
+            }
+        }
+    }
+
+    edges.sort();
+    for (from, to) in edges {
+        println!("    \"{}\" -> \"{}\";", from, to);
+    }
+
+    println!("}}");
+}

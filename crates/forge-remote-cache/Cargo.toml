@@ -1,0 +1,17 @@
+[package]
+name = "forge-remote-cache"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Remote build cache client and tiered L1/L2 caching for forge"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { workspace = true }
+forge-cache = { workspace = true }
+forge-executor = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
