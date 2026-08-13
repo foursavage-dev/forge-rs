@@ -52,6 +52,8 @@ pub enum BuildMode {
     Build,
     /// `cargo check` — type-check only, no artifacts.
     Check,
+    /// `cargo test --package X` — compile and run each package's tests.
+    Test,
 }
 
 impl BuildMode {
@@ -59,6 +61,7 @@ impl BuildMode {
         match self {
             Self::Build => "build",
             Self::Check => "check",
+            Self::Test => "test",
         }
     }
 

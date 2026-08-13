@@ -56,6 +56,100 @@ fn discover(root: &Path) -> (Project, BuildGraph<PackageId>) {
 }
 
 #[test]
+fn test_mode_includes_dev_dependency_tasks() {
+    let dir = tempfile::tempdir().unwrap();
+    write_workspace(dir.path());
+    fs::write(
+        dir.path().join("app/Cargo.toml"),
+        "[package]\nname = \"app\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\ncore = { path = \"../core\" }\n\n[dev-dependencies]\ntest-utils = { path = \"../test-utils\" }\n",
+    )
+    .unwrap();
+    let test_utils = dir.path().join("test-utils");
+    fs::create_dir_all(test_utils.join("src")).unwrap();
+    fs::write(
+        test_utils.join("Cargo.toml"),
+        "[package]\nname = \"test-utils\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+    )
+    .unwrap();
+    fs::write(
+        test_utils.join("src/lib.rs"),
+        "pub fn fixture() -> u32 { 7 }\n",
+    )
+    .unwrap();
+
+    let project = Project::discover(dir.path()).unwrap().unwrap();
+    let package_graph = project.build_test_graph().unwrap();
+    let backend = RustBackend::new().unwrap();
+    let tasks = backend
+        .create_tasks(&project, &package_graph, BuildMode::Test, false)
+        .unwrap();
+
+    let labels: Vec<&str> = tasks
+        .nodes()
+        .iter()
+        .map(|n| n.payload.label.as_str())
+        .collect();
+    assert!(
+        labels.contains(&"test-utils"),
+        "dev-dep package has a task: {labels:?}"
+    );
+    let app_at = labels.iter().position(|l| *l == "app").unwrap();
+    let levels = tasks.levels();
+    let level_of = |label: &str| {
+        levels
+            .iter()
+            .position(|level| {
+                level
+                    .iter()
+                    .any(|id| tasks.node(*id).unwrap().payload.label == label)
+            })
+            .unwrap()
+    };
+    assert!(
+        level_of("test-utils") < level_of("app"),
+        "test-utils must build before app: {labels:?}"
+    );
+    let app = &tasks.nodes()[app_at].payload;
+    assert!(app.spec.command_line().contains("test"));
+}
+
+#[test]
+fn pipeline_runs_tests_and_reports_failures() {
+    let dir = tempfile::tempdir().unwrap();
+    write_workspace(dir.path());
+    fs::write(
+        dir.path().join("app/src/lib.rs"),
+        "// app\npub fn from_core() {}\n\n#[cfg(test)]\nmod tests {\n    #[test]\n    fn always_fails() {\n        assert_eq!(1, 2);\n    }\n}\n",
+    )
+    .unwrap();
+    let project = Project::discover(dir.path()).unwrap().unwrap();
+    let package_graph = project.build_test_graph().unwrap();
+    let backend = RustBackend::new().unwrap();
+    let mut tasks = backend
+        .create_tasks(&project, &package_graph, BuildMode::Test, false)
+        .unwrap();
+    let executor = ProcessExecutor::new(false);
+    let scheduler = Scheduler::new(2);
+    let summary = scheduler.run(&mut tasks, &executor, |_, _| {}).unwrap();
+
+    assert_eq!(summary.failed, 1, "one failing test task");
+    assert_eq!(summary.failures[0].label, "app");
+    let output = format!(
+        "{}{}",
+        summary.failures[0].stdout, summary.failures[0].stderr
+    );
+    assert!(
+        output.contains("always_fails"),
+        "output should mention the failing test, got: {output}"
+    );
+    assert_eq!(
+        output.matches("test result: FAILED").count(),
+        1,
+        "test result banner: {output}"
+    );
+}
+
+#[test]
 fn create_tasks_builds_an_ordered_graph_with_cache_entries() {
     let dir = tempfile::tempdir().unwrap();
     write_workspace(dir.path());

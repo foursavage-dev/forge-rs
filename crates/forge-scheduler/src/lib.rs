@@ -34,6 +34,8 @@ pub struct FailureRecord {
     pub label: String,
     /// The command line that failed.
     pub description: String,
+    /// Captured stdout of the failed task (e.g. test results).
+    pub stdout: String,
     /// Captured stderr of the failed task (or an executor error message).
     pub stderr: String,
 }
@@ -125,6 +127,7 @@ where
                 failures.push(FailureRecord {
                     label: task.label.clone(),
                     description: task.description.clone(),
+                    stdout: outcome.stdout.clone(),
                     stderr: outcome.stderr.clone(),
                 });
             }

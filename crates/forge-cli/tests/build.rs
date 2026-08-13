@@ -192,7 +192,45 @@ fn check_type_checks_the_workspace() {
     let dir = workspace_fixture();
     let output = run(forge().arg("check").current_dir(dir.path()));
     assert!(output.status.success(), "stderr: {}", stderr(&output));
-    assert!(stdout(&output).contains("Build completed successfully."));
+    assert!(stdout(&output).contains("Check completed successfully."));
+}
+
+#[test]
+fn test_runs_workspace_tests_and_reports_success() {
+    let dir = workspace_fixture();
+    // Add a passing test to one package.
+    let lib = dir.path().join("core/src/lib.rs");
+    let mut content = fs::read_to_string(&lib).expect("read lib.rs");
+    content.push_str("\n#[cfg(test)]\nmod tests {\n    #[test]\n    fn passes() {\n        assert!(true);\n    }\n}\n");
+    fs::write(&lib, content).expect("write lib.rs");
+
+    let output = run(forge().arg("test").current_dir(dir.path()));
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let text = stdout(&output);
+    assert!(text.contains("Testing..."));
+    assert!(text.contains("All tests passed."));
+    assert!(text.contains("✓ core"));
+}
+
+#[test]
+fn test_reports_a_failing_test() {
+    let dir = workspace_fixture();
+    let lib = dir.path().join("app/src/lib.rs");
+    let content = format!(
+        "{}\n#[cfg(test)]\nmod tests {{\n    #[test]\n    fn fails() {{\n        assert_eq!(1, 2);\n    }}\n}}\n",
+        fs::read_to_string(&lib).expect("read lib.rs")
+    );
+    fs::write(&lib, content).expect("write lib.rs");
+
+    let output = run(forge().arg("test").current_dir(dir.path()));
+    assert!(!output.status.success());
+    assert!(stdout(&output).contains("Some tests failed."));
+    let errors = stderr(&output);
+    assert!(errors.contains("Task:      app"));
+    assert!(
+        errors.contains("test result: FAILED"),
+        "test output in failure report: {errors}"
+    );
 }
 
 #[test]

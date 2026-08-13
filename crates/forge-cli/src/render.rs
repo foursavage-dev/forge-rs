@@ -7,6 +7,7 @@ use anstream::println;
 use anstyle::{AnsiColor, Color, Effects, Style};
 
 use cargo_metadata::PackageId;
+use forge_backend_rust::BuildMode;
 use forge_core::project::Project;
 use forge_graph::BuildGraph;
 
@@ -165,11 +166,21 @@ pub fn print_progress(task: &forge_executor::Task, outcome: &forge_executor::Tas
 }
 
 /// The post-build summary block.
-pub fn print_build_summary(summary: &forge_scheduler::BuildSummary) {
+pub fn print_build_summary(summary: &forge_scheduler::BuildSummary, mode: BuildMode) {
     if summary.succeeded() {
-        println!("{}", Styled::new(GREEN, "Build completed successfully."));
+        let message = match mode {
+            BuildMode::Build => "Build completed successfully.",
+            BuildMode::Check => "Check completed successfully.",
+            BuildMode::Test => "All tests passed.",
+        };
+        println!("{}", Styled::new(GREEN, message));
     } else {
-        println!("{}", Styled::new(RED, "Build failed."));
+        let message = match mode {
+            BuildMode::Build => "Build failed.",
+            BuildMode::Check => "Check failed.",
+            BuildMode::Test => "Some tests failed.",
+        };
+        println!("{}", Styled::new(RED, message));
     }
     println!("  Tasks:     {} total", summary.total);
     println!("  Executed:  {}", summary.executed);
@@ -198,21 +209,29 @@ pub fn print_cache_stats(cache: &forge_cache::LocalCache) {
     );
 }
 
-/// Details of every failed task, with a tail of its stderr.
+/// Details of every failed task, with a tail of its output.
 pub fn print_failures(summary: &forge_scheduler::BuildSummary) {
     for failure in &summary.failures {
         eprintln!();
         eprintln!("Task:      {}", failure.label);
         eprintln!("Command:   {}", failure.description);
         eprintln!("Output:");
-        for (index, line) in failure.stderr.lines().enumerate() {
+        let mut output = String::new();
+        if !failure.stdout.trim().is_empty() {
+            output.push_str(&failure.stdout);
+        }
+        if !failure.stderr.trim().is_empty() {
+            output.push_str(&failure.stderr);
+        }
+        let total = output.lines().count();
+        for (index, line) in output.lines().enumerate() {
             if index == 30 {
-                eprintln!("  … ({} more lines)", failure.stderr.lines().count() - 30);
+                eprintln!("  … ({} more lines)", total - 30);
                 break;
             }
             eprintln!("  {line}");
         }
-        if failure.stderr.trim().is_empty() {
+        if output.trim().is_empty() {
             eprintln!("  (no output)");
         }
     }

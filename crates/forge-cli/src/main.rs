@@ -40,6 +40,8 @@ enum Command {
     Build(BuildArgs),
     /// Type-check the current Cargo project without producing artifacts.
     Check(CheckArgs),
+    /// Build and run the tests of every workspace package.
+    Test(TestArgs),
     /// Remove build artifacts (delegates to `cargo clean`).
     Clean(CleanArgs),
 }
@@ -52,6 +54,12 @@ struct BuildArgs {
 
 #[derive(Debug, Args)]
 struct CheckArgs {
+    #[command(flatten)]
+    common: CommonArgs,
+}
+
+#[derive(Debug, Args)]
+struct TestArgs {
     #[command(flatten)]
     common: CommonArgs,
 }
@@ -86,6 +94,7 @@ fn main() -> ExitCode {
         }
         Command::Build(args) => run_build_mode(args.common, BuildMode::Build),
         Command::Check(args) => run_build_mode(args.common, BuildMode::Check),
+        Command::Test(args) => run_build_mode(args.common, BuildMode::Test),
         Command::Clean(args) => run_clean(args.path.as_deref()),
     }
 }
@@ -133,7 +142,11 @@ fn run_build_mode(args: CommonArgs, mode: BuildMode) -> ExitCode {
         }
     };
 
-    let package_graph = match project.build_graph() {
+    let package_graph = match if mode == BuildMode::Test {
+        project.build_test_graph()
+    } else {
+        project.build_graph()
+    } {
         Ok(graph) => graph,
         Err(error) => {
             eprintln!("error: {error}");
@@ -186,7 +199,7 @@ fn run_build_mode(args: CommonArgs, mode: BuildMode) -> ExitCode {
 
     render::print_project(&project, &package_graph);
     println!();
-    println!("Building...");
+    println!("{}...", mode_verb(mode));
     println!();
 
     let summary = match scheduler.run(&mut task_graph, &executor, |task, outcome| {
@@ -199,7 +212,7 @@ fn run_build_mode(args: CommonArgs, mode: BuildMode) -> ExitCode {
         }
     };
 
-    render::print_build_summary(&summary);
+    render::print_build_summary(&summary, mode);
     if let ExecutorChoice::Cached(cached) = &executor {
         render::print_cache_stats(cached.cache());
     }
@@ -259,6 +272,14 @@ fn run_clean(path: Option<&Path>) -> ExitCode {
             eprintln!("error: failed to run `cargo clean`: {error}");
             ExitCode::FAILURE
         }
+    }
+}
+
+fn mode_verb(mode: BuildMode) -> &'static str {
+    match mode {
+        BuildMode::Build => "Building",
+        BuildMode::Check => "Checking",
+        BuildMode::Test => "Testing",
     }
 }
 

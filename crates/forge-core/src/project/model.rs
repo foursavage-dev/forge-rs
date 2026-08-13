@@ -206,9 +206,22 @@ impl Project {
     /// Only normal and build dependencies contribute edges: Cargo allows
     /// dependency cycles through dev-dependencies (which only matter for
     /// test builds), and those edges are not part of the build order.
-    /// Regression: dev-dependency edges will be added when test targets are
-    /// supported.
     pub fn build_graph(&self) -> Result<BuildGraph<PackageId>> {
+        self.build_graph_with(false)
+    }
+
+    /// Test-build graph: like [`Self::build_graph`] but also includes
+    /// dev-dependency edges, so `forge test` builds nothing its tests need
+    /// before running them.
+    ///
+    /// Dev-dependency edges that would create a cycle are skipped: Cargo
+    /// permits dev-dep cycles and resolves them itself, so a missing edge
+    /// only costs a slightly less optimal schedule.
+    pub fn build_test_graph(&self) -> Result<BuildGraph<PackageId>> {
+        self.build_graph_with(true)
+    }
+
+    fn build_graph_with(&self, include_dev: bool) -> Result<BuildGraph<PackageId>> {
         let mut graph = BuildGraph::new();
         let mut ids: HashMap<&PackageId, NodeId> = HashMap::new();
         for id in &self.metadata.workspace_members {
@@ -233,10 +246,15 @@ impl Project {
                     .dep_kinds
                     .iter()
                     .all(|info| info.kind == DependencyKind::Development);
-                if is_dev_only {
+                if is_dev_only && !include_dev {
                     continue;
                 }
-                graph.add_dependency(dependency, dependent)?;
+                if graph.add_dependency(dependency, dependent).is_err() {
+                    // Only dev edges can trigger this (build edges come from
+                    // Cargo's acyclic resolution): leave the edge out rather
+                    // than reject the workspace.
+                    debug_assert!(is_dev_only);
+                }
             }
         }
         Ok(graph)

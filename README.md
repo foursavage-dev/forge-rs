@@ -12,9 +12,11 @@ official `cargo metadata` output instead of re-parsing `Cargo.toml`.
 ## Status
 
 Milestones 1–3 are in place: Forge discovers a Cargo project, loads its
-metadata, builds the workspace graph, maps it onto fingerprinted tasks, and
-executes them in parallel with a fingerprint cache that makes rebuilds
-instant when nothing changed.
+metadata, builds the workspace graph (and a test graph that includes
+dev-dependency edges), maps it onto fingerprinted tasks, and executes them
+in parallel with a fingerprint cache that makes rebuilds instant when
+nothing changed. `forge build`, `forge check`, `forge test` and
+`forge clean` all run real Cargo commands.
 
 ```text
 $ forge build
@@ -85,7 +87,10 @@ The Rust backend (`forge-backend-rust`) maps every workspace package to a
 `cargo build --package X` task and fingerprints each package's own inputs —
 file contents (mtime-blind), the workspace `Cargo.lock`, the toolchain
 versions, and the fingerprint of every direct dependency, combined in a
-content hash. `forge check` is the same pipeline with `cargo check`.
+content hash. `forge check` is the same pipeline with `cargo check`, and
+`forge test` runs `cargo test --package X` over a graph that includes
+dev-dependency edges, so dev-only packages build before the tests that use
+them.
 
 The cache (`forge-cache`) stores `(key, fingerprint)` records under
 `~/.forge/cache` with atomic writes; a missing or corrupt record is simply a
@@ -109,8 +114,14 @@ The binary is `target/debug/forge`.
 | `forge --version` / `forge version`| implemented                         |
 | `forge build [-j N] [-v] [--no-cache] [PATH]` | implemented                |
 | `forge check [-j N] [-v] [--no-cache] [PATH]` | implemented              |
+| `forge test [-j N] [-v] [--no-cache] [PATH]`  | implemented                |
 | `forge clean [PATH]`               | implemented (cargo clean)           |
-| `forge test/run/graph/cache/doctor/...` | planned                        |
+| `forge run/graph/cache/doctor/...` | planned                             |
+
+`forge test` builds a *test graph* that also honors dev-dependency edges
+(cyclic dev-dependency edges are dropped rather than rejected), then runs
+`cargo test --package X` per workspace package and reports failed assertions
+from the captured output.
 
 ## Roadmap
 

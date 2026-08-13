@@ -281,6 +281,90 @@ fn build_graph_ignores_dev_only_edges() {
     assert_eq!(graph.levels().len(), 3);
 }
 
+#[test]
+fn build_test_graph_includes_acyclic_dev_edges() {
+    // `app` dev-depends on `core`; that edge is acyclic and must appear in
+    // the test graph only (build graphs ignore dev-dependencies).
+    let dir = fixture(&[
+        ("Cargo.toml", WORKSPACE_MANIFEST),
+        ("network/Cargo.toml", &package_manifest("network", &[])),
+        ("network/src/lib.rs", "pub fn ping() {}\n"),
+        ("core/Cargo.toml", &package_manifest("core", &[])),
+        ("core/src/lib.rs", "pub fn run() {}\n"),
+        (
+            "app/Cargo.toml",
+            &dev_dep_manifest("app", "core", "../core"),
+        ),
+        ("app/src/lib.rs", "pub fn start() {}\n"),
+    ]);
+
+    let project = Project::discover(dir.path())
+        .expect("load metadata")
+        .expect("manifest should be found");
+
+    let build = project.build_graph().expect("build graph");
+    build.validate().expect("build graph acyclic");
+    assert_eq!(build.len(), 3, "build graph ignores dev edges");
+    let level_of = |graph: &forge_graph::BuildGraph<cargo_metadata::PackageId>, name: &str| {
+        graph
+            .levels()
+            .iter()
+            .position(|level| {
+                level.iter().any(|id| {
+                    let package_id = &graph.node(*id).unwrap().payload;
+                    project
+                        .package(package_id)
+                        .is_some_and(|p| p.name.as_str() == name)
+                })
+            })
+            .unwrap()
+    };
+    assert_eq!(
+        level_of(&build, "core"),
+        level_of(&build, "app"),
+        "no core->app edge in the build graph"
+    );
+
+    let test = project.build_test_graph().expect("test graph");
+    test.validate().expect("test graph acyclic");
+    assert_eq!(test.len(), 3, "test graph has the same members");
+    assert!(
+        level_of(&test, "core") < level_of(&test, "app"),
+        "test graph schedules core before app via the dev edge"
+    );
+}
+
+#[test]
+fn build_test_graph_skips_cyclic_dev_edges() {
+    // `network` dev-depends on `app` which would close a cycle
+    // (app -> core -> network -> app): the edge must be dropped, not fatal.
+    let dir = fixture(&[
+        ("Cargo.toml", WORKSPACE_MANIFEST),
+        (
+            "network/Cargo.toml",
+            &dev_dep_manifest("network", "app", "../app"),
+        ),
+        ("network/src/lib.rs", "pub fn ping() {}\n"),
+        (
+            "core/Cargo.toml",
+            &package_manifest("core", &[("network", "../network")]),
+        ),
+        ("core/src/lib.rs", "pub fn run() { network::ping(); }\n"),
+        (
+            "app/Cargo.toml",
+            &package_manifest("app", &[("core", "../core")]),
+        ),
+        ("app/src/lib.rs", "pub fn start() { core::run(); }\n"),
+    ]);
+
+    let project = Project::discover(dir.path())
+        .expect("load metadata")
+        .expect("manifest should be found");
+    let test = project.build_test_graph().expect("test graph");
+    test.validate().expect("test graph stays acyclic");
+    assert_eq!(test.len(), 3);
+}
+
 fn dev_dep_manifest(name: &str, dev_dep: &str, path: &str) -> String {
     format!(
         r#"
