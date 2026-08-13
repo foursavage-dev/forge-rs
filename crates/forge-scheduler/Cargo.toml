@@ -1,0 +1,12 @@
+[package]
+name = "forge-scheduler"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Parallel task scheduler for the forge build tool"
+
+[dependencies]
+forge-executor = { path = "../forge-executor" }
+forge-graph = { path = "../forge-graph" }
+thiserror = { workspace = true }

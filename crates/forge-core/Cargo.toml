@@ -1,0 +1,15 @@
+[package]
+name = "forge-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Forge core library: project discovery and Cargo metadata integration"
+
+[dependencies]
+cargo_metadata = { workspace = true }
+forge-graph = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

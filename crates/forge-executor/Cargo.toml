@@ -1,0 +1,10 @@
+[package]
+name = "forge-executor"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Task model and process execution for the forge build tool"
+
+[dependencies]
+thiserror = { workspace = true }

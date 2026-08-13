@@ -1,0 +1,36 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/forge-core",
+    "crates/forge-graph",
+    "crates/forge-executor",
+    "crates/forge-scheduler",
+    "crates/forge-cache",
+    "crates/forge-backend-rust",
+    "crates/forge-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+repository = "https://github.com/requla11/forge-rs"
+description = "Forge is a fast, flexible, cache-first build orchestration system for Rust and beyond."
+
+[workspace.dependencies]
+forge-core = { path = "crates/forge-core", version = "0.1.0" }
+forge-graph = { path = "crates/forge-graph", version = "0.1.0" }
+forge-executor = { path = "crates/forge-executor", version = "0.1.0" }
+forge-scheduler = { path = "crates/forge-scheduler", version = "0.1.0" }
+forge-cache = { path = "crates/forge-cache", version = "0.1.0" }
+forge-backend-rust = { path = "crates/forge-backend-rust", version = "0.1.0" }
+
+cargo_metadata = "0.21"
+thiserror = "2"
+
+clap = { version = "4.5", features = ["derive"] }
+anstream = "0.6"
+anstyle = "1.0"
+
+tempfile = "3"
