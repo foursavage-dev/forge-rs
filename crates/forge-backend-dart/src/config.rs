@@ -2,6 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum DartProjectType {
@@ -20,20 +21,24 @@ pub enum DartTargetPlatform {
     All,
 }
 
-impl DartTargetPlatform {
-    pub fn from_str(s: &str) -> Self {
+impl FromStr for DartTargetPlatform {
+    type Err = String;
+    
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "apk" => DartTargetPlatform::APK,
-            "ios" => DartTargetPlatform::IOS,
-            "web" => DartTargetPlatform::Web,
-            "windows" => DartTargetPlatform::Windows,
-            "macos" => DartTargetPlatform::MacOS,
-            "linux" => DartTargetPlatform::Linux,
-            "all" => DartTargetPlatform::All,
-            _ => DartTargetPlatform::All, // Default to all platforms
+            "apk" => Ok(DartTargetPlatform::APK),
+            "ios" => Ok(DartTargetPlatform::IOS),
+            "web" => Ok(DartTargetPlatform::Web),
+            "windows" => Ok(DartTargetPlatform::Windows),
+            "macos" => Ok(DartTargetPlatform::MacOS),
+            "linux" => Ok(DartTargetPlatform::Linux),
+            "all" => Ok(DartTargetPlatform::All),
+            _ => Ok(DartTargetPlatform::All), // Default to all platforms
         }
     }
+}
 
+impl DartTargetPlatform {
     pub fn as_str(&self) -> &str {
         match self {
             DartTargetPlatform::APK => "apk",
@@ -217,8 +222,8 @@ dependencies:
 
     #[test]
     fn test_target_platform_parsing() {
-        assert_eq!(DartTargetPlatform::from_str("apk"), DartTargetPlatform::APK);
-        assert_eq!(DartTargetPlatform::from_str("ios"), DartTargetPlatform::IOS);
-        assert_eq!(DartTargetPlatform::from_str("web"), DartTargetPlatform::Web);
+        assert_eq!(DartTargetPlatform::from_str("apk").unwrap(), DartTargetPlatform::APK);
+        assert_eq!(DartTargetPlatform::from_str("ios").unwrap(), DartTargetPlatform::IOS);
+        assert_eq!(DartTargetPlatform::from_str("web").unwrap(), DartTargetPlatform::Web);
     }
 }

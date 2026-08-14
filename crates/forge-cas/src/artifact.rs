@@ -117,7 +117,7 @@ impl Artifact {
     pub async fn from_file(path: &Path) -> Result<Self> {
         let data = tokio::fs::read(path)
             .await
-            .map_err(|e| CasError::Io(e))?;
+            .map_err(CasError::Io)?;
         
         let hash = ArtifactHash::from_bytes(&data)?;
         let size = data.len() as u64;

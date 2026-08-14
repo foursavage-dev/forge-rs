@@ -13,6 +13,8 @@ use forge_executor::CommandSpec;
 use forge_graph::BuildGraph;
 use std::fmt::Debug;
 
+type DockerStages = Vec<(String, Vec<CommandSpec>)>;
+
 #[derive(Debug)]
 pub struct DockerBackend {
     config: DockerProjectConfig,
@@ -129,7 +131,7 @@ impl BuildBackend for DockerBackend {
 }
 
 impl DockerBackend {
-    fn parse_dockerfile(&self) -> Result<Vec<(String, Vec<CommandSpec>)>, Box<dyn std::error::Error>> {
+    fn parse_dockerfile(&self) -> Result<DockerStages, Box<dyn std::error::Error>> {
         let dockerfile = self.config.dockerfile_path.as_ref()
             .ok_or("No Dockerfile specified")?;
         

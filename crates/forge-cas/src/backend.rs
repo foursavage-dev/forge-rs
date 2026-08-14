@@ -1,8 +1,10 @@
 #![forbid(unsafe_code)]
 
 use crate::artifact::{Artifact, ArtifactHash};
+use crate::compression::CompressionAlgorithm;
 use crate::error::{CasError, Result};
 use async_trait::async_trait;
+use std::str::FromStr;
 
 /// Trait for CAS backend implementations
 #[async_trait]
@@ -49,7 +51,7 @@ impl LocalCasBackend {
     /// Create a new local CAS backend
     pub fn new(base_path: std::path::PathBuf, compression: crate::compression::CompressionAlgorithm) -> Result<Self> {
         std::fs::create_dir_all(&base_path)
-            .map_err(|e| CasError::Io(e))?;
+            .map_err(CasError::Io)?;
         
         Ok(Self {
             base_path,
@@ -84,7 +86,7 @@ impl CasBackend for LocalCasBackend {
         // Create parent directory
         if let Some(parent) = data_path.parent() {
             tokio::fs::create_dir_all(parent).await
-                .map_err(|e| CasError::Io(e))?;
+                .map_err(CasError::Io)?;
         }
         
         // Compress data if configured
@@ -98,7 +100,7 @@ impl CasBackend for LocalCasBackend {
         
         // Store data
         tokio::fs::write(&data_path, &data_to_store).await
-            .map_err(|e| CasError::Io(e))?;
+            .map_err(CasError::Io)?;
         
         // Store metadata
         let mut metadata = artifact.metadata.clone();
@@ -110,7 +112,7 @@ impl CasBackend for LocalCasBackend {
             .map_err(|e| CasError::Serialization(e.to_string()))?;
         
         tokio::fs::write(&metadata_path, metadata_json).await
-            .map_err(|e| CasError::Io(e))?;
+            .map_err(CasError::Io)?;
         
         Ok(())
     }
@@ -126,20 +128,20 @@ impl CasBackend for LocalCasBackend {
         
         // Read metadata
         let metadata_json = tokio::fs::read_to_string(&metadata_path).await
-            .map_err(|e| CasError::Io(e))?;
+            .map_err(CasError::Io)?;
         
         let metadata: crate::artifact::ArtifactMetadata = serde_json::from_str(&metadata_json)
             .map_err(|e| CasError::Serialization(e.to_string()))?;
         
         // Read and decompress data
         let data = tokio::fs::read(&data_path).await
-            .map_err(|e| CasError::Io(e))?;
+            .map_err(CasError::Io)?;
         
         let decompressed_data = if metadata.compression.is_some() {
             let algorithm = metadata.compression
                 .as_ref()
-                .and_then(|alg| crate::compression::CompressionAlgorithm::from_str(alg))
-                .unwrap_or(crate::compression::CompressionAlgorithm::None);
+                .and_then(|alg| CompressionAlgorithm::from_str(alg).ok())
+                .unwrap_or(CompressionAlgorithm::None);
             
             crate::compression::decompress(&data, algorithm)?
         } else {
@@ -166,12 +168,12 @@ impl CasBackend for LocalCasBackend {
         
         if data_path.exists() {
             tokio::fs::remove_file(&data_path).await
-                .map_err(|e| CasError::Io(e))?;
+                .map_err(CasError::Io)?;
         }
         
         if metadata_path.exists() {
             tokio::fs::remove_file(&metadata_path).await
-                .map_err(|e| CasError::Io(e))?;
+                .map_err(CasError::Io)?;
         }
         
         Ok(())
@@ -181,18 +183,18 @@ impl CasBackend for LocalCasBackend {
         let mut hashes = Vec::new();
         
         let mut entries = tokio::fs::read_dir(&self.base_path).await
-            .map_err(|e| CasError::Io(e))?;
+            .map_err(CasError::Io)?;
         
         while let Some(entry) = entries.next_entry().await
-            .map_err(|e| CasError::Io(e))? 
+            .map_err(CasError::Io)? 
         {
             let path = entry.path();
             if path.is_dir() {
                 let mut sub_entries = tokio::fs::read_dir(&path).await
-                    .map_err(|e| CasError::Io(e))?;
+                    .map_err(CasError::Io)?;
                 
                 while let Some(sub_entry) = sub_entries.next_entry().await
-                    .map_err(|e| CasError::Io(e))?
+                    .map_err(CasError::Io)?
                 {
                     let sub_path = sub_entry.path();
                     if sub_path.is_file() && sub_path.extension().map(|e| e != "meta").unwrap_or(true) {

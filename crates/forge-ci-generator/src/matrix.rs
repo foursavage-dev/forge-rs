@@ -28,6 +28,12 @@ pub struct CacheConfig {
     pub key_prefix: String,
 }
 
+impl Default for CIMatrix {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CIMatrix {
     pub fn new() -> Self {
         Self {

@@ -2,6 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum DotnetTargetFramework {
@@ -14,19 +15,23 @@ pub enum DotnetTargetFramework {
     Custom(String),
 }
 
-impl DotnetTargetFramework {
-    pub fn from_str(s: &str) -> Self {
+impl FromStr for DotnetTargetFramework {
+    type Err = String;
+    
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "net6.0" => DotnetTargetFramework::Net6_0,
-            "net7.0" => DotnetTargetFramework::Net7_0,
-            "net8.0" => DotnetTargetFramework::Net8_0,
-            "net9.0" => DotnetTargetFramework::Net9_0,
-            "netstandard2.0" => DotnetTargetFramework::NetStandard2_0,
-            "netstandard2.1" => DotnetTargetFramework::NetStandard2_1,
-            custom => DotnetTargetFramework::Custom(custom.to_string()),
+            "net6.0" => Ok(DotnetTargetFramework::Net6_0),
+            "net7.0" => Ok(DotnetTargetFramework::Net7_0),
+            "net8.0" => Ok(DotnetTargetFramework::Net8_0),
+            "net9.0" => Ok(DotnetTargetFramework::Net9_0),
+            "netstandard2.0" => Ok(DotnetTargetFramework::NetStandard2_0),
+            "netstandard2.1" => Ok(DotnetTargetFramework::NetStandard2_1),
+            custom => Ok(DotnetTargetFramework::Custom(custom.to_string())),
         }
     }
+}
 
+impl DotnetTargetFramework {
     pub fn as_str(&self) -> &str {
         match self {
             DotnetTargetFramework::Net6_0 => "net6.0",
@@ -155,7 +160,7 @@ impl DotnetProjectConfig {
             let start = start + start_tag.len();
             if let Some(end) = content.find(end_tag) {
                 let tf_str = &content[start..end];
-                return Some(DotnetTargetFramework::from_str(tf_str.trim()));
+                return DotnetTargetFramework::from_str(tf_str.trim()).ok();
             }
         }
 
@@ -169,7 +174,7 @@ impl DotnetProjectConfig {
                 let tf_str = &content[start..end];
                 // Take the first framework if multiple are specified
                 let first_tf = tf_str.split(';').next().unwrap_or(tf_str);
-                return Some(DotnetTargetFramework::from_str(first_tf.trim()));
+                return DotnetTargetFramework::from_str(first_tf.trim()).ok();
             }
         }
 
@@ -202,8 +207,8 @@ mod tests {
 
     #[test]
     fn test_target_framework_parsing() {
-        assert_eq!(DotnetTargetFramework::from_str("net6.0"), DotnetTargetFramework::Net6_0);
-        assert_eq!(DotnetTargetFramework::from_str("net8.0"), DotnetTargetFramework::Net8_0);
-        assert_eq!(DotnetTargetFramework::from_str("custom"), DotnetTargetFramework::Custom("custom".to_string()));
+        assert_eq!(DotnetTargetFramework::from_str("net6.0").unwrap(), DotnetTargetFramework::Net6_0);
+        assert_eq!(DotnetTargetFramework::from_str("net8.0").unwrap(), DotnetTargetFramework::Net8_0);
+        assert_eq!(DotnetTargetFramework::from_str("custom").unwrap(), DotnetTargetFramework::Custom("custom".to_string()));
     }
 }

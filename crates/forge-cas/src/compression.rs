@@ -2,6 +2,7 @@
 
 use crate::error::{CasError, Result};
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 /// Compression algorithms supported by CAS
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -25,14 +26,18 @@ impl CompressionAlgorithm {
             Self::ZstdFast => "zstd-fast",
         }
     }
+}
+
+impl FromStr for CompressionAlgorithm {
+    type Err = String;
     
-    pub fn from_str(s: &str) -> Option<Self> {
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "none" => Some(Self::None),
-            "zstd" => Some(Self::Zstd),
-            "zstd-max" => Some(Self::ZstdMax),
-            "zstd-fast" => Some(Self::ZstdFast),
-            _ => None,
+            "none" => Ok(Self::None),
+            "zstd" => Ok(Self::Zstd),
+            "zstd-max" => Ok(Self::ZstdMax),
+            "zstd-fast" => Ok(Self::ZstdFast),
+            _ => Err(format!("Unknown compression algorithm: {}", s)),
         }
     }
 }
@@ -145,9 +150,9 @@ mod tests {
     
     #[test]
     fn test_compression_algorithm_parsing() {
-        assert_eq!(CompressionAlgorithm::from_str("zstd"), Some(CompressionAlgorithm::Zstd));
-        assert_eq!(CompressionAlgorithm::from_str("none"), Some(CompressionAlgorithm::None));
-        assert_eq!(CompressionAlgorithm::from_str("invalid"), None);
+        assert_eq!(CompressionAlgorithm::from_str("zstd").unwrap(), CompressionAlgorithm::Zstd);
+        assert_eq!(CompressionAlgorithm::from_str("none").unwrap(), CompressionAlgorithm::None);
+        assert!(CompressionAlgorithm::from_str("invalid").is_err());
     }
     
     #[test]

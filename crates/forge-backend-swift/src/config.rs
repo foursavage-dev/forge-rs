@@ -2,6 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum SwiftPlatform {
@@ -12,18 +13,22 @@ pub enum SwiftPlatform {
     Linux,
 }
 
-impl SwiftPlatform {
-    pub fn from_str(s: &str) -> Self {
+impl FromStr for SwiftPlatform {
+    type Err = String;
+    
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "ios" => SwiftPlatform::IOS,
-            "macos" | "mac" => SwiftPlatform::MacOS,
-            "tvos" => SwiftPlatform::TVOS,
-            "watchos" => SwiftPlatform::WatchOS,
-            "linux" => SwiftPlatform::Linux,
-            _ => SwiftPlatform::MacOS, // Default to macOS
+            "ios" => Ok(SwiftPlatform::IOS),
+            "macos" | "mac" => Ok(SwiftPlatform::MacOS),
+            "tvos" => Ok(SwiftPlatform::TVOS),
+            "watchos" => Ok(SwiftPlatform::WatchOS),
+            "linux" => Ok(SwiftPlatform::Linux),
+            _ => Ok(SwiftPlatform::MacOS), // Default to macOS
         }
     }
+}
 
+impl SwiftPlatform {
     pub fn as_str(&self) -> &str {
         match self {
             SwiftPlatform::IOS => "ios",
@@ -184,8 +189,8 @@ let package = Package(
 
     #[test]
     fn test_platform_parsing() {
-        assert_eq!(SwiftPlatform::from_str("ios"), SwiftPlatform::IOS);
-        assert_eq!(SwiftPlatform::from_str("macos"), SwiftPlatform::MacOS);
-        assert_eq!(SwiftPlatform::from_str("linux"), SwiftPlatform::Linux);
+        assert_eq!(SwiftPlatform::from_str("ios").unwrap(), SwiftPlatform::IOS);
+        assert_eq!(SwiftPlatform::from_str("macos").unwrap(), SwiftPlatform::MacOS);
+        assert_eq!(SwiftPlatform::from_str("linux").unwrap(), SwiftPlatform::Linux);
     }
 }

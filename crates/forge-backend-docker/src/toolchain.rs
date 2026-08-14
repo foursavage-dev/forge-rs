@@ -67,7 +67,7 @@ impl DockerToolchain {
     
     pub fn check_registry(&self, registry: &str) -> Result<bool> {
         let output = std::process::Command::new(&self.docker_path)
-            .args(&["search", registry])
+            .args(["search", registry])
             .output()
             .map_err(|e| DockerToolchainError::CommandFailed(e.to_string()))?;
         
@@ -76,7 +76,7 @@ impl DockerToolchain {
     
     pub fn list_images(&self) -> Result<Vec<String>> {
         let output = std::process::Command::new(&self.docker_path)
-            .args(&["images", "--format", "{{.Repository}}:{{.Tag}}"])
+            .args(["images", "--format", "{{.Repository}}:{{.Tag}}"])
             .output()
             .map_err(|e| DockerToolchainError::CommandFailed(e.to_string()))?;
         
@@ -96,7 +96,7 @@ impl DockerToolchain {
     
     pub fn list_containers(&self) -> Result<Vec<String>> {
         let output = std::process::Command::new(&self.docker_path)
-            .args(&["ps", "--format", "{{.Names}}"])
+            .args(["ps", "--format", "{{.Names}}"])
             .output()
             .map_err(|e| DockerToolchainError::CommandFailed(e.to_string()))?;
         

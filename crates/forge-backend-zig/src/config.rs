@@ -2,6 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ZigTarget {
@@ -15,20 +16,24 @@ pub enum ZigTarget {
     Custom(String),
 }
 
-impl ZigTarget {
-    pub fn from_str(s: &str) -> Self {
+impl FromStr for ZigTarget {
+    type Err = String;
+    
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "native" => ZigTarget::Native,
-            "x86_64-linux" | "x86_64-linux-gnu" => ZigTarget::X86_64Linux,
-            "x86_64-windows" | "x86_64-windows-gnu" => ZigTarget::X86_64Windows,
-            "x86_64-macos" | "x86_64-macos-gnu" => ZigTarget::X86_64MacOS,
-            "aarch64-linux" | "aarch64-linux-gnu" => ZigTarget::Aarch64Linux,
-            "aarch64-macos" | "aarch64-macos-gnu" => ZigTarget::Aarch64MacOS,
-            "wasm32" | "wasm32-wasi" => ZigTarget::Wasm32,
-            custom => ZigTarget::Custom(custom.to_string()),
+            "native" => Ok(ZigTarget::Native),
+            "x86_64-linux" | "x86_64-linux-gnu" => Ok(ZigTarget::X86_64Linux),
+            "x86_64-windows" | "x86_64-windows-gnu" => Ok(ZigTarget::X86_64Windows),
+            "x86_64-macos" | "x86_64-macos-gnu" => Ok(ZigTarget::X86_64MacOS),
+            "aarch64-linux" | "aarch64-linux-gnu" => Ok(ZigTarget::Aarch64Linux),
+            "aarch64-macos" | "aarch64-macos-gnu" => Ok(ZigTarget::Aarch64MacOS),
+            "wasm32" | "wasm32-wasi" => Ok(ZigTarget::Wasm32),
+            custom => Ok(ZigTarget::Custom(custom.to_string())),
         }
     }
+}
 
+impl ZigTarget {
     pub fn as_str(&self) -> &str {
         match self {
             ZigTarget::Native => "native",
@@ -165,8 +170,8 @@ pub fn build(b: *std.Build) void {
 
     #[test]
     fn test_target_parsing() {
-        assert_eq!(ZigTarget::from_str("native"), ZigTarget::Native);
-        assert_eq!(ZigTarget::from_str("x86_64-linux"), ZigTarget::X86_64Linux);
-        assert_eq!(ZigTarget::from_str("wasm32"), ZigTarget::Wasm32);
+        assert_eq!(ZigTarget::from_str("native").unwrap(), ZigTarget::Native);
+        assert_eq!(ZigTarget::from_str("x86_64-linux").unwrap(), ZigTarget::X86_64Linux);
+        assert_eq!(ZigTarget::from_str("wasm32").unwrap(), ZigTarget::Wasm32);
     }
 }
