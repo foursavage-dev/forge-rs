@@ -1,63 +1,82 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+# Forge Installation Script for Linux/macOS
+# Usage: curl -fsSL https://raw.githubusercontent.com/requla11/forge-rs/main/install.sh | bash
 
-REPO="requla11/forge-rs"
-INSTALL_DIR="${FORGE_INSTALL_DIR:-$HOME/.forge/bin}"
+set -e
 
-OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
-ARCH="$(uname -m)"
+FORGE_VERSION="0.1.0"
+FORGE_REPO="requla11/forge-rs"
+INSTALL_DIR="/usr/local/bin"
+TEMP_DIR=$(mktemp -d)
 
-case "$OS" in
-  linux)
-    case "$ARCH" in
-      x86_64|amd64) TARGET="forge-linux-x86_64" ;;
-      aarch64|arm64) TARGET="forge-linux-x86_64" ;;
-      *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;;
-    esac
-    ;;
-  darwin)
-    case "$ARCH" in
-      x86_64) TARGET="forge-macos-x86_64" ;;
-      arm64|aarch64) TARGET="forge-macos-aarch64" ;;
-      *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;;
-    esac
-    ;;
-  *)
-    echo "Unsupported OS: $OS. For Windows, please run install.ps1 in PowerShell." >&2
-    exit 1
-    ;;
+echo "🦀 Installing Forge v${FORGE_VERSION}..."
+
+# Detect OS and architecture
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m)
+
+case $ARCH in
+    x86_64)
+        ARCH="amd64"
+        ;;
+    aarch64|arm64)
+        ARCH="arm64"
+        ;;
+    *)
+        echo "❌ Unsupported architecture: $ARCH"
+        exit 1
+        ;;
 esac
 
-DOWNLOAD_URL="https://github.com/${REPO}/releases/latest/download/${TARGET}"
+BINARY_NAME="forge-${OS}-${ARCH}"
+DOWNLOAD_URL="https://github.com/${FORGE_REPO}/releases/download/v${FORGE_VERSION}/${BINARY_NAME}"
 
-echo "Installing Forge (${TARGET}) from ${REPO}..."
+echo "📥 Downloading Forge from ${DOWNLOAD_URL}..."
 
-mkdir -p "$INSTALL_DIR"
-TEMP_FILE="$(mktemp)"
-
-if command -v curl >/dev/null 2>&1; then
-  curl -fsSL "$DOWNLOAD_URL" -o "$TEMP_FILE"
-elif command -v wget >/dev/null 2>&1; then
-  wget -qO "$TEMP_FILE" "$DOWNLOAD_URL"
+# Try to download binary
+if curl -fsSL -o "${TEMP_DIR}/forge" "${DOWNLOAD_URL}"; then
+    echo "✅ Download successful"
 else
-  echo "Error: curl or wget is required to download Forge." >&2
-  exit 1
+    echo "⚠️  Pre-built binary not found, building from source..."
+    echo "📦 This requires Rust to be installed"
+    
+    # Check if cargo is available
+    if ! command -v cargo &> /dev/null; then
+        echo "❌ Rust/Cargo not found. Please install Rust first:"
+        echo "   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+        exit 1
+    fi
+    
+    # Clone and build
+    cd "${TEMP_DIR}"
+    git clone --depth 1 --branch main "https://github.com/${FORGE_REPO}.git" forge-rs
+    cd forge-rs
+    cargo build --release
+    
+    cp target/release/forge "${TEMP_DIR}/forge"
+    echo "✅ Build successful"
 fi
 
-chmod +x "$TEMP_FILE"
-mv "$TEMP_FILE" "$INSTALL_DIR/forge"
+# Install binary
+echo "📝 Installing to ${INSTALL_DIR}..."
+if [ -w "${INSTALL_DIR}" ]; then
+    mv "${TEMP_DIR}/forge" "${INSTALL_DIR}/forge"
+    chmod +x "${INSTALL_DIR}/forge"
+else
+    echo "⚠️  Sudo required for installation"
+    sudo mv "${TEMP_DIR}/forge" "${INSTALL_DIR}/forge"
+    sudo chmod +x "${INSTALL_DIR}/forge"
+fi
 
-echo "Forge successfully installed to $INSTALL_DIR/forge"
+# Cleanup
+rm -rf "${TEMP_DIR}"
 
-case ":$PATH:" in
-  *":$INSTALL_DIR:"*) ;;
-  *)
-    echo ""
-    echo "Please add Forge to your PATH by adding the following line to your shell profile (~/.bashrc, ~/.zshrc, etc.):"
-    echo ""
-    echo "  export PATH=\"\$PATH:$INSTALL_DIR\""
-    echo ""
-    ;;
-esac
-
-echo "Run 'forge --version' or 'forge doctor' to get started! 🦀"
+# Verify installation
+if command -v forge &> /dev/null; then
+    echo "✅ Forge installed successfully!"
+    echo "🎉 Run 'forge --help' to get started"
+    forge --version
+else
+    echo "❌ Installation failed"
+    exit 1
+fi

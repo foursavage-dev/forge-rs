@@ -1,0 +1,13 @@
+{
+  "name": "web-frontend",
+  "version": "0.1.0",
+  "description": "TypeScript frontend for polyglot demo",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
