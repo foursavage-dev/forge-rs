@@ -106,30 +106,13 @@ impl SwiftProjectConfig {
     }
 
     fn extract_package_name(content: &str) -> Option<String> {
-        // Try to extract package name from Package.swift
-        // Look for name: "PackageName" or name: 'PackageName'
-        let patterns = [
-            r#"name\s*[:=]\s*"([^"]+)""#,
-            r#"name\s*[:=]\s*'([^']+)'"#,
-        ];
-
-        for pattern in patterns {
-            if let Some(name) = Self::extract_with_pattern(pattern, content) {
-                return Some(name);
-            }
-        }
-
-        None
-    }
-
-    fn extract_with_pattern(pattern: &str, text: &str) -> Option<String> {
-        // Simple pattern matching - in production use regex crate
-        let pattern_parts: Vec<&str> = pattern.split("\"").collect();
-        if pattern_parts.len() >= 2 {
-            if let Some(start) = text.find(pattern_parts[0]) {
-                let after_start = &text[start + pattern_parts[0].len()..];
-                if let Some(end) = after_start.find(pattern_parts[1]) {
-                    return Some(after_start[..end].to_string());
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if let Some(rest) = trimmed.strip_prefix("name:") {
+                let rest = rest.trim().trim_matches(|c| c == ',' || c == ' ');
+                let val = rest.trim_matches(|c| c == '\'' || c == '"' || c == ' ');
+                if !val.is_empty() {
+                    return Some(val.to_string());
                 }
             }
         }

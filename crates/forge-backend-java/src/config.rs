@@ -49,7 +49,7 @@ impl JavaProjectConfig {
         let build_path = project_dir.join("build.gradle");
         let build_kts_path = project_dir.join("build.gradle.kts");
 
-        let (build_file, is_kotlin) = if build_kts_path.exists() {
+        let (build_file, _is_kotlin) = if build_kts_path.exists() {
             (build_kts_path, true)
         } else if build_path.exists() {
             (build_path, false)
@@ -60,11 +60,16 @@ impl JavaProjectConfig {
         let content = std::fs::read_to_string(&build_file)
             .map_err(|e| format!("Failed to read build file: {}", e))?;
 
-        // Simple regex extraction for group, name, version
         let group_id = extract_gradle_property(&content, &["group", "grouping"])
             .unwrap_or_else(|| "com.example".to_string());
-        let artifact_id = extract_gradle_property(&content, &["name", "artifactId"])
-            .ok_or("artifactId/name not found in build.gradle")?;
+        let artifact_id = extract_gradle_property(&content, &["name", "artifactId", "rootProject.name"])
+            .or_else(|| {
+                project_dir
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .map(|s| s.to_string())
+            })
+            .unwrap_or_else(|| "app".to_string());
         let version = extract_gradle_property(&content, &["version"])
             .unwrap_or_else(|| "1.0.0".to_string());
 
@@ -72,22 +77,16 @@ impl JavaProjectConfig {
             group_id,
             artifact_id,
             version,
-            build_system: if is_kotlin {
-                JavaBuildSystem::Gradle
-            } else {
-                JavaBuildSystem::Gradle
-            },
+            build_system: JavaBuildSystem::Gradle,
             skip_tests: false,
         })
     }
 
     pub fn detect(project_dir: &Path) -> Result<Self, String> {
-        // Try Maven first
         if project_dir.join("pom.xml").exists() {
             return Self::from_maven_pom(project_dir);
         }
 
-        // Try Gradle
         if project_dir.join("build.gradle").exists() || project_dir.join("build.gradle.kts").exists() {
             return Self::from_gradle_build(project_dir);
         }
@@ -109,119 +108,22 @@ fn extract_xml_tag(content: &str, tag: &str) -> Option<String> {
 }
 
 fn extract_gradle_property(content: &str, keys: &[&str]) -> Option<String> {
-    for key in keys {
-        // Try different patterns: key = "value", key = 'value', key = value
-        let patterns = [
-            format!(r#"{}\s*=\s*["']([^"']+)["']"#, key),
-            format!(r#"{}\s*=\s*(\S+)"#, key),
-            format!(r#"{}(["']([^"']+)["'])"#, key),
-        ];
-
-        for pattern in patterns {
-            if let Some(captures) = regex_match(&pattern, content) {
-                if !captures.is_empty() {
-                    return Some(captures[0].clone());
+    for line in content.lines() {
+        let trimmed = line.trim();
+        for key in keys {
+            if let Some(rest) = trimmed.strip_prefix(key) {
+                let rest = rest.trim();
+                let rest = rest.strip_prefix('=').unwrap_or(rest).trim();
+                let rest = rest.strip_prefix('(').unwrap_or(rest).trim();
+                let rest = rest.strip_suffix(')').unwrap_or(rest).trim();
+                let val = rest.trim_matches(|c| c == '\'' || c == '"' || c == ' ');
+                if !val.is_empty() {
+                    return Some(val.to_string());
                 }
             }
         }
     }
     None
-}
-
-fn regex_match(pattern: &str, text: &str) -> Option<Vec<String>> {
-    // Simple pattern matching without regex crate for now
-    // In production, use the regex crate
-    let mut result = Vec::new();
-    let pattern_chars: Vec<char> = pattern.chars().collect();
-    let text_chars: Vec<char> = text.chars().collect();
-    
-    if pattern_chars.is_empty() || text_chars.is_empty() {
-        return None;
-    }
-
-    let mut i = 0;
-    let mut j = 0;
-    let mut capture_start = None;
-    let mut in_capture = false;
-
-    while i < pattern_chars.len() && j < text_chars.len() {
-        match pattern_chars[i] {
-            '\\' => {
-                i += 1;
-                if i < pattern_chars.len() && pattern_chars[i] == text_chars[j] {
-                    j += 1;
-                    i += 1;
-                } else {
-                    return None;
-                }
-            }
-            '[' => {
-                // Handle character class
-                let mut class_chars = Vec::new();
-                i += 1;
-                while i < pattern_chars.len() && pattern_chars[i] != ']' {
-                    class_chars.push(pattern_chars[i]);
-                    i += 1;
-                }
-                i += 1;
-                if class_chars.contains(&text_chars[j]) {
-                    j += 1;
-                } else {
-                    return None;
-                }
-            }
-            '(' => {
-                in_capture = true;
-                capture_start = Some(j);
-                i += 1;
-            }
-            ')' => {
-                if in_capture {
-                    if let Some(start) = capture_start {
-                        result.push(text_chars[start..j].iter().collect());
-                    }
-                    in_capture = false;
-                    capture_start = None;
-                }
-                i += 1;
-            }
-            '.' => {
-                if in_capture {
-                    // Capture any character
-                }
-                j += 1;
-                i += 1;
-            }
-            '+' => {
-                // One or more of previous - simplified
-                i += 1;
-            }
-            '*' => {
-                // Zero or more of previous - simplified
-                i += 1;
-            }
-            '?' => {
-                // Zero or one of previous - simplified
-                i += 1;
-            }
-            c if c == text_chars[j] => {
-                if in_capture && capture_start.is_none() {
-                    capture_start = Some(j);
-                }
-                j += 1;
-                i += 1;
-            }
-            _ => {
-                return None;
-            }
-        }
-    }
-
-    if result.is_empty() {
-        None
-    } else {
-        Some(result)
-    }
 }
 
 #[cfg(test)]
@@ -264,7 +166,7 @@ version = '3.0.0'
 
         let config = JavaProjectConfig::from_gradle_build(temp.path()).unwrap();
         assert_eq!(config.group_id, "org.test");
-        assert_eq!(config.artifact_id, "3.0.0"); // This might fail with simple parsing
+        assert_eq!(config.version, "3.0.0");
         assert_eq!(config.build_system, JavaBuildSystem::Gradle);
     }
 }

@@ -47,7 +47,7 @@ pub fn compute_dotnet_fingerprint(
 
 fn collect_source_files(project_dir: &Path) -> Result<Vec<std::path::PathBuf>, DotnetBackendError> {
     let mut source_files = Vec::new();
-    let extensions = [".cs", ".fs", ".vb", ".xaml"];
+    let extensions = ["cs", "fs", "vb", "xaml"];
     
     let source_dirs = [
         project_dir.join("src"),
@@ -80,7 +80,7 @@ fn collect_source_files(project_dir: &Path) -> Result<Vec<std::path::PathBuf>, D
 
 fn collect_project_files(project_dir: &Path) -> Result<Vec<std::path::PathBuf>, DotnetBackendError> {
     let mut project_files = Vec::new();
-    let project_extensions = [".csproj", ".fsproj", ".vbproj", ".sln"];
+    let project_extensions = ["csproj", "fsproj", "vbproj", "sln"];
     
     if let Ok(entries) = fs::read_dir(project_dir) {
         for entry in entries.flatten() {

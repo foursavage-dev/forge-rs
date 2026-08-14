@@ -47,7 +47,7 @@ pub fn compute_swift_fingerprint(
 
 fn collect_source_files(project_dir: &Path) -> Result<Vec<std::path::PathBuf>, SwiftBackendError> {
     let mut source_files = Vec::new();
-    let extensions = [".swift", ".m", ".mm", ".h", ".hpp", ".c", ".cpp"];
+    let extensions = ["swift", "m", "mm", "h", "hpp", "c", "cpp"];
     
     let source_dirs = [
         project_dir.join("Sources"),

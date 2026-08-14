@@ -80,7 +80,7 @@ pub fn compute_java_fingerprint(
 
 fn collect_source_files(project_dir: &Path) -> Result<Vec<std::path::PathBuf>, JavaBackendError> {
     let mut source_files = Vec::new();
-    let java_extensions = [".java", ".kt", ".scala"];
+    let java_extensions = ["java", "kt", "scala"];
     
     let source_dirs = [
         project_dir.join("src").join("main").join("java"),

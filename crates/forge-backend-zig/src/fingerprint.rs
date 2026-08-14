@@ -47,7 +47,7 @@ pub fn compute_zig_fingerprint(
 
 fn collect_source_files(project_dir: &Path) -> Result<Vec<std::path::PathBuf>, ZigBackendError> {
     let mut source_files = Vec::new();
-    let extensions = [".zig", ".zon"];
+    let extensions = ["zig", "zon"];
     
     let source_dirs = [
         project_dir.join("src"),

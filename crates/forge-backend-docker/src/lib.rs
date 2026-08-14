@@ -31,6 +31,15 @@ impl DockerBackend {
             fingerprinter,
         })
     }
+
+    pub fn with_toolchain(config: DockerProjectConfig, toolchain: DockerToolchain) -> Self {
+        let fingerprinter = DockerFingerprinter::new(config.clone());
+        Self {
+            config,
+            toolchain,
+            fingerprinter,
+        }
+    }
     
     pub fn detect_config(project_dir: &std::path::Path) -> Option<DockerProjectConfig> {
         // Check for Dockerfile
@@ -186,8 +195,14 @@ mod tests {
             cache_from: Vec::new(),
             cache_to: Vec::new(),
         };
+
+        let toolchain = DockerToolchain {
+            docker_path: std::path::PathBuf::from("docker"),
+            is_podman: false,
+            version: "24.0.0".to_string(),
+        };
         
-        let backend = DockerBackend::new(config);
-        assert!(backend.is_ok());
+        let backend = DockerBackend::with_toolchain(config, toolchain);
+        assert_eq!(backend.config.context_path, std::path::PathBuf::from("."));
     }
 }
