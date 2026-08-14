@@ -88,6 +88,18 @@ pub struct ForgeConfig {
     pub swarm_compute: bool,
     #[serde(default)]
     pub critical_path: bool,
+    #[serde(default)]
+    pub turbo_link: bool,
+    #[serde(default)]
+    pub speculative: bool,
+    #[serde(default)]
+    pub daemon_pool: bool,
+    #[serde(default)]
+    pub kernel_bypass: bool,
+    #[serde(default)]
+    pub wasm_sandbox: bool,
+    #[serde(default)]
+    pub super_opt: bool,
 }
 
 impl ForgeConfig {
