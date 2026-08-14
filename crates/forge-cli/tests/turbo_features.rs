@@ -208,6 +208,59 @@ fn test_distributed_compute_swarm_cli() {
 }
 
 #[test]
+fn test_critical_path_scheduler_cli() {
+    let dir = fixture(&[
+        ("Cargo.toml", CARGO_MANIFEST),
+        ("src/lib.rs", "pub fn critical_task() -> u32 { 100 }\n"),
+    ]);
+
+    let output = run(forge()
+        .arg("build")
+        .arg("--critical-path")
+        .arg(dir.path()));
+
+    let out = stdout(&output);
+    let err = stderr(&output);
+    assert!(output.status.success(), "stdout: {out}, stderr: {err}");
+    assert!(out.contains("Dynamic Critical-Path Lookahead Scheduler active"));
+}
+
+#[test]
+fn test_timemachine_history_and_rewind_cli() {
+    let dir = fixture(&[
+        ("Cargo.toml", CARGO_MANIFEST),
+        ("src/lib.rs", "pub fn app_v1() {}\n"),
+    ]);
+
+    let history_output = run(forge().arg("history").arg(dir.path()));
+    assert!(history_output.status.success());
+    assert!(stdout(&history_output).contains("Forge Time-Machine Build History"));
+}
+
+#[test]
+fn test_slsa_attestation_and_verification_cli() {
+    let dir = fixture(&[
+        ("Cargo.toml", CARGO_MANIFEST),
+        ("src/lib.rs", "pub fn pristine_module() {}\n"),
+    ]);
+
+    let attest_output = run(forge().arg("attest").arg(dir.path()));
+    assert!(attest_output.status.success());
+    assert!(stdout(&attest_output).contains("SLSA Level 3 Attestation generated"));
+
+    let attestation_path = dir.path().join(".forge/attestation.json");
+    assert!(attestation_path.exists());
+
+    let verify_output = run(forge()
+        .arg("verify")
+        .arg(&attestation_path)
+        .arg(dir.path()));
+
+    assert!(verify_output.status.success());
+    assert!(stdout(&verify_output).contains("SLSA Provenance Verified"));
+}
+
+#[test]
 fn test_full_combined_turbo_stack() {
     let dir = fixture(&[
         ("Cargo.toml", CARGO_MANIFEST),
@@ -222,6 +275,7 @@ fn test_full_combined_turbo_stack() {
         .arg("--reflink")
         .arg("--hermetic-trace")
         .arg("--swarm-compute")
+        .arg("--critical-path")
         .arg(dir.path()));
 
     let out = stdout(&output);
@@ -232,4 +286,5 @@ fn test_full_combined_turbo_stack() {
     assert!(out.contains("Reflink / Copy-on-Write hardware VFS engine active"));
     assert!(out.contains("Hermetic Syscall tracing sandbox active"));
     assert!(out.contains("Distributed P2P Compute Swarm active"));
+    assert!(out.contains("Dynamic Critical-Path Lookahead Scheduler active"));
 }

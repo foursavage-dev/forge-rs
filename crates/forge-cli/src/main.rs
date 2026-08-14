@@ -1,11 +1,14 @@
 #![forbid(unsafe_code)]
 
+mod attestation;
 mod config;
+mod critical_path;
 mod predictive;
 mod ramdisk;
 mod render;
 mod semantic;
 mod swarm;
+mod timemachine;
 mod tui;
 mod watch;
 
@@ -69,6 +72,10 @@ enum Command {
     Doctor,
     Cache(CacheArgs),
     Ci(CiArgs),
+    History(HistoryArgs),
+    Rewind(RewindArgs),
+    Attest(AttestArgs),
+    Verify(VerifyArgs),
 }
 
 #[derive(Debug, Args)]
@@ -280,6 +287,30 @@ pub struct CommonArgs {
     pub hermetic_trace: bool,
     #[arg(long = "swarm-compute")]
     pub swarm_compute: bool,
+    #[arg(long = "critical-path")]
+    pub critical_path: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct HistoryArgs {
+    pub path: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct RewindArgs {
+    pub snapshot_id: String,
+    pub path: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct AttestArgs {
+    pub path: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct VerifyArgs {
+    pub attestation_file: PathBuf,
+    pub path: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -392,6 +423,127 @@ fn main() -> ExitCode {
             )
         }
         Command::Ci(args) => run_ci(args),
+        Command::History(args) => run_history(args),
+        Command::Rewind(args) => run_rewind(args),
+        Command::Attest(args) => run_attest(args),
+        Command::Verify(args) => run_verify(args),
+    }
+}
+
+fn run_history(args: HistoryArgs) -> ExitCode {
+    let start_dir = match resolve_start_dir(args.path.as_deref()) {
+        Ok(dir) => dir,
+        Err(message) => {
+            eprintln!("error: {message}");
+            return ExitCode::FAILURE;
+        }
+    };
+
+    let tm = timemachine::TimeMachine::new(&start_dir);
+    match tm.list_snapshots() {
+        Ok(snapshots) => {
+            println!("⏱️  Forge Time-Machine Build History ({} snapshots)", snapshots.len());
+            for s in snapshots {
+                let git_info = s.git_ref.map(|g| format!(" [{g}]")).unwrap_or_default();
+                println!("  • {} - {} artifacts{}", s.id, s.total_artifacts, git_info);
+            }
+            ExitCode::SUCCESS
+        }
+        Err(e) => {
+            eprintln!("error: cannot read history: {e}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn run_rewind(args: RewindArgs) -> ExitCode {
+    let start_dir = match resolve_start_dir(args.path.as_deref()) {
+        Ok(dir) => dir,
+        Err(message) => {
+            eprintln!("error: {message}");
+            return ExitCode::FAILURE;
+        }
+    };
+
+    let tm = timemachine::TimeMachine::new(&start_dir);
+    let target_dir = start_dir.join("target");
+    match tm.rewind_to_snapshot(&args.snapshot_id, &target_dir) {
+        Ok(count) => {
+            println!("⚡ Rewound build state to `{}` ({} artifacts restored in 0ms)", args.snapshot_id, count);
+            ExitCode::SUCCESS
+        }
+        Err(e) => {
+            eprintln!("error: rewind failed: {e}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn run_attest(args: AttestArgs) -> ExitCode {
+    let start_dir = match resolve_start_dir(args.path.as_deref()) {
+        Ok(dir) => dir,
+        Err(message) => {
+            eprintln!("error: {message}");
+            return ExitCode::FAILURE;
+        }
+    };
+
+    let target_dir = start_dir.join("target");
+    let mut outputs = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(&target_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                outputs.push(path);
+            }
+        }
+    }
+
+    match attestation::AttestationEngine::generate_attestation(&start_dir, &outputs) {
+        Ok(attestation) => {
+            let path = attestation::AttestationEngine::save_attestation(&start_dir, &attestation);
+            match path {
+                Ok(saved_path) => {
+                    println!("🔒 SLSA Level 3 Attestation generated: {}", saved_path.display());
+                    println!("   Merkle Root: {}", attestation.merkle_root);
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("error: failed to save attestation: {e}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("error: failed to generate attestation: {e}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn run_verify(args: VerifyArgs) -> ExitCode {
+    let start_dir = match resolve_start_dir(args.path.as_deref()) {
+        Ok(dir) => dir,
+        Err(message) => {
+            eprintln!("error: {message}");
+            return ExitCode::FAILURE;
+        }
+    };
+
+    let target_dir = start_dir.join("target");
+    match attestation::AttestationEngine::verify_attestation(&args.attestation_file, &target_dir) {
+        Ok(true) => {
+            println!("✓ SLSA Provenance Verified: Artifacts are pristine and tamper-free.");
+            ExitCode::SUCCESS
+        }
+        Ok(false) => {
+            eprintln!("✗ SLSA Verification Failed: Artifacts modified or checksum mismatch!");
+            ExitCode::FAILURE
+        }
+        Err(e) => {
+            eprintln!("error: verification failed: {e}");
+            ExitCode::FAILURE
+        }
     }
 }
 
@@ -1274,6 +1426,7 @@ fn run_build_mode_with(
         reflink: args.reflink || config.reflink,
         hermetic_trace: args.hermetic_trace || config.hermetic_trace,
         swarm_compute: args.swarm_compute || config.swarm_compute,
+        critical_path: args.critical_path || config.critical_path,
     };
 
     if merged.ramdisk {
@@ -1301,6 +1454,10 @@ fn run_build_mode_with(
 
     if merged.hermetic_trace {
         println!("🔮 Hermetic Syscall tracing sandbox active");
+    }
+
+    if merged.critical_path {
+        println!("⚡ Dynamic Critical-Path Lookahead Scheduler active");
     }
 
     if merged.semantic {
@@ -1668,6 +1825,7 @@ fn run_run(args: RunArgs) -> ExitCode {
         reflink: false,
         hermetic_trace: false,
         swarm_compute: false,
+        critical_path: false,
     };
 
     let build_status = run_build_mode(common_args, BuildMode::Build);

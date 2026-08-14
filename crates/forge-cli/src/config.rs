@@ -86,6 +86,8 @@ pub struct ForgeConfig {
     pub hermetic_trace: bool,
     #[serde(default)]
     pub swarm_compute: bool,
+    #[serde(default)]
+    pub critical_path: bool,
 }
 
 impl ForgeConfig {
