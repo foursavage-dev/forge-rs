@@ -1,0 +1,139 @@
+name: AI PR Bot
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  pr-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        continue-on-error: true
+        with:
+          app-id: ${{ secrets.BOT_APP_ID || '4594289' }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Bootstrap Forge
+        run: cargo build --release --bin forge
+
+      - name: Analyze Affected Crates and Performance
+        id: analysis
+        run: |
+          AFFECTED_OUTPUT=$(./target/release/forge affected --since origin/${{ github.base_ref }} || echo "all")
+          echo "affected<<EOF" >> $GITHUB_OUTPUT
+          echo "$AFFECTED_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          START_TIME=$(date +%s%N)
+          ./target/release/forge build --no-cache
+          END_TIME=$(date +%s%N)
+          COLD_DURATION=$(( (END_TIME - START_TIME) / 1000000 ))
+
+          START_WARM=$(date +%s%N)
+          ./target/release/forge build
+          END_WARM=$(date +%s%N)
+          WARM_DURATION=$(( (END_WARM - START_WARM) / 1000000 ))
+
+          echo "cold_ms=$COLD_DURATION" >> $GITHUB_OUTPUT
+          echo "warm_ms=$WARM_DURATION" >> $GITHUB_OUTPUT
+
+      - name: Generate AI Review and Benchmark Summary
+        id: ai_review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          AFFECTED: ${{ steps.analysis.outputs.affected }}
+          COLD_MS: ${{ steps.analysis.outputs.cold_ms }}
+          WARM_MS: ${{ steps.analysis.outputs.warm_ms }}
+        run: |
+          GIT_DIFF=$(git diff origin/${{ github.base_ref }} --stat)
+          PROMPT="You are ForgeBot, an elite AI assistant and reviewer for the Forge build system repository.
+          PR Title: $PR_TITLE
+          PR Description: $PR_BODY
+          Affected packages detected by forge:
+          $AFFECTED
+          Benchmark results:
+          - Cold build duration: ${COLD_MS}ms
+          - Warm cache duration: ${WARM_MS}ms
+          Git Diff Summary:
+          $GIT_DIFF
+
+          Provide a concise, professional markdown review for this Pull Request.
+          Include:
+          1. 📊 **Performance & Build Metrics** (Display cold & warm times in seconds).
+          2. 🎯 **Affected Components Summary** (List affected crates/modules).
+          3. 💡 **AI Architecture & Code Review Insights** (Key improvements, safety/concurrency considerations, potential edge cases).
+          Keep it clean, formatting in standard GitHub Markdown."
+
+          if [ -n "$GEMINI_API_KEY" ]; then
+            PAYLOAD=$(jq -n --arg text "$PROMPT" '{"contents": [{"parts": [{"text": $text}]}]}')
+            RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${GEMINI_API_KEY}" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD")
+            AI_TEXT=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+          fi
+
+          if [ -z "$AI_TEXT" ]; then
+            AI_TEXT="### 🦀 Forge Bot Analysis
+          - **Cold Build Duration:** $(awk "BEGIN {print $COLD_MS/1000}")s
+          - **Warm Cache Duration:** $(awk "BEGIN {print $WARM_MS/1000}")s
+          - **Affected Modules:**
+          \`\`\`
+          $AFFECTED
+          \`\`\`
+          *(Set \`GEMINI_API_KEY\` secret in repository settings to enable AI-powered deep review insights.)*"
+          fi
+
+          echo "comment<<EOF" >> $GITHUB_OUTPUT
+          echo "$AI_TEXT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Post Comment on PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token || secrets.BOT_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            const commentBody = process.env.COMMENT_BODY;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+
+            const botComment = comments.find(c => c.body.includes('Forge Bot Analysis') || c.body.includes('Performance & Build Metrics'));
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: commentBody
+              });
+            }
+        env:
+          COMMENT_BODY: ${{ steps.ai_review.outputs.comment }}

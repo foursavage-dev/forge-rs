@@ -1,0 +1,72 @@
+name: AI Issue Doctor
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        continue-on-error: true
+        with:
+          app-id: ${{ secrets.BOT_APP_ID || '4594289' }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Analyze Issue with AI Doctor
+        id: doctor
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+        run: |
+          PROMPT="You are ForgeBot Doctor, an AI triage assistant for the Forge build system repository.
+          Author: @$ISSUE_AUTHOR
+          Issue Title: $ISSUE_TITLE
+          Issue Body:
+          $ISSUE_BODY
+
+          Analyze this issue:
+          1. If it contains a bug, compilation failure, toolchain issue, or \`forge doctor\` output, diagnose the root cause and provide actionable, step-by-step fix commands.
+          2. If it is a feature request or question, provide a polite and helpful response.
+          3. Recommend 1-3 labels (from: bug, question, enhancement, documentation, os:windows, os:linux, os:macos, toolchain:rust, toolchain:cc, toolchain:go, toolchain:ts, cache:remote).
+          Format your answer in clean GitHub Markdown."
+
+          if [ -n "$GEMINI_API_KEY" ]; then
+            PAYLOAD=$(jq -n --arg text "$PROMPT" '{"contents": [{"parts": [{"text": $text}]}]}')
+            RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${GEMINI_API_KEY}" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD")
+            AI_TEXT=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+          fi
+
+          if [ -z "$AI_TEXT" ]; then
+            AI_TEXT="Hello @$ISSUE_AUTHOR! 👋 Thank you for opening this issue. A maintainer will review it shortly. If you encountered an error, please ensure you have attached the output of \`forge doctor\`."
+          fi
+
+          echo "reply<<EOF" >> $GITHUB_OUTPUT
+          echo "$AI_TEXT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Reply to Issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token || secrets.BOT_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            const replyBody = process.env.REPLY_BODY;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: replyBody
+            });
+        env:
+          REPLY_BODY: ${{ steps.doctor.outputs.reply }}

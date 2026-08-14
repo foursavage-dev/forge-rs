@@ -1,0 +1,138 @@
+name: AI Release & Packaging
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-binaries:
+    name: Build Binary (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: forge-linux-x86_64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: forge-windows-x86_64.exe
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: forge-macos-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: forge-macos-aarch64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build Binary
+        run: cargo build --release --bin forge --target ${{ matrix.target }}
+
+      - name: Stage Artifact
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp target/${{ matrix.target }}/release/forge.exe ./${{ matrix.artifact_name }}
+          else
+            cp target/${{ matrix.target }}/release/forge ./${{ matrix.artifact_name }}
+          fi
+
+      - name: Upload Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}
+
+  create-release:
+    name: Create AI GitHub Release
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        continue-on-error: true
+        with:
+          app-id: ${{ secrets.BOT_APP_ID || '4594289' }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Generate Checksums & AI Release Notes
+        id: release_notes
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          cd release-artifacts
+          find . -type f -exec cp {} . \;
+          sha256sum forge-* > SHA256SUMS.txt || true
+          cd ..
+
+          COMMITS=$(git log -n 25 --oneline)
+          PROMPT="You are ForgeBot, releasing version $TAG_NAME of the Forge build system.
+          Recent Git Commit History:
+          $COMMITS
+
+          Generate an outstanding, developer-friendly Release Notes in Markdown.
+          Sections to include:
+          - 🚀 **What's New / Highlights**
+          - ⚡ **Performance & Core Engine Improvements**
+          - 🛠️ **Language Backends & Tooling**
+          - 📦 **Installation & Download Instructions**
+          Keep it clean, exciting, and professional."
+
+          if [ -n "$GEMINI_API_KEY" ]; then
+            PAYLOAD=$(jq -n --arg text "$PROMPT" '{"contents": [{"parts": [{"text": $text}]}]}')
+            RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${GEMINI_API_KEY}" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD")
+            NOTES=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+          fi
+
+          if [ -z "$NOTES" ]; then
+            NOTES="## Release $TAG_NAME
+
+          ### Highlights
+          - High performance build orchestration
+          - Polyglot backend execution and incremental caching
+
+          ### Commits
+          \`\`\`
+          $COMMITS
+          \`\`\`"
+          fi
+
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ steps.app-token.outputs.token || secrets.BOT_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          name: "Forge ${{ github.ref_name }} 🦀"
+          body: ${{ steps.release_notes.outputs.notes }}
+          files: |
+            release-artifacts/forge-*
+            release-artifacts/SHA256SUMS.txt
