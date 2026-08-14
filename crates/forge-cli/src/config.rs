@@ -20,6 +20,24 @@ pub enum BackendChoice {
     Py,
     #[serde(rename = "python")]
     Python,
+    Java,
+    Kotlin,
+    Dotnet,
+    #[serde(rename = "csharp")]
+    CSharp,
+    #[serde(rename = "fsharp")]
+    FSharp,
+    Swift,
+    #[serde(rename = "objc")]
+    ObjC,
+    #[serde(rename = "objective-c")]
+    ObjectiveC,
+    Dart,
+    Flutter,
+    Zig,
+    Docker,
+    #[serde(rename = "oci")]
+    Oci,
     Plugin,
     #[serde(rename = "rules")]
     Rules,
@@ -42,6 +60,20 @@ pub struct ForgeConfig {
     pub profile: Option<String>,
     #[serde(default)]
     pub tui: bool,
+    #[serde(default)]
+    pub remote_cache: Option<String>,
+    #[serde(default)]
+    pub remote_cache_token: Option<String>,
+    #[serde(default)]
+    pub remote_workers: Option<Vec<String>>,
+    #[serde(default)]
+    pub remote_workers_token: Option<String>,
+    #[serde(default)]
+    pub cache_dir: Option<String>,
+    #[serde(default)]
+    pub send_source: bool,
+    #[serde(default)]
+    pub ram_limit: Option<u8>,
 }
 
 impl ForgeConfig {
@@ -83,13 +115,18 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         std::fs::write(
             dir.path().join("forge.toml"),
-            "backend = \"cc\"\njobs = 4\nno_cache = true\n",
+            "backend = \"cc\"\njobs = 4\nno_cache = true\nremote_cache = \"127.0.0.1:9091\"\nremote_workers = [\"127.0.0.1:9092\"]\n",
         )
         .unwrap();
         let config = ForgeConfig::load(dir.path()).unwrap().unwrap();
         assert_eq!(config.backend, BackendChoice::Cc);
         assert_eq!(config.jobs, Some(4));
         assert!(config.no_cache);
+        assert_eq!(config.remote_cache.as_deref(), Some("127.0.0.1:9091"));
+        assert_eq!(
+            config.remote_workers.as_deref(),
+            Some(&["127.0.0.1:9092".to_string()][..])
+        );
     }
 
     #[test]

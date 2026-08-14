@@ -366,3 +366,67 @@ edition = "2024"
 "#
     )
 }
+
+#[test]
+fn packages_for_paths_maps_files_to_owners() {
+    let dir = workspace_fixture();
+    let project = Project::discover(dir.path())
+        .expect("load metadata")
+        .expect("manifest should be found");
+
+    let name = |ids: &[cargo_metadata::PackageId]| -> Vec<String> {
+        ids.iter()
+            .map(|id| project.package(id).unwrap().name.to_string())
+            .collect()
+    };
+
+    let core_lib = dir.path().join("core/src/lib.rs");
+    let affected = project
+        .packages_for_paths(&[core_lib.as_path()])
+        .expect("core owns its own sources");
+    assert_eq!(name(&affected), vec!["core".to_string()]);
+
+    let app_manifest = dir.path().join("app/Cargo.toml");
+    let affected = project
+        .packages_for_paths(&[app_manifest.as_path()])
+        .expect("app owns its manifest");
+    assert_eq!(name(&affected), vec!["app".to_string()]);
+}
+
+#[test]
+fn packages_for_paths_handles_multiple_files() {
+    let dir = workspace_fixture();
+    let project = Project::discover(dir.path())
+        .expect("load metadata")
+        .expect("manifest should be found");
+
+    let name = |ids: &[cargo_metadata::PackageId]| -> Vec<String> {
+        ids.iter()
+            .map(|id| project.package(id).unwrap().name.to_string())
+            .collect()
+    };
+
+    let network = dir.path().join("network/src/lib.rs");
+    let app = dir.path().join("app/src/lib.rs");
+    let affected = project
+        .packages_for_paths(&[network.as_path(), app.as_path()])
+        .expect("both files belong to packages");
+    assert_eq!(name(&affected), vec!["network".to_string(), "app".to_string()]);
+}
+
+#[test]
+fn packages_for_paths_returns_none_for_unowned_files() {
+    let dir = workspace_fixture();
+    let project = Project::discover(dir.path())
+        .expect("load metadata")
+        .expect("manifest should be found");
+
+    let root_manifest = dir.path().join("Cargo.toml");
+    assert!(
+        project.packages_for_paths(&[root_manifest.as_path()]).is_none(),
+        "workspace-root files affect every package"
+    );
+
+    let unknown = dir.path().join("scripts/build.py");
+    assert!(project.packages_for_paths(&[unknown.as_path()]).is_none());
+}

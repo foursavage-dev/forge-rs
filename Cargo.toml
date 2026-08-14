@@ -6,11 +6,19 @@ members = [
     "crates/forge-executor",
     "crates/forge-scheduler",
     "crates/forge-cache",
+    "crates/forge-cas",
+    "crates/forge-ci-generator",
     "crates/forge-backend-rust",
     "crates/forge-backend-cc",
     "crates/forge-backend-go",
     "crates/forge-backend-ts",
     "crates/forge-backend-py",
+    "crates/forge-backend-java",
+    "crates/forge-backend-dotnet",
+    "crates/forge-backend-swift",
+    "crates/forge-backend-dart",
+    "crates/forge-backend-zig",
+    "crates/forge-backend-docker",
     "crates/forge-worker",
     "crates/forge-plugin",
     "crates/forge-remote-cache",
@@ -32,11 +40,19 @@ forge-graph = { path = "crates/forge-graph", version = "0.1.0" }
 forge-executor = { path = "crates/forge-executor", version = "0.1.0" }
 forge-scheduler = { path = "crates/forge-scheduler", version = "0.1.0" }
 forge-cache = { path = "crates/forge-cache", version = "0.1.0" }
+forge-cas = { path = "crates/forge-cas", version = "0.1.0" }
+forge-ci-generator = { path = "crates/forge-ci-generator", version = "0.1.0" }
 forge-backend-rust = { path = "crates/forge-backend-rust", version = "0.1.0" }
 forge-backend-cc = { path = "crates/forge-backend-cc", version = "0.1.0" }
 forge-backend-go = { path = "crates/forge-backend-go", version = "0.1.0" }
 forge-backend-ts = { path = "crates/forge-backend-ts", version = "0.1.0" }
 forge-backend-py = { path = "crates/forge-backend-py", version = "0.1.0" }
+forge-backend-java = { path = "crates/forge-backend-java", version = "0.1.0" }
+forge-backend-dotnet = { path = "crates/forge-backend-dotnet", version = "0.1.0" }
+forge-backend-swift = { path = "crates/forge-backend-swift", version = "0.1.0" }
+forge-backend-dart = { path = "crates/forge-backend-dart", version = "0.1.0" }
+forge-backend-zig = { path = "crates/forge-backend-zig", version = "0.1.0" }
+forge-backend-docker = { path = "crates/forge-backend-docker", version = "0.1.0" }
 forge-worker = { path = "crates/forge-worker", version = "0.1.0" }
 forge-plugin = { path = "crates/forge-plugin", version = "0.1.0" }
 forge-remote-cache = { path = "crates/forge-remote-cache", version = "0.1.0" }

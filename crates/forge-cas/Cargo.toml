@@ -1,0 +1,37 @@
+[package]
+name = "forge-cas"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Content-Addressable Storage for build artifacts with compression and remote backends"
+
+[dependencies]
+blake3 = "1"
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { version = "1", features = ["fs", "io-util"] }
+async-trait = "0.1"
+chrono = "0.4"
+# Compression
+zstd = "0.13"
+# Optional S3 support
+rusoto_core = { version = "0.48", optional = true }
+rusoto_s3 = { version = "0.48", optional = true }
+# Optional GCS support
+tame-gcs = { version = "0.11", optional = true }
+# HTTP client for remote operations
+reqwest = { version = "0.11", features = ["json"], optional = true }
+
+[features]
+default = ["local"]
+local = []
+s3 = ["rusoto_core", "rusoto_s3"]
+gcs = ["tame-gcs"]
+remote = ["reqwest"]
+full = ["local", "s3", "gcs", "remote"]
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

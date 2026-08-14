@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::time::Duration;
 
 use crate::command::CommandSpec;
@@ -18,6 +19,10 @@ pub struct Task {
     pub spec: CommandSpec,
 
     pub cache: Option<CacheEntry>,
+
+    /// Paths (relative to `spec.cwd`) of the build outputs produced by this
+    /// task; they are packed, content-addressed and restored from cache.
+    pub artifacts: Vec<PathBuf>,
 }
 
 impl Task {
@@ -31,11 +36,17 @@ impl Task {
             description: description.into(),
             spec,
             cache: None,
+            artifacts: Vec::new(),
         }
     }
 
     pub fn with_cache(mut self, entry: CacheEntry) -> Self {
         self.cache = Some(entry);
+        self
+    }
+
+    pub fn with_artifacts(mut self, artifacts: Vec<PathBuf>) -> Self {
+        self.artifacts = artifacts;
         self
     }
 }

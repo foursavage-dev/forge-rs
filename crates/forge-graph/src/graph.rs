@@ -1,4 +1,4 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::error::GraphError;
 use crate::state::TaskState;
@@ -15,6 +15,12 @@ impl std::fmt::Display for NodeId {
 impl From<usize> for NodeId {
     fn from(index: usize) -> Self {
         Self(index)
+    }
+}
+
+impl NodeId {
+    pub fn index(self) -> usize {
+        self.0
     }
 }
 
@@ -227,6 +233,58 @@ impl<T> BuildGraph<T> {
                 for dep in deps {
                     out.add_dependency(*dep, id)
                         .expect("mapped graph inherits the DAG structure");
+                }
+            }
+        }
+        out
+    }
+
+    pub fn affected_nodes(&self, changed: &[NodeId]) -> Vec<NodeId> {
+        let mut affected = Vec::new();
+        let mut seen: HashSet<NodeId> = HashSet::new();
+        let mut queue = VecDeque::new();
+        for id in changed {
+            if self.node(*id).is_none() {
+                continue;
+            }
+            if seen.insert(*id) {
+                queue.push_back(*id);
+            }
+        }
+        while let Some(id) = queue.pop_front() {
+            affected.push(id);
+            if let Ok(dependents) = self.dependents(id) {
+                for dependent in dependents {
+                    if seen.insert(*dependent) {
+                        queue.push_back(*dependent);
+                    }
+                }
+            }
+        }
+        affected
+    }
+
+    pub fn subgraph(&self, keep: &[NodeId]) -> BuildGraph<T>
+    where
+        T: Clone,
+    {
+        let mut out = BuildGraph::new();
+        let mut renumber: HashMap<NodeId, NodeId> = HashMap::new();
+        for &id in keep {
+            if let Some(node) = self.node(id) {
+                renumber.insert(id, out.add_node(node.payload.clone()));
+            }
+        }
+        for &id in keep {
+            let Some(&new_id) = renumber.get(&id) else {
+                continue;
+            };
+            if let Ok(deps) = self.deps(id) {
+                for dep in deps {
+                    if let Some(&new_dep) = renumber.get(dep) {
+                        out.add_dependency(new_dep, new_id)
+                            .expect("a subgraph of a DAG is a DAG");
+                    }
                 }
             }
         }
@@ -485,5 +543,50 @@ mod tests {
     fn validate_accepts_valid_graphs() {
         let graph = string_graph(&[(NodeId(0), NodeId(1)), (NodeId(1), NodeId(2))]);
         assert_eq!(graph.validate(), Ok(()));
+    }
+
+    #[test]
+    fn affected_nodes_include_transitive_dependents() {
+        let mut graph = string_graph(&[(NodeId(0), NodeId(1)), (NodeId(1), NodeId(2))]);
+        graph.add_node("unrelated".to_string());
+
+        let affected = graph.affected_nodes(&[NodeId(0)]);
+        assert_eq!(affected, vec![NodeId(0), NodeId(1), NodeId(2)]);
+    }
+
+    #[test]
+    fn affected_nodes_ignore_unknown_ids() {
+        let graph = string_graph(&[(NodeId(0), NodeId(1))]);
+        let affected = graph.affected_nodes(&[NodeId(42), NodeId(1)]);
+        assert_eq!(affected, vec![NodeId(1)]);
+    }
+
+    #[test]
+    fn subgraph_keeps_induced_edges_and_renumbers() {
+        let mut graph = string_graph(&[(NodeId(0), NodeId(1)), (NodeId(1), NodeId(2))]);
+        graph.add_node("extra".to_string());
+
+        let sub = graph.subgraph(&[NodeId(1), NodeId(2), NodeId(3)]);
+        assert_eq!(sub.len(), 3);
+        assert_eq!(
+            sub.deps(NodeId(0)),
+            Ok(&[][..]),
+            "old node 1 (now 0) loses its dependency on the dropped node 0"
+        );
+        assert_eq!(sub.deps(NodeId(1)), Ok(&[NodeId(0)][..]));
+        assert_eq!(sub.dependents(NodeId(2)), Ok(&[][..]));
+        assert_eq!(sub.validate(), Ok(()));
+    }
+
+    #[test]
+    fn subgraph_of_a_chain_preserves_order_and_topology() {
+        let graph = string_graph(&[(NodeId(0), NodeId(1)), (NodeId(1), NodeId(2))]);
+        let sub = graph.subgraph(&[NodeId(0), NodeId(2)]);
+        assert_eq!(sub.len(), 2);
+        assert_eq!(
+            sub.deps(NodeId(1)),
+            Ok(&[][..]),
+            "the edge through the dropped middle node is cut"
+        );
     }
 }

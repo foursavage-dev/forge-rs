@@ -76,6 +76,55 @@ impl Project {
             .find(|package| &package.id == id)
     }
 
+    /// Maps a set of changed file paths to the workspace packages that own
+    /// them. A file belongs to a package when it lives under the package's
+    /// manifest directory or is one of the package's declared targets.
+    /// Returns `None` when the caller should treat the whole workspace as
+    /// affected (e.g. a workspace-root `Cargo.toml`/`Cargo.lock` change).
+    pub fn packages_for_paths(&self, paths: &[&Path]) -> Option<Vec<PackageId>> {        let members: Vec<&Package> = self
+            .metadata
+            .workspace_members
+            .iter()
+            .filter_map(|id| self.package(id))
+            .collect();
+
+        let mut owners: Vec<&Package> = Vec::new();
+        for path in paths {
+            let path = plain_path(path);
+            let mut best: Option<(&Package, usize)> = None;
+            for package in &members {
+                let package_dir = package
+                    .manifest_path
+                    .parent()
+                    .map(|parent| plain_path(&PathBuf::from(parent.as_str())))
+                    .unwrap_or_else(|| PathBuf::from("."));
+                let owned = path.starts_with(&package_dir)
+                    || package
+                        .targets
+                        .iter()
+                        .any(|target| plain_path(Path::new(target.src_path.as_str())) == path);
+                if owned {
+                    let specificity = package_dir.components().count();
+                    if best.map(|(_, len)| specificity > len).unwrap_or(true) {
+                        best = Some((package, specificity));
+                    }
+                }
+            }
+            let (package, _) = best?;
+            if !owners.iter().any(|p| p.id == package.id) {
+                owners.push(package);
+            }
+        }
+
+        let mut affected: Vec<PackageId> = Vec::new();
+        for id in &self.metadata.workspace_members {
+            if owners.iter().any(|p| &p.id == id) {
+                affected.push(id.clone());
+            }
+        }
+        Some(affected)
+    }
+
     pub fn build_order(&self) -> Vec<PackageId> {
         let Some(resolve) = &self.metadata.resolve else {
             return self.metadata.workspace_members.clone();
@@ -208,4 +257,17 @@ impl Project {
         }
         Ok(graph)
     }
+}
+
+/// Strips the `\\?\` extended-length prefix that `std::fs::canonicalize`
+/// (and therefore cargo metadata) may attach on Windows, so that paths from
+/// different sources compare identically.
+fn plain_path(path: &Path) -> PathBuf {
+    let text = path.to_string_lossy();
+    if cfg!(windows) {
+        if let Some(stripped) = text.strip_prefix(r"\\?\") {
+            return PathBuf::from(stripped);
+        }
+    }
+    path.to_path_buf()
 }

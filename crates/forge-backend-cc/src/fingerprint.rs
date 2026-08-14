@@ -2,11 +2,17 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::depfile::read_depfile;
+
+/// Computes a content fingerprint for a translation unit. When a compiler
+/// depfile (`-MMD -MF`) from a previous run is available it is the source of
+/// truth for the header set; otherwise the syntactic include scanner is used.
 pub fn compute_source_fingerprint(
     source_path: &Path,
     includes: &[PathBuf],
     flags: &[String],
     compiler_version: &str,
+    depfile: Option<&Path>,
 ) -> Result<String, std::io::Error> {
     let mut hasher = blake3::Hasher::new();
     hasher.update(compiler_version.as_bytes());
@@ -20,9 +26,26 @@ pub fn compute_source_fingerprint(
         let content = fs::read(source_path)?;
         hasher.update(&content);
 
-        let parent = source_path.parent();
-        let mut visited = HashSet::new();
-        scan_and_hash_headers(&content, parent, includes, &mut hasher, &mut visited)?;
+        if let Some(deps) = depfile.and_then(read_depfile) {
+            let base = source_path.parent().unwrap_or_else(|| Path::new("."));
+            for dep in deps {
+                let dep = if dep.is_absolute() {
+                    dep
+                } else {
+                    base.join(dep)
+                };
+                if dep == source_path {
+                    continue;
+                }
+                if let Ok(header_content) = fs::read(&dep) {
+                    hasher.update(&header_content);
+                }
+            }
+        } else {
+            let parent = source_path.parent();
+            let mut visited = HashSet::new();
+            scan_and_hash_headers(&content, parent, includes, &mut hasher, &mut visited)?;
+        }
     }
 
     Ok(hasher.finalize().to_hex().to_string())
@@ -111,10 +134,11 @@ mod tests {
         .unwrap();
 
         let includes = vec![dir.path().to_path_buf()];
-        let before = compute_source_fingerprint(&source, &includes, &[], "gcc 13").unwrap();
+        let before =
+            compute_source_fingerprint(&source, &includes, &[], "gcc 13", None).unwrap();
 
         fs::write(dir.path().join("util.h"), "#define VALUE 2\n").unwrap();
-        let after = compute_source_fingerprint(&source, &includes, &[], "gcc 13").unwrap();
+        let after = compute_source_fingerprint(&source, &includes, &[], "gcc 13", None).unwrap();
 
         assert_ne!(
             before, after,
@@ -128,8 +152,44 @@ mod tests {
         fs::write(dir.path().join("main.c"), "int main() { return 0; }\n").unwrap();
         let source = dir.path().join("main.c");
 
-        let a = compute_source_fingerprint(&source, &[], &["-O2".to_string()], "gcc 13").unwrap();
-        let b = compute_source_fingerprint(&source, &[], &["-O2".to_string()], "gcc 13").unwrap();
+        let a =
+            compute_source_fingerprint(&source, &[], &["-O2".to_string()], "gcc 13", None).unwrap();
+        let b =
+            compute_source_fingerprint(&source, &[], &["-O2".to_string()], "gcc 13", None).unwrap();
         assert_eq!(a, b);
+    }
+
+    #[test]
+    fn depfile_headers_drive_the_fingerprint() {
+        let dir = tempdir().unwrap();
+        fs::write(dir.path().join("main.c"), "int main() { return 0; }\n").unwrap();
+        fs::write(dir.path().join("generated.h"), "#define GENERATED 1\n").unwrap();
+        let source = dir.path().join("main.c");
+
+        // The scanner cannot see `generated.h` (it is injected by a build
+        // script), but the depfile records it.
+        let depfile = dir.path().join("main.d");
+        fs::write(
+            &depfile,
+            "main.o: main.c generated.h\n",
+        )
+        .unwrap();
+
+        let before =
+            compute_source_fingerprint(&source, &[], &[], "gcc 13", Some(&depfile)).unwrap();
+
+        fs::write(dir.path().join("generated.h"), "#define GENERATED 2\n").unwrap();
+        let after =
+            compute_source_fingerprint(&source, &[], &[], "gcc 13", Some(&depfile)).unwrap();
+
+        assert_ne!(
+            before, after,
+            "a depfile-listed header change must change the fingerprint"
+        );
+
+        // A depfile the scanner could not have produced also wins over the
+        // scanner when present.
+        let scanner_only = compute_source_fingerprint(&source, &[], &[], "gcc 13", None).unwrap();
+        assert_ne!(before, scanner_only);
     }
 }

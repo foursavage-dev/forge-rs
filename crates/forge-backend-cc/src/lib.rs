@@ -9,6 +9,7 @@ use forge_graph::BuildGraph;
 
 pub mod compiler;
 pub mod config;
+pub mod depfile;
 pub mod fingerprint;
 
 pub use compiler::{CcCompiler, CompilerFamily};
@@ -89,9 +90,17 @@ impl CcBackend {
             let obj_path = output_dir.join("objs").join(&obj_filename);
             object_paths.push(obj_path.clone());
 
+            // GCC/Clang write the header dependency list next to the object
+            // file; it is the fingerprint source of truth on later runs.
+            let depfile = if self.compiler.family == CompilerFamily::Msvc {
+                None
+            } else {
+                Some(output_dir.join("objs").join(format!("{stem}.d")))
+            };
+
             let (prog, args) = self
                 .compiler
-                .compile_object_args(source, &obj_path, &includes, flags);
+                .compile_object_args(source, &obj_path, &includes, flags, depfile.as_deref());
 
             let spec = CommandSpec::new(prog).args(args).cwd(project_dir);
 
@@ -103,6 +112,7 @@ impl CcBackend {
                 &includes,
                 flags,
                 &self.compiler.version,
+                depfile.as_deref(),
             )
             .unwrap_or_else(|_| "no_fp".to_string());
 

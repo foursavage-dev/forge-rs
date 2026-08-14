@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+use std::cmp::Reverse;
 use std::collections::HashMap;
 use std::sync::mpsc;
 use std::thread;
@@ -267,13 +268,54 @@ where
 #[derive(Debug, Clone)]
 pub struct Scheduler {
     workers: usize,
+    critical_path: bool,
+    ram_threshold: Option<u8>,
+    ram_floor: usize,
+}
+
+/// Returns the number of workers that may run concurrently once the system's
+/// free memory falls below `threshold_percent` of the total: the build is
+/// throttled down to `floor` workers so compilers do not get OOM-killed.
+pub fn ram_capped_workers(
+    available: u64,
+    total: u64,
+    requested: usize,
+    floor: usize,
+    threshold_percent: u8,
+) -> usize {
+    let threshold = threshold_percent.min(100) as u64;
+    let constrained = total > 0 && available.saturating_mul(100) < total.saturating_mul(threshold);
+    if constrained {
+        floor.max(1).min(requested)
+    } else {
+        requested
+    }
 }
 
 impl Scheduler {
     pub fn new(workers: usize) -> Self {
         Self {
             workers: workers.max(1),
+            critical_path: true,
+            ram_threshold: None,
+            ram_floor: 1,
         }
+    }
+
+    /// Enables (default) or disables critical-path-first task selection. When
+    /// enabled, ready tasks whose dependency tail is the longest are picked
+    /// first, which minimizes idle worker gaps on wide build graphs.
+    pub fn with_critical_path_priority(mut self, enabled: bool) -> Self {
+        self.critical_path = enabled;
+        self
+    }
+
+    /// Throttles the build to `floor` concurrent workers whenever the system's
+    /// available memory drops below `threshold_percent` of the total memory.
+    pub fn with_ram_backpressure(mut self, threshold_percent: u8, floor: usize) -> Self {
+        self.ram_threshold = Some(threshold_percent.min(100));
+        self.ram_floor = floor.max(1);
+        self
     }
 
     pub fn run<E, G>(
@@ -288,12 +330,15 @@ impl Scheduler {
     {
         graph.validate()?;
         graph.reset_states();
+        let tail = critical_path_tails(graph);
         let start = Instant::now();
         let (tx, rx): (mpsc::Sender<Outcome>, mpsc::Receiver<Outcome>) = mpsc::channel();
         let mut in_flight: usize = 0;
         let mut failures: Vec<FailureRecord> = Vec::new();
         let mut timings: Vec<TaskTiming> = Vec::new();
         let mut free_workers: Vec<usize> = (0..self.workers).rev().collect();
+        let mut last_ram_check = Instant::now() - Duration::from_secs(1);
+        let mut ram_limited = false;
 
         let result = thread::scope(|scope| -> Result<(), SchedulerError> {
             let mut ready: Vec<NodeId> = Vec::new();
@@ -301,9 +346,28 @@ impl Scheduler {
             loop {
                 if ready_index >= ready.len() {
                     ready = graph.ready_nodes();
+                    if self.critical_path {
+                        ready.sort_by_key(|id| Reverse(tail[id.index()]));
+                    }
                     ready_index = 0;
                 }
-                while in_flight < self.workers && ready_index < ready.len() {
+                let effective_workers = if let Some(threshold) = self.ram_threshold {
+                    if last_ram_check.elapsed() >= Duration::from_millis(500) {
+                        last_ram_check = Instant::now();
+                        let mut sys = sysinfo::System::new_all();
+                        sys.refresh_memory();
+                        ram_limited = sys.available_memory().saturating_mul(100)
+                            < sys.total_memory().saturating_mul(threshold as u64);
+                    }
+                    if ram_limited {
+                        self.ram_floor.min(self.workers)
+                    } else {
+                        self.workers
+                    }
+                } else {
+                    self.workers
+                };
+                while in_flight < effective_workers && ready_index < ready.len() {
                     let id = ready[ready_index];
                     ready_index += 1;
                     graph.set_state(id, TaskState::Running)?;
@@ -384,6 +448,24 @@ impl Scheduler {
             timings,
         ))
     }
+}
+
+/// Longest path (in edges) from each node down to a leaf of the dependency
+/// DAG, measured through `dependents` (reverse topological order); tasks with
+/// heavier tails are scheduled first.
+fn critical_path_tails(graph: &BuildGraph<Task>) -> Vec<usize> {
+    let mut tail = vec![0usize; graph.len()];
+    for id in graph.topological_order().into_iter().rev() {
+        let longest_dependent = graph
+            .dependents(id)
+            .unwrap_or_default()
+            .iter()
+            .map(|dep| tail[dep.index()])
+            .max()
+            .unwrap_or(0);
+        tail[id.index()] = longest_dependent + 1;
+    }
+    tail
 }
 
 #[cfg(test)]
@@ -611,6 +693,91 @@ mod tests {
         assert_eq!(Scheduler::new(0).workers, 1);
         assert_eq!(Scheduler::new(1).workers, 1);
         assert_eq!(Scheduler::new(4).workers, 4);
+    }
+
+    #[test]
+    fn critical_path_priority_schedules_heavy_chains_first() {
+        let mut graph = BuildGraph::new();
+        let _b = graph.add_node(Task::new(
+            "b".to_string(),
+            "b".to_string(),
+            CommandSpec::new("echo").arg("b"),
+        ));
+        let a0 = graph.add_node(Task::new(
+            "a0".to_string(),
+            "a0".to_string(),
+            CommandSpec::new("echo").arg("a0"),
+        ));
+        let a1 = graph.add_node(Task::new(
+            "a1".to_string(),
+            "a1".to_string(),
+            CommandSpec::new("echo").arg("a1"),
+        ));
+        graph.add_dependency(a0, a1).expect("a0 -> a1");
+
+        let executor = FakeExecutor::default();
+        let scheduler = Scheduler::new(1);
+        let summary = scheduler.run(&mut graph, &executor, |_, _| {}).unwrap();
+        assert!(summary.succeeded());
+
+        let order = executor.order.lock().unwrap().clone();
+        assert_eq!(
+            order.first(),
+            Some(&"a0".to_string()),
+            "the node whose tail is longer (a0 -> a1) must be picked before the independent b"
+        );
+        let a0_pos = order.iter().position(|l| l == "a0").unwrap();
+        let a1_pos = order.iter().position(|l| l == "a1").unwrap();
+        assert!(a0_pos < a1_pos, "a1 cannot run before its dependency a0");
+    }
+
+    #[test]
+    fn without_priority_the_node_order_wins() {
+        let mut graph = BuildGraph::new();
+        let _b = graph.add_node(Task::new(
+            "b".to_string(),
+            "b".to_string(),
+            CommandSpec::new("echo").arg("b"),
+        ));
+        let a0 = graph.add_node(Task::new(
+            "a0".to_string(),
+            "a0".to_string(),
+            CommandSpec::new("echo").arg("a0"),
+        ));
+        let a1 = graph.add_node(Task::new(
+            "a1".to_string(),
+            "a1".to_string(),
+            CommandSpec::new("echo").arg("a1"),
+        ));
+        graph.add_dependency(a0, a1).expect("a0 -> a1");
+
+        let executor = FakeExecutor::default();
+        let scheduler = Scheduler::new(1).with_critical_path_priority(false);
+        scheduler.run(&mut graph, &executor, |_, _| {}).unwrap();
+
+        let order = executor.order.lock().unwrap().clone();
+        assert_eq!(order, vec!["b", "a0", "a1"]);
+    }
+
+    #[test]
+    fn ram_capped_workers_only_throttles_below_the_threshold() {
+        assert_eq!(ram_capped_workers(8000, 10000, 8, 1, 20), 8);
+        assert_eq!(ram_capped_workers(1000, 10000, 8, 1, 20), 1);
+        assert_eq!(ram_capped_workers(0, 10000, 8, 2, 10), 2);
+        assert_eq!(ram_capped_workers(1000, 0, 8, 2, 10), 8, "unknown totals never throttle");
+        assert_eq!(ram_capped_workers(1, 100, 4, 1, 100), 1, "100% free always throttles");
+        assert_eq!(ram_capped_workers(1, 100, 4, 4, 100), 4, "floor is capped by requested");
+        assert_eq!(ram_capped_workers(99, 100, 4, 2, 100), 2);
+    }
+
+    #[test]
+    fn ram_backpressure_still_completes_a_build() {
+        let mut graph = chain_graph(&["a", "b", "c"]);
+        let executor = FakeExecutor::default();
+        let scheduler = Scheduler::new(4).with_ram_backpressure(1, 1);
+        let summary = scheduler.run(&mut graph, &executor, |_, _| {}).unwrap();
+        assert!(summary.succeeded());
+        assert_eq!(summary.executed, 3);
     }
 
     #[test]

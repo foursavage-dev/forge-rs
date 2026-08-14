@@ -59,6 +59,7 @@ impl CcCompiler {
         output_object: &Path,
         includes: &[PathBuf],
         flags: &[String],
+        depfile: Option<&Path>,
     ) -> (String, Vec<String>) {
         let mut args = Vec::new();
         match self.family {
@@ -79,6 +80,11 @@ impl CcCompiler {
                 for inc in includes {
                     args.push("-I".to_string());
                     args.push(inc.to_string_lossy().to_string());
+                }
+                if let Some(depfile) = depfile {
+                    args.push("-MMD".to_string());
+                    args.push("-MF".to_string());
+                    args.push(depfile.to_string_lossy().to_string());
                 }
                 args.extend(flags.iter().cloned());
             }

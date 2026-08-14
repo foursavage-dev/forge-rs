@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 use cargo_metadata::PackageId;
@@ -141,6 +141,8 @@ impl RustBackend {
             .unwrap_or_else(|| PathBuf::from("cargo"));
         let cargo = cargo.to_string_lossy().into_owned();
 
+        let profile = "debug";
+
         let levels = package_graph.levels();
         let mut level_node: HashMap<NodeId, NodeId> = HashMap::new();
         let mut task_graph = BuildGraph::new();
@@ -188,7 +190,13 @@ impl RustBackend {
             let spec = CommandSpec::new(&cargo).args(args).cwd(&workspace_root);
             let description = spec.command_line();
 
-            let mut task = Task::new(label, description, spec);
+            let artifacts = if mode == BuildMode::Build {
+                bin_outputs(project, &members, package_graph, &workspace_root, profile)
+            } else {
+                Vec::new()
+            };
+
+            let mut task = Task::new(label, description, spec).with_artifacts(artifacts);
             if caching {
                 let fingerprint = fingerprint::combined_fingerprint(
                     "",
@@ -242,6 +250,38 @@ fn tool_version(tool: &str, args: &[&str]) -> Result<String, BackendError> {
     }
     let stdout = String::from_utf8_lossy(&output.stdout);
     Ok(stdout.lines().next().unwrap_or_default().trim().to_string())
+}
+
+/// The `target/<profile>/` binaries produced by the bin targets of the given
+/// packages. Only `cargo build` (not check/test) declares these outputs so
+/// the artifact cache has something real to ship around.
+fn bin_outputs(
+    project: &Project,
+    members: &[NodeId],
+    package_graph: &BuildGraph<PackageId>,
+    workspace_root: &Path,
+    profile: &str,
+) -> Vec<PathBuf> {
+    let mut outputs = Vec::new();
+    for id in members {
+        let package_id = &package_graph
+            .node(*id)
+            .expect("level members are package graph nodes")
+            .payload;
+        let Some(package) = project.package(package_id) else {
+            continue;
+        };
+        for target in &package.targets {
+            if target.kind.iter().any(|kind| kind.to_string() == "bin") {
+                let mut name = target.name.clone();
+                if cfg!(windows) {
+                    name.push_str(".exe");
+                }
+                outputs.push(workspace_root.join("target").join(profile).join(name));
+            }
+        }
+    }
+    outputs
 }
 
 #[cfg(test)]

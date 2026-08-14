@@ -467,3 +467,207 @@ fn build_with_tui_flag_succeeds() {
     let output = run(forge().arg("build").arg("--tui").current_dir(dir.path()));
     assert!(output.status.success(), "stderr: {}", stderr(&output));
 }
+
+#[test]
+fn build_with_remote_cache_flags_succeeds() {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let cache_addr = listener.local_addr().unwrap().to_string();
+    drop(listener);
+
+    let temp = tempfile::tempdir().unwrap();
+    let server = forge_remote_cache::RemoteCacheServer::new(
+        &cache_addr,
+        Some("auth_token_secret".to_string()),
+        Some(temp.path().to_path_buf()),
+    );
+    let _handle = server.start_background().unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(50));
+
+    let dir = workspace_fixture();
+    let output = run(forge()
+        .arg("build")
+        .arg("--remote-cache")
+        .arg(&cache_addr)
+        .arg("--remote-cache-token")
+        .arg("auth_token_secret")
+        .current_dir(dir.path()));
+
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let text = stdout(&output);
+    assert!(text.contains("✓ network"));
+    assert!(text.contains("✓ core"));
+    assert!(text.contains("✓ app"));
+    assert!(text.contains("Executed:  3"));
+
+    server.stop();
+}
+
+#[test]
+fn build_with_remote_workers_flags_succeeds() {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let worker_addr = listener.local_addr().unwrap().to_string();
+    drop(listener);
+
+    let server = forge_worker::WorkerServer::with_options(
+        &worker_addr,
+        Some("worker_token_secret".to_string()),
+        "test-worker",
+        4,
+    );
+    let _handle = server.start_background().unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(50));
+
+    let dir = workspace_fixture();
+    let output = run(forge()
+        .arg("build")
+        .arg("--remote-workers")
+        .arg(&worker_addr)
+        .arg("--remote-workers-token")
+        .arg("worker_token_secret")
+        .current_dir(dir.path()));
+
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let text = stdout(&output);
+    assert!(text.contains("✓ network"));
+    assert!(text.contains("✓ core"));
+    assert!(text.contains("✓ app"));
+    assert!(text.contains("Executed:  3"));
+
+    server.stop();
+}
+
+fn git(dir: &std::path::Path, args: &[&str]) -> Output {
+    run(Command::new("git").arg("-C").arg(dir).args(args))
+}
+
+#[test]
+fn affected_builds_only_changed_packages_and_their_dependents() {
+    let dir = workspace_fixture();
+    let init = git(dir.path(), &["init", "-q"]);
+    assert!(init.status.success(), "git must be available");
+
+    let root = dir.path().to_path_buf();
+    fs::write(dir.path().join(".gitignore"), "target/\n").expect("gitignore");
+    // `forge graph` runs cargo metadata, which writes Cargo.lock; commit it
+    // so it does not show up as an untracked workspace-level change later.
+    let graph = run(forge().arg("graph").current_dir(dir.path()));
+    assert!(graph.status.success(), "graph must load the workspace");
+
+    git(&root, &["add", "-A"]);
+    git(&root, &["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "initial"]);
+
+    fs::write(dir.path().join("core/src/lib.rs"), "pub fn run() { network::ping(); }\n// touched\n")
+        .expect("touch core");
+
+    let output = run(forge()
+        .arg("affected")
+        .arg("--since")
+        .arg("HEAD")
+        .current_dir(dir.path()));
+
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        stderr(&output)
+    );
+    let text = stdout(&output);
+    assert!(
+        text.contains("Affected packages (2 of 3)"),
+        "core affected, app as dependent; network untouched: {text}"
+    );
+    assert!(text.contains("  - core"));
+    assert!(text.contains("  - app"));
+    assert!(!text.contains("  - network"), "network must not be affected: {text}");
+    assert!(text.contains("✓ core"));
+    assert!(text.contains("✓ app"));
+    assert!(!text.contains("✓ network"), "network must not be built: {text}");
+}
+
+#[test]
+fn affected_reports_nothing_when_tree_is_clean() {
+    let dir = workspace_fixture();
+    let init = git(dir.path(), &["init", "-q"]);
+    assert!(init.status.success(), "git must be available");
+
+    let root = dir.path().to_path_buf();
+    fs::write(dir.path().join(".gitignore"), "target/\n").expect("gitignore");
+    let graph = run(forge().arg("graph").current_dir(dir.path()));
+    assert!(graph.status.success(), "graph must load the workspace");
+
+    git(&root, &["add", "-A"]);
+    git(&root, &["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "initial"]);
+
+    let output = run(forge()
+        .arg("affected")
+        .arg("--since")
+        .arg("HEAD")
+        .current_dir(dir.path()));
+
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let text = stdout(&output);
+    assert!(
+        text.contains("No changes since `HEAD`"),
+        "clean tree: {text}"
+    );
+}
+
+#[test]
+fn cache_stats_and_prune_report_sizes() {
+    let dir = workspace_fixture();
+    let cache_dir = dir.path().join("forge-cache");
+
+    let build = run(forge()
+        .arg("build")
+        .arg("--cache-dir")
+        .arg(&cache_dir)
+        .current_dir(dir.path()));
+    assert!(build.status.success(), "build must populate the cache");
+
+    let stats = run(forge()
+        .arg("cache")
+        .arg("--dir")
+        .arg(&cache_dir)
+        .arg("stats"));
+    assert!(stats.status.success(), "stderr: {}", stderr(&stats));
+    let text = stdout(&stats);
+    assert!(
+        text.contains("Fingerprint records: 3"),
+        "three package fingerprints: {text}"
+    );
+
+    let prune = run(forge()
+        .arg("cache")
+        .arg("--dir")
+        .arg(&cache_dir)
+        .arg("prune")
+        .arg("--older-than")
+        .arg("0s")
+        .arg("--max-size")
+        .arg("1KB"));
+    assert!(prune.status.success(), "stderr: {}", stderr(&prune));
+    let text = stdout(&prune);
+    assert!(text.contains("Removed 3 fingerprint records"), "prune report: {text}");
+}
+
+#[test]
+fn doctor_reports_tools_and_cache() {
+    let output = run(forge().arg("doctor"));
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let text = stdout(&output);
+    assert!(text.contains("[ok] cargo"), "doctor output: {text}");
+    assert!(text.contains("[ok] git"), "doctor output: {text}");
+    assert!(text.contains("All checks passed."));
+}
+
+#[test]
+fn build_accepts_ram_limit_and_send_source_flags() {
+    let dir = workspace_fixture();
+    let output = run(forge()
+        .arg("build")
+        .arg("--ram-limit")
+        .arg("5")
+        .current_dir(dir.path()));
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    assert!(stdout(&output).contains("✓ network"));
+}
+

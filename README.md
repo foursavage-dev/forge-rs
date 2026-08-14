@@ -136,14 +136,19 @@ The binary is `target/debug/forge`.
 | Command                            | Status                              |
 | ---------------------------------- | ----------------------------------- |
 | `forge --version` / `forge version`| implemented                         |
-| `forge build [-j N] [-v] [--no-cache] [--sandbox] [--timeout SECS] [--profile FILE] [PATH]` | implemented |
+| `forge build [-j N] [-v] [--no-cache] [--sandbox] [--timeout SECS] [--profile FILE] [--remote-cache ADDR] [--remote-workers ADDRS] [PATH]` | implemented |
 | `forge check [-j N] [-v] [--no-cache] [--sandbox] [--timeout SECS] [--profile FILE] [PATH]` | implemented |
 | `forge test [-j N] [-v] [--no-cache] [--sandbox] [--timeout SECS] [--profile FILE] [PATH]`  | implemented |
 | `forge run [-p PKG] [--bin BIN] [ARGS]`       | implemented                |
 | `forge graph [--format tree\|json\|dot] [PATH]`| implemented                |
 | `forge watch [--mode build\|check\|test] [--debounce MS] [--clear] [--once]` | implemented |
+| `forge affected [--since REV] [--mode build\|check\|test]` | implemented |
+| `forge doctor`                        | implemented                        |
+| `forge cache stats`                   | implemented                        |
+| `forge cache prune [--older-than DUR] [--max-size SIZE] [--dir PATH]` | implemented |
+| `forge cache-server [--listen ADDR] [--dir PATH] [--auth-token TOKEN]` | implemented |
+| `forge worker [--listen ADDR] [--auth-token TOKEN] [--name NAME] [--max-concurrency N]` | implemented |
 | `forge clean [PATH]`               | implemented (cargo clean)           |
-| `forge cache/doctor/...`           | planned                             |
 
 `forge build` is a single entry point for four backends: a Cargo workspace
 (`Cargo.toml`), a C/C++ project (`forge.cc.json`), a Go module
@@ -233,11 +238,8 @@ package — all four levels come from cache in 0.00s. Touch `forge-core` and
 4. **Milestone 4:** polyglot — C/C++, Go and TypeScript backends, `forge
    run`, `forge graph`, `forge watch`, per-project `forge.toml`, dogfood
    CI. ✔
-5. Then: task-level concurrency analytics and critical-path reporting
-   (Chrome-trace export exists), sandboxing beyond environment
-   sanitization, artifact caching, remote cache server (the client
-   scaffold already exists), backend plugin API, remote execution,
-   distributed builds.
+5. **Milestone 5:** remote cache daemon & tiered composite caching (`forge cache-server`, `--remote-cache`), distributed execution cluster & failover (`forge worker`, `--remote-workers`). ✔
+6. Then: distributed artifact CAS storage, dynamic worker discovery, and remote containerized sandboxing.
 
 ## Design principles
 

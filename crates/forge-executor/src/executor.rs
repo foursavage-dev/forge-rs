@@ -171,6 +171,12 @@ impl<T: ?Sized + TaskExecutor> TaskExecutor for &T {
     }
 }
 
+impl<T: ?Sized + TaskExecutor> TaskExecutor for std::sync::Arc<T> {
+    fn execute(&self, task: &Task) -> Result<TaskOutcome, ExecutorError> {
+        (**self).execute(task)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
