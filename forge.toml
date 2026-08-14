@@ -1,14 +1,3 @@
-# Forge builds Forge.
-#
-# This file tunes the `forge` CLI when it runs inside this repository.
-# Everything here maps to an existing command-line flag, and flags always
-# win over the file.
-#
-#   forge build     # parallel build of all workspace packages
-#   forge check     # type-check only
-#   forge test      # build + run every package's tests
-#   forge graph     # dependency graph as tree / json / dot
-
-backend = "auto"   # auto | rust | cc | go | ts
-jobs = 0           # worker processes; 0 = one per logical CPU
-no_cache = false   # set to true to always rebuild from scratch
+backend = "auto"
+jobs = 0
+no_cache = false

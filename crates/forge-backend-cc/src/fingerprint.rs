@@ -28,13 +28,6 @@ pub fn compute_source_fingerprint(
     Ok(hasher.finalize().to_hex().to_string())
 }
 
-/// Hash the contents of every `#include`d header, transitively.
-///
-/// Header includes are followed recursively (with a visited set to stop
-/// cycles), so a change in `a.h` that only `b.h` includes still invalidates
-/// the task. Headers that cannot be resolved — e.g. system headers like
-/// `<stdio.h>` — are skipped, matching the compiler's own search order
-/// (source directory first, then the configured include directories).
 fn scan_and_hash_headers(
     content: &[u8],
     source_dir: Option<&Path>,

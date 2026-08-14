@@ -1,15 +1,7 @@
-//! Locating a Cargo project on disk.
-//!
-//! Like Cargo itself, Forge searches upward from a starting directory for a
-//! `Cargo.toml` manifest.
-
 use std::path::{Path, PathBuf};
 
-/// File name of Cargo's manifest.
 pub const MANIFEST_FILE: &str = "Cargo.toml";
 
-/// Return the first directory at or above `start` that contains a `Cargo.toml`
-/// file, or `None` if no such directory exists.
 pub fn find_manifest_dir(start: &Path) -> Option<PathBuf> {
     start
         .ancestors()
@@ -17,8 +9,6 @@ pub fn find_manifest_dir(start: &Path) -> Option<PathBuf> {
         .map(Path::to_path_buf)
 }
 
-/// Return the path of the `Cargo.toml` file governing `start`, or `None` if
-/// no Cargo project contains `start`.
 pub fn find_manifest(start: &Path) -> Option<PathBuf> {
     find_manifest_dir(start).map(|dir| dir.join(MANIFEST_FILE))
 }

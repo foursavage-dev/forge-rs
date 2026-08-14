@@ -1,5 +1,3 @@
-//! Terminal rendering for the Forge CLI.
-
 use std::fmt;
 use std::path::Path;
 
@@ -16,12 +14,10 @@ const DIM: Style = Style::new().fg_color(Some(Color::Ansi(AnsiColor::BrightBlack
 const GREEN: Style = Style::new().fg_color(Some(Color::Ansi(AnsiColor::Green)));
 const RED: Style = Style::new().fg_color(Some(Color::Ansi(AnsiColor::Red)));
 
-/// Emoji bullet with `prefix`, like "✓ label" or "✓ label (cached)".
 fn bullet(prefix: &str, text: &str) -> String {
     format!("{prefix} {text}")
 }
 
-/// Text wrapped in ANSI styling, rendered only as escape sequences.
 struct Styled {
     style: Style,
     text: String,
@@ -48,7 +44,6 @@ impl fmt::Display for Styled {
     }
 }
 
-/// Print the project summary and the workspace build graph.
 pub fn print_project(project: &Project, graph: &BuildGraph<PackageId>) {
     println!(
         "{}",
@@ -88,8 +83,6 @@ fn package_name(project: &Project, payload: &PackageId) -> String {
         .unwrap_or_else(|| payload.to_string())
 }
 
-/// Render the graph as horizontal levels; each arrow column belongs to the
-/// node above it.
 fn print_levels(project: &Project, graph: &BuildGraph<PackageId>) {
     const INDENT: usize = 4;
     let levels = graph.levels();
@@ -149,7 +142,6 @@ fn workspace_label(project: &Project) -> String {
     }
 }
 
-/// One line of live progress: tick + label, dimmed when cached.
 pub fn print_progress(task: &forge_executor::Task, outcome: &forge_executor::TaskOutcome) {
     match outcome.status {
         forge_executor::TaskStatus::Executed => {
@@ -165,7 +157,6 @@ pub fn print_progress(task: &forge_executor::Task, outcome: &forge_executor::Tas
     }
 }
 
-/// The post-build summary block.
 pub fn print_build_summary(summary: &forge_scheduler::BuildSummary, mode: BuildMode) {
     if summary.succeeded() {
         let message = match mode {
@@ -193,12 +184,10 @@ pub fn print_build_summary(summary: &forge_scheduler::BuildSummary, mode: BuildM
     println!("  Duration:  {:.2}s", summary.duration.as_secs_f64());
 }
 
-/// Where the fingerprint cache lives (printed once at the start of a build).
 pub fn print_cache_location(root: &Path) {
     println!("Cache:                {}", root.display());
 }
 
-/// Cache hit/miss/error counters, printed after the build summary.
 pub fn print_cache_stats(cache: &forge_cache::LocalCache) {
     let stats = cache.stats();
     println!(
@@ -213,7 +202,6 @@ pub fn print_profile_saved(path: &Path) {
     println!("  Trace:     {} (open in ui.perfetto.dev)", path.display());
 }
 
-/// Details of every failed task, with a tail of its output.
 pub fn print_failures(summary: &forge_scheduler::BuildSummary) {
     for failure in &summary.failures {
         eprintln!();

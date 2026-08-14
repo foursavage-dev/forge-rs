@@ -1,5 +1,3 @@
-//! End-to-end tests for the Forge binary.
-
 use std::fs;
 use std::process::{Command, Output};
 
@@ -183,7 +181,10 @@ fn build_fails_in_non_cargo_directory() {
     let output = run(forge().arg("build").current_dir(dir.path()));
 
     assert!(!output.status.success());
-    assert!(stderr(&output).contains("no Cargo, C/C++, Go, or TypeScript project found"));
+    assert!(
+        stderr(&output)
+            .contains("no Cargo, C/C++, Go, TypeScript, Python, or Custom Rules project found")
+    );
     assert!(stderr(&output).contains("hint:"));
 }
 
@@ -198,7 +199,7 @@ fn check_type_checks_the_workspace() {
 #[test]
 fn test_runs_workspace_tests_and_reports_success() {
     let dir = workspace_fixture();
-    // Add a passing test to one package.
+
     let lib = dir.path().join("core/src/lib.rs");
     let mut content = fs::read_to_string(&lib).expect("read lib.rs");
     content.push_str("\n#[cfg(test)]\nmod tests {\n    #[test]\n    fn passes() {\n        assert!(true);\n    }\n}\n");
@@ -297,7 +298,6 @@ fn forge_toml_sets_worker_count_and_disable_flag_wins() {
         "forge.toml no_cache=true disables the cache: {text}"
     );
 
-    // A rebuild with the file present stays cache-free.
     let second = run(forge().arg("build").current_dir(dir.path()));
     assert!(second.status.success());
     assert!(stdout(&second).contains("Cached:    0"));
@@ -393,4 +393,77 @@ fn build_typescript_project_succeeds() {
     assert!(text.contains("✓ frontend:typecheck"));
     assert!(text.contains("✓ frontend:build"));
     assert!(text.contains("Executed:  2"));
+}
+
+#[test]
+fn build_python_project_succeeds() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let forge_py = r#"{
+        "name": "ai-service",
+        "tasks": [
+            {
+                "name": "lint",
+                "command": "node",
+                "args": ["-e", "process.exit(0)"],
+                "depends_on": []
+            },
+            {
+                "name": "test",
+                "command": "node",
+                "args": ["-e", "process.exit(0)"],
+                "depends_on": ["lint"]
+            }
+        ]
+    }"#;
+    fs::write(dir.path().join("forge.py.json"), forge_py).expect("write forge.py.json");
+    fs::create_dir(dir.path().join("src")).expect("mkdir src");
+    fs::write(
+        dir.path().join("src").join("main.py"),
+        "print('forge python')",
+    )
+    .expect("write main.py");
+
+    let output = run(forge().arg("build").current_dir(dir.path()));
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let text = stdout(&output);
+    assert!(text.contains("✓ ai-service:lint"));
+    assert!(text.contains("✓ ai-service:test"));
+    assert!(text.contains("Executed:  2"));
+}
+
+#[test]
+fn build_custom_rules_project_succeeds() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let forgefile = r#"{
+        "name": "custom-rule-app",
+        "rules": [
+            {
+                "name": "gen",
+                "command": "node",
+                "args": ["-e", "process.exit(0)"],
+                "depends_on": []
+            },
+            {
+                "name": "package",
+                "command": "node",
+                "args": ["-e", "process.exit(0)"],
+                "depends_on": ["gen"]
+            }
+        ]
+    }"#;
+    fs::write(dir.path().join("Forgefile.json"), forgefile).expect("write Forgefile.json");
+
+    let output = run(forge().arg("build").current_dir(dir.path()));
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let text = stdout(&output);
+    assert!(text.contains("✓ custom-rule-app:gen"));
+    assert!(text.contains("✓ custom-rule-app:package"));
+    assert!(text.contains("Executed:  2"));
+}
+
+#[test]
+fn build_with_tui_flag_succeeds() {
+    let dir = workspace_fixture();
+    let output = run(forge().arg("build").arg("--tui").current_dir(dir.path()));
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
 }

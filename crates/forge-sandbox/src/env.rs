@@ -47,10 +47,6 @@ pub fn sanitize_env(
                     "HOMEPATH",
                     "CARGO_HOME",
                     "RUSTUP_HOME",
-                    // `ProgramData` (and the ProgramFiles/SytemDrive siblings) are
-                    // how rustc's `find-msvc-tools` locates the Visual Studio
-                    // toolchain (vswhere/COM setup), so a hermetic env that omits
-                    // them cannot link with the MSVC linker.
                     "ProgramData",
                     "ProgramFiles",
                     "ProgramFiles(x86)",

@@ -1,13 +1,3 @@
-//! `forge-scheduler`: parallel execution of the build graph.
-//!
-//! Given a validated `BuildGraph<Task>`, the scheduler runs ready tasks on
-//! a fixed-size worker pool, propagates failures (cancelling dependents),
-//! counts cached tasks, and reports a `BuildSummary`.
-//!
-//! The scheduler never spawns processes itself: it only talks to the
-//! [`TaskExecutor`] trait, so cached wrappers and test doubles plug in
-//! seamlessly.
-
 #![forbid(unsafe_code)]
 
 use std::collections::HashMap;
@@ -18,14 +8,11 @@ use std::time::{Duration, Instant};
 use forge_executor::{Task, TaskExecutor, TaskOutcome, TaskStatus};
 use forge_graph::{BuildGraph, GraphError, NodeId, TaskState};
 
-/// Errors surfaced by the scheduler.
 #[derive(Debug, thiserror::Error)]
 pub enum SchedulerError {
-    /// The graph failed structural validation before execution.
     #[error("invalid build graph: {0}")]
     InvalidGraph(#[from] GraphError),
-    /// Defensive: the scheduler ran out of work while tasks were still
-    /// pending, which indicates a state-machine bug.
+
     #[error("scheduler stalled with pending tasks; this is a bug, please report it")]
     Stalled,
 }
@@ -475,8 +462,6 @@ mod tests {
         assert_eq!(path, vec!["a", "b", "c"]);
     }
 
-    /// Deterministic test executor: records execution order, max concurrency,
-    /// and can fail or serve-from-cache specific labels.
     #[derive(Default)]
     struct FakeExecutor {
         order: Mutex<Vec<String>>,
@@ -543,7 +528,7 @@ mod tests {
         let summary = scheduler.run(&mut graph, &executor, |_, _| {}).unwrap();
         assert_eq!(summary.executed, 3);
         assert!(summary.succeeded());
-        // root runs alone, then both leaves overlap.
+
         assert_eq!(executor.max_concurrent.load(Ordering::SeqCst), 2);
     }
 

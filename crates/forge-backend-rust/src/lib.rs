@@ -141,14 +141,6 @@ impl RustBackend {
             .unwrap_or_else(|| PathBuf::from("cargo"));
         let cargo = cargo.to_string_lossy().into_owned();
 
-        // One task per topological level: `cargo build --package a --package
-        // b` covers every package whose dependencies are already built.
-        // Batching keeps concurrent cargo processes from fighting over the
-        // shared target-dir lock (cargo would serialize them anyway) and
-        // turns the whole build into a short chain of cargo invocations.
-        // Packages within a level are independent, so cargo's own unit-level
-        // parallelism does the work; forge's per-level cache still skips
-        // unchanged levels entirely.
         let levels = package_graph.levels();
         let mut level_node: HashMap<NodeId, NodeId> = HashMap::new();
         let mut task_graph = BuildGraph::new();

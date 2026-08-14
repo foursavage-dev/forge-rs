@@ -1,29 +1,18 @@
-//! Executors turn `Task`s into `TaskOutcome`s.
-//!
-//! The `TaskExecutor` trait is the boundary between the scheduler and any
-//! mechanism that can build a task: process execution, remote execution,
-//! local caching, mock executors in tests. The scheduler only ever sees
-//! `&dyn`-style `TaskExecutor`s, so behavior can be layered
-//! (e.g. `CachingExecutor` wrapping a `ProcessExecutor`).
-
 use std::process::Command;
 use std::time::{Duration, Instant};
 
 use crate::task::{Task, TaskOutcome, TaskStatus};
 
-/// Errors that can occur when executing a task.
 #[derive(Debug, thiserror::Error)]
 pub enum ExecutorError {
-    /// The process could not be spawned at all.
     #[error("failed to spawn `{command}`: {source}")]
     Spawn {
-        /// The command line that failed to spawn.
         command: String,
-        /// The underlying OS error.
+
         #[source]
         source: std::io::Error,
     },
-    /// The executor could not record the outcome (I/O failure).
+
     #[allow(dead_code)]
     #[error("failed to record output of `{command}`: {source}")]
     Record {
@@ -33,24 +22,14 @@ pub enum ExecutorError {
     },
 }
 
-/// Executes tasks on this machine. Implementations must be `Send + Sync` so
-/// the scheduler can run tasks concurrently.
 pub trait TaskExecutor: Send + Sync {
-    /// Execute a single task and report its outcome.
-    ///
-    /// Must not panic (`Scheduler::run` treats panics as a failed task, but
-    /// implementations shouldn't rely on that).
     fn execute(&self, task: &Task) -> Result<TaskOutcome, ExecutorError>;
 }
 
-/// The standard executor: run the task's command as a child process, capture
-/// stdout/stderr, and classify the outcome by exit code.
 #[derive(Debug, Clone)]
 pub struct ProcessExecutor {
-    /// Print task output lines to stderr as they complete (for `-v`).
     pub verbose: bool,
-    /// Maximum time a task may run before it is killed and reported as
-    /// failed (`None` = no limit).
+
     pub timeout: Option<Duration>,
 }
 
@@ -62,7 +41,6 @@ impl ProcessExecutor {
         }
     }
 
-    /// The maximum time a task may run before it is killed.
     pub fn with_timeout(verbose: bool, timeout: Option<Duration>) -> Self {
         Self { verbose, timeout }
     }
@@ -74,10 +52,6 @@ impl Default for ProcessExecutor {
     }
 }
 
-/// Kill `child` and, on Windows, its whole descendant tree.
-///
-/// Cargo spawns rustc, which spawns build scripts; terminating only the
-/// direct child would leave those grandchildren running as orphans.
 fn kill_process_tree(child: &mut std::process::Child) {
     #[cfg(windows)]
     {
@@ -91,21 +65,11 @@ fn kill_process_tree(child: &mut std::process::Child) {
     }
     #[cfg(not(windows))]
     {
-        // Without a separate process group there is no safe tree-kill
-        // (the child shares forge's group); kill the direct child.
         let _ = child.kill();
     }
     let _ = child.wait();
 }
 
-/// Run `command`, killing it if it outlives `timeout`.
-///
-/// `Command::output()` blocks until the child exits, so a hung task would
-/// hang the whole build. This path spawns the child with piped output,
-/// drains the pipes on reader threads (so a chatty child can never
-/// deadlock the timeout), and polls `try_wait` against a deadline. On
-/// timeout the child is killed and reaped; the reader threads are
-/// detached and finish whenever the pipes close.
 fn run_with_timeout(
     command: &mut Command,
     timeout: Duration,
@@ -192,6 +156,18 @@ impl TaskExecutor for ProcessExecutor {
             stderr,
             duration: start.elapsed(),
         })
+    }
+}
+
+impl<T: ?Sized + TaskExecutor> TaskExecutor for Box<T> {
+    fn execute(&self, task: &Task) -> Result<TaskOutcome, ExecutorError> {
+        (**self).execute(task)
+    }
+}
+
+impl<T: ?Sized + TaskExecutor> TaskExecutor for &T {
+    fn execute(&self, task: &Task) -> Result<TaskOutcome, ExecutorError> {
+        (**self).execute(task)
     }
 }
 

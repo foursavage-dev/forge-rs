@@ -20,6 +20,9 @@ forge-backend-rust = { workspace = true }
 forge-backend-cc = { workspace = true }
 forge-backend-go = { workspace = true }
 forge-backend-ts = { workspace = true }
+forge-backend-py = { workspace = true }
+forge-worker = { workspace = true }
+forge-plugin = { workspace = true }
 forge-sandbox = { workspace = true }
 cargo_metadata = { workspace = true }
 serde = { workspace = true }
@@ -30,6 +33,8 @@ clap = { workspace = true }
 anstream = { workspace = true }
 anstyle = { workspace = true }
 notify = { workspace = true }
+crossterm = { workspace = true }
+ratatui = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

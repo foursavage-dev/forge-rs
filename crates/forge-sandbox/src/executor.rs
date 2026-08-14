@@ -5,11 +5,6 @@ use forge_executor::{CommandSpec, ExecutorError, Task, TaskExecutor, TaskOutcome
 use crate::env::{EnvPolicy, sanitize_env};
 use crate::isolation::FsPolicy;
 
-/// Sandboxing knobs applied to every task the executor runs.
-///
-/// Time limits live on `ProcessExecutor` (killing a child requires owning
-/// its handle, so the process layer enforces `--timeout`); this executor
-/// is purely about *what* the task sees: environment and filesystem policy.
 #[derive(Debug, Clone)]
 pub struct SandboxConfig {
     pub env_policy: EnvPolicy,
@@ -27,13 +22,6 @@ impl Default for SandboxConfig {
     }
 }
 
-/// Wraps any `TaskExecutor` and rewrites the task's environment before the
-/// inner executor runs it.
-///
-/// `EnvPolicy::Hermetic` and `EnvPolicy::Custom` mark the command
-/// `env_clear` so the child sees *only* the sanitized map — otherwise
-/// `CommandSpec` env entries would just be overrides on top of forge's own
-/// (leaky) environment.
 pub struct SandboxedExecutor<E: TaskExecutor> {
     inner: E,
     config: SandboxConfig,

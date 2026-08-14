@@ -1,9 +1,3 @@
-//! Integration tests for project discovery and the Cargo metadata model.
-//!
-//! Fixture projects are generated in temporary directories at test time and
-//! inspected through the real `cargo metadata` interface, which requires
-//! Cargo to be available on PATH.
-
 use std::fs;
 use std::path::Path;
 
@@ -251,8 +245,6 @@ fn build_graph_mirrors_metadata_dependencies() {
 
 #[test]
 fn build_graph_ignores_dev_only_edges() {
-    // `network` dev-depends on `app`, which would close a dependency cycle
-    // (app -> core -> network -> app) if dev edges were part of the graph.
     let dir = fixture(&[
         ("Cargo.toml", WORKSPACE_MANIFEST),
         (
@@ -283,8 +275,6 @@ fn build_graph_ignores_dev_only_edges() {
 
 #[test]
 fn build_test_graph_includes_acyclic_dev_edges() {
-    // `app` dev-depends on `core`; that edge is acyclic and must appear in
-    // the test graph only (build graphs ignore dev-dependencies).
     let dir = fixture(&[
         ("Cargo.toml", WORKSPACE_MANIFEST),
         ("network/Cargo.toml", &package_manifest("network", &[])),
@@ -336,8 +326,6 @@ fn build_test_graph_includes_acyclic_dev_edges() {
 
 #[test]
 fn build_test_graph_skips_cyclic_dev_edges() {
-    // `network` dev-depends on `app` which would close a cycle
-    // (app -> core -> network -> app): the edge must be dropped, not fatal.
     let dir = fixture(&[
         ("Cargo.toml", WORKSPACE_MANIFEST),
         (

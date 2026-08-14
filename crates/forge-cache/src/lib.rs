@@ -1,20 +1,3 @@
-//! `forge-cache`: the incremental-build fingerprint store.
-//!
-//! Backends compute a stable hash (`fingerprint`) of everything a task
-//! depends on (source files, toolchain, dependency fingerprints). The cache
-//! answers one question: *"have I stored this exact fingerprint before?"*
-//!
-//! Design notes:
-//!
-//! - The cache never stores build artifacts or trust metadata from the
-//!   project; it only stores `(key, fingerprint)` pairs as small JSON
-//!   records on disk. The scheduler decides what to rebuild; the cache only
-//!   decides what can be skipped.
-//! - A mismatch or a missing record is a miss. A corrupt record is treated
-//!   as a miss too, so the store is self-healing.
-//! - Writes are atomic (temp file + rename), and `CachingExecutor` tolerates
-//!   write errors — a cache failure must never fail a build.
-
 use std::fmt;
 use std::fs;
 use std::io;
@@ -25,16 +8,14 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use forge_executor::{CacheEntry, ExecutorError, Task, TaskExecutor, TaskOutcome, TaskStatus};
 use serde::{Deserialize, Serialize};
 
-/// Errors from the fingerprint store.
 #[derive(Debug)]
 pub enum CacheError {
-    /// The default cache location could not be determined.
     NoHomeDir,
-    /// Initializing the cache directory failed.
+
     Init { path: PathBuf, source: io::Error },
-    /// Reading a fingerprint record failed.
+
     Read { key: String, source: io::Error },
-    /// Writing a fingerprint record failed.
+
     Write { key: String, source: io::Error },
 }
 
@@ -64,16 +45,13 @@ impl fmt::Display for CacheError {
 
 impl std::error::Error for CacheError {}
 
-/// What got stored on disk for one cache key.
 #[derive(Debug, Serialize, Deserialize)]
 struct FingerprintRecord {
     fingerprint: String,
-    /// When the record was written (unix seconds), for debugging / future
-    /// TTL policies.
+
     stored_at: u64,
 }
 
-/// Volatile counters for instrumentation and CLI reporting.
 #[derive(Debug, Default)]
 pub struct CacheStats {
     hits: AtomicU64,
@@ -107,7 +85,6 @@ impl CacheStats {
     }
 }
 
-/// On-disk fingerprint store rooted at a single directory.
 #[derive(Debug)]
 pub struct LocalCache {
     root: PathBuf,
@@ -115,7 +92,6 @@ pub struct LocalCache {
 }
 
 impl LocalCache {
-    /// Create (and create the directories of) a cache at `root`.
     pub fn new(root: impl Into<PathBuf>) -> Result<Self, CacheError> {
         let root = root.into();
         fs::create_dir_all(root.join("metadata").join("fingerprints")).map_err(|source| {
@@ -124,8 +100,7 @@ impl LocalCache {
                 source,
             }
         })?;
-        // Reserve the artifact directories; future backends may cache
-        // build outputs here.
+
         let _ = fs::create_dir_all(root.join("objects"));
         let _ = fs::create_dir_all(root.join("artifacts"));
         Ok(Self {
@@ -134,7 +109,6 @@ impl LocalCache {
         })
     }
 
-    /// The standard per-user cache location: `~/.forge/cache`.
     pub fn default_location() -> Result<Self, CacheError> {
         let home = std::env::var_os("HOME")
             .or_else(|| std::env::var_os("USERPROFILE"))
@@ -150,10 +124,6 @@ impl LocalCache {
         &self.stats
     }
 
-    /// True when a record for `key` exists and matches `fingerprint`.
-    ///
-    /// Missing or unreadable records count as misses and are safe to
-    /// rebuild from scratch.
     pub fn matches(&self, key: &str, fingerprint: &str) -> bool {
         match self.read_record(key) {
             Ok(Some(record)) if record.fingerprint == fingerprint => {
@@ -167,12 +137,10 @@ impl LocalCache {
         }
     }
 
-    /// The stored fingerprint for `key`, if any.
     pub fn get(&self, key: &str) -> Option<String> {
         self.read_record(key).ok().flatten().map(|r| r.fingerprint)
     }
 
-    /// Store a fingerprint for `key`, replacing any previous record.
     pub fn put(&self, key: &str, fingerprint: &str) -> Result<(), CacheError> {
         let path = self.fingerprint_path(key);
         if let Some(parent) = path.parent() {
@@ -200,7 +168,6 @@ impl LocalCache {
         })
     }
 
-    /// Path where a key's record lives: `<root>/metadata/fingerprints/<key>.json`.
     fn fingerprint_path(&self, key: &str) -> PathBuf {
         self.root
             .join("metadata")
@@ -220,18 +187,11 @@ impl LocalCache {
                 });
             }
         };
-        // JSON parse failures (corruption, tampering, version skew) are
-        // self-healing misses, not build failures.
+
         Ok(serde_json::from_slice(&bytes).ok())
     }
 }
 
-/// An executor wrapper that skips cacheable tasks whose fingerprints match.
-///
-/// Wrapping order matters: `CachingExecutor` sits *above* the process
-/// executor, so cached tasks never spawn a process and never appear as
-/// executed. Cache failures degrade to plain execution — a build must never
-/// fail because the cache had a hiccup.
 #[derive(Debug)]
 pub struct CachingExecutor<I> {
     inner: I,
@@ -329,8 +289,7 @@ mod tests {
     fn concurrent_puts_are_safe() {
         let dir = tempfile::tempdir().expect("tempdir");
         let cache = LocalCache::new(dir.path()).unwrap();
-        // `thread::scope` joins all threads before returning, so the
-        // temporary is safely borrowed.
+
         std::thread::scope(|scope| {
             let cache = &cache;
             for thread in 0..8 {
@@ -355,15 +314,14 @@ mod tests {
     #[test]
     fn default_location_requires_a_home_directory() {
         let original = (std::env::var_os("HOME"), std::env::var_os("USERPROFILE"));
-        // SAFETY: test-only, single-threaded mutation of process environment.
+
         unsafe { std::env::remove_var("HOME") };
         unsafe { std::env::remove_var("USERPROFILE") };
         assert!(matches!(
             LocalCache::default_location(),
             Err(CacheError::NoHomeDir)
         ));
-        // SAFETY: restoring the environment we mutated above; the test is
-        // the only thread touching it.
+
         if let Some(home) = original.0 {
             unsafe { std::env::set_var("HOME", home) };
         }

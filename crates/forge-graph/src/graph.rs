@@ -1,19 +1,8 @@
-//! The Forge build graph data structure.
-//!
-//! A [`BuildGraph`] is a directed acyclic graph where an edge
-//! `dependency -> dependent` means "`dependency` must finish before
-//! `dependent` starts". Nodes carry an arbitrary payload (typically a task
-//! description from a language backend) and a [`TaskState`].
-
 use std::collections::{HashSet, VecDeque};
 
 use crate::error::GraphError;
 use crate::state::TaskState;
 
-/// Stable identifier of a node inside a [`BuildGraph`].
-///
-/// Node IDs are compact indices; they are only meaningful within the graph
-/// that created them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct NodeId(usize);
 
@@ -29,22 +18,15 @@ impl From<usize> for NodeId {
     }
 }
 
-/// A node in the build graph: one unit of work.
 #[derive(Debug)]
 pub struct Node<T> {
-    /// The node's identifier within its graph.
     pub id: NodeId,
-    /// Backend-defined description of the work to perform.
+
     pub payload: T,
-    /// Current lifecycle state.
+
     pub state: TaskState,
 }
 
-/// A directed acyclic graph of build tasks.
-///
-/// Nodes are stored contiguously and addressed by [`NodeId`]; dependency
-/// adjacency is kept for edges in both directions (`deps` and `dependents`),
-/// so traversal in either direction is a single slice lookup.
 #[derive(Debug)]
 pub struct BuildGraph<T> {
     nodes: Vec<Node<T>>,
@@ -59,7 +41,6 @@ impl<T> Default for BuildGraph<T> {
 }
 
 impl<T> BuildGraph<T> {
-    /// Create an empty build graph.
     pub fn new() -> Self {
         Self {
             nodes: Vec::new(),
@@ -68,17 +49,14 @@ impl<T> BuildGraph<T> {
         }
     }
 
-    /// Whether the graph contains no nodes.
     pub fn is_empty(&self) -> bool {
         self.nodes.is_empty()
     }
 
-    /// Number of nodes in the graph.
     pub fn len(&self) -> usize {
         self.nodes.len()
     }
 
-    /// Add a node with an initial [`TaskState::Pending`] state.
     pub fn add_node(&mut self, payload: T) -> NodeId {
         let id = NodeId(self.nodes.len());
         self.nodes.push(Node {
@@ -91,40 +69,30 @@ impl<T> BuildGraph<T> {
         id
     }
 
-    /// All nodes in the graph, in insertion order.
     pub fn nodes(&self) -> &[Node<T>] {
         &self.nodes
     }
 
-    /// Look up a node by ID.
     pub fn node(&self, id: NodeId) -> Option<&Node<T>> {
         self.nodes.get(id.0)
     }
 
-    /// Mutably look up a node by ID.
     pub fn node_mut(&mut self, id: NodeId) -> Option<&mut Node<T>> {
         self.nodes.get_mut(id.0)
     }
 
-    /// Current state of the node, or an error if the ID does not exist.
     pub fn state(&self, id: NodeId) -> Result<TaskState, GraphError> {
         self.node(id)
             .map(|node| node.state)
             .ok_or(GraphError::MissingNode(id))
     }
 
-    /// Set the state of a node.
     pub fn set_state(&mut self, id: NodeId, state: TaskState) -> Result<(), GraphError> {
         let node = self.node_mut(id).ok_or(GraphError::MissingNode(id))?;
         node.state = state;
         Ok(())
     }
 
-    /// Add a dependency edge: `dependency` must finish before `dependent`
-    /// can run.
-    ///
-    /// The graph must remain acyclic; adding an edge that would close a
-    /// cycle is rejected.
     pub fn add_dependency(
         &mut self,
         dependency: NodeId,
@@ -150,7 +118,6 @@ impl<T> BuildGraph<T> {
         Ok(())
     }
 
-    /// Direct dependencies of a node (what it waits for).
     pub fn deps(&self, id: NodeId) -> Result<&[NodeId], GraphError> {
         self.deps
             .get(id.0)
@@ -158,7 +125,6 @@ impl<T> BuildGraph<T> {
             .ok_or(GraphError::MissingNode(id))
     }
 
-    /// Direct dependents of a node (what waits for it).
     pub fn dependents(&self, id: NodeId) -> Result<&[NodeId], GraphError> {
         self.dependents
             .get(id.0)
@@ -166,9 +132,6 @@ impl<T> BuildGraph<T> {
             .ok_or(GraphError::MissingNode(id))
     }
 
-    /// Whether every dependency of the node has finished successfully
-    /// ([`TaskState::Succeeded`], [`TaskState::Skipped`] or
-    /// [`TaskState::Cached`]). Nodes without dependencies are ready.
     pub fn is_ready(&self, id: NodeId) -> Result<bool, GraphError> {
         Ok(self
             .deps(id)?
@@ -176,7 +139,6 @@ impl<T> BuildGraph<T> {
             .all(|dep| self.state(*dep).is_ok_and(TaskState::is_successful)))
     }
 
-    /// All nodes that are ready to run right now, in node order.
     pub fn ready_nodes(&self) -> Vec<NodeId> {
         self.nodes
             .iter()
@@ -187,8 +149,6 @@ impl<T> BuildGraph<T> {
             .collect()
     }
 
-    /// Whether the node has at least one dependency that failed or was
-    /// cancelled and has not been cancelled itself.
     pub fn is_blocked(&self, id: NodeId) -> Result<bool, GraphError> {
         Ok(self
             .deps(id)?
@@ -196,11 +156,6 @@ impl<T> BuildGraph<T> {
             .any(|dep| self.state(*dep).is_ok_and(TaskState::is_unsuccessful)))
     }
 
-    /// Mark a node as failed and cancel every transitive dependent.
-    ///
-    /// Dependents are set to [`TaskState::Cancelled`]: they did not fail
-    /// themselves, but they can never run because something they need
-    /// failed.
     pub fn mark_failed(&mut self, id: NodeId) -> Result<(), GraphError> {
         self.set_state(id, TaskState::Failed)?;
         let mut queue = VecDeque::from([id]);
@@ -216,12 +171,6 @@ impl<T> BuildGraph<T> {
         Ok(())
     }
 
-    /// Nodes in an order where every node comes after all of its
-    /// dependencies. Deterministic: ties are broken by node ID (insertion
-    /// order).
-    ///
-    /// The graph is guaranteed acyclic by [`Self::add_dependency`], so the
-    /// visit always completes.
     pub fn topological_order(&self) -> Vec<NodeId> {
         let mut indegree: Vec<usize> = self.deps.iter().map(Vec::len).collect();
         let mut ready: VecDeque<NodeId> = self
@@ -247,13 +196,6 @@ impl<T> BuildGraph<T> {
         order
     }
 
-    /// Partition nodes into topological levels: level 0 contains nodes with
-    /// no dependencies, and each later level contains nodes whose last
-    /// dependency finished in the previous level. Within a level, nodes are
-    /// ordered by ID.
-    ///
-    /// This is the classic layer view of the graph as presented in `forge
-    /// build` output.
     pub fn levels(&self) -> Vec<Vec<NodeId>> {
         let mut level_of: Vec<usize> = vec![0; self.nodes.len()];
         let mut levels: Vec<Vec<NodeId>> = Vec::new();
@@ -274,12 +216,6 @@ impl<T> BuildGraph<T> {
         levels
     }
 
-    /// Map every node payload through `f`, preserving node order, edge
-    /// structure, and states. This is how a backend turns a `BuildGraph<A>`
-    /// into a `BuildGraph<B>` (e.g. package graph into task graph).
-    ///
-    /// `f` is called as `f(id, payload)` so callers can index auxiliary
-    /// per-node data (fingerprints, etc.) keyed by `NodeId`.
     pub fn map_nodes<R>(&self, mut f: impl FnMut(NodeId, &T) -> R) -> BuildGraph<R> {
         let mut out = BuildGraph::new();
         for node in &self.nodes {
@@ -289,8 +225,6 @@ impl<T> BuildGraph<T> {
             let id = NodeId(index);
             if let Ok(deps) = self.deps(id) {
                 for dep in deps {
-                    // `add_node` assigns sequential IDs in the same order,
-                    // so original IDs are valid in the new graph.
                     out.add_dependency(*dep, id)
                         .expect("mapped graph inherits the DAG structure");
                 }
@@ -299,19 +233,12 @@ impl<T> BuildGraph<T> {
         out
     }
 
-    /// Reset every node to [`TaskState::Pending`].
-    ///
-    /// The scheduler calls this on entry so a graph can be run more than
-    /// once (e.g. a warm rebuild in tests) with no state left over from a
-    /// previous run.
     pub fn reset_states(&mut self) {
         for node in &mut self.nodes {
             node.state = TaskState::Pending;
         }
     }
 
-    /// Structural sanity check: no missing endpoints, no self-loops, and the
-    /// graph is acyclic.
     pub fn validate(&self) -> Result<(), GraphError> {
         for (index, (deps, dependents)) in self.deps.iter().zip(&self.dependents).enumerate() {
             let id = NodeId(index);
@@ -330,8 +257,6 @@ impl<T> BuildGraph<T> {
             }
         }
         if self.topological_order().len() != self.nodes.len() {
-            // Defensive: insertion-time cycle detection should make this
-            // unreachable.
             return Err(GraphError::Cycle {
                 dependency: NodeId(0),
                 dependent: NodeId(0),
@@ -340,7 +265,6 @@ impl<T> BuildGraph<T> {
         Ok(())
     }
 
-    /// Whether `from` can reach `to` by following dependency edges.
     fn reaches(&self, from: NodeId, to: NodeId) -> bool {
         let mut seen: HashSet<NodeId> = HashSet::new();
         let mut queue = VecDeque::from([from]);
@@ -421,11 +345,11 @@ mod tests {
                 dependent: NodeId(0)
             })
         );
-        // adding a parallel edge that does not close a cycle is fine
+
         graph
             .add_dependency(NodeId(0), NodeId(2))
             .expect("parallel edges are allowed");
-        // ... but the reverse edge would close the cycle 0 -> 2 -> 0
+
         assert_eq!(
             graph.add_dependency(NodeId(2), NodeId(0)),
             Err(GraphError::Cycle {
@@ -437,7 +361,6 @@ mod tests {
 
     #[test]
     fn topological_order_respects_dependencies() {
-        // diamond: 0 -> 2, 1 -> 2, 2 -> 3
         let mut graph = BuildGraph::new();
         for _ in 0..4 {
             graph.add_node(String::new());
@@ -451,7 +374,7 @@ mod tests {
                 .add_dependency(dependency, dependent)
                 .expect("edge must be added");
         }
-        // add an independent node last in insertion order
+
         let extra = graph.add_node("extra".to_string());
 
         let order = graph.topological_order();
@@ -469,7 +392,7 @@ mod tests {
         for _ in 0..5 {
             graph.add_node(());
         }
-        // 0,1 -> 2 -> 3; 4 independent
+
         for (dependency, dependent) in [
             (NodeId(0), NodeId(2)),
             (NodeId(1), NodeId(2)),
@@ -491,7 +414,6 @@ mod tests {
     fn readiness_requires_successful_dependencies() {
         let mut graph = string_graph(&[(NodeId(0), NodeId(1)), (NodeId(1), NodeId(2))]);
 
-        // untouched: sources are ready, others are not
         assert!(!graph.is_ready(NodeId(2)).unwrap());
         assert_eq!(graph.ready_nodes(), vec![NodeId(0)]);
 
@@ -500,7 +422,6 @@ mod tests {
         assert!(!graph.is_ready(NodeId(2)).unwrap());
         assert_eq!(graph.ready_nodes(), vec![NodeId(1)]);
 
-        // a failed dependency never makes its dependent ready
         graph.set_state(NodeId(0), TaskState::Failed).unwrap();
         assert!(!graph.is_ready(NodeId(1)).unwrap());
         assert_eq!(graph.ready_nodes(), vec![]);

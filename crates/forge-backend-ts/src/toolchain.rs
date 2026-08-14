@@ -11,11 +11,6 @@ impl TsToolchain {
         Self
     }
 
-    /// Windows package managers (npm, pnpm, yarn, npx) are `.cmd` shims, and
-    /// `std::process::Command` cannot find a bare name without an extension.
-    /// Resolve the first `{program}.{exe,cmd,bat}` on `PATH` so the task can
-    /// actually spawn; fall back to the bare name on Unix or when nothing
-    /// matches, letting the OS produce the real error.
     pub fn resolve_program(program: &str) -> String {
         if !cfg!(windows) {
             return program.to_string();

@@ -1,7 +1,3 @@
-//! End-to-end pipeline: metadata → task graph → scheduler → real cargo
-//! builds → fingerprint cache. These tests compile the tiny fixture
-//! workspace with real `cargo build` invocations.
-
 use std::fs;
 use std::path::Path;
 
@@ -13,7 +9,6 @@ use forge_executor::ProcessExecutor;
 use forge_graph::BuildGraph;
 use forge_scheduler::Scheduler;
 
-/// A three-package workspace: `app -> core -> network`.
 fn write_workspace(root: &Path) {
     let packages = [
         ("network", "\n"),
@@ -239,7 +234,6 @@ fn check_mode_uses_cargo_check() {
     }
 }
 
-/// Full pipeline: build, rebuild from cache, then invalidate transitively.
 #[test]
 fn pipeline_builds_incrementally_with_the_fingerprint_cache() {
     let dir = tempfile::tempdir().unwrap();
@@ -267,7 +261,6 @@ fn pipeline_builds_incrementally_with_the_fingerprint_cache() {
     assert_eq!(second.cached, 3, "unchanged inputs hit the cache");
     assert_eq!(second.executed, 0);
 
-    // Touch core only: core and app (its dependent) must rebuild, network stays cached.
     fs::write(
         dir.path().join("core/src/lib.rs"),
         "// core\npub fn from_network() {} // changed\n",
@@ -283,7 +276,6 @@ fn pipeline_builds_incrementally_with_the_fingerprint_cache() {
     assert_eq!(third.executed, 2, "core and app rebuild");
     assert_eq!(third.failed, 0);
 
-    // Touch network: the whole cone invalidates.
     fs::write(
         dir.path().join("network/src/lib.rs"),
         "// network\npub fn net() {} // changed\n",

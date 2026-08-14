@@ -1,34 +1,15 @@
-//! Input-fingerprinting for the Rust backend.
-//!
-//! A package's fingerprint is a content hash of:
-//!
-//! 1. every regular file under the package directory (excluding `target`,
-//!    `.git`, and `.forge`), walked deterministically;
-//! 2. the workspace `Cargo.lock`, when present (so dependency bumps
-//!    invalidate fingerprints);
-//! 3. the toolchain and profile configuration.
-//!
-//! The package-level fingerprint is combined with the fingerprints of all
-//! direct dependencies (sorted to be order-independent) so a change anywhere
-//! in the dependency cone invalidates every affected task. Only file
-//! *content* is hashed; mtimes are deliberately ignored for robustness.
-
 use std::fs;
 use std::io::Read;
 use std::path::Path;
 
 use crate::{BackendError, BuildMode};
 
-/// Directories that never contribute to a package fingerprint.
 pub const EXCLUDED_DIRS: &[&str] = &["target", ".git", ".forge"];
 
-/// Hash a string into `hasher` (NOT length-prefixed; callers control
-/// framing at the next level).
 pub fn hash_string(hasher: &mut blake3::Hasher, value: &str) {
     hasher.update(value.as_bytes());
 }
 
-/// Hash the content of a single file into `hasher`.
 pub fn hash_file_into(path: &Path, hasher: &mut blake3::Hasher) -> Result<(), BackendError> {
     let mut file = fs::File::open(path).map_err(|source| BackendError::Read {
         path: path.to_path_buf(),
@@ -50,12 +31,6 @@ pub fn hash_file_into(path: &Path, hasher: &mut blake3::Hasher) -> Result<(), Ba
     Ok(())
 }
 
-/// Hash every regular file under `dir` (recursively) into `hasher`.
-///
-/// Entries are visited in sorted order with their *relative* path hashed
-/// before the content, so the hash is stable across machines and unaffected
-/// by where the workspace lives. Symlinks and excluded directories are
-/// skipped.
 pub fn hash_directory(dir: &Path, hasher: &mut blake3::Hasher) -> Result<(), BackendError> {
     fn walk(hasher: &mut blake3::Hasher, dir: &Path, base: &str) -> Result<(), BackendError> {
         let mut entries = fs::read_dir(dir)
@@ -90,15 +65,12 @@ pub fn hash_directory(dir: &Path, hasher: &mut blake3::Hasher) -> Result<(), Bac
             } else if file_type.is_file() {
                 hash_file_into(&path, hasher)?;
             }
-            // Symlinks and special files are hashed as metadata only
-            // (their name already went into the hash above).
         }
         Ok(())
     }
     walk(hasher, dir, "")
 }
 
-/// Fingerprint of a package's own inputs, independent of its dependencies.
 pub fn package_input_fingerprint(
     package_dir: &Path,
     lock_file: Option<&Path>,
@@ -122,10 +94,6 @@ pub fn package_input_fingerprint(
     Ok(hasher.finalize().to_hex().to_string())
 }
 
-/// Combine a package's own fingerprint with its dependencies' fingerprints.
-///
-/// Dependencies are sorted so the combination is order-independent, and each
-/// fingerprint is length-framed to avoid ambiguous concatenations.
 pub fn combined_fingerprint(own: &str, dep_fingerprints: &[String]) -> String {
     let mut deps: Vec<&String> = dep_fingerprints.iter().collect();
     deps.sort();
@@ -197,7 +165,7 @@ mod tests {
             hash_directory(dir.path(), &mut hasher).unwrap();
             hasher.finalize().to_hex().to_string()
         };
-        // Rewrite identical content after a pause: same bytes, new mtime.
+
         std::thread::sleep(std::time::Duration::from_millis(1100));
         fs::write(&path, "stable content").unwrap();
         let b = {

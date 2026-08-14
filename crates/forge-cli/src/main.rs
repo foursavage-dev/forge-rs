@@ -1,14 +1,8 @@
-//! Forge command-line interface.
-//!
-//! Milestone 3: `forge build` / `forge check` / `forge clean` drive the full
-//! pipeline: Cargo metadata → package graph → task graph (fingerprinted) →
-//! parallel scheduling → caching → summary. `forge clean` delegates to
-//! `cargo clean`.
-
 #![forbid(unsafe_code)]
 
 mod config;
 mod render;
+mod tui;
 mod watch;
 
 use std::path::{Path, PathBuf};
@@ -18,13 +12,16 @@ use clap::{Args, Parser, Subcommand};
 
 use forge_backend_cc::{CcBackend, CcProjectConfig};
 use forge_backend_go::{GoBackend, GoProjectConfig};
+use forge_backend_py::{PyBackend, PyProjectConfig};
 use forge_backend_rust::{BuildMode, RustBackend};
 use forge_backend_ts::{TsBackend, TsProjectConfig};
 use forge_cache::{CachingExecutor, LocalCache};
 use forge_core::project::Project;
 use forge_executor::{ExecutorError, ProcessExecutor, Task, TaskExecutor, TaskOutcome};
+use forge_plugin::{PluginBackend, PluginRulesManifest};
 use forge_sandbox::{SandboxConfig, SandboxedExecutor};
 use forge_scheduler::Scheduler;
+use tui::TuiDashboard;
 
 use crate::config::{BackendChoice, ForgeConfig};
 
@@ -85,6 +82,8 @@ pub struct CommonArgs {
     pub timeout_secs: Option<u64>,
     #[arg(long = "profile", num_args = 0..=1, default_missing_value = "forge_trace.json")]
     pub profile: Option<PathBuf>,
+    #[arg(long = "tui")]
+    pub tui: bool,
 }
 
 #[derive(Debug, Args)]
@@ -236,6 +235,7 @@ pub(crate) fn run_build_mode(args: CommonArgs, mode: BuildMode) -> ExitCode {
         sandbox: args.sandbox || config.sandbox,
         timeout_secs: args.timeout_secs.or(config.timeout),
         profile: args.profile.or_else(|| config.profile.map(PathBuf::from)),
+        tui: args.tui || config.tui,
     };
 
     match config.backend {
@@ -245,8 +245,16 @@ pub(crate) fn run_build_mode(args: CommonArgs, mode: BuildMode) -> ExitCode {
         | BackendChoice::Typescript
         | BackendChoice::Javascript
         | BackendChoice::Js => return run_ts_build(&start_dir, &merged),
+        BackendChoice::Py | BackendChoice::Python => return run_py_build(&start_dir, &merged),
+        BackendChoice::Plugin | BackendChoice::Rules => {
+            return run_plugin_build(&start_dir, &merged);
+        }
         BackendChoice::Rust => return run_rust_build(&start_dir, &merged, mode),
         BackendChoice::Auto => {}
+    }
+
+    if start_dir.join("Forgefile.json").exists() || start_dir.join("forge.rules.json").exists() {
+        return run_plugin_build(&start_dir, &merged);
     }
 
     if start_dir.join("forge.cc.json").exists() {
@@ -265,6 +273,12 @@ pub(crate) fn run_build_mode(args: CommonArgs, mode: BuildMode) -> ExitCode {
         return run_ts_build(&start_dir, &merged);
     }
 
+    if start_dir.join("forge.py.json").exists()
+        || (start_dir.join("pyproject.toml").exists() && !start_dir.join("Cargo.toml").exists())
+    {
+        return run_py_build(&start_dir, &merged);
+    }
+
     run_rust_build(&start_dir, &merged, mode)
 }
 
@@ -273,11 +287,11 @@ fn run_rust_build(start_dir: &Path, args: &CommonArgs, mode: BuildMode) -> ExitC
         Ok(Some(project)) => project,
         Ok(None) => {
             eprintln!(
-                "error: no Cargo, C/C++, Go, or TypeScript project found in `{}` or any parent directory",
+                "error: no Cargo, C/C++, Go, TypeScript, Python, or Custom Rules project found in `{}` or any parent directory",
                 start_dir.display()
             );
             eprintln!(
-                "hint: run `forge build` from a directory containing Cargo.toml, forge.cc.json, go.mod, or forge.ts.json/package.json"
+                "hint: run `forge build` from a directory containing Cargo.toml, forge.cc.json, go.mod, package.json, pyproject.toml, or Forgefile.json"
             );
             return ExitCode::FAILURE;
         }
@@ -323,11 +337,15 @@ fn run_rust_build(start_dir: &Path, args: &CommonArgs, mode: BuildMode) -> ExitC
     } else {
         match LocalCache::default_location() {
             Ok(cache) => {
-                render::print_cache_location(cache.root());
+                if !args.tui {
+                    render::print_cache_location(cache.root());
+                }
                 Some(cache)
             }
             Err(error) => {
-                eprintln!("warning: fingerprint cache disabled: {error}");
+                if !args.tui {
+                    eprintln!("warning: fingerprint cache disabled: {error}");
+                }
                 None
             }
         }
@@ -337,18 +355,48 @@ fn run_rust_build(start_dir: &Path, args: &CommonArgs, mode: BuildMode) -> ExitC
     let workers = args.jobs.unwrap_or_else(default_jobs).max(1);
     let scheduler = Scheduler::new(workers);
 
-    render::print_project(&project, &package_graph);
-    println!();
-    println!("{}...", mode_verb(mode));
-    println!();
+    if !args.tui {
+        render::print_project(&project, &package_graph);
+        println!();
+        println!("{}...", mode_verb(mode));
+        println!();
+    }
 
-    let summary = match scheduler.run(&mut task_graph, &executor, |task, outcome| {
-        render::print_progress(task, outcome)
-    }) {
-        Ok(summary) => summary,
-        Err(error) => {
-            eprintln!("error: scheduler failed: {error}");
-            return ExitCode::FAILURE;
+    let summary = if args.tui {
+        let mut dashboard = TuiDashboard::new(task_graph.len());
+        let _ = dashboard.start();
+        let run_res = scheduler.run(&mut task_graph, &executor, |task, outcome| {
+            dashboard.on_task_finish(&task.label, outcome);
+        });
+        let summary = match run_res {
+            Ok(s) => s,
+            Err(err) => {
+                let _ = dashboard.finish(&forge_scheduler::BuildSummary {
+                    total: task_graph.len(),
+                    executed: 0,
+                    cached: 0,
+                    failed: 1,
+                    cancelled: 0,
+                    duration: std::time::Duration::from_millis(0),
+                    workers,
+                    failures: vec![],
+                    timings: vec![],
+                });
+                eprintln!("error: scheduler failed: {err}");
+                return ExitCode::FAILURE;
+            }
+        };
+        let _ = dashboard.finish(&summary);
+        summary
+    } else {
+        match scheduler.run(&mut task_graph, &executor, |task, outcome| {
+            render::print_progress(task, outcome)
+        }) {
+            Ok(summary) => summary,
+            Err(error) => {
+                eprintln!("error: scheduler failed: {error}");
+                return ExitCode::FAILURE;
+            }
         }
     };
 
@@ -506,6 +554,7 @@ fn run_run(args: RunArgs) -> ExitCode {
         sandbox: false,
         timeout_secs: None,
         profile: None,
+        tui: false,
     };
 
     let build_status = run_build_mode(common_args, BuildMode::Build);
@@ -612,8 +661,6 @@ fn resolve_start_dir(path: Option<&Path>) -> std::result::Result<PathBuf, String
         .map_err(|error| format!("cannot access `{}`: {error}", base.display()))
 }
 
-/// Strip the `\\?\` verbatim prefix Windows `canonicalize` adds; native C/C++
-/// and Go tools cannot open such paths.
 fn plain_path(path: &Path) -> std::path::PathBuf {
     let text = path.to_string_lossy();
     if cfg!(windows) {
@@ -625,8 +672,6 @@ fn plain_path(path: &Path) -> std::path::PathBuf {
 }
 
 fn run_cc_build(start_dir: &Path, args: &CommonArgs) -> ExitCode {
-    // Canonicalized paths on Windows carry a `\\?\` verbatim prefix that
-    // C/C++ compilers cannot open; hand the backend a plain path.
     let start_dir = plain_path(start_dir);
     let config_path = start_dir.join("forge.cc.json");
     let config = match CcProjectConfig::from_file(&config_path) {
@@ -658,7 +703,6 @@ fn run_cc_build(start_dir: &Path, args: &CommonArgs) -> ExitCode {
 }
 
 fn run_go_build(start_dir: &Path, args: &CommonArgs) -> ExitCode {
-    // See `run_cc_build`: the Go toolchain also chokes on `\\?\` paths.
     let start_dir = plain_path(start_dir);
     let config_path = start_dir.join("forge.go.json");
     let config = if config_path.exists() {
@@ -728,6 +772,50 @@ fn run_ts_build(start_dir: &Path, args: &CommonArgs) -> ExitCode {
     execute_task_graph(&mut task_graph, args)
 }
 
+fn run_py_build(start_dir: &Path, args: &CommonArgs) -> ExitCode {
+    let start_dir = plain_path(start_dir);
+    let config = match PyProjectConfig::discover_or_default(&start_dir) {
+        Ok(cfg) => cfg,
+        Err(err) => {
+            eprintln!("error: failed to discover Python project: {err}");
+            return ExitCode::FAILURE;
+        }
+    };
+
+    let backend = PyBackend::new();
+    let mut task_graph = match backend.build_task_graph(&config, &start_dir) {
+        Ok(g) => g,
+        Err(err) => {
+            eprintln!("error: {err}");
+            return ExitCode::FAILURE;
+        }
+    };
+
+    execute_task_graph(&mut task_graph, args)
+}
+
+fn run_plugin_build(start_dir: &Path, args: &CommonArgs) -> ExitCode {
+    let start_dir = plain_path(start_dir);
+    let manifest = match PluginRulesManifest::discover_or_load(&start_dir) {
+        Ok(m) => m,
+        Err(err) => {
+            eprintln!("error: failed to load custom build rules: {err}");
+            return ExitCode::FAILURE;
+        }
+    };
+
+    let backend = PluginBackend::new();
+    let mut task_graph = match backend.build_task_graph(&manifest, &start_dir) {
+        Ok(g) => g,
+        Err(err) => {
+            eprintln!("error: {err}");
+            return ExitCode::FAILURE;
+        }
+    };
+
+    execute_task_graph(&mut task_graph, args)
+}
+
 fn execute_task_graph(
     task_graph: &mut forge_graph::BuildGraph<Task>,
     args: &CommonArgs,
@@ -737,11 +825,15 @@ fn execute_task_graph(
     } else {
         match LocalCache::default_location() {
             Ok(c) => {
-                render::print_cache_location(c.root());
+                if !args.tui {
+                    render::print_cache_location(c.root());
+                }
                 Some(c)
             }
             Err(err) => {
-                eprintln!("warning: fingerprint cache disabled: {err}");
+                if !args.tui {
+                    eprintln!("warning: fingerprint cache disabled: {err}");
+                }
                 None
             }
         }
@@ -752,13 +844,41 @@ fn execute_task_graph(
     let workers = args.jobs.unwrap_or_else(default_jobs).max(1);
     let scheduler = Scheduler::new(workers);
 
-    let summary = match scheduler.run(task_graph, &executor, |task, outcome| {
-        render::print_progress(task, outcome)
-    }) {
-        Ok(summary) => summary,
-        Err(err) => {
-            eprintln!("error: scheduling failure: {err}");
-            return ExitCode::FAILURE;
+    let summary = if args.tui {
+        let mut dashboard = TuiDashboard::new(task_graph.len());
+        let _ = dashboard.start();
+        let run_res = scheduler.run(task_graph, &executor, |task, outcome| {
+            dashboard.on_task_finish(&task.label, outcome);
+        });
+        let summary = match run_res {
+            Ok(s) => s,
+            Err(err) => {
+                let _ = dashboard.finish(&forge_scheduler::BuildSummary {
+                    total: task_graph.len(),
+                    executed: 0,
+                    cached: 0,
+                    failed: 1,
+                    cancelled: 0,
+                    duration: std::time::Duration::from_millis(0),
+                    workers,
+                    failures: vec![],
+                    timings: vec![],
+                });
+                eprintln!("error: scheduling failure: {err}");
+                return ExitCode::FAILURE;
+            }
+        };
+        let _ = dashboard.finish(&summary);
+        summary
+    } else {
+        match scheduler.run(task_graph, &executor, |task, outcome| {
+            render::print_progress(task, outcome)
+        }) {
+            Ok(summary) => summary,
+            Err(err) => {
+                eprintln!("error: scheduling failure: {err}");
+                return ExitCode::FAILURE;
+            }
         }
     };
 

@@ -1,32 +1,23 @@
-//! Lifecycle states of build tasks.
-
-/// Lifecycle state of a task in the build graph.
-///
-/// Transitions are not enforced by [`crate::BuildGraph`] itself; the
-/// scheduler is responsible for moving tasks through their lifecycle.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TaskState {
-    /// Created, but not all dependencies have finished successfully.
     Pending,
-    /// All dependencies finished successfully; waiting to be executed.
+
     Ready,
-    /// Currently executing.
+
     Running,
-    /// Finished successfully.
+
     Succeeded,
-    /// Finished with a failure.
+
     Failed,
-    /// Deliberately skipped (e.g. excluded from the requested selection).
+
     Skipped,
-    /// Restored from cache without executing.
+
     Cached,
-    /// Cancelled because a dependency failed or the build was aborted.
+
     Cancelled,
 }
 
 impl TaskState {
-    /// Whether the state is terminal, meaning no further transitions are
-    /// expected.
     pub fn is_terminal(self) -> bool {
         matches!(
             self,
@@ -38,8 +29,6 @@ impl TaskState {
         )
     }
 
-    /// Whether the state counts as success for dependency gating: a node
-    /// whose dependencies are all in a successful state is allowed to run.
     pub fn is_successful(self) -> bool {
         matches!(
             self,
@@ -47,7 +36,6 @@ impl TaskState {
         )
     }
 
-    /// Whether the state represents an unsuccessful outcome.
     pub fn is_unsuccessful(self) -> bool {
         matches!(self, TaskState::Failed | TaskState::Cancelled)
     }

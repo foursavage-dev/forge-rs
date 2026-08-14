@@ -107,7 +107,6 @@ impl CcBackend {
             .unwrap_or_else(|_| "no_fp".to_string());
 
             let cache_entry = CacheEntry {
-                // `/` separators keep keys valid as file paths on Windows.
                 key: format!("cc/{namespace}/{}/{}", config.name, stem),
                 fingerprint: fingerprint_val,
             };

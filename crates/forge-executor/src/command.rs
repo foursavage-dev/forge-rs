@@ -1,33 +1,21 @@
-//! A declarative description of a process to run: `CommandSpec`.
-//!
-//! `CommandSpec` is the recipe a task's executor turns into an OS process.
-//! It stays serializable and pure (no side effects on construction), so a
-//! task graph can be built, inspected, and executed freely.
-
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::path::PathBuf;
 
-/// A fully-specified external command: program, arguments, environment, cwd.
-///
-/// Forge never shells out to a command interpreter; the `program` is
-/// resolved and spawned directly (see `std::process::Command`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CommandSpec {
-    /// The program to execute.
     pub program: String,
-    /// Positional arguments, in order.
+
     pub args: Vec<String>,
-    /// Environment overrides applied on top of the inherited environment.
+
     pub env: BTreeMap<String, String>,
-    /// Replace the inherited environment entirely; only `env` entries apply.
+
     pub env_clear: bool,
-    /// Working directory for the child process.
+
     pub cwd: Option<PathBuf>,
 }
 
 impl CommandSpec {
-    /// Create a command with no arguments.
     pub fn new(program: impl Into<String>) -> Self {
         Self {
             program: program.into(),
@@ -38,13 +26,11 @@ impl CommandSpec {
         }
     }
 
-    /// Append an argument.
     pub fn arg(mut self, arg: impl Into<String>) -> Self {
         self.args.push(arg.into());
         self
     }
 
-    /// Append several arguments.
     pub fn args<I, S>(mut self, args: I) -> Self
     where
         I: IntoIterator<Item = S>,
@@ -54,28 +40,21 @@ impl CommandSpec {
         self
     }
 
-    /// Set an environment variable override.
     pub fn env(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.env.insert(key.into(), value.into());
         self
     }
 
-    /// Drop the inherited environment; only `env` entries are set.
     pub fn env_clear(mut self) -> Self {
         self.env_clear = true;
         self
     }
 
-    /// Set the working directory.
     pub fn cwd(mut self, cwd: impl Into<PathBuf>) -> Self {
         self.cwd = Some(cwd.into());
         self
     }
 
-    /// Render the command as a single shell-like string (for display only).
-    ///
-    /// `program` is rendered verbatim; arguments are single-quoted if they
-    /// contain whitespace or shell metacharacters.
     pub fn command_line(&self) -> String {
         let mut line = String::new();
         write!(&mut line, "{}", self.program).unwrap();
@@ -91,7 +70,6 @@ impl CommandSpec {
         line
     }
 
-    /// Convert into a `std::process::Command`, ready to run.
     pub fn to_std_command(&self) -> std::process::Command {
         let mut command = std::process::Command::new(&self.program);
         command.args(&self.args);
