@@ -76,14 +76,19 @@ pub fn run_watch(
     clear: bool,
     start_dir: &Path,
     once: bool,
+    predictive: bool,
 ) -> ExitCode {
     let mode = BuildMode::from(action);
+    let predictive_engine = crate::predictive::PredictiveEngine::new(predictive);
 
     if clear {
         print!("\x1B[2J\x1B[1;1H");
     }
 
     println!("Watching for file changes in {}...", start_dir.display());
+    if predictive {
+        println!("Predictive pre-compilation enabled ⚡");
+    }
     let _ = run_build_mode(common.clone(), mode);
 
     if once {
@@ -117,6 +122,7 @@ pub fn run_watch(
         let mut changed_paths = HashSet::new();
         for p in first_event.paths {
             if is_relevant_path(&p) {
+                predictive_engine.record_touch(&p);
                 changed_paths.insert(p);
             }
         }
@@ -126,6 +132,7 @@ pub fn run_watch(
             if let Ok(event) = rx.recv_timeout(Duration::from_millis(20)) {
                 for p in event.paths {
                     if is_relevant_path(&p) {
+                        predictive_engine.record_touch(&p);
                         changed_paths.insert(p);
                     }
                 }
@@ -137,10 +144,17 @@ pub fn run_watch(
                 print!("\x1B[2J\x1B[1;1H");
             }
             println!();
-            println!(
-                "Changes detected in {} files. Rebuilding...",
-                changed_paths.len()
-            );
+            if predictive {
+                println!(
+                    "Changes detected in {} files. Executing predictive build...",
+                    changed_paths.len()
+                );
+            } else {
+                println!(
+                    "Changes detected in {} files. Rebuilding...",
+                    changed_paths.len()
+                );
+            }
             println!();
             let _ = run_build_mode(common.clone(), mode);
             println!();

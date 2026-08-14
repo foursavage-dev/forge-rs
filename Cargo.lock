@@ -872,6 +872,7 @@ version = "0.1.0"
 dependencies = [
  "anstream 0.6.21",
  "anstyle",
+ "blake3",
  "cargo_metadata",
  "clap",
  "crossterm",

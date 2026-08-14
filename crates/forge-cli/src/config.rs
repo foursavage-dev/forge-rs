@@ -74,6 +74,12 @@ pub struct ForgeConfig {
     pub send_source: bool,
     #[serde(default)]
     pub ram_limit: Option<u8>,
+    #[serde(default)]
+    pub semantic: bool,
+    #[serde(default)]
+    pub ramdisk: bool,
+    #[serde(default)]
+    pub swarm: bool,
 }
 
 impl ForgeConfig {

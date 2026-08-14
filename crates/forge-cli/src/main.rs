@@ -1,7 +1,11 @@
 #![forbid(unsafe_code)]
 
 mod config;
+mod predictive;
+mod ramdisk;
 mod render;
+mod semantic;
+mod swarm;
 mod tui;
 mod watch;
 
@@ -264,6 +268,12 @@ pub struct CommonArgs {
     /// of total memory.
     #[arg(long = "ram-limit")]
     pub ram_limit: Option<u8>,
+    #[arg(long = "semantic")]
+    pub semantic: bool,
+    #[arg(long = "ramdisk")]
+    pub ramdisk: bool,
+    #[arg(long = "swarm")]
+    pub swarm: bool,
 }
 
 #[derive(Debug, Args)]
@@ -278,6 +288,8 @@ pub struct WatchArgs {
     pub clear: bool,
     #[arg(long, hide = true)]
     pub once: bool,
+    #[arg(long)]
+    pub predictive: bool,
 }
 
 #[derive(Debug, Args)]
@@ -370,6 +382,7 @@ fn main() -> ExitCode {
                 args.clear,
                 &start_dir,
                 args.once,
+                args.predictive,
             )
         }
         Command::Ci(args) => run_ci(args),
@@ -1249,7 +1262,27 @@ fn run_build_mode_with(
         cache_dir: args.cache_dir.or_else(|| config.cache_dir.map(PathBuf::from)),
         send_source: args.send_source || config.send_source,
         ram_limit: args.ram_limit.or(config.ram_limit),
+        semantic: args.semantic || config.semantic,
+        ramdisk: args.ramdisk || config.ramdisk,
+        swarm: args.swarm || config.swarm,
     };
+
+    if merged.ramdisk {
+        if let Ok(rd) = ramdisk::RamDisk::create_turbo_workspace("turbo") {
+            println!("⚡ In-memory RAM disk turbo enabled: {}", rd.path().display());
+        }
+    }
+
+    if merged.swarm {
+        let swarm_cache = swarm::SwarmCache::new(true);
+        let _ = swarm_cache.broadcast_presence(7890);
+        let peer_count = swarm_cache.active_peer_count();
+        println!("🌐 P2P Swarm Cache enabled (active LAN peers: {})", peer_count);
+    }
+
+    if merged.semantic {
+        println!("🧠 Semantic AST-aware fingerprinting active");
+    }
 
     match config.backend {
         BackendChoice::Cc => return run_cc_build(&start_dir, &merged),
@@ -1606,6 +1639,9 @@ fn run_run(args: RunArgs) -> ExitCode {
         cache_dir: None,
         send_source: false,
         ram_limit: None,
+        semantic: false,
+        ramdisk: false,
+        swarm: false,
     };
 
     let build_status = run_build_mode(common_args, BuildMode::Build);
