@@ -3,10 +3,12 @@
 pub mod env;
 pub mod executor;
 pub mod isolation;
+pub mod tracer;
 
 pub use env::{EnvPolicy, sanitize_env};
 pub use executor::{SandboxConfig, SandboxedExecutor};
 pub use isolation::{FsPolicy, SandboxWorkspace};
+pub use tracer::{HermeticTraceResult, SyscallTracer};
 
 #[cfg(test)]
 mod tests {

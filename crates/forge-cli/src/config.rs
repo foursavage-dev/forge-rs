@@ -80,6 +80,12 @@ pub struct ForgeConfig {
     pub ramdisk: bool,
     #[serde(default)]
     pub swarm: bool,
+    #[serde(default)]
+    pub reflink: bool,
+    #[serde(default)]
+    pub hermetic_trace: bool,
+    #[serde(default)]
+    pub swarm_compute: bool,
 }
 
 impl ForgeConfig {

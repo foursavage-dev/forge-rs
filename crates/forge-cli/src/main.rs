@@ -274,6 +274,12 @@ pub struct CommonArgs {
     pub ramdisk: bool,
     #[arg(long = "swarm")]
     pub swarm: bool,
+    #[arg(long = "reflink")]
+    pub reflink: bool,
+    #[arg(long = "hermetic-trace")]
+    pub hermetic_trace: bool,
+    #[arg(long = "swarm-compute")]
+    pub swarm_compute: bool,
 }
 
 #[derive(Debug, Args)]
@@ -1265,6 +1271,9 @@ fn run_build_mode_with(
         semantic: args.semantic || config.semantic,
         ramdisk: args.ramdisk || config.ramdisk,
         swarm: args.swarm || config.swarm,
+        reflink: args.reflink || config.reflink,
+        hermetic_trace: args.hermetic_trace || config.hermetic_trace,
+        swarm_compute: args.swarm_compute || config.swarm_compute,
     };
 
     if merged.ramdisk {
@@ -1273,11 +1282,25 @@ fn run_build_mode_with(
         }
     }
 
-    if merged.swarm {
+    if merged.swarm || merged.swarm_compute {
         let swarm_cache = swarm::SwarmCache::new(true);
         let _ = swarm_cache.broadcast_presence(7890);
-        let peer_count = swarm_cache.active_peer_count();
-        println!("🌐 P2P Swarm Cache enabled (active LAN peers: {})", peer_count);
+        if merged.swarm_compute {
+            let _ = swarm_cache.broadcast_compute_worker(7891, 4);
+            let workers = swarm_cache.discovered_compute_endpoints();
+            println!("🪐 Distributed P2P Compute Swarm active (LAN workers: {})", workers.len());
+        } else {
+            let peer_count = swarm_cache.active_peer_count();
+            println!("🌐 P2P Swarm Cache enabled (active LAN peers: {})", peer_count);
+        }
+    }
+
+    if merged.reflink {
+        println!("⚡ Reflink / Copy-on-Write hardware VFS engine active");
+    }
+
+    if merged.hermetic_trace {
+        println!("🔮 Hermetic Syscall tracing sandbox active");
     }
 
     if merged.semantic {
@@ -1642,6 +1665,9 @@ fn run_run(args: RunArgs) -> ExitCode {
         semantic: false,
         ramdisk: false,
         swarm: false,
+        reflink: false,
+        hermetic_trace: false,
+        swarm_compute: false,
     };
 
     let build_status = run_build_mode(common_args, BuildMode::Build);

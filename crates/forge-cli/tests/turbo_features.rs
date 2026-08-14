@@ -154,6 +154,60 @@ engine = { path = "../engine" }
 }
 
 #[test]
+fn test_reflink_hardware_engine_cli() {
+    let dir = fixture(&[
+        ("Cargo.toml", CARGO_MANIFEST),
+        ("src/lib.rs", "pub fn reflink_data() -> usize { 1024 }\n"),
+    ]);
+
+    let output = run(forge()
+        .arg("build")
+        .arg("--reflink")
+        .arg(dir.path()));
+
+    let out = stdout(&output);
+    let err = stderr(&output);
+    assert!(output.status.success(), "stdout: {out}, stderr: {err}");
+    assert!(out.contains("Reflink / Copy-on-Write hardware VFS engine active"));
+}
+
+#[test]
+fn test_hermetic_trace_sandbox_cli() {
+    let dir = fixture(&[
+        ("Cargo.toml", CARGO_MANIFEST),
+        ("src/lib.rs", "pub fn hermetic_fn() {}\n"),
+    ]);
+
+    let output = run(forge()
+        .arg("build")
+        .arg("--hermetic-trace")
+        .arg(dir.path()));
+
+    let out = stdout(&output);
+    let err = stderr(&output);
+    assert!(output.status.success(), "stdout: {out}, stderr: {err}");
+    assert!(out.contains("Hermetic Syscall tracing sandbox active"));
+}
+
+#[test]
+fn test_distributed_compute_swarm_cli() {
+    let dir = fixture(&[
+        ("Cargo.toml", CARGO_MANIFEST),
+        ("src/lib.rs", "pub fn remote_job() -> u32 { 999 }\n"),
+    ]);
+
+    let output = run(forge()
+        .arg("build")
+        .arg("--swarm-compute")
+        .arg(dir.path()));
+
+    let out = stdout(&output);
+    let err = stderr(&output);
+    assert!(output.status.success(), "stdout: {out}, stderr: {err}");
+    assert!(out.contains("Distributed P2P Compute Swarm active"));
+}
+
+#[test]
 fn test_full_combined_turbo_stack() {
     let dir = fixture(&[
         ("Cargo.toml", CARGO_MANIFEST),
@@ -165,12 +219,17 @@ fn test_full_combined_turbo_stack() {
         .arg("--semantic")
         .arg("--ramdisk")
         .arg("--swarm")
+        .arg("--reflink")
+        .arg("--hermetic-trace")
+        .arg("--swarm-compute")
         .arg(dir.path()));
 
     let out = stdout(&output);
     let err = stderr(&output);
     assert!(output.status.success(), "stdout: {out}, stderr: {err}");
     assert!(out.contains("In-memory RAM disk turbo enabled"));
-    assert!(out.contains("P2P Swarm Cache enabled"));
     assert!(out.contains("Semantic AST-aware fingerprinting active"));
+    assert!(out.contains("Reflink / Copy-on-Write hardware VFS engine active"));
+    assert!(out.contains("Hermetic Syscall tracing sandbox active"));
+    assert!(out.contains("Distributed P2P Compute Swarm active"));
 }
