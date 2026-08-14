@@ -20,6 +20,8 @@ pub struct CommandSpec {
     pub args: Vec<String>,
     /// Environment overrides applied on top of the inherited environment.
     pub env: BTreeMap<String, String>,
+    /// Replace the inherited environment entirely; only `env` entries apply.
+    pub env_clear: bool,
     /// Working directory for the child process.
     pub cwd: Option<PathBuf>,
 }
@@ -31,6 +33,7 @@ impl CommandSpec {
             program: program.into(),
             args: Vec::new(),
             env: BTreeMap::new(),
+            env_clear: false,
             cwd: None,
         }
     }
@@ -54,6 +57,12 @@ impl CommandSpec {
     /// Set an environment variable override.
     pub fn env(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.env.insert(key.into(), value.into());
+        self
+    }
+
+    /// Drop the inherited environment; only `env` entries are set.
+    pub fn env_clear(mut self) -> Self {
+        self.env_clear = true;
         self
     }
 
@@ -86,6 +95,9 @@ impl CommandSpec {
     pub fn to_std_command(&self) -> std::process::Command {
         let mut command = std::process::Command::new(&self.program);
         command.args(&self.args);
+        if self.env_clear {
+            command.env_clear();
+        }
         for (key, value) in &self.env {
             command.env(key, value);
         }
@@ -129,5 +141,19 @@ mod tests {
         let args: Vec<&std::ffi::OsStr> = std_command.get_args().collect();
         assert_eq!(args, vec!["--version"]);
         assert_eq!(std_command.get_envs().count(), 1);
+    }
+
+    #[test]
+    fn env_clear_replaces_the_inherited_environment() {
+        let spec = CommandSpec::new("cmd").env_clear().env("FORGE_ONLY", "1");
+        let std_command = spec.to_std_command();
+        let envs: Vec<_> = std_command.get_envs().collect();
+        assert_eq!(
+            envs,
+            vec![(
+                std::ffi::OsStr::new("FORGE_ONLY"),
+                Some(std::ffi::OsStr::new("1"))
+            )]
+        );
     }
 }

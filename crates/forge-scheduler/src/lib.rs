@@ -8,6 +8,8 @@
 //! [`TaskExecutor`] trait, so cached wrappers and test doubles plug in
 //! seamlessly.
 
+#![forbid(unsafe_code)]
+
 use std::collections::HashMap;
 use std::sync::mpsc;
 use std::thread;
@@ -31,8 +33,27 @@ pub enum SchedulerError {
 #[derive(Debug, Clone)]
 pub struct TaskTiming {
     pub label: String,
+    pub description: String,
+    pub start_offset: Duration,
     pub duration: Duration,
     pub node_id: NodeId,
+    pub worker_id: usize,
+    pub status: TaskStatus,
+}
+
+impl TaskTiming {
+    pub fn new(label: impl Into<String>, duration: Duration, node_id: NodeId) -> Self {
+        let label = label.into();
+        Self {
+            label: label.clone(),
+            description: label,
+            start_offset: Duration::ZERO,
+            duration,
+            node_id,
+            worker_id: 0,
+            status: TaskStatus::Executed,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -95,6 +116,74 @@ impl BuildSummary {
         self.failed == 0
     }
 
+    pub fn to_chrome_trace(&self) -> serde_json::Value {
+        let mut events = Vec::new();
+
+        events.push(serde_json::json!({
+            "name": "process_name",
+            "ph": "M",
+            "pid": 1,
+            "args": {
+                "name": "Forge Build Engine"
+            }
+        }));
+
+        for w in 0..self.workers {
+            events.push(serde_json::json!({
+                "name": "thread_name",
+                "ph": "M",
+                "pid": 1,
+                "tid": w,
+                "args": {
+                    "name": format!("Worker {w}")
+                }
+            }));
+        }
+
+        for timing in &self.timings {
+            let status_str = match timing.status {
+                TaskStatus::Executed => "executed",
+                TaskStatus::Cached => "cached",
+                TaskStatus::Failed => "failed",
+            };
+            events.push(serde_json::json!({
+                "name": timing.label,
+                "cat": "task",
+                "ph": "X",
+                "ts": timing.start_offset.as_micros(),
+                "dur": timing.duration.as_micros(),
+                "pid": 1,
+                "tid": timing.worker_id,
+                "args": {
+                    "description": timing.description,
+                    "status": status_str,
+                    "duration_ms": timing.duration.as_secs_f64() * 1000.0,
+                }
+            }));
+        }
+
+        serde_json::json!({
+            "traceEvents": events,
+            "displayTimeUnit": "ms",
+            "otherData": {
+                "forge_version": "0.1.0",
+                "total_duration_ms": self.duration.as_secs_f64() * 1000.0,
+                "total_tasks": self.total,
+                "executed": self.executed,
+                "cached": self.cached,
+                "failed": self.failed,
+            }
+        })
+    }
+
+    pub fn write_chrome_trace(&self, path: &std::path::Path) -> std::io::Result<()> {
+        let trace = self.to_chrome_trace();
+        let file = std::fs::File::create(path)?;
+        let writer = std::io::BufWriter::new(file);
+        serde_json::to_writer_pretty(writer, &trace)?;
+        Ok(())
+    }
+
     pub fn critical_path(&self, graph: &BuildGraph<Task>) -> (Duration, Vec<String>) {
         let timing_map: HashMap<NodeId, Duration> = self
             .timings
@@ -137,11 +226,9 @@ impl BuildSummary {
     }
 }
 
-// A (node, outcome) pair travelling from worker threads to the scheduler.
-type Outcome = (NodeId, TaskOutcome);
+type Outcome = (NodeId, TaskOutcome, usize, Duration);
 
-/// Apply one finished task to the graph: update the node state, record
-/// failures, and notify progress listeners.
+#[allow(clippy::too_many_arguments)]
 fn process_completion<G>(
     graph: &mut BuildGraph<Task>,
     in_flight: &mut usize,
@@ -150,6 +237,8 @@ fn process_completion<G>(
     on_progress: &mut G,
     id: NodeId,
     outcome: TaskOutcome,
+    worker_id: usize,
+    start_offset: Duration,
 ) -> Result<(), SchedulerError>
 where
     G: FnMut(&Task, &TaskOutcome),
@@ -159,8 +248,12 @@ where
     if let Some(task) = &task {
         timings.push(TaskTiming {
             label: task.label.clone(),
+            description: task.description.clone(),
+            start_offset,
             duration: outcome.duration,
             node_id: id,
+            worker_id,
+            status: outcome.status,
         });
     }
     match outcome.status {
@@ -184,7 +277,6 @@ where
     Ok(())
 }
 
-/// Executes ready tasks in parallel on a fixed worker pool.
 #[derive(Debug, Clone)]
 pub struct Scheduler {
     workers: usize,
@@ -197,16 +289,6 @@ impl Scheduler {
         }
     }
 
-    /// Run every task in `graph` to completion.
-    ///
-    /// Tasks become ready as soon as all their dependencies succeeded or
-    /// were cached. When a task fails, its transitive dependents are marked
-    /// `Cancelled`. `on_progress` is invoked (on the scheduling thread)
-    /// after each task finishes; it is never called from worker threads.
-    ///
-    /// Worker threads are scoped: `run` returns only after every task has
-    /// finished. Panics inside `E::execute` are caught and turned into a
-    /// failed outcome so a buggy executor cannot take down a build.
     pub fn run<E, G>(
         &self,
         graph: &mut BuildGraph<Task>,
@@ -224,13 +306,12 @@ impl Scheduler {
         let mut in_flight: usize = 0;
         let mut failures: Vec<FailureRecord> = Vec::new();
         let mut timings: Vec<TaskTiming> = Vec::new();
+        let mut free_workers: Vec<usize> = (0..self.workers).rev().collect();
 
         let result = thread::scope(|scope| -> Result<(), SchedulerError> {
             let mut ready: Vec<NodeId> = Vec::new();
             let mut ready_index: usize = 0;
             loop {
-                // 1. Dispatch all currently ready tasks (up to the worker
-                //    limit). `ready` is refreshed lazily only when exhausted.
                 if ready_index >= ready.len() {
                     ready = graph.ready_nodes();
                     ready_index = 0;
@@ -241,6 +322,8 @@ impl Scheduler {
                     graph.set_state(id, TaskState::Running)?;
                     let task = graph.node(id).expect("ready nodes exist").payload.clone();
                     in_flight += 1;
+                    let worker_id = free_workers.pop().unwrap_or(0);
+                    let task_start_offset = start.elapsed();
                     let tx = tx.clone();
                     scope.spawn(move || {
                         let outcome =
@@ -261,25 +344,21 @@ impl Scheduler {
                                     )
                                 }
                             };
-                        let _ = tx.send((id, outcome));
+                        let _ = tx.send((id, outcome, worker_id, task_start_offset));
                     });
                 }
 
-                // 2. All tasks terminal?
                 if graph.nodes().iter().all(|node| node.state.is_terminal()) {
                     break;
                 }
 
-                // 3. Nothing in flight (but tasks still pending) can only
-                //    happen if a ready task was missed or a state transition
-                //    is wrong — better to stop than to wait forever.
                 if in_flight == 0 {
                     return Err(SchedulerError::Stalled);
                 }
 
-                // 4. Block for at least one completion, then drain whatever
-                //    else arrived while we were dispatching.
-                let (id, outcome) = rx.recv().map_err(|_| SchedulerError::Stalled)?;
+                let (id, outcome, worker_id, task_start_offset) =
+                    rx.recv().map_err(|_| SchedulerError::Stalled)?;
+                free_workers.push(worker_id);
                 process_completion(
                     graph,
                     &mut in_flight,
@@ -288,8 +367,11 @@ impl Scheduler {
                     &mut on_progress,
                     id,
                     outcome,
+                    worker_id,
+                    task_start_offset,
                 )?;
-                while let Ok((id, outcome)) = rx.try_recv() {
+                while let Ok((id, outcome, worker_id, task_start_offset)) = rx.try_recv() {
+                    free_workers.push(worker_id);
                     process_completion(
                         graph,
                         &mut in_flight,
@@ -298,6 +380,8 @@ impl Scheduler {
                         &mut on_progress,
                         id,
                         outcome,
+                        worker_id,
+                        task_start_offset,
                     )?;
                 }
             }
@@ -376,21 +460,9 @@ mod tests {
         graph.add_dependency(b, c).expect("edge b -> c");
 
         let timings = vec![
-            TaskTiming {
-                label: "a".to_string(),
-                duration: Duration::from_secs(1),
-                node_id: a,
-            },
-            TaskTiming {
-                label: "b".to_string(),
-                duration: Duration::from_secs(3),
-                node_id: b,
-            },
-            TaskTiming {
-                label: "c".to_string(),
-                duration: Duration::from_secs(1),
-                node_id: c,
-            },
+            TaskTiming::new("a", Duration::from_secs(1), a),
+            TaskTiming::new("b", Duration::from_secs(3), b),
+            TaskTiming::new("c", Duration::from_secs(1), c),
         ];
         let summary = BuildSummary::from_graph(&graph, Duration::ZERO, 2, vec![], timings);
 
@@ -554,5 +626,24 @@ mod tests {
         assert_eq!(Scheduler::new(0).workers, 1);
         assert_eq!(Scheduler::new(1).workers, 1);
         assert_eq!(Scheduler::new(4).workers, 4);
+    }
+
+    #[test]
+    fn test_chrome_trace_generation() {
+        let mut graph = chain_graph(&["task1", "task2"]);
+        let executor = FakeExecutor::default();
+        let scheduler = Scheduler::new(2);
+        let summary = scheduler.run(&mut graph, &executor, |_, _| {}).unwrap();
+
+        let trace = summary.to_chrome_trace();
+        let events = trace["traceEvents"].as_array().unwrap();
+        assert!(events.iter().any(|e| e["name"] == "process_name"));
+        assert!(
+            events
+                .iter()
+                .any(|e| e["name"] == "thread_name" && e["args"]["name"] == "Worker 0")
+        );
+        assert!(events.iter().any(|e| e["name"] == "task1"));
+        assert!(events.iter().any(|e| e["name"] == "task2"));
     }
 }

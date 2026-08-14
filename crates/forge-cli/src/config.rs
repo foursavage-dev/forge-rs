@@ -7,14 +7,24 @@
 //!
 //! ```toml
 //! # Backend to use: "auto" (default) picks Cargo for Cargo.toml, the C/C++
-//! # backend for forge.cc.json, and Go for go.mod.
-//! backend = "auto"      # auto | rust | cc | go
+//! # backend for forge.cc.json, Go for go.mod, and the TypeScript backend
+//! # for forge.ts.json / package.json.
+//! backend = "auto"      # auto | rust | cc | go | ts | typescript | js | javascript
 //!
 //! # Worker processes; 0 (default) means one per logical CPU.
 //! jobs = 0
 //!
 //! # Disable the fingerprint cache for every run in this project.
 //! no_cache = false
+//!
+//! # Sandbox every spawned tool with a clean environment.
+//! sandbox = false
+//!
+//! # Kill tasks that run longer than this many seconds.
+//! timeout = 60
+//!
+//! # Write a Chrome trace of the run to this file.
+//! profile = "forge-trace.json"
 //! ```
 //!
 //! Command-line flags always win over the file: passing `-j 2` beats
@@ -28,15 +38,18 @@ use serde::Deserialize;
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum BackendChoice {
-    /// Detect from the files on disk (the default).
     #[default]
     Auto,
-    /// The Cargo/Rust backend.
     Rust,
-    /// The C/C++ backend (requires `forge.cc.json`).
     Cc,
-    /// The Go backend (requires `forge.go.json`, or just `go.mod`).
     Go,
+    Ts,
+    #[serde(rename = "typescript")]
+    Typescript,
+    #[serde(rename = "javascript")]
+    Javascript,
+    #[serde(rename = "js")]
+    Js,
 }
 
 /// Parsed `forge.toml`. All fields are optional; absent fields keep their
@@ -50,6 +63,12 @@ pub struct ForgeConfig {
     pub jobs: Option<usize>,
     #[serde(default)]
     pub no_cache: bool,
+    #[serde(default)]
+    pub sandbox: bool,
+    #[serde(default)]
+    pub timeout: Option<u64>,
+    #[serde(default)]
+    pub profile: Option<String>,
 }
 
 impl ForgeConfig {

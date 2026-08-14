@@ -9,7 +9,9 @@ members = [
     "crates/forge-backend-rust",
     "crates/forge-backend-cc",
     "crates/forge-backend-go",
+    "crates/forge-backend-ts",
     "crates/forge-remote-cache",
+    "crates/forge-sandbox",
     "crates/forge-cli",
 ]
 
@@ -30,7 +32,9 @@ forge-cache = { path = "crates/forge-cache", version = "0.1.0" }
 forge-backend-rust = { path = "crates/forge-backend-rust", version = "0.1.0" }
 forge-backend-cc = { path = "crates/forge-backend-cc", version = "0.1.0" }
 forge-backend-go = { path = "crates/forge-backend-go", version = "0.1.0" }
+forge-backend-ts = { path = "crates/forge-backend-ts", version = "0.1.0" }
 forge-remote-cache = { path = "crates/forge-remote-cache", version = "0.1.0" }
+forge-sandbox = { path = "crates/forge-sandbox", version = "0.1.0" }
 
 cargo_metadata = "0.21"
 thiserror = "2"
@@ -42,5 +46,6 @@ toml = "0.8"
 clap = { version = "4.5", features = ["derive"] }
 anstream = "0.6"
 anstyle = "1.0"
+notify = "6"
 
 tempfile = "3"

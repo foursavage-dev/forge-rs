@@ -209,6 +209,10 @@ pub fn print_cache_stats(cache: &forge_cache::LocalCache) {
     );
 }
 
+pub fn print_profile_saved(path: &Path) {
+    println!("  Trace:     {} (open in ui.perfetto.dev)", path.display());
+}
+
 /// Details of every failed task, with a tail of its output.
 pub fn print_failures(summary: &forge_scheduler::BuildSummary) {
     for failure in &summary.failures {

@@ -8,6 +8,8 @@
 //! `CommandSpec` is a pure, displayable recipe for a process; it never
 //! touches the OS until an executor runs it.
 
+#![forbid(unsafe_code)]
+
 pub mod command;
 pub mod executor;
 pub mod task;

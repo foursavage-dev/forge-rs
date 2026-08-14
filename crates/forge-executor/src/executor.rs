@@ -7,7 +7,7 @@
 //! (e.g. `CachingExecutor` wrapping a `ProcessExecutor`).
 
 use std::process::Command;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use crate::task::{Task, TaskOutcome, TaskStatus};
 
@@ -49,11 +49,22 @@ pub trait TaskExecutor: Send + Sync {
 pub struct ProcessExecutor {
     /// Print task output lines to stderr as they complete (for `-v`).
     pub verbose: bool,
+    /// Maximum time a task may run before it is killed and reported as
+    /// failed (`None` = no limit).
+    pub timeout: Option<Duration>,
 }
 
 impl ProcessExecutor {
     pub fn new(verbose: bool) -> Self {
-        Self { verbose }
+        Self {
+            verbose,
+            timeout: None,
+        }
+    }
+
+    /// The maximum time a task may run before it is killed.
+    pub fn with_timeout(verbose: bool, timeout: Option<Duration>) -> Self {
+        Self { verbose, timeout }
     }
 }
 
@@ -63,11 +74,94 @@ impl Default for ProcessExecutor {
     }
 }
 
+/// Kill `child` and, on Windows, its whole descendant tree.
+///
+/// Cargo spawns rustc, which spawns build scripts; terminating only the
+/// direct child would leave those grandchildren running as orphans.
+fn kill_process_tree(child: &mut std::process::Child) {
+    #[cfg(windows)]
+    {
+        let pid = child.id();
+        let _ = std::process::Command::new("taskkill")
+            .arg("/PID")
+            .arg(pid.to_string())
+            .arg("/T")
+            .arg("/F")
+            .status();
+    }
+    #[cfg(not(windows))]
+    {
+        // Without a separate process group there is no safe tree-kill
+        // (the child shares forge's group); kill the direct child.
+        let _ = child.kill();
+    }
+    let _ = child.wait();
+}
+
+/// Run `command`, killing it if it outlives `timeout`.
+///
+/// `Command::output()` blocks until the child exits, so a hung task would
+/// hang the whole build. This path spawns the child with piped output,
+/// drains the pipes on reader threads (so a chatty child can never
+/// deadlock the timeout), and polls `try_wait` against a deadline. On
+/// timeout the child is killed and reaped; the reader threads are
+/// detached and finish whenever the pipes close.
+fn run_with_timeout(
+    command: &mut Command,
+    timeout: Duration,
+) -> Result<std::process::Output, std::io::Error> {
+    use std::io::Read;
+    use std::process::Stdio;
+
+    command.stdout(Stdio::piped()).stderr(Stdio::piped());
+    let mut child = command.spawn()?;
+    let mut stdout = child.stdout.take().expect("piped stdout is present");
+    let mut stderr = child.stderr.take().expect("piped stderr is present");
+    let out_thread = std::thread::spawn(move || {
+        let mut buf = Vec::new();
+        let _ = stdout.read_to_end(&mut buf);
+        buf
+    });
+    let err_thread = std::thread::spawn(move || {
+        let mut buf = Vec::new();
+        let _ = stderr.read_to_end(&mut buf);
+        buf
+    });
+
+    let deadline = Instant::now() + timeout;
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                let stdout = out_thread.join().unwrap_or_default();
+                let stderr = err_thread.join().unwrap_or_default();
+                return Ok(std::process::Output {
+                    status,
+                    stdout,
+                    stderr,
+                });
+            }
+            Ok(None) if Instant::now() >= deadline => {
+                kill_process_tree(&mut child);
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::TimedOut,
+                    format!("timed out after {timeout:?}"),
+                ));
+            }
+            Ok(None) => std::thread::sleep(Duration::from_millis(10)),
+            Err(source) => return Err(source),
+        }
+    }
+}
+
 impl TaskExecutor for ProcessExecutor {
     fn execute(&self, task: &Task) -> Result<TaskOutcome, ExecutorError> {
         let start = Instant::now();
         let mut command: Command = task.spec.to_std_command();
-        let output = match command.output() {
+        let output = match self.timeout {
+            Some(timeout) => run_with_timeout(&mut command, timeout),
+            None => command.output(),
+        };
+        let output = match output {
             Ok(output) => output,
             Err(source) => {
                 return Err(ExecutorError::Spawn {
@@ -141,5 +235,27 @@ mod tests {
         let task = task_for(CommandSpec::new("forge-definitely-not-a-real-program-9f3a"));
         let error = executor.execute(&task).expect_err("spawn must fail");
         assert!(matches!(error, ExecutorError::Spawn { .. }));
+    }
+
+    #[test]
+    fn kills_a_task_that_exceeds_the_timeout() {
+        let executor = ProcessExecutor::with_timeout(false, Some(Duration::from_millis(100)));
+        let (prog, args) = if cfg!(windows) {
+            (
+                "powershell",
+                vec!["-Command".to_string(), "Start-Sleep -Seconds 2".to_string()],
+            )
+        } else {
+            ("sleep", vec!["2".to_string()])
+        };
+        let task = task_for(CommandSpec::new(prog).args(args));
+
+        let start = Instant::now();
+        let error = executor.execute(&task).unwrap_err();
+        assert!(error.to_string().contains("timed out"), "error: {error:?}");
+        assert!(
+            start.elapsed() < Duration::from_secs(1),
+            "the child must be killed, not waited on"
+        );
     }
 }

@@ -183,7 +183,7 @@ fn build_fails_in_non_cargo_directory() {
     let output = run(forge().arg("build").current_dir(dir.path()));
 
     assert!(!output.status.success());
-    assert!(stderr(&output).contains("no Cargo, C/C++, or Go project found"));
+    assert!(stderr(&output).contains("no Cargo, C/C++, Go, or TypeScript project found"));
     assert!(stderr(&output).contains("hint:"));
 }
 
@@ -315,4 +315,82 @@ fn invalid_forge_toml_is_a_clear_error() {
         "stderr: {}",
         stderr(&output)
     );
+}
+
+#[test]
+fn build_with_sandbox_flag_succeeds() {
+    let dir = workspace_fixture();
+    let output = run(forge()
+        .arg("build")
+        .arg("--sandbox")
+        .current_dir(dir.path()));
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let text = stdout(&output);
+    assert!(text.contains("✓ network"));
+    assert!(text.contains("✓ core"));
+    assert!(text.contains("✓ app"));
+    assert!(text.contains("Executed:  3"));
+}
+
+#[test]
+fn build_with_profile_flag_generates_trace_json() {
+    let dir = workspace_fixture();
+    let trace_path = dir.path().join("my_trace.json");
+    let output = run(forge()
+        .arg("build")
+        .arg("--profile")
+        .arg(&trace_path)
+        .current_dir(dir.path()));
+
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    assert!(stdout(&output).contains("Trace:"));
+    assert!(trace_path.exists());
+
+    let content = fs::read_to_string(&trace_path).expect("read trace.json");
+    let json: serde_json::Value = serde_json::from_str(&content).expect("parse trace.json");
+    assert!(json["traceEvents"].is_array());
+    let events = json["traceEvents"].as_array().unwrap();
+    assert!(events.iter().any(|e| e["name"] == "network"));
+    assert!(events.iter().any(|e| e["name"] == "core"));
+    assert!(events.iter().any(|e| e["name"] == "app"));
+}
+
+#[test]
+fn watch_mode_runs_initial_build_and_watches() {
+    let dir = workspace_fixture();
+    let output = run(forge().arg("watch").arg("--once").current_dir(dir.path()));
+
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let text = stdout(&output);
+    assert!(text.contains("Watching for file changes"));
+    assert!(text.contains("✓ network"));
+    assert!(text.contains("✓ core"));
+    assert!(text.contains("✓ app"));
+    assert!(text.contains("Executed:  3"));
+}
+
+#[test]
+fn build_typescript_project_succeeds() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let pkg_json = r#"{
+        "name": "frontend",
+        "scripts": {
+            "typecheck": "node -e \"process.exit(0)\"",
+            "build": "node -e \"process.exit(0)\""
+        }
+    }"#;
+    fs::write(dir.path().join("package.json"), pkg_json).expect("write package.json");
+    fs::create_dir(dir.path().join("src")).expect("mkdir src");
+    fs::write(
+        dir.path().join("src").join("index.ts"),
+        "console.log('forge ts');",
+    )
+    .expect("write index.ts");
+
+    let output = run(forge().arg("build").current_dir(dir.path()));
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let text = stdout(&output);
+    assert!(text.contains("✓ frontend:typecheck"));
+    assert!(text.contains("✓ frontend:build"));
+    assert!(text.contains("Executed:  2"));
 }

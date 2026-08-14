@@ -9,6 +9,6 @@
 #   forge test      # build + run every package's tests
 #   forge graph     # dependency graph as tree / json / dot
 
-backend = "auto"   # auto | rust | cc | go
+backend = "auto"   # auto | rust | cc | go | ts
 jobs = 0           # worker processes; 0 = one per logical CPU
 no_cache = false   # set to true to always rebuild from scratch

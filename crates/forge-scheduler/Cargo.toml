@@ -9,4 +9,6 @@ description = "Parallel task scheduler for the forge build tool"
 [dependencies]
 forge-executor = { path = "../forge-executor" }
 forge-graph = { path = "../forge-graph" }
+serde = { workspace = true }
+serde_json = { workspace = true }
 thiserror = { workspace = true }

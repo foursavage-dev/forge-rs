@@ -89,28 +89,27 @@ fn test_mode_includes_dev_dependency_tasks() {
         .iter()
         .map(|n| n.payload.label.as_str())
         .collect();
-    assert!(
-        labels.contains(&"test-utils"),
-        "dev-dep package has a task: {labels:?}"
-    );
     let app_at = labels.iter().position(|l| *l == "app").unwrap();
-    let levels = tasks.levels();
-    let level_of = |label: &str| {
-        levels
-            .iter()
-            .position(|level| {
-                level
-                    .iter()
-                    .any(|id| tasks.node(*id).unwrap().payload.label == label)
-            })
-            .unwrap()
-    };
+    let test_utils_at = tasks
+        .nodes()
+        .iter()
+        .position(|n| {
+            n.payload
+                .spec
+                .command_line()
+                .contains("--package test-utils")
+        })
+        .unwrap();
     assert!(
-        level_of("test-utils") < level_of("app"),
+        test_utils_at < app_at,
         "test-utils must build before app: {labels:?}"
     );
-    let app = &tasks.nodes()[app_at].payload;
-    assert!(app.spec.command_line().contains("test"));
+    let test_utils_task = &tasks.nodes()[test_utils_at].payload;
+    assert!(
+        test_utils_task.spec.command_line().contains("test"),
+        "test mode command: {}",
+        test_utils_task.spec.command_line()
+    );
 }
 
 #[test]
@@ -183,9 +182,43 @@ fn create_tasks_builds_an_ordered_graph_with_cache_entries() {
         .collect();
     assert!(!keys.windows(2).any(|w| w[0] == w[1]), "keys must differ");
     assert!(
-        keys[0].contains("/build/network"),
-        "key embeds package + mode"
+        keys[0].contains("/build/level/network"),
+        "key embeds mode and level members"
     );
+}
+
+#[test]
+fn multi_package_levels_batch_into_one_cargo_invocation() {
+    let dir = tempfile::tempdir().unwrap();
+    for name in ["alpha", "beta"] {
+        let pkg = dir.path().join(name);
+        fs::create_dir_all(pkg.join("src")).unwrap();
+        fs::write(
+            pkg.join("Cargo.toml"),
+            format!("[package]\nname = \"{name}\"\nversion = \"0.1.0\"\nedition = \"2021\"\n"),
+        )
+        .unwrap();
+        fs::write(pkg.join("src/lib.rs"), format!("// {name}\n")).unwrap();
+    }
+    fs::write(
+        dir.path().join("Cargo.toml"),
+        "[workspace]\nmembers = [\"alpha\", \"beta\"]\n",
+    )
+    .unwrap();
+
+    let project = Project::discover(dir.path()).unwrap().unwrap();
+    let package_graph = project.build_graph().unwrap();
+    let backend = RustBackend::new().unwrap();
+    let tasks = backend
+        .create_tasks(&project, &package_graph, BuildMode::Build, true)
+        .unwrap();
+
+    assert_eq!(tasks.len(), 1, "independent packages share one level");
+    let task = &tasks.nodes()[0].payload;
+    let command = task.spec.command_line();
+    assert!(command.contains("--package alpha"), "command: {command}");
+    assert!(command.contains("--package beta"), "command: {command}");
+    assert!(task.label.contains("alpha") && task.label.contains("beta"));
 }
 
 #[test]

@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use std::collections::HashMap;
 use std::path::PathBuf;
 use thiserror::Error;
@@ -139,31 +141,97 @@ impl RustBackend {
             .unwrap_or_else(|| PathBuf::from("cargo"));
         let cargo = cargo.to_string_lossy().into_owned();
 
-        let task_graph = package_graph.map_nodes(|id, package_id| {
-            let package = project
-                .package(package_id)
-                .expect("map_nodes only visits metadata packages");
+        // One task per topological level: `cargo build --package a --package
+        // b` covers every package whose dependencies are already built.
+        // Batching keeps concurrent cargo processes from fighting over the
+        // shared target-dir lock (cargo would serialize them anyway) and
+        // turns the whole build into a short chain of cargo invocations.
+        // Packages within a level are independent, so cargo's own unit-level
+        // parallelism does the work; forge's per-level cache still skips
+        // unchanged levels entirely.
+        let levels = package_graph.levels();
+        let mut level_node: HashMap<NodeId, NodeId> = HashMap::new();
+        let mut task_graph = BuildGraph::new();
 
-            let spec = CommandSpec::new(&cargo)
-                .arg(mode.cargo_subcommand())
-                .arg("--package")
-                .arg(package.name.to_string())
-                .cwd(&workspace_root);
+        for level in &levels {
+            let mut members: Vec<NodeId> = level.to_vec();
+            members.sort_by_key(|id| {
+                let package_id = &package_graph
+                    .node(*id)
+                    .expect("level members are package graph nodes")
+                    .payload;
+                project
+                    .package(package_id)
+                    .expect("level members are metadata packages")
+                    .name
+                    .to_string()
+            });
 
+            let names: Vec<String> = members
+                .iter()
+                .map(|id| {
+                    let package_id = &package_graph
+                        .node(*id)
+                        .expect("level members are package graph nodes")
+                        .payload;
+                    project
+                        .package(package_id)
+                        .expect("level members are metadata packages")
+                        .name
+                        .to_string()
+                })
+                .collect();
+
+            let label = if names.len() == 1 {
+                names[0].clone()
+            } else {
+                names.join(", ")
+            };
+
+            let mut args = vec![mode.cargo_subcommand().to_string()];
+            for name in &names {
+                args.push("--package".to_string());
+                args.push(name.clone());
+            }
+            let spec = CommandSpec::new(&cargo).args(args).cwd(&workspace_root);
             let description = spec.command_line();
-            let mut task = Task::new(package.name.to_string(), description, spec);
 
+            let mut task = Task::new(label, description, spec);
             if caching {
-                let fingerprint = fingerprints
-                    .get(&id)
-                    .expect("all fingerprints are computed before mapping");
+                let fingerprint = fingerprint::combined_fingerprint(
+                    "",
+                    &members
+                        .iter()
+                        .filter_map(|id| fingerprints.get(id).cloned())
+                        .collect::<Vec<_>>(),
+                );
                 task = task.with_cache(CacheEntry {
-                    key: format!("v1/{namespace}/{}/{}", mode.as_str(), package.name),
-                    fingerprint: fingerprint.clone(),
+                    key: format!("v1/{namespace}/{}/level/{}", mode.as_str(), names.join("+")),
+                    fingerprint,
                 });
             }
-            task
-        });
+
+            let node_id = task_graph.add_node(task);
+            for id in level {
+                level_node.insert(*id, node_id);
+            }
+        }
+
+        for level in &levels {
+            let node = level_node
+                .get(&level[0])
+                .expect("every package maps to a level task");
+            for id in level {
+                for dep in package_graph.deps(*id)? {
+                    let dep_node = level_node
+                        .get(dep)
+                        .expect("dependencies live in earlier levels");
+                    if dep_node != node {
+                        task_graph.add_dependency(*dep_node, *node)?;
+                    }
+                }
+            }
+        }
 
         Ok(task_graph)
     }

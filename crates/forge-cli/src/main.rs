@@ -9,6 +9,7 @@
 
 mod config;
 mod render;
+mod watch;
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -18,9 +19,11 @@ use clap::{Args, Parser, Subcommand};
 use forge_backend_cc::{CcBackend, CcProjectConfig};
 use forge_backend_go::{GoBackend, GoProjectConfig};
 use forge_backend_rust::{BuildMode, RustBackend};
+use forge_backend_ts::{TsBackend, TsProjectConfig};
 use forge_cache::{CachingExecutor, LocalCache};
 use forge_core::project::Project;
 use forge_executor::{ExecutorError, ProcessExecutor, Task, TaskExecutor, TaskOutcome};
+use forge_sandbox::{SandboxConfig, SandboxedExecutor};
 use forge_scheduler::Scheduler;
 
 use crate::config::{BackendChoice, ForgeConfig};
@@ -39,20 +42,14 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    /// Print version information.
     Version,
-    /// Build the current Cargo project.
     Build(BuildArgs),
-    /// Type-check the current Cargo project without producing artifacts.
     Check(CheckArgs),
-    /// Build and run the tests of every workspace package.
     Test(TestArgs),
-    /// Remove build artifacts (delegates to `cargo clean`).
     Clean(CleanArgs),
-    /// Build and run a binary.
     Run(RunArgs),
-    /// Visualize the workspace dependency graph.
     Graph(GraphArgs),
+    Watch(WatchArgs),
 }
 
 #[derive(Debug, Args)]
@@ -73,53 +70,60 @@ struct TestArgs {
     common: CommonArgs,
 }
 
-#[derive(Debug, Args)]
-struct CommonArgs {
-    /// Project directory; defaults to the current directory.
-    path: Option<PathBuf>,
-    /// Number of parallel worker processes.
+#[derive(Debug, Args, Clone)]
+pub struct CommonArgs {
+    pub path: Option<PathBuf>,
     #[arg(short = 'j', long = "jobs")]
-    jobs: Option<usize>,
-    /// Print the output of task commands as they complete.
+    pub jobs: Option<usize>,
     #[arg(short = 'v', long)]
-    verbose: bool,
-    /// Skip the fingerprint cache (rebuild everything).
+    pub verbose: bool,
     #[arg(long = "no-cache")]
-    no_cache: bool,
+    pub no_cache: bool,
+    #[arg(long = "sandbox")]
+    pub sandbox: bool,
+    #[arg(long = "timeout")]
+    pub timeout_secs: Option<u64>,
+    #[arg(long = "profile", num_args = 0..=1, default_missing_value = "forge_trace.json")]
+    pub profile: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct WatchArgs {
+    #[command(flatten)]
+    pub common: CommonArgs,
+    #[arg(long, default_value = "build")]
+    pub mode: watch::WatchAction,
+    #[arg(long, default_value = "200")]
+    pub debounce: u64,
+    #[arg(long)]
+    pub clear: bool,
+    #[arg(long, hide = true)]
+    pub once: bool,
 }
 
 #[derive(Debug, Args)]
 struct CleanArgs {
-    /// Project directory; defaults to the current directory.
     path: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
 struct RunArgs {
-    /// Project directory; defaults to the current directory.
     path: Option<PathBuf>,
-    /// Package with the target to run.
     #[arg(short = 'p', long)]
     package: Option<String>,
-    /// Name of the bin target to run.
     #[arg(long)]
     bin: Option<String>,
-    /// Number of parallel worker processes.
     #[arg(short = 'j', long = "jobs")]
     jobs: Option<usize>,
-    /// Print the output of task commands as they complete.
     #[arg(short = 'v', long)]
     verbose: bool,
-    /// Arguments for the binary.
     #[arg(last = true)]
     args: Vec<String>,
 }
 
 #[derive(Debug, Args)]
 struct GraphArgs {
-    /// Project directory; defaults to the current directory.
     path: Option<PathBuf>,
-    /// Format to output the graph.
     #[arg(long, default_value_t = GraphFormat::Tree, value_enum)]
     format: GraphFormat,
 }
@@ -145,13 +149,31 @@ fn main() -> ExitCode {
         Command::Clean(args) => run_clean(args.path.as_deref()),
         Command::Run(args) => run_run(args),
         Command::Graph(args) => run_graph(args),
+        Command::Watch(args) => {
+            let start_dir = match resolve_start_dir(args.common.path.as_deref()) {
+                Ok(dir) => dir,
+                Err(message) => {
+                    eprintln!("error: {message}");
+                    return ExitCode::FAILURE;
+                }
+            };
+            watch::run_watch(
+                args.common,
+                args.mode,
+                args.debounce,
+                args.clear,
+                &start_dir,
+                args.once,
+            )
+        }
     }
 }
 
-/// The process executor, optionally wrapped in the fingerprint cache.
 enum ExecutorChoice {
     Plain(ProcessExecutor),
     Cached(CachingExecutor<ProcessExecutor>),
+    SandboxedPlain(SandboxedExecutor<ProcessExecutor>),
+    SandboxedCached(SandboxedExecutor<CachingExecutor<ProcessExecutor>>),
 }
 
 impl TaskExecutor for ExecutorChoice {
@@ -159,11 +181,36 @@ impl TaskExecutor for ExecutorChoice {
         match self {
             Self::Plain(inner) => inner.execute(task),
             Self::Cached(inner) => inner.execute(task),
+            Self::SandboxedPlain(inner) => inner.execute(task),
+            Self::SandboxedCached(inner) => inner.execute(task),
         }
     }
 }
 
-fn run_build_mode(args: CommonArgs, mode: BuildMode) -> ExitCode {
+fn build_executor(args: &CommonArgs, cache: Option<LocalCache>) -> ExecutorChoice {
+    let process = ProcessExecutor::with_timeout(
+        args.verbose,
+        args.timeout_secs.map(std::time::Duration::from_secs),
+    );
+
+    if args.sandbox {
+        let sb_config = SandboxConfig::default();
+        match cache {
+            Some(c) => ExecutorChoice::SandboxedCached(SandboxedExecutor::new(
+                CachingExecutor::new(process, c),
+                sb_config,
+            )),
+            None => ExecutorChoice::SandboxedPlain(SandboxedExecutor::new(process, sb_config)),
+        }
+    } else {
+        match cache {
+            Some(c) => ExecutorChoice::Cached(CachingExecutor::new(process, c)),
+            None => ExecutorChoice::Plain(process),
+        }
+    }
+}
+
+pub(crate) fn run_build_mode(args: CommonArgs, mode: BuildMode) -> ExitCode {
     let start_dir = match resolve_start_dir(args.path.as_deref()) {
         Ok(dir) => dir,
         Err(message) => {
@@ -181,18 +228,23 @@ fn run_build_mode(args: CommonArgs, mode: BuildMode) -> ExitCode {
         }
     };
 
-    // Command-line flags beat `forge.toml` values; `jobs = 0` in the file
-    // means "auto", never a one-process build.
     let merged = CommonArgs {
         path: args.path,
         jobs: args.jobs.or_else(|| config.jobs.filter(|&j| j > 0)),
         verbose: args.verbose,
         no_cache: args.no_cache || config.no_cache,
+        sandbox: args.sandbox || config.sandbox,
+        timeout_secs: args.timeout_secs.or(config.timeout),
+        profile: args.profile.or_else(|| config.profile.map(PathBuf::from)),
     };
 
     match config.backend {
         BackendChoice::Cc => return run_cc_build(&start_dir, &merged),
         BackendChoice::Go => return run_go_build(&start_dir, &merged),
+        BackendChoice::Ts
+        | BackendChoice::Typescript
+        | BackendChoice::Javascript
+        | BackendChoice::Js => return run_ts_build(&start_dir, &merged),
         BackendChoice::Rust => return run_rust_build(&start_dir, &merged, mode),
         BackendChoice::Auto => {}
     }
@@ -207,6 +259,12 @@ fn run_build_mode(args: CommonArgs, mode: BuildMode) -> ExitCode {
         return run_go_build(&start_dir, &merged);
     }
 
+    if start_dir.join("forge.ts.json").exists()
+        || (start_dir.join("package.json").exists() && !start_dir.join("Cargo.toml").exists())
+    {
+        return run_ts_build(&start_dir, &merged);
+    }
+
     run_rust_build(&start_dir, &merged, mode)
 }
 
@@ -215,11 +273,11 @@ fn run_rust_build(start_dir: &Path, args: &CommonArgs, mode: BuildMode) -> ExitC
         Ok(Some(project)) => project,
         Ok(None) => {
             eprintln!(
-                "error: no Cargo, C/C++, or Go project found in `{}` or any parent directory",
+                "error: no Cargo, C/C++, Go, or TypeScript project found in `{}` or any parent directory",
                 start_dir.display()
             );
             eprintln!(
-                "hint: run `forge build` from a directory containing Cargo.toml, forge.cc.json, or go.mod"
+                "hint: run `forge build` from a directory containing Cargo.toml, forge.cc.json, go.mod, or forge.ts.json/package.json"
             );
             return ExitCode::FAILURE;
         }
@@ -274,13 +332,7 @@ fn run_rust_build(start_dir: &Path, args: &CommonArgs, mode: BuildMode) -> ExitC
             }
         }
     };
-    let executor = match cache {
-        Some(cache) => ExecutorChoice::Cached(CachingExecutor::new(
-            ProcessExecutor::new(args.verbose),
-            cache,
-        )),
-        None => ExecutorChoice::Plain(ProcessExecutor::new(args.verbose)),
-    };
+    let executor = build_executor(args, cache);
 
     let workers = args.jobs.unwrap_or_else(default_jobs).max(1);
     let scheduler = Scheduler::new(workers);
@@ -301,8 +353,19 @@ fn run_rust_build(start_dir: &Path, args: &CommonArgs, mode: BuildMode) -> ExitC
     };
 
     render::print_build_summary(&summary, mode);
-    if let ExecutorChoice::Cached(cached) = &executor {
-        render::print_cache_stats(cached.cache());
+    match &executor {
+        ExecutorChoice::Cached(cached) => render::print_cache_stats(cached.cache()),
+        ExecutorChoice::SandboxedCached(cached) => {
+            render::print_cache_stats(cached.inner().cache())
+        }
+        _ => {}
+    }
+    if let Some(ref trace_path) = args.profile {
+        if let Err(err) = summary.write_chrome_trace(trace_path) {
+            eprintln!("warning: failed to write profile trace: {err}");
+        } else {
+            render::print_profile_saved(trace_path);
+        }
     }
 
     if summary.succeeded() {
@@ -440,6 +503,9 @@ fn run_run(args: RunArgs) -> ExitCode {
         jobs: args.jobs,
         verbose: args.verbose,
         no_cache: false,
+        sandbox: false,
+        timeout_secs: None,
+        profile: None,
     };
 
     let build_status = run_build_mode(common_args, BuildMode::Build);
@@ -640,6 +706,28 @@ fn run_go_build(start_dir: &Path, args: &CommonArgs) -> ExitCode {
     execute_task_graph(&mut task_graph, args)
 }
 
+fn run_ts_build(start_dir: &Path, args: &CommonArgs) -> ExitCode {
+    let start_dir = plain_path(start_dir);
+    let config = match TsProjectConfig::discover_or_default(&start_dir) {
+        Ok(cfg) => cfg,
+        Err(err) => {
+            eprintln!("error: failed to discover TypeScript/JavaScript project: {err}");
+            return ExitCode::FAILURE;
+        }
+    };
+
+    let backend = TsBackend::new();
+    let mut task_graph = match backend.build_task_graph(&config, &start_dir) {
+        Ok(g) => g,
+        Err(err) => {
+            eprintln!("error: {err}");
+            return ExitCode::FAILURE;
+        }
+    };
+
+    execute_task_graph(&mut task_graph, args)
+}
+
 fn execute_task_graph(
     task_graph: &mut forge_graph::BuildGraph<Task>,
     args: &CommonArgs,
@@ -659,12 +747,7 @@ fn execute_task_graph(
         }
     };
 
-    let executor = match cache {
-        Some(c) => {
-            ExecutorChoice::Cached(CachingExecutor::new(ProcessExecutor::new(args.verbose), c))
-        }
-        None => ExecutorChoice::Plain(ProcessExecutor::new(args.verbose)),
-    };
+    let executor = build_executor(args, cache);
 
     let workers = args.jobs.unwrap_or_else(default_jobs).max(1);
     let scheduler = Scheduler::new(workers);
@@ -681,6 +764,13 @@ fn execute_task_graph(
 
     render::print_failures(&summary);
     render::print_build_summary(&summary, BuildMode::Build);
+    if let Some(ref trace_path) = args.profile {
+        if let Err(err) = summary.write_chrome_trace(trace_path) {
+            eprintln!("warning: failed to write profile trace: {err}");
+        } else {
+            render::print_profile_saved(trace_path);
+        }
+    }
     if summary.succeeded() {
         ExitCode::SUCCESS
     } else {
