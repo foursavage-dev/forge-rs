@@ -14,7 +14,7 @@ variables:
 
 build:
   stage: stage-0
-  timeout: "30" minutes
+  timeout: 30 minutes
   script:
     - cargo build --release
   cache:
@@ -26,7 +26,7 @@ build:
       - target/release/my_app
 test:
   stage: stage-0
-  timeout: "30" minutes
+  timeout: 30 minutes
   needs:
     - build
   script:
