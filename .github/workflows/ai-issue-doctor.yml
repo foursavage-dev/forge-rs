@@ -46,6 +46,12 @@ jobs:
               -H "Content-Type: application/json" \
               -d "$PAYLOAD")
             AI_TEXT=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+            if [ -z "$AI_TEXT" ]; then
+              RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}" \
+                -H "Content-Type: application/json" \
+                -d "$PAYLOAD")
+              AI_TEXT=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+            fi
           fi
 
           if [ -z "$AI_TEXT" ]; then

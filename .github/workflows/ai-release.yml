@@ -107,6 +107,12 @@ jobs:
               -H "Content-Type: application/json" \
               -d "$PAYLOAD")
             NOTES=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+            if [ -z "$NOTES" ]; then
+              RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}" \
+                -H "Content-Type: application/json" \
+                -d "$PAYLOAD")
+              NOTES=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+            fi
           fi
 
           if [ -z "$NOTES" ]; then
