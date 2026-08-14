@@ -98,6 +98,10 @@ impl ArtifactMetadata {
         self.tags = tags;
         self
     }
+    
+    pub fn compression_ratio(&self) -> Option<f64> {
+        self.compressed_size.map(|compressed| compressed as f64 / self.size as f64)
+    }
 }
 
 /// A build artifact that can be stored in CAS
