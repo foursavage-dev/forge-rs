@@ -15,7 +15,9 @@
     "onCommand:forge.test",
     "onCommand:forge.graph",
     "onCommand:forge.clean",
-    "onCommand:forge.doctor"
+    "onCommand:forge.doctor",
+    "onCommand:forge.affected",
+    "onView:forgePackages"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -43,6 +45,103 @@
       {
         "command": "forge.affected",
         "title": "Forge: Show Affected Packages"
+      },
+      {
+        "command": "forge.refreshPackages",
+        "title": "Forge: Refresh Package Tree",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "forge.buildPackage",
+        "title": "Forge: Build Selected Package"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "forge-container",
+          "title": "Forge",
+          "icon": "$(package)"
+        }
+      ]
+    },
+    "views": {
+      "forge-container": [
+        {
+          "id": "forgePackages",
+          "name": "Packages",
+          "when": "workspaceHasFolder"
+        }
+      ]
+    },
+    "problemMatchers": [
+      {
+        "name": "rustc",
+        "owner": "rustc",
+        "source": "rustc",
+        "fileLocation": ["relative", "${workspaceRoot}"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(\\d+):(\\d+)\\s+(error|warning):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "code": 4,
+          "message": 7,
+          "severity": 6
+        }
+      },
+      {
+        "name": "rustc-simple",
+        "owner": "rustc",
+        "source": "rustc",
+        "fileLocation": ["relative", "${workspaceRoot}"],
+        "pattern": {
+          "regexp": "^(error|warning):\\s+(.*)$",
+          "message": 2,
+          "severity": 1
+        }
+      },
+      {
+        "name": "typescript",
+        "owner": "typescript",
+        "source": "typescript",
+        "fileLocation": ["relative", "${workspaceRoot}"],
+        "pattern": {
+          "regexp": "^(.*?)(\\(\\d+,\\d+\\)):\\s+(TS\\d+)\\s+(error|warning):\\s+(.*)$",
+          "file": 1,
+          "location": 2,
+          "code": 3,
+          "message": 5,
+          "severity": 4
+        }
+      },
+      {
+        "name": "gcc",
+        "owner": "gcc",
+        "source": "gcc",
+        "fileLocation": ["relative", "${workspaceRoot}"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(error|warning):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 5,
+          "severity": 4
+        }
+      }
+    ],
+    "statusBarItems": [
+      {
+        "id": "forge.status",
+        "name": "Forge Build Status",
+        "alignment": "left",
+        "priority": 100
+      },
+      {
+        "id": "forge.cacheHitRate",
+        "name": "Forge Cache Hit Rate",
+        "alignment": "right",
+        "priority": 90
       }
     ],
     "configuration": {
