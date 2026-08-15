@@ -53,6 +53,10 @@ use crate::config::{BackendChoice, ForgeConfig};
     long_about = None
 )]
 struct Cli {
+    /// Enable experimental features (use at your own risk)
+    #[arg(long, global = true)]
+    experimental: bool,
+    
     #[command(subcommand)]
     command: Command,
 }
@@ -424,6 +428,12 @@ enum GraphFormat {
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
+    
+    // Enable experimental features if flag is set
+    if cli.experimental {
+        experimental::enable();
+    }
+    
     match cli.command {
         Command::Version => {
             println!("forge {}", env!("CARGO_PKG_VERSION"));
@@ -470,6 +480,11 @@ fn main() -> ExitCode {
 }
 
 fn run_live_patch(args: LivePatchArgs) -> ExitCode {
+    if let Err(e) = experimental::require_enabled("hotpatch") {
+        eprintln!("error: {}", e);
+        return ExitCode::FAILURE;
+    }
+
     let start_dir = match resolve_start_dir(args.path.as_deref()) {
         Ok(dir) => dir,
         Err(message) => {
@@ -503,6 +518,11 @@ fn run_live_patch(args: LivePatchArgs) -> ExitCode {
 }
 
 fn run_jit(args: JitArgs) -> ExitCode {
+    if let Err(e) = experimental::require_enabled("micro_jit") {
+        eprintln!("error: {}", e);
+        return ExitCode::FAILURE;
+    }
+
     let jit = experimental::micro_jit::MicroJitEngine::new(experimental::micro_jit::ArchitectureTarget::X86_64);
     match jit.compile_expression_to_machine_code(&args.function_name, args.value) {
         Ok(compiled) => {
@@ -518,6 +538,11 @@ fn run_jit(args: JitArgs) -> ExitCode {
 }
 
 fn run_super_opt(args: SuperOptArgs) -> ExitCode {
+    if let Err(e) = experimental::require_enabled("super_opt") {
+        eprintln!("error: {}", e);
+        return ExitCode::FAILURE;
+    }
+
     match experimental::super_opt::SuperOptimizer::optimize_binary_simd(&args.input_file, &args.output_file) {
         Ok(metric) => {
             println!("🧬 Binary Super-Optimizer applied: {} loops vectorized with {}", metric.loops_vectorized, metric.simd_extension);
@@ -1568,8 +1593,12 @@ fn run_build_mode_with(
     }
 
     if merged.turbo_link {
-        let flags = experimental::turbolink::TurboLinker::generate_rustc_flags();
-        println!("🚀 Linker Turbo-Hijack active (Fast Linker flags: {})", flags.join(" "));
+        if let Err(e) = experimental::require_enabled("turbolink") {
+            eprintln!("warning: {}", e);
+        } else {
+            let flags = experimental::turbolink::TurboLinker::generate_rustc_flags();
+            println!("🚀 Linker Turbo-Hijack active (Fast Linker flags: {})", flags.join(" "));
+        }
     }
 
     if merged.speculative {
@@ -1577,13 +1606,21 @@ fn run_build_mode_with(
     }
 
     if merged.daemon_pool {
-        let _pool = experimental::daemon_pool::CompilerDaemonPool::new(4);
-        println!("🌌 Pre-Warmed Compiler Zombie-Daemon Pool active (0ms Cold-Start)");
+        if let Err(e) = experimental::require_enabled("daemon_pool") {
+            eprintln!("warning: {}", e);
+        } else {
+            let _pool = experimental::daemon_pool::CompilerDaemonPool::new(4);
+            println!("🌌 Pre-Warmed Compiler Zombie-Daemon Pool active (0ms Cold-Start)");
+        }
     }
 
     if merged.kernel_bypass {
-        let _vfs = experimental::kernel_bypass::KernelBypassVfs::new();
-        println!("⚡ Kernel-Bypass Direct Ring-Buffer DMA VFS active (120+ GB/s)");
+        if let Err(e) = experimental::require_enabled("kernel_bypass") {
+            eprintln!("warning: {}", e);
+        } else {
+            let _vfs = experimental::kernel_bypass::KernelBypassVfs::new();
+            println!("⚡ Kernel-Bypass Direct Ring-Buffer DMA VFS active (120+ GB/s)");
+        }
     }
 
     if merged.wasm_sandbox {
