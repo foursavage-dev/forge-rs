@@ -4,6 +4,7 @@ mod attestation;
 mod config;
 mod critical_path;
 pub mod experimental;
+mod monitoring;
 mod predictive;
 mod ramdisk;
 mod render;

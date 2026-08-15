@@ -1,6 +1,7 @@
 #![cfg_attr(not(test), forbid(unsafe_code))]
 
 pub mod file_level;
+pub mod strategies;
 
 use std::fmt;
 use std::fs;

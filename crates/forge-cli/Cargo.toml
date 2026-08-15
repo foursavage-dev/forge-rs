@@ -37,6 +37,7 @@ cargo_metadata = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 toml = { workspace = true }
+spin = { workspace = true }
 tokio = { version = "1", features = ["rt-multi-thread"] }
 
 clap = { workspace = true }
