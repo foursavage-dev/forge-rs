@@ -1,9 +1,11 @@
 #![cfg_attr(not(test), forbid(unsafe_code))]
 
 pub mod file_level;
+pub mod file_level_adapter;
 pub mod strategies;
 
 pub use strategies::{LruCache, TieredCache, PredictiveCache, SpinLockLruCache};
+pub use file_level_adapter::{FileLevelCacheAdapter, HybridCachingExecutor};
 
 use std::fmt;
 use std::fs;
