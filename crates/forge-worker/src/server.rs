@@ -10,10 +10,12 @@ use std::time::{Duration, Instant};
 
 use crate::protocol::{
     RemoteTaskRequest, RemoteTaskResponse, SourceContext, WorkerHealthInfo, WorkerPingRequest,
-    WorkerPingResponse,
+    WorkerPingResponse, VfsFileRequest, VfsFileResponse,
 };
+use crate::virtual_fs::VirtualFileSystem;
 use forge_executor::{CommandSpec, ProcessExecutor, Task, TaskExecutor};
 use forge_remote_cache::artifact::unpack_artifacts;
+use base64::Engine;
 
 pub struct WorkerServer {
     addr: String,
@@ -23,6 +25,7 @@ pub struct WorkerServer {
     active_jobs: Arc<AtomicUsize>,
     start_time: Instant,
     running: Arc<AtomicBool>,
+    vfs: Arc<VirtualFileSystem>,
 }
 
 impl WorkerServer {
@@ -44,6 +47,7 @@ impl WorkerServer {
             active_jobs: Arc::new(AtomicUsize::new(0)),
             start_time: Instant::now(),
             running: Arc::new(AtomicBool::new(false)),
+            vfs: Arc::new(VirtualFileSystem::new(1024 * 1024 * 100)), // 100MB cache
         }
     }
 
@@ -59,6 +63,10 @@ impl WorkerServer {
         self.running.store(false, Ordering::SeqCst);
     }
 
+    pub fn vfs(&self) -> Arc<VirtualFileSystem> {
+        Arc::clone(&self.vfs)
+    }
+
     pub fn start_background(&self) -> std::io::Result<JoinHandle<()>> {
         let listener = TcpListener::bind(&self.addr)?;
         let auth_token = self.auth_token.clone();
@@ -67,6 +75,7 @@ impl WorkerServer {
         let active_jobs = Arc::clone(&self.active_jobs);
         let start_time = self.start_time;
         let running = Arc::clone(&self.running);
+        let vfs = Arc::clone(&self.vfs);
 
         running.store(true, Ordering::SeqCst);
         let _ = listener.set_nonblocking(true);
@@ -78,6 +87,7 @@ impl WorkerServer {
                         let auth = auth_token.clone();
                         let name = worker_name.clone();
                         let jobs = Arc::clone(&active_jobs);
+                        let vfs_clone = Arc::clone(&vfs);
                         thread::spawn(move || {
                             let _ = Self::handle_connection(
                                 &mut stream,
@@ -86,6 +96,7 @@ impl WorkerServer {
                                 max_concurrency,
                                 &jobs,
                                 start_time,
+                                vfs_clone,
                             );
                         });
                     }
@@ -105,6 +116,7 @@ impl WorkerServer {
     pub fn run_blocking(&self) -> std::io::Result<()> {
         let listener = TcpListener::bind(&self.addr)?;
         self.running.store(true, Ordering::SeqCst);
+        let vfs = Arc::clone(&self.vfs);
 
         while self.running.load(Ordering::SeqCst) {
             let (mut stream, _) = listener.accept()?;
@@ -113,6 +125,7 @@ impl WorkerServer {
             let max_concurrency = self.max_concurrency;
             let jobs = Arc::clone(&self.active_jobs);
             let start_time = self.start_time;
+            let vfs_clone = Arc::clone(&vfs);
             thread::spawn(move || {
                 let _ = Self::handle_connection(
                     &mut stream,
@@ -121,6 +134,7 @@ impl WorkerServer {
                     max_concurrency,
                     &jobs,
                     start_time,
+                    vfs_clone,
                 );
             });
         }
@@ -132,6 +146,7 @@ impl WorkerServer {
         expected_token: &Option<String>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let active_jobs = AtomicUsize::new(0);
+        let vfs = Arc::new(VirtualFileSystem::new(1024 * 1024 * 100));
         Self::handle_connection(
             stream,
             expected_token,
@@ -139,6 +154,7 @@ impl WorkerServer {
             8,
             &active_jobs,
             Instant::now(),
+            vfs,
         )
     }
 
@@ -149,6 +165,7 @@ impl WorkerServer {
         max_concurrency: usize,
         active_jobs: &AtomicUsize,
         start_time: Instant,
+        vfs: Arc<VirtualFileSystem>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let _ = stream.set_read_timeout(Some(Duration::from_secs(300)));
         let _ = stream.set_write_timeout(Some(Duration::from_secs(300)));
@@ -198,7 +215,13 @@ impl WorkerServer {
             let source_dir = req
                 .source
                 .as_ref()
-                .map(|ctx| unpack_source(ctx))
+                .map(|ctx| {
+                    if ctx.use_vfs.unwrap_or(false) {
+                        unpack_source_to_vfs(ctx, &vfs)
+                    } else {
+                        unpack_source(ctx)
+                    }
+                })
                 .transpose()?;
             if let Some(ref root) = source_dir {
                 spec.cwd = Some(
@@ -256,6 +279,53 @@ impl WorkerServer {
             stream.write_all(b"\n")?;
             stream.flush()?;
 
+            return Ok(());
+        }
+
+        if let Ok(vfs_req) = serde_json::from_str::<VfsFileRequest>(trimmed) {
+            if let Some(expected) = expected_token {
+                if vfs_req.auth_token.as_ref() != Some(expected) {
+                    let err_resp = VfsFileResponse {
+                        success: false,
+                        content_base64: None,
+                        error: Some("unauthorized".to_string()),
+                        metadata: None,
+                    };
+                    let out = serde_json::to_string(&err_resp)?;
+                    stream.write_all(out.as_bytes())?;
+                    stream.write_all(b"\n")?;
+                    stream.flush()?;
+                    return Ok(());
+                }
+            }
+
+            let file_path = Path::new(&vfs_req.file_path);
+            let response = match vfs.read_file(file_path) {
+                Ok(content) => {
+                    let metadata = vfs.metadata(file_path).ok();
+                    VfsFileResponse {
+                        success: true,
+                        content_base64: Some(base64::engine::general_purpose::STANDARD.encode(&content)),
+                        error: None,
+                        metadata: metadata.map(|m| crate::protocol::VfsFileMetadata {
+                            size: m.size,
+                            modified: m.modified,
+                            is_executable: m.is_executable,
+                        }),
+                    }
+                }
+                Err(e) => VfsFileResponse {
+                    success: false,
+                    content_base64: None,
+                    error: Some(e.to_string()),
+                    metadata: None,
+                },
+            };
+
+            let out = serde_json::to_string(&response)?;
+            stream.write_all(out.as_bytes())?;
+            stream.write_all(b"\n")?;
+            stream.flush()?;
             return Ok(());
         }
 
@@ -333,4 +403,33 @@ fn unpack_source(ctx: &SourceContext) -> Result<PathBuf, Box<dyn std::error::Err
         .keep();
     unpack_artifacts(&blob, &root).map_err(|e| e.to_string())?;
     Ok(root)
+}
+
+/// Decodes and extracts a packed source snapshot into VFS for on-demand streaming
+fn unpack_source_to_vfs(ctx: &SourceContext, vfs: &VirtualFileSystem) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    if ctx.format != "tar.zst" {
+        return Err(format!("unsupported source format: {}", ctx.format).into());
+    }
+    
+    let mut decoder = base64::read::DecoderReader::new(
+        ctx.data_base64.as_bytes(),
+        &base64::engine::general_purpose::STANDARD,
+    );
+    let mut blob = Vec::new();
+    decoder.read_to_end(&mut blob)?;
+
+    // First extract to temp directory
+    let temp_root = tempfile::Builder::new()
+        .prefix("forge-source-vfs-")
+        .tempdir()
+        .map_err(|e| e.to_string())?
+        .keep();
+    unpack_artifacts(&blob, &temp_root).map_err(|e| e.to_string())?;
+
+    // Mount to VFS
+    let vfs_mount = ctx.vfs_mount.as_deref().unwrap_or("/vfs");
+    let vfs_path = Path::new(vfs_mount);
+    vfs.mount_local(&temp_root, vfs_path).map_err(|e| e.to_string())?;
+
+    Ok(temp_root)
 }

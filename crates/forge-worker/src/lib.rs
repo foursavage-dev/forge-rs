@@ -10,6 +10,7 @@ pub use client::RemoteWorkerClient;
 pub use cluster::ClusterExecutor;
 pub use protocol::{
     RemoteTaskRequest, RemoteTaskResponse, WorkerHealthInfo, WorkerPingRequest, WorkerPingResponse,
+    VfsFileRequest, VfsFileResponse, VfsFileMetadata,
 };
 pub use server::WorkerServer;
 pub use virtual_fs::{VirtualFileSystem, VfsNode, FileMetadata, VfsError, CacheStats};

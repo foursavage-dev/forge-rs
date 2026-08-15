@@ -56,6 +56,16 @@ impl ClusterExecutor {
         self
     }
 
+    /// Enable VFS mode for on-demand file streaming
+    pub fn with_vfs(mut self, use_vfs: bool) -> Self {
+        self.workers = self
+            .workers
+            .into_iter()
+            .map(|worker| worker.with_vfs(use_vfs))
+            .collect();
+        self
+    }
+
     pub fn worker_count(&self) -> usize {
         self.workers.len()
     }

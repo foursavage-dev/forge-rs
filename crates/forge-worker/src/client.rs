@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use crate::protocol::{
     RemoteTaskRequest, RemoteTaskResponse, SourceContext, WorkerHealthInfo, WorkerPingRequest,
-    WorkerPingResponse,
+    WorkerPingResponse, VfsFileRequest, VfsFileResponse,
 };
 use forge_executor::{ExecutorError, Task, TaskExecutor, TaskOutcome, TaskStatus};
 use forge_remote_cache::artifact::pack_tree;
@@ -37,6 +37,7 @@ pub struct RemoteWorkerClient {
     pub auth_token: Option<String>,
     pub timeout: Duration,
     pub pack_source: bool,
+    pub use_vfs: bool,
 }
 
 impl RemoteWorkerClient {
@@ -46,7 +47,13 @@ impl RemoteWorkerClient {
             auth_token,
             timeout: Duration::from_secs(120),
             pack_source: false,
+            use_vfs: false,
         }
+    }
+
+    pub fn with_vfs(mut self, use_vfs: bool) -> Self {
+        self.use_vfs = use_vfs;
+        self
     }
 
     pub fn with_timeout(mut self, timeout: Duration) -> Self {
@@ -162,7 +169,7 @@ impl RemoteWorkerClient {
             .map(|p| p.to_string_lossy().to_string());
 
         let source = if self.pack_source {
-            pack_source_context(&task.spec.cwd).map_err(|e| ExecutorError::Spawn {
+            pack_source_context(&task.spec.cwd, self.use_vfs).map_err(|e| ExecutorError::Spawn {
                 command: task.label.clone(),
                 source: std::io::Error::other(e),
             })?
@@ -237,6 +244,61 @@ impl RemoteWorkerClient {
             duration: Duration::from_millis(resp.duration_ms),
         })
     }
+
+    /// Request a file from the remote worker's VFS
+    pub fn request_vfs_file(&self, file_path: &str) -> Result<VfsFileResponse, ExecutorError> {
+        let mut stream = TcpStream::connect(&self.server_addr)
+            .map_err(|e| ExecutorError::Spawn {
+                command: "vfs_request".to_string(),
+                source: std::io::Error::other(e),
+            })?;
+
+        let _ = stream.set_read_timeout(Some(self.timeout));
+        let _ = stream.set_write_timeout(Some(self.timeout));
+
+        let req = VfsFileRequest {
+            file_path: file_path.to_string(),
+            auth_token: self.auth_token.clone(),
+        };
+
+        let req_json = serde_json::to_string(&req)
+            .map_err(|e| ExecutorError::Spawn {
+                command: "vfs_request".to_string(),
+                source: std::io::Error::other(e),
+            })?;
+
+        stream.write_all(req_json.as_bytes())
+            .map_err(|e| ExecutorError::Spawn {
+                command: "vfs_request".to_string(),
+                source: std::io::Error::other(e),
+            })?;
+        stream.write_all(b"\n")
+            .map_err(|e| ExecutorError::Spawn {
+                command: "vfs_request".to_string(),
+                source: std::io::Error::other(e),
+            })?;
+        stream.flush()
+            .map_err(|e| ExecutorError::Spawn {
+                command: "vfs_request".to_string(),
+                source: std::io::Error::other(e),
+            })?;
+
+        let mut reader = BufReader::new(stream);
+        let mut line = String::new();
+        reader.read_line(&mut line)
+            .map_err(|e| ExecutorError::Spawn {
+                command: "vfs_request".to_string(),
+                source: std::io::Error::other(e),
+            })?;
+
+        let response: VfsFileResponse = serde_json::from_str(line.trim())
+            .map_err(|e| ExecutorError::Spawn {
+                command: "vfs_request".to_string(),
+                source: std::io::Error::other(e),
+            })?;
+
+        Ok(response)
+    }
 }
 
 impl TaskExecutor for RemoteWorkerClient {
@@ -245,7 +307,7 @@ impl TaskExecutor for RemoteWorkerClient {
     }
 }
 
-fn pack_source_context(cwd: &Option<PathBuf>) -> Result<Option<SourceContext>, String> {
+fn pack_source_context(cwd: &Option<PathBuf>, use_vfs: bool) -> Result<Option<SourceContext>, String> {
     use base64::Engine;
 
     let Some(cwd) = cwd else {
@@ -260,5 +322,7 @@ fn pack_source_context(cwd: &Option<PathBuf>) -> Result<Option<SourceContext>, S
         root: cwd.to_string_lossy().into_owned(),
         data_base64,
         format: "tar.zst".to_string(),
+        use_vfs: Some(use_vfs),
+        vfs_mount: if use_vfs { Some("/vfs".to_string()) } else { None },
     }))
 }
