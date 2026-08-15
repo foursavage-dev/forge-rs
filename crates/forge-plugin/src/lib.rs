@@ -11,6 +11,7 @@ use forge_graph::BuildGraph;
 
 pub mod manifest;
 pub mod rule;
+pub mod scripting;
 
 pub use rule::{PluginRulesManifest, RuleSpec};
 
