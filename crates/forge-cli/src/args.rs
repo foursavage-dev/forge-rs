@@ -172,7 +172,7 @@ pub struct CiArgs {
 pub enum CiCommand {
     /// Initialize CI configuration
     Init {
-        /// CI platform (github, gitlab, both)
+        /// CI platform (github, gitlab, circleci, bitbucket, all)
         #[arg(long, default_value = "github")]
         platform: String,
         /// Enable cache
@@ -187,7 +187,7 @@ pub enum CiCommand {
         /// Output file path
         #[arg(short = 'o', long)]
         output: PathBuf,
-        /// CI platform (github, gitlab)
+        /// CI platform (github, gitlab, circleci, bitbucket)
         #[arg(long, default_value = "github")]
         platform: String,
     },

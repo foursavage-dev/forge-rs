@@ -1,7 +1,7 @@
 use std::process::ExitCode;
 
 use crate::args::{CiArgs, CiCommand};
-use forge_ci_generator::{CIConfig, CIMatrix, CIJob, CIPlatform, GitHubActionsGenerator, GitLabCIGenerator};
+use forge_ci_generator::{CIConfig, CIMatrix, CIJob, CIPlatform, GitHubActionsGenerator, GitLabCIGenerator, CircleCIGenerator, BitbucketPipelineGenerator};
 
 pub fn run_ci(args: CiArgs) -> ExitCode {
     match args.command {
@@ -10,9 +10,11 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 platform: match platform.as_str() {
                     "github" => CIPlatform::GitHubActions,
                     "gitlab" => CIPlatform::GitLabCI,
-                    "both" => CIPlatform::Both,
+                    "circleci" => CIPlatform::CircleCI,
+                    "bitbucket" => CIPlatform::BitbucketPipelines,
+                    "all" => CIPlatform::All,
                     _ => {
-                        eprintln!("error: invalid platform '{}', expected 'github', 'gitlab', or 'both'", platform);
+                        eprintln!("error: invalid platform '{}', expected 'github', 'gitlab', 'circleci', 'bitbucket', or 'all'", platform);
                         return ExitCode::FAILURE;
                     }
                 },
@@ -50,43 +52,117 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
             matrix.cache_config.remote_url = remote_cache.clone();
             
             // Generate CI configuration files
-            if ci_config.platform == CIPlatform::GitHubActions || 
-               ci_config.platform == CIPlatform::Both {
-                let generator = GitHubActionsGenerator::new(ci_config.clone());
-                match generator.generate_workflow(&matrix) {
-                    Ok(workflow) => {
-                        std::fs::create_dir_all(".github/workflows").ok();
-                        match std::fs::write(".github/workflows/forge.yml", workflow) {
-                            Ok(_) => println!("✓ Created .github/workflows/forge.yml"),
-                            Err(e) => {
-                                eprintln!("error: failed to write GitHub Actions workflow: {}", e);
-                                return ExitCode::FAILURE;
+            match ci_config.platform {
+                CIPlatform::GitHubActions => {
+                    let generator = GitHubActionsGenerator::new(ci_config.clone());
+                    match generator.generate_workflow(&matrix) {
+                        Ok(workflow) => {
+                            std::fs::create_dir_all(".github/workflows").ok();
+                            match std::fs::write(".github/workflows/forge.yml", workflow) {
+                                Ok(_) => println!("✓ Created .github/workflows/forge.yml"),
+                                Err(e) => {
+                                    eprintln!("error: failed to write GitHub Actions workflow: {}", e);
+                                    return ExitCode::FAILURE;
+                                }
                             }
                         }
-                    }
-                    Err(e) => {
-                        eprintln!("error: failed to generate GitHub Actions workflow: {}", e);
-                        return ExitCode::FAILURE;
+                        Err(e) => {
+                            eprintln!("error: failed to generate GitHub Actions workflow: {}", e);
+                            return ExitCode::FAILURE;
+                        }
                     }
                 }
-            }
-            
-            if ci_config.platform == CIPlatform::GitLabCI || 
-               ci_config.platform == CIPlatform::Both {
-                let generator = GitLabCIGenerator::new(ci_config.clone());
-                match generator.generate_pipeline(&matrix) {
-                    Ok(pipeline) => {
-                        match std::fs::write(".gitlab-ci.yml", pipeline) {
-                            Ok(_) => println!("✓ Created .gitlab-ci.yml"),
+                CIPlatform::GitLabCI => {
+                    let generator = GitLabCIGenerator::new(ci_config.clone());
+                    match generator.generate_pipeline(&matrix) {
+                        Ok(pipeline) => {
+                            match std::fs::write(".gitlab-ci.yml", pipeline) {
+                                Ok(_) => println!("✓ Created .gitlab-ci.yml"),
+                                Err(e) => {
+                                    eprintln!("error: failed to write GitLab CI pipeline: {}", e);
+                                    return ExitCode::FAILURE;
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("error: failed to generate GitLab CI pipeline: {}", e);
+                            return ExitCode::FAILURE;
+                        }
+                    }
+                }
+                CIPlatform::CircleCI => {
+                    let generator = CircleCIGenerator::new(ci_config.clone());
+                    match generator.generate_config(&matrix) {
+                        Ok(config) => {
+                            match std::fs::write(".circleci/config.yml", config) {
+                                Ok(_) => println!("✓ Created .circleci/config.yml"),
+                                Err(e) => {
+                                    eprintln!("error: failed to write CircleCI config: {}", e);
+                                    return ExitCode::FAILURE;
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("error: failed to generate CircleCI config: {}", e);
+                            return ExitCode::FAILURE;
+                        }
+                    }
+                }
+                CIPlatform::BitbucketPipelines => {
+                    let generator = BitbucketPipelineGenerator::new(ci_config.clone());
+                    match generator.generate_config(&matrix) {
+                        Ok(config) => {
+                            match std::fs::write("bitbucket-pipelines.yml", config) {
+                                Ok(_) => println!("✓ Created bitbucket-pipelines.yml"),
+                                Err(e) => {
+                                    eprintln!("error: failed to write Bitbucket Pipelines config: {}", e);
+                                    return ExitCode::FAILURE;
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("error: failed to generate Bitbucket Pipelines config: {}", e);
+                            return ExitCode::FAILURE;
+                        }
+                    }
+                }
+                CIPlatform::All => {
+                    // Generate all configurations
+                    let platforms = vec![
+                        (CIPlatform::GitHubActions, ".github/workflows/forge.yml"),
+                        (CIPlatform::GitLabCI, ".gitlab-ci.yml"),
+                        (CIPlatform::CircleCI, ".circleci/config.yml"),
+                        (CIPlatform::BitbucketPipelines, "bitbucket-pipelines.yml"),
+                    ];
+                    
+                    for (platform, file_path) in platforms {
+                        let config = CIConfig {
+                            platform,
+                            cache_enabled: cache,
+                            remote_cache_url: remote_cache.clone(),
+                            jobs_per_run: 4,
+                            timeout_minutes: 30,
+                        };
+                        
+                        let result = config.generate_ci(&matrix);
+                        match result {
+                            Ok(content) => {
+                                if let Some(parent_dir) = std::path::Path::new(file_path).parent() {
+                                    std::fs::create_dir_all(parent_dir).ok();
+                                }
+                                match std::fs::write(file_path, content) {
+                                    Ok(_) => println!("✓ Created {}", file_path),
+                                    Err(e) => {
+                                        eprintln!("error: failed to write {}: {}", file_path, e);
+                                        return ExitCode::FAILURE;
+                                    }
+                                }
+                            }
                             Err(e) => {
-                                eprintln!("error: failed to write GitLab CI pipeline: {}", e);
+                                eprintln!("error: failed to generate CI configuration: {}", e);
                                 return ExitCode::FAILURE;
                             }
                         }
-                    }
-                    Err(e) => {
-                        eprintln!("error: failed to generate GitLab CI pipeline: {}", e);
-                        return ExitCode::FAILURE;
                     }
                 }
             }
@@ -105,8 +181,10 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 platform: match platform.as_str() {
                     "github" => CIPlatform::GitHubActions,
                     "gitlab" => CIPlatform::GitLabCI,
+                    "circleci" => CIPlatform::CircleCI,
+                    "bitbucket" => CIPlatform::BitbucketPipelines,
                     _ => {
-                        eprintln!("error: invalid platform '{}', expected 'github' or 'gitlab'", platform);
+                        eprintln!("error: invalid platform '{}', expected 'github', 'gitlab', 'circleci', or 'bitbucket'", platform);
                         return ExitCode::FAILURE;
                     }
                 },
@@ -136,6 +214,14 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 "gitlab" => {
                     let generator = GitLabCIGenerator::new(ci_config);
                     generator.generate_pipeline(&matrix)
+                }
+                "circleci" => {
+                    let generator = CircleCIGenerator::new(ci_config);
+                    generator.generate_config(&matrix)
+                }
+                "bitbucket" => {
+                    let generator = BitbucketPipelineGenerator::new(ci_config);
+                    generator.generate_config(&matrix)
                 }
                 _ => unreachable!(),
             };
