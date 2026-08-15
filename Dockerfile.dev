@@ -1,0 +1,54 @@
+FROM rust:1.85-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    libpq-dev \
+    git \
+    curl \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js for TypeScript backend
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+    apt-get install -y nodejs
+
+# Install Python for Python backend
+RUN curl -fsSL https://bootstrap.pypa.io/get-pip.py | python3 && \
+    pip install uv
+
+# Install Go for Go backend
+RUN wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz && \
+    rm go1.21.0.linux-amd64.tar.gz
+
+# Install Docker CLI for Docker backend
+RUN curl -fsSL https://get.docker.com -o get-docker.sh && \
+    sh get-docker.sh && \
+    rm get-docker.sh
+
+# Set environment variables
+ENV PATH="/usr/local/go/bin:${PATH}"
+ENV CARGO_HOME="/usr/local/cargo"
+ENV PATH="/usr/local/cargo/bin:${PATH}"
+
+# Install Rust tools
+RUN cargo install cargo-watch cargo-edit cargo-expand
+
+# Set working directory
+WORKDIR /forge-rs
+
+# Copy project files
+COPY Cargo.toml Cargo.lock ./
+COPY crates/ ./crates/
+
+# Build dependencies
+RUN cargo build --workspace --release 2>&1 || true
+
+# Copy source
+COPY . .
+
+# Default command
+CMD ["bash"]

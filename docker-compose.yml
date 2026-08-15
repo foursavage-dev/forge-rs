@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  # PostgreSQL for analytics
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: forge_analytics
+      POSTGRES_USER: forge
+      POSTGRES_PASSWORD: forge_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # MinIO for S3-compatible storage
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: forge
+      MINIO_ROOT_PASSWORD: forge_password
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+  # Vault for secret management
+  vault:
+    image: hashicorp/vault:latest
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: forge-dev-token
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - vault_data:/vault/data
+
+  # Development environment with all toolchains
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/forge-rs
+      - cargo_cache:/usr/local/cargo/registry
+      - cargo_cache:/usr/local/cargo/git
+      - target_cache:/forge-rs/target
+    working_dir: /forge-rs
+    environment:
+      CARGO_HOME: /usr/local/cargo
+      RUST_LOG: debug
+    command: sleep infinity
+
+volumes:
+  redis_data:
+  postgres_data:
+  minio_data:
+  vault_data:
+  cargo_cache:
+  target_cache:
