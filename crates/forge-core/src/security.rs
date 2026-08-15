@@ -148,7 +148,7 @@ impl SecurityValidator {
 
     fn is_suspicious_argument(&self, arg: &str) -> bool {
         let suspicious_patterns = [
-            ";", "&", "|", "$(", "`", "$(", "\\",
+            ";", "&", "|", "$(", "`",
             "&&", "||", "<", ">", ">>", "<<",
         ];
 
@@ -269,10 +269,24 @@ mod tests {
 
     #[test]
     fn test_suspicious_arguments() {
-        let validator = SecurityValidator::new(SecurityPolicy::new(SecurityLevel::Strict));
-        
-        assert!(validator.validate_command("echo", &["hello"]).is_ok());
-        assert!(validator.validate_command("rm", &["-rf", "/"]).is_err());
+        let mut policy = SecurityPolicy::new(SecurityLevel::Strict);
+        policy.add_allowed_executable("echo".to_string());
+        policy.add_allowed_executable("rm".to_string());
+        let validator = SecurityValidator::new(policy);
+
+        // Normal arguments should pass
+        assert!(validator.validate_command("echo", &["hello".to_string()]).is_ok());
+        assert!(validator.validate_command("rm", &["-rf".to_string(), "/tmp/test".to_string()]).is_ok());
+        // Windows paths with backslashes should pass
+        assert!(validator.validate_command("echo", &["C:\\Users\\test".to_string()]).is_ok());
+
+        // Shell injection attempts should be caught
+        assert!(validator.validate_command("rm", &["-rf".to_string(), "; rm -rf /".to_string()]).is_err());
+        assert!(validator.validate_command("echo", &["test; malicious".to_string()]).is_err());
+        assert!(validator.validate_command("echo", &["test && malicious".to_string()]).is_err());
+        assert!(validator.validate_command("echo", &["test || malicious".to_string()]).is_err());
+        assert!(validator.validate_command("echo", &["test > /dev/null".to_string()]).is_err());
+        assert!(validator.validate_command("echo", &["$(malicious)".to_string()]).is_err());
     }
 
     #[test]

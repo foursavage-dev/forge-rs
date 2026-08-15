@@ -18,7 +18,7 @@ pub fn try_symlink_or_copy(src: &Path, dst: &Path) -> io::Result<()> {
     // Try symlink first
     #[cfg(windows)]
     {
-        if let Ok(_) = std::os::windows::fs::symlink_file(src, dst) {
+        if std::os::windows::fs::symlink_file(src, dst).is_ok() {
             return Ok(());
         }
     }

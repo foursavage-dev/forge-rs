@@ -3,6 +3,8 @@
 pub mod file_level;
 pub mod strategies;
 
+pub use strategies::{LruCache, TieredCache, PredictiveCache, SpinLockLruCache};
+
 use std::fmt;
 use std::fs;
 use std::io;

@@ -73,6 +73,12 @@ pub struct KernelBypassVfs {
     ring_buffer: Arc<LockFreeRingBuffer>,
 }
 
+impl Default for KernelBypassVfs {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl KernelBypassVfs {
     pub fn new() -> Self {
         Self {

@@ -171,7 +171,7 @@ mod tests {
         let bin_path = out_dir.join("app.exe");
         fs::write(&bin_path, b"pristine binary artifact").unwrap();
 
-        let attestation = AttestationEngine::generate_attestation(temp.path(), &[bin_path.clone()]).unwrap();
+        let attestation = AttestationEngine::generate_attestation(temp.path(), std::slice::from_ref(&bin_path)).unwrap();
         assert!(!attestation.merkle_root.is_empty());
         assert_eq!(attestation.subject.len(), 1);
 

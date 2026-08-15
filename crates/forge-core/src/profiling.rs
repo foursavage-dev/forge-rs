@@ -8,6 +8,7 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
+use spin::Mutex as SpinMutex;
 
 #[derive(Debug, Clone)]
 pub struct PerformanceMetrics {
@@ -31,7 +32,7 @@ pub struct TaskProfile {
 
 pub struct Profiler {
     _start_time: Instant,
-    task_profiles: Arc<spin::Mutex<Vec<TaskProfile>>>,
+    task_profiles: Arc<SpinMutex<Vec<TaskProfile>>>,
     metrics: Arc<ProfilerMetrics>,
 }
 
@@ -45,11 +46,17 @@ struct ProfilerMetrics {
     io_operations: AtomicU64,
 }
 
+impl Default for Profiler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Profiler {
     pub fn new() -> Self {
         Self {
             _start_time: Instant::now(),
-            task_profiles: Arc::new(spin::Mutex::new(Vec::new())),
+            task_profiles: Arc::new(SpinMutex::new(Vec::new())),
             metrics: Arc::new(ProfilerMetrics::default()),
         }
     }
@@ -112,8 +119,18 @@ impl Profiler {
 
     pub fn get_slowest_tasks(&self, count: usize) -> Vec<TaskProfile> {
         let mut profiles = self.task_profiles.lock().clone();
-        profiles.sort_by(|a, b| b.duration.cmp(&a.duration));
+        profiles.sort_unstable_by_key(|b| std::cmp::Reverse(b.duration));
         profiles.into_iter().take(count).collect()
+    }
+
+    /// Batch record multiple cache hits at once to reduce lock contention
+    pub fn record_cache_hits_batch(&self, count: u64) {
+        self.metrics.cache_hits.fetch_add(count, Ordering::SeqCst);
+    }
+
+    /// Batch record multiple cache misses at once to reduce lock contention
+    pub fn record_cache_misses_batch(&self, count: u64) {
+        self.metrics.cache_misses.fetch_add(count, Ordering::SeqCst);
     }
 
     pub fn get_cache_miss_rate(&self) -> f64 {
@@ -131,14 +148,14 @@ impl Profiler {
 pub struct TaskGuard {
     name: String,
     start_time: Instant,
-    profiles: Arc<spin::Mutex<Vec<TaskProfile>>>,
+    profiles: Arc<SpinMutex<Vec<TaskProfile>>>,
     metrics: Arc<ProfilerMetrics>,
 }
 
 impl TaskGuard {
     fn new(
         name: String,
-        profiles: Arc<spin::Mutex<Vec<TaskProfile>>>,
+        profiles: Arc<SpinMutex<Vec<TaskProfile>>>,
         metrics: Arc<ProfilerMetrics>,
     ) -> Self {
         Self {
@@ -191,6 +208,12 @@ pub struct MemoryTracker {
     current_memory: AtomicU64,
 }
 
+impl Default for MemoryTracker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MemoryTracker {
     pub fn new() -> Self {
         Self {
@@ -226,6 +249,12 @@ pub struct ResourceMonitor {
     memory_usage: AtomicU64,
     disk_io: AtomicU64,
     network_io: AtomicU64,
+}
+
+impl Default for ResourceMonitor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ResourceMonitor {
@@ -293,6 +322,16 @@ mod tests {
         let metrics = profiler.get_metrics();
         assert_eq!(metrics.task_count, 1);
         assert!(metrics.total_duration > Duration::ZERO);
+    }
+
+    #[test]
+    fn test_batch_cache_recording() {
+        let profiler = Profiler::new();
+        profiler.record_cache_hits_batch(100);
+        profiler.record_cache_misses_batch(25);
+
+        let miss_rate = profiler.get_cache_miss_rate();
+        assert!((miss_rate - 0.2).abs() < 0.01);
     }
 
     #[test]

@@ -20,6 +20,12 @@ pub struct FileLevelCache {
     cas_storage: Arc<RwLock<HashMap<ArtifactHash, Artifact>>>,
 }
 
+impl Default for FileLevelCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FileLevelCache {
     pub fn new() -> Self {
         Self {
@@ -109,6 +115,12 @@ pub struct FileDependencyGraph {
     reverse_dependencies: Arc<RwLock<HashMap<PathBuf, Vec<PathBuf>>>>,
 }
 
+impl Default for FileDependencyGraph {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FileDependencyGraph {
     pub fn new() -> Self {
         Self {
@@ -122,8 +134,8 @@ impl FileDependencyGraph {
         let mut deps = self.dependencies.write().unwrap();
         let mut reverse = self.reverse_dependencies.write().unwrap();
         
-        deps.entry(file.clone()).or_insert_with(Vec::new).push(depends_on.clone());
-        reverse.entry(depends_on).or_insert_with(Vec::new).push(file);
+        deps.entry(file.clone()).or_default().push(depends_on.clone());
+        reverse.entry(depends_on).or_default().push(file);
     }
 
     /// Get files that depend on a given file

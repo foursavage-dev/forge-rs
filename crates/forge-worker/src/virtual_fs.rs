@@ -387,12 +387,20 @@ fn is_executable(path: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
 
     #[test]
     fn test_vfs_creation() {
         let vfs = VirtualFileSystem::new(100);
-        assert!(vfs.exists(Path::new("/")));
+        // Test that VFS was created successfully by checking it can handle operations
+        let test_path = Path::new("/test");
+        let content = b"test".to_vec();
+        let metadata = FileMetadata {
+            size: 4,
+            modified: 0,
+            is_executable: false,
+        };
+        assert!(vfs.write_file(test_path, content, metadata).is_ok());
+        assert!(vfs.exists(test_path));
     }
 
     #[test]

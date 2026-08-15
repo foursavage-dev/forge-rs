@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+#![allow(dead_code)]
 
 //! Real-time build monitoring and dashboard
 //! 
@@ -9,6 +10,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, Instant};
+use spin::Mutex as SpinMutex;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BuildStatus {
@@ -30,7 +32,7 @@ pub struct TaskProgress {
 }
 
 pub struct BuildMonitor {
-    tasks: Arc<spin::Mutex<HashMap<String, TaskProgress>>>,
+    tasks: Arc<SpinMutex<HashMap<String, TaskProgress>>>,
     total_tasks: AtomicU64,
     completed_tasks: AtomicU64,
     failed_tasks: AtomicU64,
@@ -41,7 +43,7 @@ pub struct BuildMonitor {
 impl BuildMonitor {
     pub fn new() -> Self {
         Self {
-            tasks: Arc::new(spin::Mutex::new(HashMap::new())),
+            tasks: Arc::new(SpinMutex::new(HashMap::new())),
             total_tasks: AtomicU64::new(0),
             completed_tasks: AtomicU64::new(0),
             failed_tasks: AtomicU64::new(0),
@@ -117,6 +119,45 @@ impl BuildMonitor {
     pub fn is_running(&self) -> bool {
         self.is_running.load(Ordering::SeqCst)
     }
+
+    /// Batch add multiple tasks at once to reduce lock contention
+    pub fn add_tasks_batch(&self, names: Vec<String>) {
+        self.total_tasks.fetch_add(names.len() as u64, Ordering::SeqCst);
+        let mut tasks = self.tasks.lock();
+        for name in names {
+            tasks.insert(name.clone(), TaskProgress {
+                name,
+                status: BuildStatus::Pending,
+                progress: 0.0,
+                message: "Waiting to start".to_string(),
+                start_time: None,
+                duration: None,
+            });
+        }
+    }
+
+    /// Get progress without locking for read-only snapshot
+    pub fn get_progress_snapshot(&self) -> BuildProgress {
+        let total = self.total_tasks.load(Ordering::SeqCst);
+        let completed = self.completed_tasks.load(Ordering::SeqCst);
+        let failed = self.failed_tasks.load(Ordering::SeqCst);
+        let progress = if total > 0 {
+            (completed + failed) as f64 / total as f64
+        } else {
+            0.0
+        };
+
+        let elapsed = self.start_time.elapsed();
+
+        BuildProgress {
+            total_tasks: total,
+            completed_tasks: completed,
+            failed_tasks: failed,
+            progress,
+            elapsed,
+            tasks: vec![], // Omit task list for faster snapshot
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -167,12 +208,36 @@ mod tests {
         let monitor = BuildMonitor::new();
         monitor.add_task("task1".to_string());
         monitor.add_task("task2".to_string());
-        
+
         monitor.update_task("task1", BuildStatus::Completed, 1.0, "Done".to_string());
         monitor.update_task("task2", BuildStatus::Completed, 1.0, "Done".to_string());
-        
+
         let progress = monitor.get_progress();
         assert_eq!(progress.completed_tasks, 2);
         assert_eq!(progress.progress, 1.0);
+    }
+
+    #[test]
+    fn test_batch_task_addition() {
+        let monitor = BuildMonitor::new();
+        let tasks = vec!["task1".to_string(), "task2".to_string(), "task3".to_string()];
+        monitor.add_tasks_batch(tasks);
+
+        let progress = monitor.get_progress();
+        assert_eq!(progress.total_tasks, 3);
+        assert_eq!(progress.tasks.len(), 3);
+    }
+
+    #[test]
+    fn test_progress_snapshot() {
+        let monitor = BuildMonitor::new();
+        monitor.add_task("task1".to_string());
+        monitor.update_task("task1", BuildStatus::Completed, 1.0, "Done".to_string());
+
+        let snapshot = monitor.get_progress_snapshot();
+        assert_eq!(snapshot.total_tasks, 1);
+        assert_eq!(snapshot.completed_tasks, 1);
+        assert_eq!(snapshot.progress, 1.0);
+        assert!(snapshot.tasks.is_empty()); // Snapshot should not include task list
     }
 }

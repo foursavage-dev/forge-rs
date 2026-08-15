@@ -18,7 +18,7 @@ pub use environment::EnvironmentFingerprint;
 pub use error::{ForgeError, Result};
 pub use profiling::{Profiler, PerformanceMetrics, TaskProfile, MemoryTracker, ResourceMonitor, ResourceUsage};
 pub use security::{SecurityPolicy, SecurityValidator, SecurityError, SecurityLevel, InputValidator};
-pub use testing::{TestRunner, TestSuite, TestResult, TestSummary, PropertyTestRunner, PropertyTestResult, IntegrationTestEnvironment, Benchmark, BenchmarkResult};
+pub use testing::{TestRunner, TestSuite, TestResult, TestSummary, PropertyTestRunner, PropertyTestResult, IntegrationTestEnvironment, Benchmark, BenchmarkResult, ParallelTestRunner, TestCase};
 
 #[cfg(windows)]
 pub use windows_compat::{try_symlink_or_copy, is_file_locked, safe_replace_file, get_windows_version, is_developer_mode_enabled};
