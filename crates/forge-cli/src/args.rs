@@ -51,6 +51,7 @@ pub enum Command {
     LivePatch(LivePatchArgs),
     Jit(JitArgs),
     SuperOpt(SuperOptArgs),
+    Plugin(PluginArgs),
 }
 
 /// Arguments for affected command
@@ -409,6 +410,33 @@ pub struct WorkerArgs {
     pub name: String,
     #[arg(long, default_value = "8")]
     pub max_concurrency: usize,
+}
+
+/// Arguments for plugin command
+#[derive(Debug, Args)]
+pub struct PluginArgs {
+    /// Project directory
+    #[arg(long, short)]
+    pub path: Option<PathBuf>,
+    #[command(subcommand)]
+    pub action: PluginAction,
+}
+
+/// Plugin subcommands
+#[derive(Debug, Subcommand)]
+pub enum PluginAction {
+    /// List all available script plugins
+    List,
+    /// Execute a specific plugin command
+    Execute {
+        /// Plugin name
+        name: String,
+        /// Command to execute
+        command: String,
+        /// Additional arguments for the command
+        #[arg(allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
 }
 
 /// Graph output format

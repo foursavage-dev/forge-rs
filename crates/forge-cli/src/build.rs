@@ -212,7 +212,19 @@ pub(crate) fn run_build_mode_with(
     }
 
     if start_dir.join("Forgefile.json").exists() || start_dir.join("forge.rules.json").exists() {
+        // Check for script plugins before running plugin build
+        if crate::backends::has_script_plugins(&start_dir) {
+            let plugins = crate::backends::list_script_plugins(&start_dir);
+            println!("🔌 Found {} script plugin(s): {}", plugins.len(), plugins.join(", "));
+        }
         return crate::backends::run_plugin_build(&start_dir, &merged);
+    }
+
+    // Auto-detect script plugins even without Forgefile.json
+    if crate::backends::has_script_plugins(&start_dir) {
+        let plugins = crate::backends::list_script_plugins(&start_dir);
+        println!("🔌 Auto-detected {} script plugin(s): {}", plugins.len(), plugins.join(", "));
+        println!("ℹ️  Script plugins are available. Use 'forge plugin' commands to manage them.");
     }
 
     if start_dir.join("forge.cc.json").exists() {

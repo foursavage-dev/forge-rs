@@ -14,7 +14,7 @@ use forge_backend_zig::{ZigBackend, ZigProjectConfig};
 use forge_backend_docker::DockerBackend;
 
 use forge_executor::Task;
-use forge_plugin::{PluginBackend, PluginRulesManifest};
+use forge_plugin::{PluginBackend, PluginRulesManifest, scripting::{PluginManager, PluginError}};
 
 use crate::args::CommonArgs;
 use crate::render;
@@ -346,6 +346,51 @@ pub(crate) fn run_plugin_build(start_dir: &Path, args: &CommonArgs) -> ExitCode 
     execute_task_graph(&mut task_graph, args)
 }
 
+/// Detects and loads script plugins from a .forge/plugins directory
+pub(crate) fn detect_and_load_plugins(start_dir: &Path) -> Result<PluginManager, PluginError> {
+    let plugin_dir = start_dir.join(".forge").join("plugins");
+    let mut manager = PluginManager::new(plugin_dir);
+    manager.load_plugins()?;
+    Ok(manager)
+}
+
+/// Executes a specific script plugin by name
+pub(crate) fn execute_script_plugin(
+    start_dir: &Path,
+    plugin_name: &str,
+    command: &str,
+    args: &[String],
+) -> Result<forge_plugin::scripting::PluginOutput, PluginError> {
+    let manager = detect_and_load_plugins(start_dir)?;
+    manager.execute_plugin(plugin_name, command, args)
+}
+
+/// Checks if a project has any script plugins loaded
+pub(crate) fn has_script_plugins(start_dir: &Path) -> bool {
+    let plugin_dir = start_dir.join(".forge").join("plugins");
+    if !plugin_dir.exists() {
+        return false;
+    }
+    
+    match detect_and_load_plugins(start_dir) {
+        Ok(manager) => !manager.list_plugins().is_empty(),
+        Err(_) => false,
+    }
+}
+
+/// Lists all available script plugins in the project
+pub(crate) fn list_script_plugins(start_dir: &Path) -> Vec<String> {
+    match detect_and_load_plugins(start_dir) {
+        Ok(manager) => {
+            manager.list_plugins()
+                .iter()
+                .map(|p| p.name.clone())
+                .collect()
+        }
+        Err(_) => vec![],
+    }
+}
+
 pub(crate) fn execute_task_graph(
     task_graph: &mut forge_graph::BuildGraph<Task>,
     args: &CommonArgs,
@@ -445,4 +490,74 @@ pub(crate) fn has_dir_with_extension(dir: &Path, extensions: &[&str]) -> bool {
         }
     }
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+    use tempfile::tempdir;
+
+    use super::*;
+
+    #[test]
+    fn test_has_script_plugins_no_directory() {
+        let dir = tempdir().unwrap();
+        assert!(!has_script_plugins(dir.path()));
+    }
+
+    #[test]
+    fn test_has_script_plugins_empty_directory() {
+        let dir = tempdir().unwrap();
+        let plugin_dir = dir.path().join(".forge").join("plugins");
+        fs::create_dir_all(&plugin_dir).unwrap();
+        assert!(!has_script_plugins(dir.path()));
+    }
+
+    #[test]
+    fn test_list_script_plugins_empty() {
+        let dir = tempdir().unwrap();
+        let plugins = list_script_plugins(dir.path());
+        assert!(plugins.is_empty());
+    }
+
+    #[test]
+    fn test_list_script_plugins_with_valid_plugin() {
+        let dir = tempdir().unwrap();
+        let plugin_dir = dir.path().join(".forge").join("plugins");
+        fs::create_dir_all(&plugin_dir).unwrap();
+
+        let test_plugin_dir = plugin_dir.join("test-plugin");
+        fs::create_dir_all(&test_plugin_dir).unwrap();
+
+        let plugin_config = r#"{
+            "name": "test-plugin",
+            "version": "1.0.0",
+            "script_type": "Shell",
+            "entry_point": "/bin/sh",
+            "dependencies": [],
+            "capabilities": {
+                "can_build": true,
+                "can_test": false,
+                "can_clean": false,
+                "can_graph": false,
+                "supports_watch": false
+            }
+        }"#;
+
+        fs::write(test_plugin_dir.join("plugin.json"), plugin_config).unwrap();
+
+        let plugins = list_script_plugins(dir.path());
+        assert_eq!(plugins.len(), 1);
+        assert_eq!(plugins[0], "test-plugin");
+    }
+
+    #[test]
+    fn test_detect_and_load_plugins_no_directory() {
+        let dir = tempdir().unwrap();
+        let result = detect_and_load_plugins(dir.path());
+        // Should succeed even without directory
+        assert!(result.is_ok());
+        let manager = result.unwrap();
+        assert!(manager.list_plugins().is_empty());
+    }
 }
