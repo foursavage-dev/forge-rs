@@ -48,7 +48,7 @@ fn test_experimental_turbolink_cli() {
         ("src/lib.rs", "pub fn fast_link() {}\n"),
     ]);
 
-    let output = run(forge().arg("build").arg("--turbo-link").arg(dir.path()));
+    let output = run(forge().arg("build").arg("--experimental").arg("--turbo-link").arg(dir.path()));
     let out = stdout(&output);
     assert!(output.status.success(), "stdout: {out}, stderr: {}", stderr(&output));
     assert!(out.contains("Linker Turbo-Hijack active"));
@@ -74,7 +74,7 @@ fn test_experimental_daemon_pool_cli() {
         ("src/lib.rs", "pub fn daemon_code() {}\n"),
     ]);
 
-    let output = run(forge().arg("build").arg("--daemon-pool").arg(dir.path()));
+    let output = run(forge().arg("build").arg("--experimental").arg("--daemon-pool").arg(dir.path()));
     let out = stdout(&output);
     assert!(output.status.success(), "stdout: {out}, stderr: {}", stderr(&output));
     assert!(out.contains("Pre-Warmed Compiler Zombie-Daemon Pool active"));
@@ -87,7 +87,7 @@ fn test_experimental_kernel_bypass_cli() {
         ("src/lib.rs", "pub fn dma_code() {}\n"),
     ]);
 
-    let output = run(forge().arg("build").arg("--kernel-bypass").arg(dir.path()));
+    let output = run(forge().arg("build").arg("--experimental").arg("--kernel-bypass").arg(dir.path()));
     let out = stdout(&output);
     assert!(output.status.success(), "stdout: {out}, stderr: {}", stderr(&output));
     assert!(out.contains("Kernel-Bypass Direct Ring-Buffer DMA VFS active"));
@@ -113,7 +113,7 @@ fn test_experimental_super_opt_cli() {
         ("src/lib.rs", "pub fn super_opt_code() {}\n"),
     ]);
 
-    let output = run(forge().arg("build").arg("--super-opt").arg(dir.path()));
+    let output = run(forge().arg("build").arg("--experimental").arg("--super-opt").arg(dir.path()));
     let out = stdout(&output);
     assert!(output.status.success(), "stdout: {out}, stderr: {}", stderr(&output));
     assert!(out.contains("Autonomous Binary Super-Optimizer & AVX-512 Rewriter active"));
@@ -121,7 +121,7 @@ fn test_experimental_super_opt_cli() {
 
 #[test]
 fn test_experimental_jit_command() {
-    let output = run(forge().arg("jit").arg("fast_compute_kernel").arg("100"));
+    let output = run(forge().arg("--experimental").arg("jit").arg("fast_compute_kernel").arg("100"));
     let out = stdout(&output);
     assert!(output.status.success(), "stdout: {out}, stderr: {}", stderr(&output));
     assert!(out.contains("In-Process Micro-JIT compiled `fast_compute_kernel`"));
@@ -133,7 +133,7 @@ fn test_experimental_super_opt_command() {
     let input = dir.path().join("app.bin");
     let output_file = dir.path().join("app_opt.bin");
 
-    let output = run(forge().arg("super-opt").arg(&input).arg(&output_file));
+    let output = run(forge().arg("--experimental").arg("super-opt").arg(&input).arg(&output_file));
     let out = stdout(&output);
     assert!(output.status.success(), "stdout: {out}, stderr: {}", stderr(&output));
     assert!(out.contains("Binary Super-Optimizer applied"));
@@ -148,6 +148,7 @@ fn test_experimental_live_patch_command() {
     let target = dir.path().join("target/release/app.exe");
 
     let output = run(forge()
+        .arg("--experimental")
         .arg("live-patch")
         .arg("4321")
         .arg(&target)
@@ -167,6 +168,7 @@ fn test_full_god_tier_experimental_stack() {
 
     let output = run(forge()
         .arg("build")
+        .arg("--experimental")
         .arg("--turbo-link")
         .arg("--speculative")
         .arg("--daemon-pool")
