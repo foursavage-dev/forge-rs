@@ -147,12 +147,66 @@ impl SecurityValidator {
     }
 
     fn is_suspicious_argument(&self, arg: &str) -> bool {
-        let suspicious_patterns = [
-            ";", "&", "|", "$(", "`",
-            "&&", "||", "<", ">", ">>", "<<",
+        // Improved validation using regex patterns with context awareness
+        // This reduces false positives by checking for actual injection patterns
+        // rather than simple substring matching
+
+        // Check for command substitution patterns - always suspicious
+        let cmd_substitution_patterns = [
+            r"\$\([^)]*\)",       // $(command)
+            r"`[^`]*`",           // `command`
+            r"\$\{[^}]*\}",       // ${var}
         ];
 
-        suspicious_patterns.iter().any(|pattern| arg.contains(pattern))
+        // Check for suspicious patterns
+        for pattern in cmd_substitution_patterns.iter() {
+            if let Ok(re) = regex::Regex::new(pattern) {
+                if re.is_match(arg) {
+                    return true;
+                }
+            }
+        }
+
+        // Check for shell injection characters with context
+        // Allow paths with backslashes (Windows)
+        // But flag suspicious chaining operators and redirections
+        let suspicious_chars = [';', '&', '|', '<', '>'];
+        
+        for char in suspicious_chars {
+            if arg.contains(char) {
+                // If it contains a suspicious char, check if it's a path
+                // If it's not clearly a path, flag it
+                if !self.is_legitimate_path(arg) {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    /// Helper to determine if an argument looks like a legitimate file path
+    fn is_legitimate_path(&self, arg: &str) -> bool {
+        // Allow patterns like: /path/to/file, C:\path, file.txt
+        // But reject patterns like: ; rm -rf /, cmd && malicious, file > /dev/null
+        
+        // If it has redirection operators, it's not a legitimate path
+        if arg.contains('>') || arg.contains('<') {
+            return false;
+        }
+        
+        // If it has path separators and looks like a path, allow it
+        if arg.contains('/') || arg.contains('\\') {
+            // Check if it contains suspicious operators in addition to path chars
+            // If it has both path separators AND shell operators, it's suspicious
+            let has_shell_operators = arg.contains(';') || arg.contains('&') || arg.contains('|');
+            if has_shell_operators {
+                return false;
+            }
+            return true;
+        }
+        
+        false
     }
 
     pub fn update_policy(&self, new_policy: SecurityPolicy) {
@@ -287,6 +341,8 @@ mod tests {
         assert!(validator.validate_command("echo", &["test || malicious".to_string()]).is_err());
         assert!(validator.validate_command("echo", &["test > /dev/null".to_string()]).is_err());
         assert!(validator.validate_command("echo", &["$(malicious)".to_string()]).is_err());
+        assert!(validator.validate_command("echo", &["`malicious`".to_string()]).is_err());
+        assert!(validator.validate_command("echo", &["${malicious}".to_string()]).is_err());
     }
 
     #[test]
