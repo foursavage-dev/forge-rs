@@ -1,14 +1,14 @@
 # Forge 🦀
 
-[![CI](https://github.com/requla11/forge-rs/actions/workflows/dogfood.yml/badge.svg)](https://github.com/requla11/forge-rs/actions)
+[![CI](https://github.com/foursavage-dev/forge-rs/actions/workflows/dogfood.yml/badge.svg)](https://github.com/foursavage-dev/forge-rs/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org)
-[![AI Assistant](https://img.shields.io/badge/AI%20Bot-Gemini%203.7%20Flash-brightgreen.svg)](https://github.com/requla11/forge-rs/actions)
-[![Language Backends](https://img.shields.io/badge/backends-10%2B-ff69b4.svg)](https://github.com/requla11/forge-rs)
-[![Cache Engine](https://img.shields.io/badge/cache-CAS%20Artifact-blue.svg)](https://github.com/requla11/forge-rs)
-[![CI Generator](https://img.shields.io/badge/CI%20Generator-Auto%20Generate-green.svg)](https://github.com/requla11/forge-rs)
-[![Stars](https://img.shields.io/github/stars/requla11/forge-rs?style=social)](https://github.com/requla11/forge-rs/stargazers)
-[![Forks](https://img.shields.io/github/forks/requla11/forge-rs?style=social)](https://github.com/requla11/forge-rs/network/members)
+[![AI Assistant](https://img.shields.io/badge/AI%20Bot-Gemini%203.7%20Flash-brightgreen.svg)](https://github.com/foursavage-dev/forge-rs/actions)
+[![Language Backends](https://img.shields.io/badge/backends-10%2B-ff69b4.svg)](https://github.com/foursavage-dev/forge-rs)
+[![Cache Engine](https://img.shields.io/badge/cache-CAS%20Artifact-blue.svg)](https://github.com/foursavage-dev/forge-rs)
+[![CI Generator](https://img.shields.io/badge/CI%20Generator-Auto%20Generate-green.svg)](https://github.com/foursavage-dev/forge-rs)
+[![Stars](https://img.shields.io/github/stars/foursavage-dev/forge-rs?style=social)](https://github.com/foursavage-dev/forge-rs/stargazers)
+[![Forks](https://img.shields.io/github/forks/foursavage-dev/forge-rs?style=social)](https://github.com/foursavage-dev/forge-rs/network/members)
 
 > A blazing fast, polyglot, cache-first build orchestration system built in Rust.
 > Forge orchestrates your toolchains into an incremental, cache-aware, and distributed build graph.
@@ -23,12 +23,12 @@ Forge is **not** a compiler, a package registry, or a language package manager r
 
 **Linux & macOS:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/requla11/forge-rs/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/foursavage-dev/forge-rs/main/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://raw.githubusercontent.com/requla11/forge-rs/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/foursavage-dev/forge-rs/main/install.ps1 | iex
 ```
 
 ### From Source
@@ -38,7 +38,7 @@ cargo install --path crates/forge-cli
 
 ### Cargo Install
 ```bash
-cargo install forge-cli --git https://github.com/requla11/forge-rs
+cargo install forge-cli --git https://github.com/foursavage-dev/forge-rs
 ```
 
 ---
@@ -49,7 +49,7 @@ cargo install forge-cli --git https://github.com/requla11/forge-rs
 - 🌐 **Polyglot Monorepo Support:** Out-of-the-box backends for 10+ languages and containers without complex Starlark/BUILD configurations.
 - 📦 **CAS Artifact Cache:** Content-Addressable Storage for local and remote caching of exact build outputs and binaries.
 - 🔄 **Level Partitioning & Batching:** Groups independent packages per build level into single toolchain calls, eliminating process spawn overhead.
-- 🤖 **AI Assistant Bot (`requla11-bot[bot]`):** Powered by Gemini 3.7 Flash for automatic PR benchmarking, affected crate reviews, and issue triage.
+- 🤖 **AI Assistant Bot (`foursavage-dev-bot[bot]`):** Powered by Gemini 3.7 Flash for automatic PR benchmarking, affected crate reviews, and issue triage.
 - 📊 **Interactive TUI & Web Dashboard:** Live Terminal UI with Ratatui and an interactive Web Flamegraph visualizer for bottleneck discovery.
 - ☸️ **Distributed Cluster Execution:** Remote worker discovery, tiered L1/L2 cache daemons, and failover balancing.
 - 🛠️ **CI/CD Generator:** Automatically generate optimized GitHub Actions and GitLab CI workflows with `forge ci init`.
@@ -111,6 +111,9 @@ Content-Addressable Storage for efficient artifact caching:
 Automatically generate optimized CI workflows:
 - **GitHub Actions**: `forge ci init --platform github`
 - **GitLab CI**: `forge ci init --platform gitlab`
+- **CircleCI**: `forge ci init --platform circleci`
+- **Bitbucket Pipelines**: `forge ci init --platform bitbucket`
+- **All platforms**: `forge ci init --platform all`
 - **Matrix generation**: Parallel job scheduling based on build graph
 - **Cache integration**: Automatic cache configuration
 - **Affected builds**: PR-optimized CI for changed packages only
@@ -153,9 +156,9 @@ forge/
 │   ├── forge-cache/           # Fingerprint store & executor cache wrapper
 │   ├── forge-cas/             # Content-Addressable Storage (CAS) engine
 │   ├── forge-remote-cache/    # Remote cache client & tiered L1/L2 composite
-│   ├── forge-worker/          # Distributed execution worker & clustering
+│   ├── forge-worker/          # Distributed execution worker & clustering with VFS support
 │   ├── forge-sandbox/         # Hermetic environment isolation
-│   ├── forge-ci-generator/    # GitHub Actions & GitLab CI pipeline generator
+│   ├── forge-ci-generator/    # GitHub Actions, GitLab CI, CircleCI, Bitbucket Pipelines generator
 │   ├── forge-backend-rust/    # Cargo metadata -> task graph + fingerprints
 │   ├── forge-backend-cc/      # C/C++ backend (gcc/clang/msvc)
 │   ├── forge-backend-go/      # Go backend (go.mod)
@@ -167,8 +170,8 @@ forge/
 │   ├── forge-backend-swift/   # Swift Package Manager backend
 │   ├── forge-backend-dart/    # Dart / Flutter backend
 │   ├── forge-backend-zig/     # Zig backend (build.zig)
-│   ├── forge-plugin/          # Custom rule plugin backend
-│   └── forge-cli/             # The `forge` binary & terminal UI
+│   ├── forge-plugin/          # Custom rule plugin backend with ScriptPlugin support
+│   └── forge-cli/             # The `forge` binary & terminal UI with plugin integration
 ├── examples/
 │   └── polyglot-demo/         # Sample monorepo with Rust + Go + TS + Docker
 ├── install.sh                 # One-line installer for Linux/macOS
@@ -189,7 +192,7 @@ forge build
 ### Build a Polyglot Monorepo
 ```bash
 # Clone the example monorepo
-git clone https://github.com/requla11/forge-rs.git
+git clone https://github.com/foursavage-dev/forge-rs.git
 cd forge-rs/examples/polyglot-demo
 
 # Build all services (Rust + Go + TypeScript + Docker)
@@ -209,6 +212,15 @@ forge ci init --platform github
 
 # Generate GitLab CI pipeline
 forge ci init --platform gitlab
+
+# Generate CircleCI config
+forge ci init --platform circleci
+
+# Generate Bitbucket Pipelines config
+forge ci init --platform bitbucket
+
+# Generate all platform configs
+forge ci init --platform all
 ```
 
 ### Use CAS Artifact Cache
