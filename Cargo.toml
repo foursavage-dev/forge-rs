@@ -23,6 +23,16 @@ members = [
     "crates/forge-plugin",
     "crates/forge-remote-cache",
     "crates/forge-sandbox",
+    "crates/forge-signing",
+    "crates/forge-security",
+    "crates/forge-analytics",
+    "crates/forge-multiplatform",
+    "crates/forge-notifications",
+    "crates/forge-flaky-detection",
+    "crates/forge-docker-builder",
+    "crates/forge-secrets",
+    "crates/forge-incremental",
+    "crates/forge-templates",
     "crates/forge-cli",
 ]
 
@@ -57,6 +67,16 @@ forge-worker = { path = "crates/forge-worker", version = "0.1.0" }
 forge-plugin = { path = "crates/forge-plugin", version = "0.1.0" }
 forge-remote-cache = { path = "crates/forge-remote-cache", version = "0.1.0" }
 forge-sandbox = { path = "crates/forge-sandbox", version = "0.1.0" }
+forge-signing = { path = "crates/forge-signing", version = "0.1.0" }
+forge-security = { path = "crates/forge-security", version = "0.1.0" }
+forge-analytics = { path = "crates/forge-analytics", version = "0.1.0" }
+forge-multiplatform = { path = "crates/forge-multiplatform", version = "0.1.0" }
+forge-notifications = { path = "crates/forge-notifications", version = "0.1.0" }
+forge-flaky-detection = { path = "crates/forge-flaky-detection", version = "0.1.0" }
+forge-docker-builder = { path = "crates/forge-docker-builder", version = "0.1.0" }
+forge-secrets = { path = "crates/forge-secrets", version = "0.1.0" }
+forge-incremental = { path = "crates/forge-incremental", version = "0.1.0" }
+forge-templates = { path = "crates/forge-templates", version = "0.1.0" }
 
 cargo_metadata = "0.21"
 thiserror = "2"
@@ -73,3 +93,4 @@ anstyle = "1.0"
 notify = "6"
 crossterm = "0.28"
 ratatui = { version = "0.29", default-features = false, features = ["crossterm"] }
+async-trait = "0.1"

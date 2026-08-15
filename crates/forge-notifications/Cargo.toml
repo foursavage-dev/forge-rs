@@ -1,0 +1,21 @@
+[package]
+name = "forge-notifications"
+version = "0.1.0"
+edition = "2024"
+authors = ["Foursavage Dev <team@foursavage.dev>"]
+license = "MIT"
+repository = "https://github.com/foursavage-dev/forge-rs"
+description = "Build notification system for Forge"
+keywords = ["notifications", "slack", "discord", "email"]
+categories = ["development-tools"]
+
+[dependencies]
+forge-core = { path = "../forge-core" }
+
+thiserror = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.40", features = ["full"] }
+reqwest = { version = "0.12", features = ["json"] }
+async-trait = "0.1"
+chrono = { version = "0.4", features = ["serde"] }

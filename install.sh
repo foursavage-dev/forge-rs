@@ -1,11 +1,11 @@
 #!/bin/bash
 # Forge Installation Script for Linux/macOS
-# Usage: curl -fsSL https://raw.githubusercontent.com/requla11/forge-rs/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/foursavage-dev/forge-rs/main/install.sh | bash
 
 set -e
 
 FORGE_VERSION="0.1.0"
-FORGE_REPO="requla11/forge-rs"
+FORGE_REPO="foursavage-dev/forge-rs"
 INSTALL_DIR="/usr/local/bin"
 TEMP_DIR=$(mktemp -d)
 

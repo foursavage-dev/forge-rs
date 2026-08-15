@@ -1,10 +1,10 @@
 # Forge Installation Script for Windows
-# Usage: irm https://raw.githubusercontent.com/requla11/forge-rs/main/install.ps1 | iex
+# Usage: irm https://raw.githubusercontent.com/foursavage-dev/forge-rs/main/install.ps1 | iex
 
 $ErrorActionPreference = "Stop"
 
 $FORGE_VERSION = "0.1.0"
-$FORGE_REPO = "requla11/forge-rs"
+$FORGE_REPO = "foursavage-dev/forge-rs"
 $INSTALL_DIR = "$env:USERPROFILE\.forge\bin"
 $TEMP_DIR = Join-Path $env:TEMP "forge-install"
 

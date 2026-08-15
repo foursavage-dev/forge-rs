@@ -52,7 +52,17 @@ cargo install forge-cli --git https://github.com/foursavage-dev/forge-rs
 - 🤖 **AI Assistant Bot (`foursavage-dev-bot[bot]`):** Powered by Gemini 3.7 Flash for automatic PR benchmarking, affected crate reviews, and issue triage.
 - 📊 **Interactive TUI & Web Dashboard:** Live Terminal UI with Ratatui and an interactive Web Flamegraph visualizer for bottleneck discovery.
 - ☸️ **Distributed Cluster Execution:** Remote worker discovery, tiered L1/L2 cache daemons, and failover balancing.
-- 🛠️ **CI/CD Generator:** Automatically generate optimized GitHub Actions and GitLab CI workflows with `forge ci init`.
+- 🛠️ **CI/CD Generator:** Automatically generate optimized GitHub Actions, GitLab CI, CircleCI, and Bitbucket Pipelines workflows with `forge ci init`.
+- 🔐 **Artifact Signing & Verification:** Cryptographic signing with Ed25519, SBOM generation (SPDX/CycloneDX), and automated verification.
+- 🛡️ **Security Scanner:** Dependency vulnerability scanning across all backends with automatic blocking policies.
+- 📈 **Build Analytics:** Real-time cache performance analytics with hit rate tracking and optimization suggestions.
+- 🌍 **Multi-Platform CI:** Auto-generate test matrices for Linux, macOS, Windows across x86_64 and ARM64 architectures.
+- 🔔 **Build Notifications:** Slack, Discord, and email notifications for build status with rich context.
+- 🧪 **Flaky Test Detection:** Statistical analysis to detect flaky tests with configurable auto-retry policies.
+- 🐳 **Docker Builder:** First-class Docker image building with layer caching and registry integration.
+- 🔑 **Secret Management:** Secure secret injection with HashiCorp Vault, AWS Secrets Manager, and Kubernetes secrets.
+- 📊 **Incremental Analysis:** Analyze build patterns to identify hotspots and suggest refactoring optimizations.
+- 📋 **Pipeline Templates:** Shareable pipeline templates for common workflows with Handlebars rendering.
 
 ---
 
@@ -171,6 +181,16 @@ forge/
 │   ├── forge-backend-dart/    # Dart / Flutter backend
 │   ├── forge-backend-zig/     # Zig backend (build.zig)
 │   ├── forge-plugin/          # Custom rule plugin backend with ScriptPlugin support
+│   ├── forge-signing/         # Artifact signing & verification with SBOM generation
+│   ├── forge-security/        # Dependency vulnerability scanner
+│   ├── forge-analytics/       # Build cache analytics dashboard
+│   ├── forge-multiplatform/   # Multi-platform CI matrix generator
+│   ├── forge-notifications/   # Build notification system (Slack/Discord/Email)
+│   ├── forge-flaky-detection/ # Flaky test detection & auto-retry
+│   ├── forge-docker-builder/  # Docker image building as first-class artifacts
+│   ├── forge-secrets/         # Secret management integration (Vault/AWS/K8s)
+│   ├── forge-incremental/     # Incremental build analysis
+│   ├── forge-templates/       # Build pipeline templates
 │   └── forge-cli/             # The `forge` binary & terminal UI with plugin integration
 ├── examples/
 │   └── polyglot-demo/         # Sample monorepo with Rust + Go + TS + Docker
