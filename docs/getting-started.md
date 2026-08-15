@@ -287,4 +287,4 @@ If workers can't connect:
 - [Documentation](../README.md)
 - [Support](../SUPPORT.md)
 - [GitHub Issues](https://github.com/foursavage-dev/forge-rs/issues)
-- [Email](support@foursavage.dev)
+- [Email](foursavage@proton.me)

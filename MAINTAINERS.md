@@ -11,7 +11,7 @@ This document lists the maintainers of the Forge project and their responsibilit
   - Release management
   - Security oversight
   - Final approval on PRs
-- **Contact**: team@foursavage.dev
+- **Contact**: foursavage@proton.me
 
 ## Active Maintainers
 
@@ -232,9 +232,9 @@ Maintainers are recognized in:
 
 ## Contact
 
-- **General inquiries**: team@foursavage.dev
-- **Security issues**: security@foursavage.dev
-- **Code of conduct**: conduct@foursavage.dev
+- **General inquiries**: foursavage@proton.me
+- **Security issues**: foursavage@proton.me
+- **Code of conduct**: foursavage@proton.me
 
 ## Acknowledgments
 

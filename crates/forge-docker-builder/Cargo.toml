@@ -2,7 +2,7 @@
 name = "forge-docker-builder"
 version = "0.1.0"
 edition = "2024"
-authors = ["Foursavage Dev <team@foursavage.dev>"]
+authors = ["Foursavage Dev <foursavage@proton.me>"]
 license = "MIT"
 repository = "https://github.com/foursavage-dev/forge-rs"
 description = "Docker image building as first-class artifacts for Forge"

@@ -17,7 +17,7 @@ This document provides support resources for Forge users.
 - **Discord**: Join our Discord community for real-time help
 - **GitHub Issues**: Report bugs and request features
 - **GitHub Discussions**: Ask questions and share ideas
-- **Email**: support@foursavage.dev
+- **Email**: foursavage@proton.me
 
 ## Common Issues
 
@@ -250,7 +250,7 @@ Want to contribute? See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Professional Support
 
 For enterprise support, SLAs, and priority assistance:
-- **Email**: enterprise@foursavage.dev
+- **Email**: foursavage@proton.me
 - **Website**: https://foursavage.dev
 
 ## Resources

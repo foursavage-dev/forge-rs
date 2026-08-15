@@ -260,7 +260,7 @@ Add any other context or screenshots about the feature request here.
 
 - Open an issue for bugs or feature requests
 - Join our Discord community (link coming soon)
-- Email: conduct@foursavage.dev
+- Email: foursavage@proton.me
 - Check the [documentation](docs/)
 
 ## License

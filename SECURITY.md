@@ -12,7 +12,7 @@ Currently, only the latest version of Forge is supported with security updates.
 
 If you discover a potential security vulnerability in Forge, please **do not** open a public issue.
 
-Instead, send an email to **security@foursavage.dev** with the following information:
+Instead, send an email to **foursavage@proton.me** with the following information:
 
 - A description of the vulnerability
 - Steps to reproduce the vulnerability

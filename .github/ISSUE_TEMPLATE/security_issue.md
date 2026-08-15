@@ -8,7 +8,7 @@ assignees: ''
 
 **⚠️ IMPORTANT: Do not report security vulnerabilities publicly!**
 
-For security vulnerabilities, please email: **security@foursavage.dev**
+For security vulnerabilities, please email: **foursavage@proton.me**
 
 ## What to Include in Your Report
 
