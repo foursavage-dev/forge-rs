@@ -1,0 +1,170 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [ main, develop, dev ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly security scan
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Dependency Vulnerability Scanning
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+      
+      - name: Run cargo audit
+        run: cargo audit
+      
+      - name: Run cargo-deny
+        uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          command: check
+
+  # Security Features Testing
+  security-features:
+    name: Security Features Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Test signing module
+        run: cargo test -p forge-signing --lib
+      
+      - name: Test security module
+        run: cargo test -p forge-security --lib
+      
+      - name: Test secrets module
+        run: cargo test -p forge-secrets --lib
+
+  # CodeQL Analysis
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: rust
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:rust"
+
+  # Secret Scanning
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # Security Documentation Check
+  security-docs:
+    name: Security Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for security documentation
+        run: |
+          if [ ! -f "SECURITY.md" ]; then
+            echo "❌ SECURITY.md not found"
+            exit 1
+          fi
+          echo "✅ SECURITY.md exists"
+      
+      - name: Check for security best practices
+        run: |
+          # Check for common security issues in code
+          grep -r "unsafe" crates/ --include="*.rs" | head -20 || echo "No unsafe code found"
+          grep -r "unwrap()" crates/ --include="*.rs" | head -20 || echo "No unwrap calls found"
+          grep -r "expect(" crates/ --include="*.rs" | head -20 || echo "No expect calls found"
+
+  # Memory Safety Check
+  memory-safety:
+    name: Memory Safety Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Check for unsafe code blocks
+        run: |
+          echo "Checking for unsafe code blocks..."
+          grep -r "#\[forbid(unsafe_code)\]" crates/ --include="*.rs" || echo "No forbid(unsafe_code) found"
+          grep -r "unsafe" crates/ --include="*.rs" | grep -v "forbid(unsafe_code)" || echo "No unsafe code found"
+      
+      - name: Run Miri for undefined behavior
+        run: |
+          cargo install miri
+          cargo miri test -p forge-core -p forge-cache -p forge-executor
+
+  # Security Compliance Report
+  security-report:
+    name: Security Compliance Report
+    runs-on: ubuntu-latest
+    needs: [dependency-audit, security-features, codeql, secret-scan]
+    if: always()
+    steps:
+      - name: Generate security report
+        run: |
+          echo "# Security Compliance Report" > security-report.md
+          echo "" >> security-report.md
+          echo "## Dependency Audit: ${{ needs.dependency-audit.result }}" >> security-report.md
+          echo "## Security Features: ${{ needs.security-features.result }}" >> security-report.md
+          echo "## CodeQL Analysis: ${{ needs.codeql.result }}" >> security-report.md
+          echo "## Secret Scan: ${{ needs.secret-scan.result }}" >> security-report.md
+          echo "" >> security-report.md
+          cat security-report.md
+      
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.md

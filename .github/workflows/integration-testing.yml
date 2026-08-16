@@ -1,0 +1,337 @@
+name: Integration Testing
+
+on:
+  push:
+    branches: [ main, develop, dev ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Basic Integration Tests
+  basic-integration:
+    name: Basic Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc g++ python3 nodejs npm golang openjdk-17-jdk
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Run integration tests
+        run: cargo test --workspace --test '*_test.rs' -- --test-threads=1
+
+  # CLI Integration Tests
+  cli-integration:
+    name: CLI Integration Tests
+    runs-on: ubuntu-latest
+    needs: basic-integration
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-release-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Build CLI
+        run: cargo build -p forge-cli --release
+      
+      - name: Test CLI build command
+        run: ./target/release/forge build --no-cache
+      
+      - name: Test CLI check command
+        run: ./target/release/forge check --no-cache
+      
+      - name: Test CLI test command
+        run: ./target/release/forge test --no-cache
+      
+      - name: Test CLI graph command
+        run: ./target/release/forge graph --format tree
+      
+      - name: Test CLI cache commands
+        run: |
+          ./target/release/forge cache stats
+          ./target/release/forge cache prune --max-size 1MB
+
+  # Cache Integration Tests
+  cache-integration:
+    name: Cache Integration Tests
+    runs-on: ubuntu-latest
+    needs: basic-integration
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Test cache integration
+        run: cargo test -p forge-cache --test '*_test.rs' -- --test-threads=1
+      
+      - name: Test async cache operations
+        run: cargo test -p forge-cache async_io -- --test-threads=1
+      
+      - name: Test memory pool integration
+        run: cargo test -p forge-cache pool -- --test-threads=1
+
+  # Scheduler Integration Tests
+  scheduler-integration:
+    name: Scheduler Integration Tests
+    runs-on: ubuntu-latest
+    needs: basic-integration
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Test scheduler integration
+        run: cargo test -p forge-scheduler --test '*_test.rs' -- --test-threads=1
+      
+      - name: Test work-stealing scheduler
+        run: cargo test -p forge-scheduler work_stealing -- --test-threads=1
+
+  # Executor Integration Tests
+  executor-integration:
+    name: Executor Integration Tests
+    runs-on: ubuntu-latest
+    needs: basic-integration
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Test executor integration
+        run: cargo test -p forge-executor --test '*_test.rs' -- --test-threads=1
+      
+      - name: Test async executor
+        run: cargo test -p forge-executor async_executor -- --test-threads=1
+
+  # Security Integration Tests
+  security-integration:
+    name: Security Integration Tests
+    runs-on: ubuntu-latest
+    needs: basic-integration
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Test signing integration
+        run: cargo test -p forge-signing --test '*_test.rs' -- --test-threads=1
+      
+      - name: Test security integration
+        run: cargo test -p forge-security --test '*_test.rs' -- --test-threads=1
+
+  # End-to-End Integration Tests
+  e2e-integration:
+    name: End-to-End Integration Tests
+    runs-on: ubuntu-latest
+    needs: [cli-integration, cache-integration, scheduler-integration, executor-integration]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc g++ python3 nodejs npm golang openjdk-17-jdk
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-release-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Build CLI
+        run: cargo build -p forge-cli --release
+      
+      - name: Create test project
+        run: |
+          mkdir -p test-project
+          cd test-project
+          cargo init --name test-project
+          echo '[dependencies]' >> Cargo.toml
+          echo 'serde = "1.0"' >> Cargo.toml
+      
+      - name: Test Forge CLI on real project
+        run: |
+          cd test-project
+          ../target/release/forge build --no-cache
+          ../target/release/forge test --no-cache
+          ../target/release/forge graph --format tree
+      
+      - name: Test cache functionality
+        run: |
+          cd test-project
+          ../target/release/forge build --no-cache
+          ../target/release/forge cache stats
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: test-project/
+
+  # Integration Summary
+  integration-summary:
+    name: Integration Summary
+    runs-on: ubuntu-latest
+    needs: [basic-integration, cli-integration, cache-integration, scheduler-integration, executor-integration, security-integration, e2e-integration]
+    if: always()
+    steps:
+      - name: Check integration test results
+        run: |
+          echo "Basic Integration: ${{ needs.basic-integration.result }}"
+          echo "CLI Integration: ${{ needs.cli-integration.result }}"
+          echo "Cache Integration: ${{ needs.cache-integration.result }}"
+          echo "Scheduler Integration: ${{ needs.scheduler-integration.result }}"
+          echo "Executor Integration: ${{ needs.executor-integration.result }}"
+          echo "Security Integration: ${{ needs.security-integration.result }}"
+          echo "E2E Integration: ${{ needs.e2e-integration.result }}"
+          
+          failed_tests=0
+          [ "${{ needs.basic-integration.result }}" != "success" ] && ((failed_tests++))
+          [ "${{ needs.cli-integration.result }}" != "success" ] && ((failed_tests++))
+          [ "${{ needs.cache-integration.result }}" != "success" ] && ((failed_tests++))
+          [ "${{ needs.scheduler-integration.result }}" != "success" ] && ((failed_tests++))
+          [ "${{ needs.executor-integration.result }}" != "success" ] && ((failed_tests++))
+          [ "${{ needs.security-integration.result }}" != "success" ] && ((failed_tests++))
+          [ "${{ needs.e2e-integration.result }}" != "success" ] && ((failed_tests++))
+          
+          if [ $failed_tests -gt 0 ]; then
+            echo "❌ $failed_tests integration test(s) failed"
+            exit 1
+          else
+            echo "✅ All integration tests passed"
+          fi
