@@ -9,6 +9,10 @@ on:
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: "0"
@@ -42,7 +46,7 @@ jobs:
           key: ${{ runner.os }}-cargo-bench-target-${{ hashFiles('**/Cargo.lock') }}
       
       - name: Run cache benchmarks
-        run: cargo bench -p forge-cache -- --test-threads=1
+        run: cargo bench -p forge-cache
       
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
@@ -108,5 +112,26 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-bench-target-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Run concurrent cache benchmarks
-        run: cargo test -p forge-cache --release -- --nocapture
+      - name: Run concurrent executor benchmarks
+        run: cargo test -p forge-executor --release -- --nocapture
+
+  benchmark-summary:
+    name: Benchmark Summary
+    runs-on: ubuntu-latest
+    needs: [cache-benchmarks, scheduler-benchmarks, concurrent-performance]
+    if: always()
+    steps:
+      - name: Check benchmark results
+        run: |
+          echo "Cache Benchmarks: ${{ needs.cache-benchmarks.result }}"
+          echo "Scheduler Benchmarks: ${{ needs.scheduler-benchmarks.result }}"
+          echo "Concurrent Performance: ${{ needs.concurrent-performance.result }}"
+          
+          if [ "${{ needs.cache-benchmarks.result }}" != "success" ] || \
+             [ "${{ needs.scheduler-benchmarks.result }}" != "success" ] || \
+             [ "${{ needs.concurrent-performance.result }}" != "success" ]; then
+            echo "Benchmarks Failed"
+            exit 1
+          else
+            echo "All Benchmarks Passed"
+          fi
