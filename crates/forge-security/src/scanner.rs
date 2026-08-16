@@ -130,6 +130,6 @@ mod tests {
     #[tokio::test]
     async fn test_scanner_creation() {
         let _scanner = VulnerabilityScanner::new();
-        assert!(true);
+        // Scanner creation test - no assertion needed
     }
 }

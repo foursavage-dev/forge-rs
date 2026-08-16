@@ -86,7 +86,7 @@ impl ArtifactVerifier {
         let mut hasher = sha2::Sha256::new();
         hasher.update(&artifact_content);
         let hash = hasher.finalize();
-        let hash_match = general_purpose::STANDARD.encode(&hash) == signature.artifact_hash;
+        let hash_match = general_purpose::STANDARD.encode(hash) == signature.artifact_hash;
 
         // Determine overall status
         let status = if signature_valid && signer_trusted && hash_match {

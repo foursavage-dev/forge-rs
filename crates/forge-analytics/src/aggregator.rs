@@ -3,7 +3,7 @@
 use crate::metrics::CacheMetrics;
 use std::path::Path;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct MetricsAggregator;
 
 impl MetricsAggregator {
@@ -23,8 +23,4 @@ impl MetricsAggregator {
     }
 }
 
-impl Default for MetricsAggregator {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+

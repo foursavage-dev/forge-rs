@@ -43,15 +43,6 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> LruCache<K, V> {
     }
 
     pub fn get(&self, key: &K) -> Option<V> {
-        // First try read lock to check if key exists
-        {
-            let entries = self.entries.read().unwrap();
-            if !entries.contains_key(key) {
-                return None;
-            }
-        }
-
-        // Key exists, acquire write lock to update access order
         let mut entries = self.entries.write().unwrap();
         let mut access_order = self.access_order.write().unwrap();
 

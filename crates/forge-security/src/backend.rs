@@ -16,7 +16,7 @@ pub trait BackendScanner {
 }
 
 /// Rust/Cargo scanner
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct RustScanner;
 
 impl RustScanner {
@@ -49,7 +49,7 @@ impl BackendScanner for RustScanner {
 }
 
 /// NPM scanner
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct NpmScanner;
 
 impl NpmScanner {
@@ -78,7 +78,7 @@ impl BackendScanner for NpmScanner {
 }
 
 /// Maven scanner
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct MavenScanner;
 
 impl MavenScanner {

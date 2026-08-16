@@ -59,6 +59,6 @@ mod tests {
     #[tokio::test]
     async fn test_security_service_creation() {
         let _service = SecurityService::new();
-        assert!(true); // Basic test
+        // Security service creation test - no assertion needed
     }
 }

@@ -327,8 +327,8 @@ pub trait RemoteCasBackend: CasBackend {
 /// Placeholder implementation for remote CAS backend
 #[cfg(feature = "remote")]
 pub struct RemoteCasBackendImpl {
-    config: crate::storage::RemoteConfig,
-    compression: crate::compression::CompressionAlgorithm,
+    _config: crate::storage::RemoteConfig,
+    _compression: crate::compression::CompressionAlgorithm,
 }
 
 #[cfg(feature = "remote")]
@@ -339,8 +339,8 @@ impl RemoteCasBackendImpl {
     ) -> Result<Self> {
         // TODO: Implement actual remote backend initialization
         Ok(Self {
-            config,
-            compression,
+            _config: config,
+            _compression: compression,
         })
     }
 }

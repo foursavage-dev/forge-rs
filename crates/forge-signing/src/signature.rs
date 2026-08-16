@@ -5,7 +5,7 @@ use crate::keypair::SigningKeyPair;
 use crate::sbom::SbomMetadata;
 use base64::{Engine as _, engine::general_purpose};
 use chrono::{DateTime, Utc};
-use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
+use ed25519_dalek::{Signature, Signer, Verifier, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::path::Path;
@@ -52,7 +52,7 @@ pub async fn sign_artifact(
     let mut hasher = Sha256::new();
     hasher.update(&artifact_content);
     let hash = hasher.finalize();
-    let artifact_hash = general_purpose::STANDARD.encode(&hash);
+    let artifact_hash = general_purpose::STANDARD.encode(hash);
 
     // Create signature based on algorithm
     let signature = match algorithm {

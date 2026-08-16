@@ -93,8 +93,8 @@ impl SigningKeyPair {
             .clone()
             .try_into()
             .map_err(|_| SigningError::InvalidKeyFormat("Invalid public key length".to_string()))?;
-        Ok(VerifyingKey::from_bytes(&public_bytes)
-            .map_err(|e| SigningError::InvalidKeyFormat(e.to_string()))?)
+        VerifyingKey::from_bytes(&public_bytes)
+            .map_err(|e| SigningError::InvalidKeyFormat(e.to_string()))
     }
 }
 

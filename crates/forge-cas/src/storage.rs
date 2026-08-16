@@ -259,7 +259,7 @@ impl CasStorage {
 
         let removals: Vec<_> = match policy {
             CleanupPolicy::KeepMostRecent(keep) => {
-                entries.sort_by(|(_, left), (_, right)| right.timestamp.cmp(&left.timestamp));
+                entries.sort_by_key(|(_, right)| std::cmp::Reverse(right.timestamp));
                 entries.into_iter().skip(keep).collect()
             }
             policy => entries
