@@ -1372,10 +1372,12 @@ dependencies = [
  "forge-graph",
  "regex",
  "serde",
+ "serde_json",
  "spin",
  "tempfile",
  "thiserror 2.0.20",
  "toml",
+ "uuid",
 ]
 
 [[package]]

@@ -3,6 +3,7 @@
 pub mod backend;
 pub mod backend_utils;
 pub mod config;
+pub mod diagnostics;
 pub mod environment;
 pub mod error;
 pub mod profiling;
@@ -16,8 +17,9 @@ pub mod windows_compat;
 pub use backend::BuildBackend;
 pub use backend_utils::{BinaryUtils, FingerprintUtils, TaskDagBuilder, ToolchainUtils, DEFAULT_EXCLUDED_DIRS};
 pub use config::{ForgeConfig, GeneralConfig, CacheConfig, BuildConfig, CIConfig, SecurityConfig, ExperimentalConfig, ConfigError};
+pub use diagnostics::{DiagnosticLogger, DiagnosticLog, LogLevel, HealthCheckRegistry, ComponentHealthMonitor, SystemDiagnostics, DiagnosticReport, OpPerformanceMetrics};
 pub use environment::EnvironmentFingerprint;
-pub use error::{ForgeError, Result};
+pub use error::{ForgeError, Result, ErrorContext, ErrorSeverity, RecoveryStrategy, DiagnosticInfo, HealthCheckResult, HealthStatus, HealthCheck};
 pub use profiling::{Profiler, PerformanceMetrics, TaskProfile, MemoryTracker, ResourceMonitor, ResourceUsage};
 pub use security::{SecurityPolicy, SecurityValidator, SecurityError, SecurityLevel, InputValidator};
 pub use testing::{TestRunner, TestSuite, TestResult, TestSummary, PropertyTestRunner, PropertyTestResult, IntegrationTestEnvironment, Benchmark, BenchmarkResult, ParallelTestRunner, TestCase};
