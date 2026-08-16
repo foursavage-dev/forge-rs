@@ -85,6 +85,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: release-artifacts
+          merge-multiple: true
 
       - name: Generate Checksums & AI Release Notes
         id: release_notes
@@ -93,8 +94,9 @@ jobs:
           TAG_NAME: ${{ github.ref_name }}
         run: |
           cd release-artifacts
-          find . -type f -exec cp {} . \;
+          ls -la
           sha256sum forge-* > SHA256SUMS.txt || true
+          cat SHA256SUMS.txt || true
           cd ..
 
           COMMITS=$(git log -n 25 --oneline)
@@ -130,6 +132,7 @@ jobs:
           ### Highlights
           - High performance build orchestration
           - Polyglot backend execution and incremental caching
+          - Windows Setup Installer app (forge-setup-windows-x86_64.exe) with multi-language support (EN, VI, ZH-CN, ZH-TW, JA) and PATH configuration
 
           ### Commits
           \`\`\`
@@ -149,5 +152,4 @@ jobs:
           name: "Forge ${{ github.ref_name }} 🦀"
           body: ${{ steps.release_notes.outputs.notes }}
           files: |
-            release-artifacts/forge-*
-            release-artifacts/SHA256SUMS.txt
+            release-artifacts/*
