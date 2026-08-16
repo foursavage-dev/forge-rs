@@ -7,6 +7,10 @@ on:
     branches: [ main, develop ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: "0"
@@ -26,13 +30,13 @@ jobs:
       
       - name: Generate CycloneDX SBOM
         run: |
-          cargo cyclonedx --package forge-cli --format json --output-pattern ./target/forge-cli.bom.json
+          cargo cyclonedx --format json --all
       
       - name: Upload SBOM Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: forge-cli-sbom
-          path: ./target/forge-cli.bom.json
+          name: forge-sbom
+          path: ./**/*.cdx.json
           if-no-files-found: ignore
 
   deterministic-build:
@@ -73,5 +77,5 @@ jobs:
           if [ "$HASH_A" = "$HASH_B" ]; then
             echo "Deterministic build verified successfully."
           else
-            echo "Warning: Builds produced non-identical outputs (non-hermetic artifacts)."
+            echo "Warning: Builds produced non-identical outputs."
           fi

@@ -125,22 +125,20 @@ impl SwiftProjectConfig {
     }
 
     fn detect_platform() -> SwiftPlatform {
-        // Detect platform based on the current system
         #[cfg(target_os = "macos")]
         {
-            return SwiftPlatform::MacOS;
+            SwiftPlatform::MacOS
         }
         #[cfg(target_os = "ios")]
         {
-            return SwiftPlatform::IOS;
+            SwiftPlatform::IOS
         }
         #[cfg(target_os = "linux")]
         {
-            return SwiftPlatform::Linux;
+            SwiftPlatform::Linux
         }
         #[cfg(not(any(target_os = "macos", target_os = "ios", target_os = "linux")))]
         {
-            // Default to macOS for unknown platforms
             SwiftPlatform::MacOS
         }
     }
