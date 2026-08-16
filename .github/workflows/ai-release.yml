@@ -38,13 +38,19 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Build Binary
-        run: cargo build --release --bin forge --target ${{ matrix.target }}
+        run: |
+          cargo build --release --bin forge --target ${{ matrix.target }}
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cargo build --release --bin forge-setup --target ${{ matrix.target }}
+          fi
+        shell: bash
 
       - name: Stage Artifact
         shell: bash
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             cp target/${{ matrix.target }}/release/forge.exe ./${{ matrix.artifact_name }}
+            cp target/${{ matrix.target }}/release/forge-setup.exe ./forge-setup-windows-x86_64.exe
           else
             cp target/${{ matrix.target }}/release/forge ./${{ matrix.artifact_name }}
           fi
@@ -53,7 +59,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.artifact_name }}
+          path: |
+            ${{ matrix.artifact_name }}
+            forge-setup-windows-x86_64.exe
+          if-no-files-found: ignore
 
   create-release:
     name: Create AI GitHub Release

@@ -34,6 +34,7 @@ members = [
     "crates/forge-incremental",
     "crates/forge-templates",
     "crates/forge-cli",
+    "crates/forge-installer",
 ]
 
 [workspace.package]

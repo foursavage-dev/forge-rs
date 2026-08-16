@@ -1329,6 +1329,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "forge-installer"
+version = "0.1.0"
+dependencies = [
+ "anstream 0.6.21",
+ "anstyle",
+ "clap",
+ "crossterm",
+ "forge-core",
+ "serde",
+ "serde_json",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "forge-multiplatform"
 version = "0.1.0"
 dependencies = [
