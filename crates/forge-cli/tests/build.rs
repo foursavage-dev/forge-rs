@@ -254,7 +254,9 @@ fn test_reports_a_failing_test() {
     assert!(!output.status.success());
     let combined = format!("{}\n{}", stdout(&output), stderr(&output));
     assert!(
-        combined.contains("Some tests failed") || combined.contains("FAILED") || combined.contains("fails"),
+        combined.contains("Some tests failed")
+            || combined.contains("FAILED")
+            || combined.contains("fails"),
         "test output in failure report: {combined}"
     );
 }

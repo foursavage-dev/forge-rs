@@ -93,12 +93,12 @@ impl std::fmt::Display for ErrorSeverity {
 #[derive(Error, Debug)]
 pub struct ForgeError {
     kind: ErrorKind,
-    context: ErrorContext,
+    context: Box<ErrorContext>,
 }
 
 impl ForgeError {
     pub fn new(kind: ErrorKind, context: ErrorContext) -> Self {
-        Self { kind, context }
+        Self { kind, context: Box::new(context) }
     }
 
     pub fn context(&self) -> &ErrorContext {
