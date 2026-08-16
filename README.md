@@ -29,6 +29,37 @@ The source tree contains the authoritative list of commands and supported
 options. Run `forge --help` and `forge <command> --help` for your installed
 version.
 
+## Branch Policy
+
+Forge uses two main branches:
+
+- **`main`** — The stable branch and the primary source of code for the
+  project. Code in `main` should be tested and considered stable.
+- **`dev`** — The development and experimental branch. New features, changes,
+  fixes, and other experimental code are developed and tested here first.
+
+Changes should **not be merged directly into `main`** during normal
+development. Instead, changes are developed and tested on `dev`. Once the
+changes have been verified and are considered stable, they can be merged from
+`dev` into `main`.
+
+In short:
+
+```text
+dev
+ │
+ │  develop + test
+ ▼
+[verified / stable]
+ │
+ │  merge
+ ▼
+main
+```
+
+> **Important:** `main` is intended to contain stable code, while `dev` may
+> contain unfinished, experimental, or potentially unstable changes.
+
 ## Install
 
 ### From source
