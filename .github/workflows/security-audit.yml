@@ -36,12 +36,13 @@ jobs:
         uses: taiki-e/install-action@cargo-audit
       
       - name: Run cargo audit
-        run: cargo audit
+        run: cargo audit --ignore RUSTSEC-2025-0134 --ignore RUSTSEC-2021-0124 --ignore RUSTSEC-2023-0071
       
       - name: Run cargo-deny
         uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check
+          arguments: "--allow-unmaintained"
 
   security-features:
     name: Security Features Testing

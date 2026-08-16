@@ -98,7 +98,10 @@ pub struct ForgeError {
 
 impl ForgeError {
     pub fn new(kind: ErrorKind, context: ErrorContext) -> Self {
-        Self { kind, context: Box::new(context) }
+        Self {
+            kind,
+            context: Box::new(context),
+        }
     }
 
     pub fn context(&self) -> &ErrorContext {
