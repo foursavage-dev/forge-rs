@@ -172,6 +172,9 @@ impl LocalCache {
     }
 
     pub fn default_location() -> Result<Self, CacheError> {
+        if let Some(path) = std::env::var_os("FORGE_CACHE_DIR") {
+            return Self::new(PathBuf::from(path));
+        }
         let home = std::env::var_os("HOME")
             .or_else(|| std::env::var_os("USERPROFILE"))
             .ok_or(CacheError::NoHomeDir)?;

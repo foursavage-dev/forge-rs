@@ -135,10 +135,23 @@ fn build_builds_workspace_successfully() {
 #[test]
 fn build_rebuilds_from_the_fingerprint_cache() {
     let dir = workspace_fixture();
-    let first = run(forge().arg("build").current_dir(dir.path()));
+    let cache_dir = dir.path().join(".forge-cache");
+    let first = run(
+        forge()
+            .arg("build")
+            .arg("--cache-dir")
+            .arg(&cache_dir)
+            .current_dir(dir.path()),
+    );
     assert!(first.status.success(), "first build must succeed");
 
-    let second = run(forge().arg("build").current_dir(dir.path()));
+    let second = run(
+        forge()
+            .arg("build")
+            .arg("--cache-dir")
+            .arg(&cache_dir)
+            .current_dir(dir.path()),
+    );
     assert!(second.status.success(), "rebuild must succeed");
     let text = stdout(&second);
     assert!(text.contains("✓ network (cached)"));
@@ -651,7 +664,12 @@ fn cache_stats_and_prune_report_sizes() {
 
 #[test]
 fn doctor_reports_tools_and_cache() {
-    let output = run(forge().arg("doctor"));
+    let dir = tempfile::tempdir().expect("create cache fixture");
+    let output = run(
+        forge()
+            .arg("doctor")
+            .env("FORGE_CACHE_DIR", dir.path().join("cache")),
+    );
     assert!(output.status.success(), "stderr: {}", stderr(&output));
     let text = stdout(&output);
     assert!(text.contains("[ok] cargo"), "doctor output: {text}");

@@ -15,7 +15,7 @@ use crate::watch;
 #[command(
     name = "forge",
     version = env!("CARGO_PKG_VERSION"),
-    about = "🦀 Forge: a fast, cache-first build orchestration system for Rust and beyond.",
+    about = "Forge: a fast, cache-first build orchestration system for Rust and beyond.",
     long_about = None
 )]
 pub struct Cli {
@@ -89,7 +89,7 @@ impl AffectedMode {
 /// Arguments for cache command
 #[derive(Debug, Args)]
 pub struct CacheArgs {
-    /// Cache directory; defaults to `~/.forge/cache`.
+    /// Cache directory; defaults to `FORGE_CACHE_DIR` or `~/.forge/cache`.
     #[arg(long)]
     pub dir: Option<PathBuf>,
     #[command(subcommand)]
@@ -252,7 +252,7 @@ pub struct CommonArgs {
     pub remote_workers: Option<Vec<String>>,
     #[arg(long = "remote-workers-token")]
     pub remote_workers_token: Option<String>,
-    /// Local cache directory; defaults to `~/.forge/cache`.
+    /// Local cache directory; defaults to `FORGE_CACHE_DIR` or `~/.forge/cache`.
     #[arg(long = "cache-dir")]
     pub cache_dir: Option<PathBuf>,
     /// Ship a compressed snapshot of the working tree to remote workers so
