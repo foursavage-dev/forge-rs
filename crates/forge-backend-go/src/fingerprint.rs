@@ -1,5 +1,6 @@
-use std::fs;
 use std::path::Path;
+
+use forge_core::{FingerprintUtils, DEFAULT_EXCLUDED_DIRS};
 
 pub fn compute_go_fingerprint(
     project_dir: &Path,
@@ -16,53 +17,25 @@ pub fn compute_go_fingerprint(
 
     let go_mod = project_dir.join("go.mod");
     if go_mod.exists() {
-        if let Ok(content) = fs::read(&go_mod) {
-            hasher.update(&content);
-        }
+        let _ = FingerprintUtils::hash_file_into(&go_mod, &mut hasher);
     }
 
     let go_sum = project_dir.join("go.sum");
     if go_sum.exists() {
-        if let Ok(content) = fs::read(&go_sum) {
-            hasher.update(&content);
-        }
+        let _ = FingerprintUtils::hash_file_into(&go_sum, &mut hasher);
     }
 
-    hash_dir_go_files(project_dir, &mut hasher)?;
+    let go_work = project_dir.join("go.work");
+    if go_work.exists() {
+        let _ = FingerprintUtils::hash_file_into(&go_work, &mut hasher);
+    }
+
+    FingerprintUtils::hash_directory_with_extensions(
+        project_dir,
+        &["go"],
+        DEFAULT_EXCLUDED_DIRS,
+        &mut hasher,
+    )?;
 
     Ok(hasher.finalize().to_hex().to_string())
-}
-
-fn hash_dir_go_files(dir: &Path, hasher: &mut blake3::Hasher) -> Result<(), std::io::Error> {
-    if !dir.exists() || !dir.is_dir() {
-        return Ok(());
-    }
-
-    let mut entries = Vec::new();
-    for entry in fs::read_dir(dir)? {
-        let entry = entry?;
-        let path = entry.path();
-        if path.is_file() {
-            if let Some(ext) = path.extension() {
-                if ext == "go" {
-                    entries.push(path);
-                }
-            }
-        } else if path.is_dir() {
-            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-            if !name.starts_with('.') && name != "vendor" {
-                hash_dir_go_files(&path, hasher)?;
-            }
-        }
-    }
-
-    entries.sort();
-    for path in entries {
-        if let Ok(content) = fs::read(&path) {
-            hasher.update(path.to_string_lossy().as_bytes());
-            hasher.update(&content);
-        }
-    }
-
-    Ok(())
 }

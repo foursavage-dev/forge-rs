@@ -1,4 +1,4 @@
-use std::process::Command;
+use forge_core::ToolchainUtils;
 
 #[derive(Debug, Clone)]
 pub struct GoToolchain {
@@ -9,16 +9,7 @@ pub struct GoToolchain {
 impl GoToolchain {
     pub fn detect() -> Result<Self, String> {
         let executable = "go".to_string();
-        let output = Command::new(&executable)
-            .arg("version")
-            .output()
-            .map_err(|e| format!("Failed to spawn `go`: {e}"))?;
-
-        if !output.status.success() {
-            return Err("`go version` exited with error".to_string());
-        }
-
-        let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        let version = ToolchainUtils::get_tool_version(&executable, &["version"])?;
 
         Ok(Self {
             executable,

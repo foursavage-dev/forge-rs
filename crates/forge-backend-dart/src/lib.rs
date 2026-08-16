@@ -3,7 +3,7 @@
 use std::path::Path;
 use thiserror::Error;
 
-use forge_core::BuildBackend;
+use forge_core::{BuildBackend, FingerprintUtils};
 use forge_executor::{CacheEntry, CommandSpec, Task};
 use forge_graph::BuildGraph;
 
@@ -12,7 +12,7 @@ pub mod fingerprint;
 pub mod toolchain;
 
 pub use config::{DartProjectConfig, DartTargetPlatform};
-pub use toolchain::{DartToolchain, DartCompiler};
+pub use toolchain::{DartCompiler, DartToolchain};
 
 #[derive(Debug, Error)]
 pub enum DartBackendError {
@@ -58,9 +58,7 @@ impl DartBackend {
         let mut graph = BuildGraph::new();
         std::fs::create_dir_all(output_dir)?;
 
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(project_dir.to_string_lossy().as_bytes());
-        let namespace = hasher.finalize().to_hex().to_string()[..12].to_string();
+        let namespace = FingerprintUtils::compute_namespace(project_dir);
 
         let fp = fingerprint::compute_dart_fingerprint(
             project_dir,
@@ -91,11 +89,10 @@ impl DartBackend {
         let dart = self.toolchain.dart_executable.as_ref()
             .ok_or_else(|| DartBackendError::Toolchain("Dart not found".to_string()))?;
 
-        // Get dependencies
         let get_args = vec!["pub".to_string(), "get".to_string()];
         let get_spec = CommandSpec::new(dart).args(get_args).cwd(project_dir);
         let get_cache = CacheEntry {
-            key: format!("dart/pub/get/{}/{}", namespace, config.project_name),
+            key: FingerprintUtils::format_cache_key("dart/pub", namespace, "get", &config.project_name),
             fingerprint: fp.to_string(),
         };
         let get_task = Task::new(
@@ -105,7 +102,6 @@ impl DartBackend {
         ).with_cache(get_cache);
         let get_node_id = graph.add_node(get_task);
 
-        // Analyze
         let analyze_args = vec!["analyze".to_string()];
         let analyze_spec = CommandSpec::new(dart).args(analyze_args).cwd(project_dir);
         let analyze_task = Task::new(
@@ -116,12 +112,11 @@ impl DartBackend {
         let analyze_node_id = graph.add_node(analyze_task);
         graph.add_dependency(get_node_id, analyze_node_id)?;
 
-        // Test
         if config.run_tests {
             let test_args = vec!["test".to_string()];
             let test_spec = CommandSpec::new(dart).args(test_args).cwd(project_dir);
             let test_cache = CacheEntry {
-                key: format!("dart/test/{}/{}", namespace, config.project_name),
+                key: FingerprintUtils::format_cache_key("dart", namespace, "test", &config.project_name),
                 fingerprint: fp.to_string(),
             };
             let test_task = Task::new(
@@ -133,12 +128,11 @@ impl DartBackend {
             graph.add_dependency(analyze_node_id, test_node_id)?;
         }
 
-        // Build/Compile
         if config.compile {
             let compile_args = vec!["compile".to_string(), "exe".to_string()];
             let compile_spec = CommandSpec::new(dart).args(compile_args).cwd(project_dir);
             let compile_cache = CacheEntry {
-                key: format!("dart/compile/{}/{}", namespace, config.project_name),
+                key: FingerprintUtils::format_cache_key("dart", namespace, "compile", &config.project_name),
                 fingerprint: fp.to_string(),
             };
             let compile_task = Task::new(
@@ -165,11 +159,10 @@ impl DartBackend {
         let flutter = self.toolchain.flutter_executable.as_ref()
             .ok_or_else(|| DartBackendError::Toolchain("Flutter not found".to_string()))?;
 
-        // Flutter pub get
         let pub_get_args = vec!["pub".to_string(), "get".to_string()];
         let pub_get_spec = CommandSpec::new(flutter).args(pub_get_args).cwd(project_dir);
         let pub_get_cache = CacheEntry {
-            key: format!("flutter/pub/get/{}/{}", namespace, config.project_name),
+            key: FingerprintUtils::format_cache_key("flutter/pub", namespace, "get", &config.project_name),
             fingerprint: fp.to_string(),
         };
         let pub_get_task = Task::new(
@@ -179,7 +172,6 @@ impl DartBackend {
         ).with_cache(pub_get_cache);
         let pub_get_node_id = graph.add_node(pub_get_task);
 
-        // Flutter analyze
         let analyze_args = vec!["analyze".to_string()];
         let analyze_spec = CommandSpec::new(flutter).args(analyze_args).cwd(project_dir);
         let analyze_task = Task::new(
@@ -190,12 +182,11 @@ impl DartBackend {
         let analyze_node_id = graph.add_node(analyze_task);
         graph.add_dependency(pub_get_node_id, analyze_node_id)?;
 
-        // Flutter test
         if config.run_tests {
             let test_args = vec!["test".to_string()];
             let test_spec = CommandSpec::new(flutter).args(test_args).cwd(project_dir);
             let test_cache = CacheEntry {
-                key: format!("flutter/test/{}/{}", namespace, config.project_name),
+                key: FingerprintUtils::format_cache_key("flutter", namespace, "test", &config.project_name),
                 fingerprint: fp.to_string(),
             };
             let test_task = Task::new(
@@ -207,7 +198,6 @@ impl DartBackend {
             graph.add_dependency(analyze_node_id, test_node_id)?;
         }
 
-        // Flutter build
         let mut build_args = vec!["build".to_string()];
         match &config.target_platform {
             DartTargetPlatform::APK => {
@@ -239,7 +229,7 @@ impl DartBackend {
 
         let build_spec = CommandSpec::new(flutter).args(build_args).cwd(project_dir);
         let build_cache = CacheEntry {
-            key: format!("flutter/build/{}/{}", namespace, config.project_name),
+            key: FingerprintUtils::format_cache_key("flutter", namespace, "build", &config.project_name),
             fingerprint: fp.to_string(),
         };
         let build_task = Task::new(

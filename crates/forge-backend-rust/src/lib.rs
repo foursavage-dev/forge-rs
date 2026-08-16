@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 use cargo_metadata::PackageId;
-use forge_core::BuildBackend;
+use forge_core::{BinaryUtils, BuildBackend, FingerprintUtils, ToolchainUtils};
 use forge_core::project::Project;
 use forge_executor::{CacheEntry, CommandSpec, Task};
 use forge_graph::{BuildGraph, NodeId};
@@ -71,7 +71,8 @@ impl BuildBackend for RustBackend {
 
 impl RustBackend {
     pub fn new() -> Result<Self, BackendError> {
-        let toolchain = tool_version("rustc", &["--version"])?;
+        let toolchain = ToolchainUtils::get_tool_version("rustc", &["--version"])
+            .map_err(BackendError::Toolchain)?;
         let rustc = RustcCompiler::detect().map_err(BackendError::Toolchain)?;
         Ok(Self { toolchain, rustc })
     }
@@ -86,11 +87,7 @@ impl RustBackend {
         let workspace_root = PathBuf::from(project.workspace_root().as_str());
         let lock_file = workspace_root.join("Cargo.lock");
         let lock_file = lock_file.is_file().then_some(lock_file);
-        let namespace = {
-            let mut hasher = blake3::Hasher::new();
-            hasher.update(workspace_root.to_string_lossy().as_bytes());
-            hasher.finalize().to_hex().to_string()[..12].to_string()
-        };
+        let namespace = FingerprintUtils::compute_namespace(&workspace_root);
 
         let mut fingerprints: HashMap<NodeId, String> = HashMap::new();
         for level in package_graph.levels() {
@@ -120,15 +117,13 @@ impl RustBackend {
                     &self.toolchain,
                     mode,
                 )?;
-                let mut dep_fingerprints = Vec::new();
-                for dep in package_graph.deps(id)? {
-                    if let Some(fp) = fingerprints.get(dep) {
-                        dep_fingerprints.push(fp.clone());
-                    }
-                }
+                let dep_fingerprints: Vec<String> = package_graph.deps(id)?
+                    .iter()
+                    .filter_map(|dep| fingerprints.get(dep).cloned())
+                    .collect();
                 fingerprints.insert(
                     id,
-                    fingerprint::combined_fingerprint(&own, &dep_fingerprints),
+                    FingerprintUtils::combine_fingerprints(&own, &dep_fingerprints),
                 );
             }
         }
@@ -198,7 +193,7 @@ impl RustBackend {
 
             let mut task = Task::new(label, description, spec).with_artifacts(artifacts);
             if caching {
-                let fingerprint = fingerprint::combined_fingerprint(
+                let fingerprint = FingerprintUtils::combine_fingerprints(
                     "",
                     &members
                         .iter()
@@ -206,7 +201,12 @@ impl RustBackend {
                         .collect::<Vec<_>>(),
                 );
                 task = task.with_cache(CacheEntry {
-                    key: format!("v1/{namespace}/{}/level/{}", mode.as_str(), names.join("+")),
+                    key: FingerprintUtils::format_cache_key(
+                        "v1",
+                        &namespace,
+                        &format!("{}/level", mode.as_str()),
+                        &names.join("+"),
+                    ),
                     fingerprint,
                 });
             }
@@ -237,24 +237,6 @@ impl RustBackend {
     }
 }
 
-fn tool_version(tool: &str, args: &[&str]) -> Result<String, BackendError> {
-    let output = std::process::Command::new(tool)
-        .args(args)
-        .output()
-        .map_err(|source| BackendError::Toolchain(format!("failed to run `{tool}`: {source}")))?;
-    if !output.status.success() {
-        return Err(BackendError::Toolchain(format!(
-            "`{tool}` exited with {}",
-            output.status
-        )));
-    }
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    Ok(stdout.lines().next().unwrap_or_default().trim().to_string())
-}
-
-/// The `target/<profile>/` binaries produced by the bin targets of the given
-/// packages. Only `cargo build` (not check/test) declares these outputs so
-/// the artifact cache has something real to ship around.
 fn bin_outputs(
     project: &Project,
     members: &[NodeId],
@@ -273,10 +255,7 @@ fn bin_outputs(
         };
         for target in &package.targets {
             if target.kind.iter().any(|kind| kind.to_string() == "bin") {
-                let mut name = target.name.clone();
-                if cfg!(windows) {
-                    name.push_str(".exe");
-                }
+                let name = BinaryUtils::add_binary_extension(&target.name);
                 outputs.push(workspace_root.join("target").join(profile).join(name));
             }
         }

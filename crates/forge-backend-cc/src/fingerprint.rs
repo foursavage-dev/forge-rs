@@ -2,11 +2,9 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use forge_core::FingerprintUtils;
 use crate::depfile::read_depfile;
 
-/// Computes a content fingerprint for a translation unit. When a compiler
-/// depfile (`-MMD -MF`) from a previous run is available it is the source of
-/// truth for the header set; otherwise the syntactic include scanner is used.
 pub fn compute_source_fingerprint(
     source_path: &Path,
     includes: &[PathBuf],
@@ -23,8 +21,7 @@ pub fn compute_source_fingerprint(
     }
 
     if source_path.exists() {
-        let content = fs::read(source_path)?;
-        hasher.update(&content);
+        FingerprintUtils::hash_file_into(source_path, &mut hasher)?;
 
         if let Some(deps) = depfile.and_then(read_depfile) {
             let base = source_path.parent().unwrap_or_else(|| Path::new("."));
@@ -37,11 +34,11 @@ pub fn compute_source_fingerprint(
                 if dep == source_path {
                     continue;
                 }
-                if let Ok(header_content) = fs::read(&dep) {
-                    hasher.update(&header_content);
+                if dep.exists() {
+                    let _ = FingerprintUtils::hash_file_into(&dep, &mut hasher);
                 }
             }
-        } else {
+        } else if let Ok(content) = fs::read(source_path) {
             let parent = source_path.parent();
             let mut visited = HashSet::new();
             scan_and_hash_headers(&content, parent, includes, &mut hasher, &mut visited)?;
@@ -65,8 +62,8 @@ fn scan_and_hash_headers(
             if let Some(header_name) = extract_header_name(trimmed) {
                 if let Some(path) = resolve_header(&header_name, source_dir, includes) {
                     if path.exists() && visited.insert(path.clone()) {
+                        FingerprintUtils::hash_file_into(&path, hasher)?;
                         if let Ok(header_content) = fs::read(&path) {
-                            hasher.update(&header_content);
                             scan_and_hash_headers(
                                 &header_content,
                                 path.parent(),
@@ -166,8 +163,6 @@ mod tests {
         fs::write(dir.path().join("generated.h"), "#define GENERATED 1\n").unwrap();
         let source = dir.path().join("main.c");
 
-        // The scanner cannot see `generated.h` (it is injected by a build
-        // script), but the depfile records it.
         let depfile = dir.path().join("main.d");
         fs::write(
             &depfile,
@@ -187,8 +182,6 @@ mod tests {
             "a depfile-listed header change must change the fingerprint"
         );
 
-        // A depfile the scanner could not have produced also wins over the
-        // scanner when present.
         let scanner_only = compute_source_fingerprint(&source, &[], &[], "gcc 13", None).unwrap();
         assert_ne!(before, scanner_only);
     }

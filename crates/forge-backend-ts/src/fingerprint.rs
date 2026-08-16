@@ -1,11 +1,10 @@
-use std::fs;
 use std::io;
 use std::path::Path;
 
-use blake3::Hasher;
+use forge_core::{FingerprintUtils, DEFAULT_EXCLUDED_DIRS};
 
 pub fn compute_ts_fingerprint(root: &Path, source_dirs: &[String]) -> Result<String, io::Error> {
-    let mut hasher = Hasher::new();
+    let mut hasher = blake3::Hasher::new();
 
     for config_name in &[
         "package.json",
@@ -25,8 +24,7 @@ pub fn compute_ts_fingerprint(root: &Path, source_dirs: &[String]) -> Result<Str
         let file_path = root.join(config_name);
         if file_path.is_file() {
             hasher.update(config_name.as_bytes());
-            let bytes = fs::read(&file_path)?;
-            hasher.update(&bytes);
+            let _ = FingerprintUtils::hash_file_into(&file_path, &mut hasher);
         }
     }
 
@@ -45,68 +43,18 @@ pub fn compute_ts_fingerprint(root: &Path, source_dirs: &[String]) -> Result<Str
         }
     }
 
+    let extensions = &[
+        "ts", "tsx", "js", "jsx", "mjs", "cjs", "json", "css", "scss", "html", "vue", "svelte",
+    ];
+
     for dir in dirs_to_scan {
-        hash_directory_recursive(&dir, root, &mut hasher)?;
+        FingerprintUtils::hash_directory_with_extensions(
+            &dir,
+            extensions,
+            DEFAULT_EXCLUDED_DIRS,
+            &mut hasher,
+        )?;
     }
 
     Ok(hasher.finalize().to_hex().to_string())
-}
-
-fn hash_directory_recursive(dir: &Path, root: &Path, hasher: &mut Hasher) -> Result<(), io::Error> {
-    if !dir.is_dir() {
-        return Ok(());
-    }
-
-    let mut entries = fs::read_dir(dir)?
-        .filter_map(|e| e.ok())
-        .collect::<Vec<_>>();
-
-    entries.sort_by_key(|e| e.file_name());
-
-    for entry in entries {
-        let path = entry.path();
-        let file_name = entry.file_name();
-        let name = file_name.to_string_lossy();
-
-        if name == "node_modules"
-            || name == "dist"
-            || name == "build"
-            || name == ".next"
-            || name == ".turbo"
-            || name == ".git"
-            || name == ".forge"
-            || name.starts_with('.')
-        {
-            continue;
-        }
-
-        if path.is_dir() {
-            hash_directory_recursive(&path, root, hasher)?;
-        } else if path.is_file() {
-            if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                if matches!(
-                    ext,
-                    "ts" | "tsx"
-                        | "js"
-                        | "jsx"
-                        | "mjs"
-                        | "cjs"
-                        | "json"
-                        | "css"
-                        | "scss"
-                        | "html"
-                        | "vue"
-                        | "svelte"
-                ) {
-                    if let Ok(rel) = path.strip_prefix(root) {
-                        hasher.update(rel.to_string_lossy().as_bytes());
-                    }
-                    let bytes = fs::read(&path)?;
-                    hasher.update(&bytes);
-                }
-            }
-        }
-    }
-
-    Ok(())
 }

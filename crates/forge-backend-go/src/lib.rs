@@ -3,7 +3,7 @@
 use std::path::Path;
 use thiserror::Error;
 
-use forge_core::BuildBackend;
+use forge_core::{BuildBackend, BinaryUtils, FingerprintUtils};
 use forge_executor::{CacheEntry, CommandSpec, Task};
 use forge_graph::BuildGraph;
 
@@ -55,10 +55,7 @@ impl GoBackend {
     ) -> Result<BuildGraph<Task>, GoBackendError> {
         let mut graph = BuildGraph::new();
         std::fs::create_dir_all(output_dir)?;
-
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(project_dir.to_string_lossy().as_bytes());
-        let namespace = hasher.finalize().to_hex().to_string()[..12].to_string();
+        let namespace = FingerprintUtils::compute_namespace(project_dir);
 
         let fp =
             fingerprint::compute_go_fingerprint(project_dir, &self.toolchain.version, &config.tags)
@@ -75,9 +72,8 @@ impl GoBackend {
         );
         let vet_node_id = graph.add_node(vet_task);
 
-        let binary_ext = if cfg!(windows) { ".exe" } else { "" };
         let default_out = output_dir
-            .join(format!("{}{}", config.name, binary_ext))
+            .join(BinaryUtils::add_binary_extension(&config.name))
             .to_string_lossy()
             .to_string();
 
@@ -99,7 +95,7 @@ impl GoBackend {
             .cwd(project_dir);
 
         let build_cache = CacheEntry {
-            key: format!("go/build/{}/{}", namespace, config.name),
+            key: FingerprintUtils::format_cache_key("go", &namespace, "build", &config.name),
             fingerprint: fp.clone(),
         };
 
@@ -120,7 +116,7 @@ impl GoBackend {
                 .cwd(project_dir);
 
             let test_cache = CacheEntry {
-                key: format!("go/test/{}/{}", namespace, config.name),
+                key: FingerprintUtils::format_cache_key("go", &namespace, "test", &config.name),
                 fingerprint: fp,
             };
 

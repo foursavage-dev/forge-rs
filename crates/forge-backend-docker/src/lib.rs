@@ -8,7 +8,7 @@ pub use config::DockerProjectConfig;
 pub use fingerprint::DockerFingerprinter;
 pub use toolchain::DockerToolchain;
 
-use forge_core::backend::BuildBackend;
+use forge_core::BuildBackend;
 use forge_executor::CommandSpec;
 use forge_graph::BuildGraph;
 use std::fmt::Debug;
@@ -44,7 +44,6 @@ impl DockerBackend {
     }
     
     pub fn detect_config(project_dir: &std::path::Path) -> Option<DockerProjectConfig> {
-        // Check for Dockerfile
         let dockerfile = project_dir.join("Dockerfile");
         if dockerfile.exists() {
             return Some(DockerProjectConfig {
@@ -57,7 +56,6 @@ impl DockerBackend {
             });
         }
         
-        // Check for docker-compose.yml
         let compose_file = project_dir.join("docker-compose.yml");
         if compose_file.exists() {
             return Some(DockerProjectConfig {
@@ -75,15 +73,10 @@ impl DockerBackend {
     
     pub fn build_task_graph(&self) -> Result<BuildGraph<forge_executor::Task>, Box<dyn std::error::Error>> {
         let mut graph = BuildGraph::new();
-        
-        // Get fingerprint
         let fingerprint = self.fingerprinter.compute()?;
-        
-        // Parse Dockerfile to get layers/stages
         let stages = self.parse_dockerfile()?;
         let stages_count = stages.len();
         
-        // Create tasks for each stage
         for (stage_name, commands) in stages {
             let task_id = format!("docker:build:{}", stage_name);
             
@@ -94,7 +87,6 @@ impl DockerBackend {
                     cmd,
                 );
                 
-                // Add cache entry
                 if let Some(dockerfile) = &self.config.dockerfile_path {
                     task = task.with_cache(forge_executor::CacheEntry {
                         key: format!("docker:{}", dockerfile.display()),
@@ -102,7 +94,6 @@ impl DockerBackend {
                     });
                 }
                 
-                // Add artifact output
                 if stage_name == "final" || stages_count == 1 {
                     task = task.with_artifacts(vec![std::path::PathBuf::from(format!("{}.tar", stage_name))]);
                 }
@@ -147,7 +138,6 @@ impl DockerBackend {
             }
             
             if let Some(stage) = line.strip_prefix("FROM ") {
-                // Check for multi-stage build
                 if let Some(as_stage) = stage.split(" AS ").nth(1) {
                     if !current_commands.is_empty() {
                         stages.push((current_stage.clone(), current_commands.clone()));
@@ -170,7 +160,6 @@ impl DockerBackend {
         }
         
         if stages.is_empty() {
-            // Default single-stage build
             let docker_cmd = format!("build -t forge:latest {}", self.config.context_path.display());
             let mut cmd = CommandSpec::new(self.toolchain.docker_path.to_string_lossy().to_string());
             for arg in docker_cmd.split_whitespace() {

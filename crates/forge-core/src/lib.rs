@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 pub mod backend;
+pub mod backend_utils;
 pub mod config;
 pub mod environment;
 pub mod error;
@@ -13,6 +14,7 @@ pub mod testing;
 pub mod windows_compat;
 
 pub use backend::BuildBackend;
+pub use backend_utils::{BinaryUtils, FingerprintUtils, TaskDagBuilder, ToolchainUtils, DEFAULT_EXCLUDED_DIRS};
 pub use config::{ForgeConfig, GeneralConfig, CacheConfig, BuildConfig, CIConfig, SecurityConfig, ExperimentalConfig, ConfigError};
 pub use environment::EnvironmentFingerprint;
 pub use error::{ForgeError, Result};

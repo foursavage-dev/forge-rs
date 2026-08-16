@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use thiserror::Error;
 
-use forge_core::BuildBackend;
+use forge_core::{BuildBackend, FingerprintUtils, TaskDagBuilder};
 use forge_executor::{CacheEntry, Task};
 use forge_graph::BuildGraph;
 
@@ -49,112 +49,66 @@ impl TsBackend {
         Self { toolchain }
     }
 
-    fn combined_fingerprint(prefix: &str, member_fps: &[String]) -> String {
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(prefix.as_bytes());
-        let mut sorted = member_fps.to_vec();
-        sorted.sort();
-        for fp in &sorted {
-            hasher.update(b":");
-            hasher.update(fp.as_bytes());
-        }
-        hasher.finalize().to_hex().to_string()
-    }
-
     pub fn build_task_graph(
         &self,
         config: &TsProjectConfig,
         project_dir: &Path,
     ) -> Result<BuildGraph<Task>, TsBackendError> {
         let mut graph = BuildGraph::new();
-
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(project_dir.to_string_lossy().as_bytes());
-        let namespace = hasher.finalize().to_hex().to_string()[..12].to_string();
-
+        let namespace = FingerprintUtils::compute_namespace(project_dir);
         let base_fp = fingerprint::compute_ts_fingerprint(project_dir, &config.source_dirs)?;
+
+        let order = TaskDagBuilder::resolve_dag_order(
+            &config.tasks,
+            |task| &task.name,
+            |task| &task.depends_on,
+        )
+        .map_err(TsBackendError::Config)?;
 
         let mut node_map: HashMap<String, forge_graph::NodeId> = HashMap::new();
         let mut dep_fps: HashMap<String, String> = HashMap::new();
 
-        while node_map.len() < config.tasks.len() {
-            let ready: Vec<&TsTaskSpec> = config
-                .tasks
-                .iter()
-                .filter(|task| !node_map.contains_key(&task.name))
-                .filter(|task| task.depends_on.iter().all(|dep| node_map.contains_key(dep)))
-                .collect();
-
-            if ready.is_empty() {
-                let known: std::collections::HashSet<&str> =
-                    config.tasks.iter().map(|t| t.name.as_str()).collect();
-                for task in config
-                    .tasks
-                    .iter()
-                    .filter(|t| !node_map.contains_key(&t.name))
-                {
-                    for dep in &task.depends_on {
-                        if !known.contains(dep.as_str()) {
-                            return Err(TsBackendError::Config(format!(
+        for idx in order {
+            let task_spec = &config.tasks[idx];
+            let mut member_fps = Vec::new();
+            for dep in &task_spec.depends_on {
+                member_fps.push(
+                    dep_fps
+                        .get(dep)
+                        .ok_or_else(|| {
+                            TsBackendError::Config(format!(
                                 "task `{}` depends on unknown task `{}`",
-                                task.name, dep
-                            )));
-                        }
-                    }
-                }
-                let cycle: Vec<&str> = config
-                    .tasks
-                    .iter()
-                    .filter(|t| !node_map.contains_key(&t.name))
-                    .map(|t| t.name.as_str())
-                    .collect();
-                return Err(TsBackendError::Config(format!(
-                    "dependency cycle among tasks: {}",
-                    cycle.join(" -> ")
-                )));
+                                task_spec.name, dep
+                            ))
+                        })?
+                        .clone(),
+                );
             }
 
-            for task_spec in ready {
-                let mut member_fps = Vec::new();
-                for dep in &task_spec.depends_on {
-                    member_fps.push(
-                        dep_fps
-                            .get(dep)
-                            .ok_or_else(|| {
-                                TsBackendError::Config(format!(
-                                    "task `{}` depends on unknown task `{}`",
-                                    task_spec.name, dep
-                                ))
-                            })?
-                            .clone(),
-                    );
-                }
+            let task_fp = FingerprintUtils::combine_fingerprints(
+                &format!("ts:{base_fp}:{}", task_spec.name),
+                &member_fps,
+            );
 
-                let task_fp = Self::combined_fingerprint(
-                    &format!("ts:{base_fp}:{}", task_spec.name),
-                    &member_fps,
-                );
+            let spec = self.toolchain.build_command(
+                task_spec,
+                config.package_manager.unwrap_or_default(),
+                project_dir,
+            );
 
-                let spec = self.toolchain.build_command(
-                    task_spec,
-                    config.package_manager.unwrap_or_default(),
-                    project_dir,
-                );
+            let task = Task::new(
+                format!("{}:{}", config.name, task_spec.name),
+                spec.command_line(),
+                spec,
+            )
+            .with_cache(CacheEntry {
+                key: FingerprintUtils::format_cache_key("ts", &namespace, "task", &task_spec.name),
+                fingerprint: task_fp.clone(),
+            });
 
-                let task = Task::new(
-                    format!("{}:{}", config.name, task_spec.name),
-                    spec.command_line(),
-                    spec,
-                )
-                .with_cache(CacheEntry {
-                    key: format!("ts/{}/{}", namespace, task_spec.name),
-                    fingerprint: task_fp.clone(),
-                });
-
-                let node_id = graph.add_node(task);
-                node_map.insert(task_spec.name.clone(), node_id);
-                dep_fps.insert(task_spec.name.clone(), task_fp);
-            }
+            let node_id = graph.add_node(task);
+            node_map.insert(task_spec.name.clone(), node_id);
+            dep_fps.insert(task_spec.name.clone(), task_fp);
         }
 
         for task in &config.tasks {

@@ -86,6 +86,7 @@ toml = "0.8"
 spin = "0.9"
 tempfile = "3"
 regex = "1"
+blake3 = "1"
 
 clap = { version = "4.5", features = ["derive"] }
 anstream = "0.6"

@@ -3,7 +3,7 @@
 use std::path::Path;
 use thiserror::Error;
 
-use forge_core::BuildBackend;
+use forge_core::{BuildBackend, BinaryUtils, FingerprintUtils};
 use forge_executor::{CacheEntry, CommandSpec, Task};
 use forge_graph::BuildGraph;
 
@@ -69,10 +69,7 @@ impl CcBackend {
 
         let mut object_paths = Vec::new();
         let mut compile_node_ids = Vec::new();
-
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(project_dir.to_string_lossy().as_bytes());
-        let namespace = hasher.finalize().to_hex().to_string()[..12].to_string();
+        let namespace = FingerprintUtils::compute_namespace(project_dir);
 
         for source in &sources {
             let stem = source
@@ -80,18 +77,11 @@ impl CcBackend {
                 .and_then(|s| s.to_str())
                 .unwrap_or("source");
 
-            let obj_ext = if self.compiler.family == CompilerFamily::Msvc {
-                "obj"
-            } else {
-                "o"
-            };
-
+            let obj_ext = BinaryUtils::object_extension(self.compiler.family == CompilerFamily::Msvc);
             let obj_filename = format!("{stem}.{obj_ext}");
             let obj_path = output_dir.join("objs").join(&obj_filename);
             object_paths.push(obj_path.clone());
 
-            // GCC/Clang write the header dependency list next to the object
-            // file; it is the fingerprint source of truth on later runs.
             let depfile = if self.compiler.family == CompilerFamily::Msvc {
                 None
             } else {
@@ -117,7 +107,7 @@ impl CcBackend {
             .unwrap_or_else(|_| "no_fp".to_string());
 
             let cache_entry = CacheEntry {
-                key: format!("cc/{namespace}/{}/{}", config.name, stem),
+                key: FingerprintUtils::format_cache_key("cc", &namespace, &config.name, stem),
                 fingerprint: fingerprint_val,
             };
 
@@ -126,8 +116,7 @@ impl CcBackend {
             compile_node_ids.push(node_id);
         }
 
-        let binary_ext = if cfg!(windows) { ".exe" } else { "" };
-        let out_name = format!("{}{}", config.name, binary_ext);
+        let out_name = BinaryUtils::add_binary_extension(&config.name);
         let final_output = output_dir.join(&out_name);
 
         let (link_prog, link_args) = self.compiler.link_args(

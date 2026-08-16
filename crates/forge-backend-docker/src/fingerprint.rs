@@ -1,10 +1,7 @@
 #![forbid(unsafe_code)]
 
+use forge_core::{FingerprintUtils, DEFAULT_EXCLUDED_DIRS};
 use crate::config::DockerProjectConfig;
-use blake3;
-use std::collections::HashSet;
-use std::fs;
-use std::path::Path;
 
 #[derive(Debug, Clone)]
 pub struct DockerFingerprinter {
@@ -19,23 +16,21 @@ impl DockerFingerprinter {
     pub fn compute(&self) -> Result<String, Box<dyn std::error::Error>> {
         let mut hasher = blake3::Hasher::new();
         
-        // Hash Dockerfile content
         if let Some(dockerfile) = &self.config.dockerfile_path {
             if dockerfile.exists() {
-                let content = fs::read(dockerfile)?;
-                hasher.update(&content);
+                let _ = FingerprintUtils::hash_file_into(dockerfile, &mut hasher);
             }
         }
         
-        // Hash build context files
-        let context_files = self.collect_context_files()?;
-        for file in context_files {
-            if let Ok(content) = fs::read(&file) {
-                hasher.update(&content);
-            }
+        if self.config.context_path.is_dir() {
+            FingerprintUtils::hash_directory_filtered(
+                &self.config.context_path,
+                |dir_name| DEFAULT_EXCLUDED_DIRS.contains(&dir_name) || dir_name == ".dockerignore",
+                |_file_path| true,
+                &mut hasher,
+            )?;
         }
         
-        // Hash build args
         let mut args: Vec<_> = self.config.build_args.iter().collect();
         args.sort_by_key(|(k, _)| *k);
         for (key, value) in args {
@@ -43,64 +38,11 @@ impl DockerFingerprinter {
             hasher.update(value.as_bytes());
         }
         
-        // Hash target stage
         if let Some(target) = &self.config.target {
             hasher.update(target.as_bytes());
         }
         
         Ok(hasher.finalize().to_hex().to_string())
-    }
-    
-    fn collect_context_files(&self) -> Result<Vec<std::path::PathBuf>, Box<dyn std::error::Error>> {
-        let mut files = Vec::new();
-        let mut visited = HashSet::new();
-        
-        if !self.config.context_path.exists() {
-            return Ok(files);
-        }
-        
-        self.walk_directory(&self.config.context_path, &mut files, &mut visited)?;
-        
-        // Sort for consistent fingerprinting
-        files.sort();
-        
-        Ok(files)
-    }
-    
-    fn walk_directory(
-        &self,
-        dir: &Path,
-        files: &mut Vec<std::path::PathBuf>,
-        visited: &mut HashSet<std::path::PathBuf>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let canonical = dir.canonicalize()?;
-        
-        if visited.contains(&canonical) {
-            return Ok(());
-        }
-        visited.insert(canonical);
-        
-        let entries = fs::read_dir(dir)?;
-        
-        for entry in entries {
-            let entry = entry?;
-            let path = entry.path();
-            
-            // Skip .dockerignore and other special files
-            if let Some(name) = path.file_name() {
-                if name == ".dockerignore" || name == ".git" {
-                    continue;
-                }
-            }
-            
-            if path.is_dir() {
-                self.walk_directory(&path, files, visited)?;
-            } else if path.is_file() {
-                files.push(path);
-            }
-        }
-        
-        Ok(())
     }
     
     pub fn compute_layer_fingerprint(&self, line: &str) -> String {

@@ -1,74 +1,32 @@
-use std::fs;
-use std::io::Read;
 use std::path::Path;
 
+use forge_core::{FingerprintUtils, DEFAULT_EXCLUDED_DIRS};
 use crate::{BackendError, BuildMode};
 
-pub const EXCLUDED_DIRS: &[&str] = &["target", ".git", ".forge"];
+pub const EXCLUDED_DIRS: &[&str] = DEFAULT_EXCLUDED_DIRS;
 
 pub fn hash_string(hasher: &mut blake3::Hasher, value: &str) {
     hasher.update(value.as_bytes());
 }
 
 pub fn hash_file_into(path: &Path, hasher: &mut blake3::Hasher) -> Result<(), BackendError> {
-    let mut file = fs::File::open(path).map_err(|source| BackendError::Read {
+    FingerprintUtils::hash_file_into(path, hasher).map_err(|source| BackendError::Read {
         path: path.to_path_buf(),
         source,
-    })?;
-    let mut buffer = [0u8; 64 * 1024];
-    loop {
-        let read = file
-            .read(&mut buffer)
-            .map_err(|source| BackendError::Read {
-                path: path.to_path_buf(),
-                source,
-            })?;
-        if read == 0 {
-            break;
-        }
-        hasher.update(&buffer[..read]);
-    }
-    Ok(())
+    })
 }
 
 pub fn hash_directory(dir: &Path, hasher: &mut blake3::Hasher) -> Result<(), BackendError> {
-    fn walk(hasher: &mut blake3::Hasher, dir: &Path, base: &str) -> Result<(), BackendError> {
-        let mut entries = fs::read_dir(dir)
-            .map_err(|source| BackendError::Read {
-                path: dir.to_path_buf(),
-                source,
-            })?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|source| BackendError::Read {
-                path: dir.to_path_buf(),
-                source,
-            })?;
-        entries.sort_by_key(|entry| entry.file_name());
-        for entry in entries {
-            let name = entry.file_name();
-            if EXCLUDED_DIRS.iter().any(|excluded| name == *excluded) {
-                continue;
-            }
-            let relative = if base.is_empty() {
-                name.to_string_lossy().into_owned()
-            } else {
-                format!("{base}/{}", name.to_string_lossy())
-            };
-            let path = entry.path();
-            let file_type = entry.file_type().map_err(|source| BackendError::Read {
-                path: path.clone(),
-                source,
-            })?;
-            hasher.update(relative.as_bytes());
-            if file_type.is_dir() {
-                walk(hasher, &path, &relative)?;
-            } else if file_type.is_file() {
-                hash_file_into(&path, hasher)?;
-            }
-        }
-        Ok(())
-    }
-    walk(hasher, dir, "")
+    FingerprintUtils::hash_directory_filtered(
+        dir,
+        |name| EXCLUDED_DIRS.contains(&name),
+        |_| true,
+        hasher,
+    )
+    .map_err(|source| BackendError::Read {
+        path: dir.to_path_buf(),
+        source,
+    })
 }
 
 pub fn package_input_fingerprint(
@@ -95,16 +53,7 @@ pub fn package_input_fingerprint(
 }
 
 pub fn combined_fingerprint(own: &str, dep_fingerprints: &[String]) -> String {
-    let mut deps: Vec<&String> = dep_fingerprints.iter().collect();
-    deps.sort();
-    let mut hasher = blake3::Hasher::new();
-    hasher.update(format!("own[{}]:", own.len()).as_bytes());
-    hasher.update(own.as_bytes());
-    for dep in deps {
-        hasher.update(format!("dep[{}]:", dep.len()).as_bytes());
-        hasher.update(dep.as_bytes());
-    }
-    hasher.finalize().to_hex().to_string()
+    FingerprintUtils::combine_fingerprints(own, dep_fingerprints)
 }
 
 #[cfg(test)]

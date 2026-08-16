@@ -3,7 +3,7 @@
 use std::path::Path;
 use thiserror::Error;
 
-use forge_core::BuildBackend;
+use forge_core::{BuildBackend, FingerprintUtils};
 use forge_executor::{CacheEntry, CommandSpec, Task};
 use forge_graph::BuildGraph;
 
@@ -11,8 +11,8 @@ pub mod config;
 pub mod fingerprint;
 pub mod toolchain;
 
-pub use config::{SwiftProjectConfig, SwiftPlatform};
-pub use toolchain::{SwiftToolchain, SwiftCompiler};
+pub use config::{SwiftPlatform, SwiftProjectConfig};
+pub use toolchain::{SwiftCompiler, SwiftToolchain};
 
 #[derive(Debug, Error)]
 pub enum SwiftBackendError {
@@ -58,9 +58,7 @@ impl SwiftBackend {
         let mut graph = BuildGraph::new();
         std::fs::create_dir_all(output_dir)?;
 
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(project_dir.to_string_lossy().as_bytes());
-        let namespace = hasher.finalize().to_hex().to_string()[..12].to_string();
+        let namespace = FingerprintUtils::compute_namespace(project_dir);
 
         let fp = fingerprint::compute_swift_fingerprint(
             project_dir,
@@ -69,7 +67,6 @@ impl SwiftBackend {
         )
         .unwrap_or_else(|_| "no_fp".to_string());
 
-        // Clean build
         let clean_args = vec!["package".to_string(), "clean".to_string()];
         let clean_spec = CommandSpec::new(&self.toolchain.executable)
             .args(clean_args)
@@ -81,13 +78,12 @@ impl SwiftBackend {
         );
         let clean_node_id = graph.add_node(clean_task);
 
-        // Resolve dependencies
         let resolve_args = vec!["package".to_string(), "resolve".to_string()];
         let resolve_spec = CommandSpec::new(&self.toolchain.executable)
             .args(resolve_args)
             .cwd(project_dir);
         let resolve_cache = CacheEntry {
-            key: format!("swift/resolve/{}/{}", namespace, config.package_name),
+            key: FingerprintUtils::format_cache_key("swift", &namespace, "resolve", &config.package_name),
             fingerprint: fp.clone(),
         };
         let resolve_task = Task::new(
@@ -98,7 +94,6 @@ impl SwiftBackend {
         let resolve_node_id = graph.add_node(resolve_task);
         graph.add_dependency(clean_node_id, resolve_node_id)?;
 
-        // Build
         let mut build_args = vec!["build".to_string()];
         if config.release {
             build_args.push("-c".to_string());
@@ -135,7 +130,7 @@ impl SwiftBackend {
             .args(build_args)
             .cwd(project_dir);
         let build_cache = CacheEntry {
-            key: format!("swift/build/{}/{}", namespace, config.package_name),
+            key: FingerprintUtils::format_cache_key("swift", &namespace, "build", &config.package_name),
             fingerprint: fp.clone(),
         };
         let build_task = Task::new(
@@ -146,7 +141,6 @@ impl SwiftBackend {
         let build_node_id = graph.add_node(build_task);
         graph.add_dependency(resolve_node_id, build_node_id)?;
 
-        // Test
         if config.run_tests {
             let mut test_args = vec!["test".to_string()];
             if config.release {
@@ -158,7 +152,7 @@ impl SwiftBackend {
                 .args(test_args)
                 .cwd(project_dir);
             let test_cache = CacheEntry {
-                key: format!("swift/test/{}/{}", namespace, config.package_name),
+                key: FingerprintUtils::format_cache_key("swift", &namespace, "test", &config.package_name),
                 fingerprint: fp,
             };
             let test_task = Task::new(

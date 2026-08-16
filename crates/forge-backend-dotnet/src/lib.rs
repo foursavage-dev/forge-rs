@@ -3,7 +3,7 @@
 use std::path::Path;
 use thiserror::Error;
 
-use forge_core::BuildBackend;
+use forge_core::{BuildBackend, FingerprintUtils};
 use forge_executor::{CacheEntry, CommandSpec, Task};
 use forge_graph::BuildGraph;
 
@@ -12,7 +12,7 @@ pub mod fingerprint;
 pub mod toolchain;
 
 pub use config::{DotnetProjectConfig, DotnetTargetFramework};
-pub use toolchain::{DotnetToolchain, DotnetCompiler};
+pub use toolchain::{DotnetCompiler, DotnetToolchain};
 
 #[derive(Debug, Error)]
 pub enum DotnetBackendError {
@@ -57,10 +57,7 @@ impl DotnetBackend {
     ) -> Result<BuildGraph<Task>, DotnetBackendError> {
         let mut graph = BuildGraph::new();
         std::fs::create_dir_all(output_dir)?;
-
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(project_dir.to_string_lossy().as_bytes());
-        let namespace = hasher.finalize().to_hex().to_string()[..12].to_string();
+        let namespace = FingerprintUtils::compute_namespace(project_dir);
 
         let fp = fingerprint::compute_dotnet_fingerprint(
             project_dir,
@@ -69,13 +66,12 @@ impl DotnetBackend {
         )
         .unwrap_or_else(|_| "no_fp".to_string());
 
-        // Restore dependencies
         let restore_args = vec!["restore".to_string()];
         let restore_spec = CommandSpec::new(&self.toolchain.executable)
             .args(restore_args)
             .cwd(project_dir);
         let restore_cache = CacheEntry {
-            key: format!("dotnet/restore/{}/{}", namespace, config.project_name),
+            key: FingerprintUtils::format_cache_key("dotnet", &namespace, "restore", &config.project_name),
             fingerprint: fp.clone(),
         };
         let restore_task = Task::new(
@@ -85,7 +81,6 @@ impl DotnetBackend {
         ).with_cache(restore_cache);
         let restore_node_id = graph.add_node(restore_task);
 
-        // Build project
         let mut build_args = vec!["build".to_string()];
         if config.release {
             build_args.push("--configuration".to_string());
@@ -104,7 +99,7 @@ impl DotnetBackend {
             .args(build_args)
             .cwd(project_dir);
         let build_cache = CacheEntry {
-            key: format!("dotnet/build/{}/{}", namespace, config.project_name),
+            key: FingerprintUtils::format_cache_key("dotnet", &namespace, "build", &config.project_name),
             fingerprint: fp.clone(),
         };
         let build_task = Task::new(
@@ -115,14 +110,13 @@ impl DotnetBackend {
         let build_node_id = graph.add_node(build_task);
         graph.add_dependency(restore_node_id, build_node_id)?;
 
-        // Test project
         if config.run_tests {
             let test_args = vec!["test".to_string()];
             let test_spec = CommandSpec::new(&self.toolchain.executable)
                 .args(test_args)
                 .cwd(project_dir);
             let test_cache = CacheEntry {
-                key: format!("dotnet/test/{}/{}", namespace, config.project_name),
+                key: FingerprintUtils::format_cache_key("dotnet", &namespace, "test", &config.project_name),
                 fingerprint: fp.clone(),
             };
             let test_task = Task::new(
@@ -134,7 +128,6 @@ impl DotnetBackend {
             graph.add_dependency(build_node_id, test_node_id)?;
         }
 
-        // Publish if requested
         if config.publish {
             let mut publish_args = vec!["publish".to_string()];
             if config.release {
@@ -156,7 +149,7 @@ impl DotnetBackend {
                 .args(publish_args)
                 .cwd(project_dir);
             let publish_cache = CacheEntry {
-                key: format!("dotnet/publish/{}/{}", namespace, config.project_name),
+                key: FingerprintUtils::format_cache_key("dotnet", &namespace, "publish", &config.project_name),
                 fingerprint: fp,
             };
             let publish_task = Task::new(

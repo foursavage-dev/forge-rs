@@ -3,7 +3,7 @@
 use std::path::Path;
 use thiserror::Error;
 
-use forge_core::BuildBackend;
+use forge_core::{BuildBackend, FingerprintUtils};
 use forge_executor::{CacheEntry, CommandSpec, Task};
 use forge_graph::BuildGraph;
 
@@ -12,7 +12,7 @@ pub mod fingerprint;
 pub mod toolchain;
 
 pub use config::{ZigProjectConfig, ZigTarget};
-pub use toolchain::{ZigToolchain, ZigCompiler};
+pub use toolchain::{ZigCompiler, ZigToolchain};
 
 #[derive(Debug, Error)]
 pub enum ZigBackendError {
@@ -58,9 +58,7 @@ impl ZigBackend {
         let mut graph = BuildGraph::new();
         std::fs::create_dir_all(output_dir)?;
 
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(project_dir.to_string_lossy().as_bytes());
-        let namespace = hasher.finalize().to_hex().to_string()[..12].to_string();
+        let namespace = FingerprintUtils::compute_namespace(project_dir);
 
         let fp = fingerprint::compute_zig_fingerprint(
             project_dir,
@@ -69,13 +67,12 @@ impl ZigBackend {
         )
         .unwrap_or_else(|_| "no_fp".to_string());
 
-        // Fetch dependencies
         let fetch_args = vec!["fetch".to_string()];
         let fetch_spec = CommandSpec::new(&self.toolchain.executable)
             .args(fetch_args)
             .cwd(project_dir);
         let fetch_cache = CacheEntry {
-            key: format!("zig/fetch/{}/{}", namespace, config.project_name),
+            key: FingerprintUtils::format_cache_key("zig", &namespace, "fetch", &config.project_name),
             fingerprint: fp.clone(),
         };
         let fetch_task = Task::new(
@@ -85,7 +82,6 @@ impl ZigBackend {
         ).with_cache(fetch_cache);
         let fetch_node_id = graph.add_node(fetch_task);
 
-        // Build
         let mut build_args = vec!["build".to_string()];
         
         if config.release {
@@ -97,9 +93,7 @@ impl ZigBackend {
         }
 
         match &config.target {
-            ZigTarget::Native => {
-                // Default to native, no additional flags needed
-            }
+            ZigTarget::Native => {}
             ZigTarget::X86_64Linux => {
                 build_args.push("-target".to_string());
                 build_args.push("x86_64-linux-gnu".to_string());
@@ -134,7 +128,7 @@ impl ZigBackend {
             .args(build_args)
             .cwd(project_dir);
         let build_cache = CacheEntry {
-            key: format!("zig/build/{}/{}", namespace, config.project_name),
+            key: FingerprintUtils::format_cache_key("zig", &namespace, "build", &config.project_name),
             fingerprint: fp.clone(),
         };
         let build_task = Task::new(
@@ -145,14 +139,13 @@ impl ZigBackend {
         let build_node_id = graph.add_node(build_task);
         graph.add_dependency(fetch_node_id, build_node_id)?;
 
-        // Test
         if config.run_tests {
             let test_args = vec!["test".to_string()];
             let test_spec = CommandSpec::new(&self.toolchain.executable)
                 .args(test_args)
                 .cwd(project_dir);
             let test_cache = CacheEntry {
-                key: format!("zig/test/{}/{}", namespace, config.project_name),
+                key: FingerprintUtils::format_cache_key("zig", &namespace, "test", &config.project_name),
                 fingerprint: fp,
             };
             let test_task = Task::new(

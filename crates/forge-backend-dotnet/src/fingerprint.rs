@@ -1,9 +1,8 @@
-#![forbid(unsafe_code)]
+use std::path::Path;
 
+use forge_core::{FingerprintUtils, DEFAULT_EXCLUDED_DIRS};
 use crate::DotnetBackendError;
 use crate::config::DotnetTargetFramework;
-use std::path::Path;
-use std::fs;
 
 pub fn compute_dotnet_fingerprint(
     project_dir: &Path,
@@ -12,138 +11,32 @@ pub fn compute_dotnet_fingerprint(
 ) -> Result<String, DotnetBackendError> {
     let mut hasher = blake3::Hasher::new();
 
-    // Include toolchain version
     hasher.update(dotnet_version.as_bytes());
-
-    // Include target framework
     hasher.update(target_framework.as_str().as_bytes());
 
-    // Include source files
-    let source_files = collect_source_files(project_dir)?;
-    for file in &source_files {
-        if let Ok(content) = fs::read(file) {
-            hasher.update(&content);
-        }
-    }
+    let extensions = &["cs", "fs", "vb", "xaml", "csproj", "fsproj", "vbproj", "sln", "props", "targets", "json", "config"];
+    FingerprintUtils::hash_directory_with_extensions(
+        project_dir,
+        extensions,
+        DEFAULT_EXCLUDED_DIRS,
+        &mut hasher,
+    )
+    .map_err(DotnetBackendError::Io)?;
 
-    // Include project files
-    let project_files = collect_project_files(project_dir)?;
-    for file in &project_files {
-        if let Ok(content) = fs::read(file) {
-            hasher.update(&content);
-        }
-    }
-
-    // Include dependency files
-    let dependency_files = collect_dependency_files(project_dir)?;
-    for file in &dependency_files {
-        if let Ok(content) = fs::read(file) {
-            hasher.update(&content);
+    for name in &["Directory.Build.props", "Directory.Build.targets", "NuGet.Config", "global.json"] {
+        let path = project_dir.join(name);
+        if path.exists() {
+            let _ = FingerprintUtils::hash_file_into(&path, &mut hasher);
         }
     }
 
     Ok(hasher.finalize().to_hex().to_string())
 }
 
-fn collect_source_files(project_dir: &Path) -> Result<Vec<std::path::PathBuf>, DotnetBackendError> {
-    let mut source_files = Vec::new();
-    let extensions = ["cs", "fs", "vb", "xaml"];
-    
-    let source_dirs = [
-        project_dir.join("src"),
-        project_dir.join("App"),
-        project_dir.join("Views"),
-        project_dir.join("ViewModels"),
-        project_dir.join("Models"),
-        project_dir.join("Services"),
-        project_dir.join("Controllers"),
-    ];
-
-    for source_dir in &source_dirs {
-        if source_dir.exists() {
-            collect_files_recursive(source_dir, &extensions, &mut source_files);
-        }
-    }
-
-    // Also check subdirectories for source files
-    if let Ok(entries) = fs::read_dir(project_dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                collect_files_recursive(&path, &extensions, &mut source_files);
-            }
-        }
-    }
-
-    Ok(source_files)
-}
-
-fn collect_project_files(project_dir: &Path) -> Result<Vec<std::path::PathBuf>, DotnetBackendError> {
-    let mut project_files = Vec::new();
-    let project_extensions = ["csproj", "fsproj", "vbproj", "sln"];
-    
-    if let Ok(entries) = fs::read_dir(project_dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if let Some(ext) = path.extension() {
-                if project_extensions.iter().any(|e| *e == ext) {
-                    project_files.push(path);
-                }
-            }
-        }
-    }
-
-    Ok(project_files)
-}
-
-fn collect_dependency_files(project_dir: &Path) -> Result<Vec<std::path::PathBuf>, DotnetBackendError> {
-    let mut dependency_files = Vec::new();
-
-    // NuGet packages.config
-    let packages_config = project_dir.join("packages.config");
-    if packages_config.exists() {
-        dependency_files.push(packages_config);
-    }
-
-    // NuGet project.json (old format)
-    let project_json = project_dir.join("project.json");
-    if project_json.exists() {
-        dependency_files.push(project_json);
-    }
-
-    // Directory.Build.props
-    let directory_build_props = project_dir.join("Directory.Build.props");
-    if directory_build_props.exists() {
-        dependency_files.push(directory_build_props);
-    }
-
-    // NuGet.Config
-    let nuget_config = project_dir.join("NuGet.Config");
-    if nuget_config.exists() {
-        dependency_files.push(nuget_config);
-    }
-
-    Ok(dependency_files)
-}
-
-fn collect_files_recursive(dir: &Path, extensions: &[&str], collected: &mut Vec<std::path::PathBuf>) {
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                collect_files_recursive(&path, extensions, collected);
-            } else if let Some(ext) = path.extension() {
-                if extensions.iter().any(|e| *e == ext) {
-                    collected.push(path);
-                }
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     use tempfile::tempdir;
 
     #[test]
@@ -165,7 +58,7 @@ mod tests {
         ).unwrap();
 
         assert!(!fingerprint.is_empty());
-        assert_eq!(fingerprint.len(), 64); // blake3 hash length
+        assert_eq!(fingerprint.len(), 64);
     }
 
     #[test]
