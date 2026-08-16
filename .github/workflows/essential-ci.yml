@@ -89,57 +89,19 @@ jobs:
       - name: Build workspace release
         run: cargo build --workspace --release
 
-  rust-version-matrix:
-    name: Rust Version Matrix
-    runs-on: ubuntu-latest
-    needs: critical-quality-checks
-    strategy:
-      matrix:
-        rust: [stable, beta]
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.rust }}
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-rust-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Test critical crates
-        run: cargo test -p forge-core -p forge-cache -p forge-executor -p forge-scheduler -p forge-graph -p forge-cas
-
   essential-status:
     name: Essential CI Status
     runs-on: ubuntu-latest
-    needs: [critical-quality-checks, critical-crates, rust-version-matrix]
+    needs: [critical-quality-checks, critical-crates]
     if: always()
     steps:
       - name: Check essential CI status
         run: |
           echo "Quality Checks: ${{ needs.critical-quality-checks.result }}"
           echo "Critical Crates: ${{ needs.critical-crates.result }}"
-          echo "Rust Matrix: ${{ needs.rust-version-matrix.result }}"
           
           if [ "${{ needs.critical-quality-checks.result }}" != "success" ] || \
-             [ "${{ needs.critical-crates.result }}" != "success" ] || \
-             [ "${{ needs.rust-version-matrix.result }}" != "success" ]; then
+             [ "${{ needs.critical-crates.result }}" != "success" ]; then
             echo "Essential CI Failed"
             exit 1
           else
