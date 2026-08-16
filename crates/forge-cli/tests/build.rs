@@ -133,25 +133,39 @@ fn build_builds_workspace_successfully() {
 }
 
 #[test]
+fn build_prefers_a_cargo_workspace_over_a_compose_file() {
+    let dir = workspace_fixture();
+    fs::write(
+        dir.path().join("docker-compose.yml"),
+        "services:\n  app:\n    image: example/app\n",
+    )
+    .expect("write compose fixture");
+
+    let output = run(forge()
+        .arg("build")
+        .arg("--cache-dir")
+        .arg(dir.path().join(".forge-cache"))
+        .current_dir(dir.path()));
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    assert!(stdout(&output).contains("Build completed successfully."));
+}
+
+#[test]
 fn build_rebuilds_from_the_fingerprint_cache() {
     let dir = workspace_fixture();
     let cache_dir = dir.path().join(".forge-cache");
-    let first = run(
-        forge()
-            .arg("build")
-            .arg("--cache-dir")
-            .arg(&cache_dir)
-            .current_dir(dir.path()),
-    );
+    let first = run(forge()
+        .arg("build")
+        .arg("--cache-dir")
+        .arg(&cache_dir)
+        .current_dir(dir.path()));
     assert!(first.status.success(), "first build must succeed");
 
-    let second = run(
-        forge()
-            .arg("build")
-            .arg("--cache-dir")
-            .arg(&cache_dir)
-            .current_dir(dir.path()),
-    );
+    let second = run(forge()
+        .arg("build")
+        .arg("--cache-dir")
+        .arg(&cache_dir)
+        .current_dir(dir.path()));
     assert!(second.status.success(), "rebuild must succeed");
     let text = stdout(&second);
     assert!(text.contains("✓ network (cached)"));
@@ -567,10 +581,24 @@ fn affected_builds_only_changed_packages_and_their_dependents() {
     assert!(graph.status.success(), "graph must load the workspace");
 
     git(&root, &["add", "-A"]);
-    git(&root, &["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "initial"]);
+    git(
+        &root,
+        &[
+            "-c",
+            "user.email=t@t",
+            "-c",
+            "user.name=t",
+            "commit",
+            "-qm",
+            "initial",
+        ],
+    );
 
-    fs::write(dir.path().join("core/src/lib.rs"), "pub fn run() { network::ping(); }\n// touched\n")
-        .expect("touch core");
+    fs::write(
+        dir.path().join("core/src/lib.rs"),
+        "pub fn run() { network::ping(); }\n// touched\n",
+    )
+    .expect("touch core");
 
     let output = run(forge()
         .arg("affected")
@@ -578,11 +606,7 @@ fn affected_builds_only_changed_packages_and_their_dependents() {
         .arg("HEAD")
         .current_dir(dir.path()));
 
-    assert!(
-        output.status.success(),
-        "stderr: {}",
-        stderr(&output)
-    );
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
     let text = stdout(&output);
     assert!(
         text.contains("Affected packages (2 of 3)"),
@@ -590,10 +614,16 @@ fn affected_builds_only_changed_packages_and_their_dependents() {
     );
     assert!(text.contains("  - core"));
     assert!(text.contains("  - app"));
-    assert!(!text.contains("  - network"), "network must not be affected: {text}");
+    assert!(
+        !text.contains("  - network"),
+        "network must not be affected: {text}"
+    );
     assert!(text.contains("✓ core"));
     assert!(text.contains("✓ app"));
-    assert!(!text.contains("✓ network"), "network must not be built: {text}");
+    assert!(
+        !text.contains("✓ network"),
+        "network must not be built: {text}"
+    );
 }
 
 #[test]
@@ -608,7 +638,18 @@ fn affected_reports_nothing_when_tree_is_clean() {
     assert!(graph.status.success(), "graph must load the workspace");
 
     git(&root, &["add", "-A"]);
-    git(&root, &["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "initial"]);
+    git(
+        &root,
+        &[
+            "-c",
+            "user.email=t@t",
+            "-c",
+            "user.name=t",
+            "commit",
+            "-qm",
+            "initial",
+        ],
+    );
 
     let output = run(forge()
         .arg("affected")
@@ -659,17 +700,18 @@ fn cache_stats_and_prune_report_sizes() {
         .arg("1KB"));
     assert!(prune.status.success(), "stderr: {}", stderr(&prune));
     let text = stdout(&prune);
-    assert!(text.contains("Removed 3 fingerprint records"), "prune report: {text}");
+    assert!(
+        text.contains("Removed 3 fingerprint records"),
+        "prune report: {text}"
+    );
 }
 
 #[test]
 fn doctor_reports_tools_and_cache() {
     let dir = tempfile::tempdir().expect("create cache fixture");
-    let output = run(
-        forge()
-            .arg("doctor")
-            .env("FORGE_CACHE_DIR", dir.path().join("cache")),
-    );
+    let output = run(forge()
+        .arg("doctor")
+        .env("FORGE_CACHE_DIR", dir.path().join("cache")));
     assert!(output.status.success(), "stderr: {}", stderr(&output));
     let text = stdout(&output);
     assert!(text.contains("[ok] cargo"), "doctor output: {text}");
@@ -688,4 +730,3 @@ fn build_accepts_ram_limit_and_send_source_flags() {
     assert!(output.status.success(), "stderr: {}", stderr(&output));
     assert!(stdout(&output).contains("✓ network"));
 }
-

@@ -11,14 +11,17 @@ use forge_remote_cache::{CompositeCache, CompositeCachingExecutor, TcpRemoteCach
 use forge_sandbox::{SandboxConfig, SandboxedExecutor};
 use forge_worker::{ClusterExecutor, RemoteWorkerClient};
 
-use crate::config::{BackendChoice, ForgeConfig};
 use crate::args::CommonArgs;
+use crate::config::{BackendChoice, ForgeConfig};
 use crate::render;
 use crate::tui::TuiDashboard;
 use crate::utils;
 
 /// Builds the executor with caching, remote workers, and sandboxing support.
-pub(crate) fn build_executor(args: &CommonArgs, cache: Option<LocalCache>) -> Box<dyn TaskExecutor> {
+pub(crate) fn build_executor(
+    args: &CommonArgs,
+    cache: Option<LocalCache>,
+) -> Box<dyn TaskExecutor> {
     let local_process = ProcessExecutor::with_timeout(
         args.verbose,
         args.timeout_secs.map(std::time::Duration::from_secs),
@@ -49,7 +52,8 @@ pub(crate) fn build_executor(args: &CommonArgs, cache: Option<LocalCache>) -> Bo
 
     if let Some(local_c) = cache {
         if let Some(remote_addr) = &args.remote_cache {
-            let remote_client = TcpRemoteCacheClient::new(remote_addr, args.remote_cache_token.clone());
+            let remote_client =
+                TcpRemoteCacheClient::new(remote_addr, args.remote_cache_token.clone());
             let composite = CompositeCache::new(local_c, Some(Box::new(remote_client)));
             Box::new(CompositeCachingExecutor::new(base_executor, composite))
         } else {
@@ -98,7 +102,9 @@ pub(crate) fn run_build_mode_with(
         remote_cache_token: args.remote_cache_token.or(config.remote_cache_token),
         remote_workers: args.remote_workers.or(config.remote_workers),
         remote_workers_token: args.remote_workers_token.or(config.remote_workers_token),
-        cache_dir: args.cache_dir.or_else(|| config.cache_dir.map(PathBuf::from)),
+        cache_dir: args
+            .cache_dir
+            .or_else(|| config.cache_dir.map(PathBuf::from)),
         send_source: args.send_source || config.send_source,
         ram_limit: args.ram_limit.or(config.ram_limit),
         semantic: args.semantic || config.semantic,
@@ -118,7 +124,10 @@ pub(crate) fn run_build_mode_with(
 
     if merged.ramdisk {
         if let Ok(rd) = crate::ramdisk::RamDisk::create_turbo_workspace("turbo") {
-            println!("⚡ In-memory RAM disk turbo enabled: {}", rd.path().display());
+            println!(
+                "⚡ In-memory RAM disk turbo enabled: {}",
+                rd.path().display()
+            );
         }
     }
 
@@ -128,10 +137,16 @@ pub(crate) fn run_build_mode_with(
         if merged.swarm_compute {
             let _ = swarm_cache.broadcast_compute_worker(7891, 4);
             let workers = swarm_cache.discovered_compute_endpoints();
-            println!("🪐 Distributed P2P Compute Swarm active (LAN workers: {})", workers.len());
+            println!(
+                "🪐 Distributed P2P Compute Swarm active (LAN workers: {})",
+                workers.len()
+            );
         } else {
             let peer_count = swarm_cache.active_peer_count();
-            println!("🌐 P2P Swarm Cache enabled (active LAN peers: {})", peer_count);
+            println!(
+                "🌐 P2P Swarm Cache enabled (active LAN peers: {})",
+                peer_count
+            );
         }
     }
 
@@ -152,7 +167,10 @@ pub(crate) fn run_build_mode_with(
             eprintln!("warning: {}", e);
         } else {
             let flags = crate::experimental::turbolink::TurboLinker::generate_rustc_flags();
-            println!("🚀 Linker Turbo-Hijack active (Fast Linker flags: {})", flags.join(" "));
+            println!(
+                "🚀 Linker Turbo-Hijack active (Fast Linker flags: {})",
+                flags.join(" ")
+            );
         }
     }
 
@@ -197,13 +215,25 @@ pub(crate) fn run_build_mode_with(
         | BackendChoice::Typescript
         | BackendChoice::Javascript
         | BackendChoice::Js => return crate::backends::run_ts_build(&start_dir, &merged),
-        BackendChoice::Py | BackendChoice::Python => return crate::backends::run_py_build(&start_dir, &merged),
-        BackendChoice::Java | BackendChoice::Kotlin => return crate::backends::run_java_build(&start_dir, &merged),
-        BackendChoice::Dotnet | BackendChoice::CSharp | BackendChoice::FSharp => return crate::backends::run_dotnet_build(&start_dir, &merged),
-        BackendChoice::Swift | BackendChoice::ObjC | BackendChoice::ObjectiveC => return crate::backends::run_swift_build(&start_dir, &merged),
-        BackendChoice::Dart | BackendChoice::Flutter => return crate::backends::run_dart_build(&start_dir, &merged),
+        BackendChoice::Py | BackendChoice::Python => {
+            return crate::backends::run_py_build(&start_dir, &merged);
+        }
+        BackendChoice::Java | BackendChoice::Kotlin => {
+            return crate::backends::run_java_build(&start_dir, &merged);
+        }
+        BackendChoice::Dotnet | BackendChoice::CSharp | BackendChoice::FSharp => {
+            return crate::backends::run_dotnet_build(&start_dir, &merged);
+        }
+        BackendChoice::Swift | BackendChoice::ObjC | BackendChoice::ObjectiveC => {
+            return crate::backends::run_swift_build(&start_dir, &merged);
+        }
+        BackendChoice::Dart | BackendChoice::Flutter => {
+            return crate::backends::run_dart_build(&start_dir, &merged);
+        }
         BackendChoice::Zig => return crate::backends::run_zig_build(&start_dir, &merged),
-        BackendChoice::Docker | BackendChoice::Oci => return crate::backends::run_docker_build(&start_dir, &merged),
+        BackendChoice::Docker | BackendChoice::Oci => {
+            return crate::backends::run_docker_build(&start_dir, &merged);
+        }
         BackendChoice::Plugin | BackendChoice::Rules => {
             return crate::backends::run_plugin_build(&start_dir, &merged);
         }
@@ -215,7 +245,11 @@ pub(crate) fn run_build_mode_with(
         // Check for script plugins before running plugin build
         if crate::backends::has_script_plugins(&start_dir) {
             let plugins = crate::backends::list_script_plugins(&start_dir);
-            println!("🔌 Found {} script plugin(s): {}", plugins.len(), plugins.join(", "));
+            println!(
+                "🔌 Found {} script plugin(s): {}",
+                plugins.len(),
+                plugins.join(", ")
+            );
         }
         return crate::backends::run_plugin_build(&start_dir, &merged);
     }
@@ -223,7 +257,11 @@ pub(crate) fn run_build_mode_with(
     // Auto-detect script plugins even without Forgefile.json
     if crate::backends::has_script_plugins(&start_dir) {
         let plugins = crate::backends::list_script_plugins(&start_dir);
-        println!("🔌 Auto-detected {} script plugin(s): {}", plugins.len(), plugins.join(", "));
+        println!(
+            "🔌 Auto-detected {} script plugin(s): {}",
+            plugins.len(),
+            plugins.join(", ")
+        );
         println!("ℹ️  Script plugins are available. Use 'forge plugin' commands to manage them.");
     }
 
@@ -258,13 +296,14 @@ pub(crate) fn run_build_mode_with(
     }
 
     // .NET detection
-    let has_dotnet_project = crate::backends::has_file_with_extension(&start_dir, &["csproj", "sln"]);
+    let has_dotnet_project =
+        crate::backends::has_file_with_extension(&start_dir, &["csproj", "sln"]);
     if has_dotnet_project {
         return crate::backends::run_dotnet_build(&start_dir, &merged);
     }
 
     // Swift/Objective-C detection
-    let has_swift_project = start_dir.join("Package.swift").exists() 
+    let has_swift_project = start_dir.join("Package.swift").exists()
         || crate::backends::has_dir_with_extension(&start_dir, &["xcodeproj"]);
     if has_swift_project {
         return crate::backends::run_swift_build(&start_dir, &merged);
@@ -280,11 +319,10 @@ pub(crate) fn run_build_mode_with(
         return crate::backends::run_zig_build(&start_dir, &merged);
     }
 
-    // Docker/OCI detection
-    if start_dir.join("Dockerfile").exists()
-        || start_dir.join("docker-compose.yml").exists()
-        || start_dir.join("docker-compose.yaml").exists()
-    {
+    // Docker builds require a Dockerfile. A compose file by itself is often
+    // development infrastructure in another kind of repository (including a
+    // Cargo workspace), so it must not select the Docker backend.
+    if start_dir.join("Dockerfile").exists() {
         return crate::backends::run_docker_build(&start_dir, &merged);
     }
 

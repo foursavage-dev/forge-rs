@@ -5,7 +5,7 @@ use crate::keypair::SigningKeyPair;
 use crate::sbom::SbomMetadata;
 use base64::{Engine as _, engine::general_purpose};
 use chrono::{DateTime, Utc};
-use ed25519_dalek::{Signature, Signer, SigningKey, Verifier};
+use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::path::Path;
@@ -64,7 +64,7 @@ pub async fn sign_artifact(
         _ => {
             return Err(SigningError::CryptoError(
                 "Algorithm not yet implemented".to_string(),
-            ))
+            ));
         }
     };
 
@@ -86,15 +86,17 @@ pub fn verify_signature(
     match signature.algorithm {
         SignatureAlgorithm::Ed25519 => {
             let sig_bytes = general_purpose::STANDARD.decode(&signature.signature)?;
-            let sig_array: [u8; 64] = sig_bytes
-                .try_into()
-                .map_err(|_| SigningError::SignatureVerificationFailed("Invalid signature length".to_string()))?;
+            let sig_array: [u8; 64] = sig_bytes.try_into().map_err(|_| {
+                SigningError::SignatureVerificationFailed("Invalid signature length".to_string())
+            })?;
             let signature_obj = Signature::from_bytes(&sig_array);
-            let public_key_bytes = general_purpose::STANDARD.decode(&signature.signer_public_key)?;
-            let public_key_array: [u8; 32] = public_key_bytes
-                .try_into()
-                .map_err(|_| SigningError::SignatureVerificationFailed("Invalid public key length".to_string()))?;
-            let public_key = SigningKey::from_bytes(&public_key_array).verifying_key();
+            let public_key_bytes =
+                general_purpose::STANDARD.decode(&signature.signer_public_key)?;
+            let public_key_array: [u8; 32] = public_key_bytes.try_into().map_err(|_| {
+                SigningError::SignatureVerificationFailed("Invalid public key length".to_string())
+            })?;
+            let public_key = VerifyingKey::from_bytes(&public_key_array)
+                .map_err(|error| SigningError::SignatureVerificationFailed(error.to_string()))?;
 
             Ok(public_key.verify(artifact_content, &signature_obj).is_ok())
         }

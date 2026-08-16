@@ -5,15 +5,15 @@
 #![allow(missing_docs)]
 #![warn(clippy::all)]
 
+pub mod backend;
 pub mod error;
 pub mod scanner;
 pub mod vulnerability;
-pub mod backend;
 
+pub use backend::{BackendScanner, MavenScanner, NpmScanner, RustScanner};
 pub use error::{SecurityError, SecurityResult};
-pub use scanner::{VulnerabilityScanner, ScanOptions, ScanReport};
-pub use vulnerability::{Vulnerability, Severity, VulnerabilitySource};
-pub use backend::{BackendScanner, RustScanner, NpmScanner, MavenScanner};
+pub use scanner::{ScanOptions, ScanReport, VulnerabilityScanner};
+pub use vulnerability::{Severity, Vulnerability, VulnerabilitySource};
 
 use std::path::Path;
 
@@ -58,7 +58,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_security_service_creation() {
-        let service = SecurityService::new();
+        let _service = SecurityService::new();
         assert!(true); // Basic test
     }
 }

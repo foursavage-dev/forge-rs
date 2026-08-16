@@ -8,7 +8,11 @@ use std::path::Path;
 /// Trait for backend-specific scanners
 pub trait BackendScanner {
     /// Scan a project for vulnerabilities
-    async fn scan(&self, project_path: &Path, options: &ScanOptions) -> SecurityResult<Vec<Vulnerability>>;
+    fn scan(
+        &self,
+        project_path: &Path,
+        options: &ScanOptions,
+    ) -> impl std::future::Future<Output = SecurityResult<Vec<Vulnerability>>> + Send;
 }
 
 /// Rust/Cargo scanner
@@ -22,10 +26,16 @@ impl RustScanner {
 }
 
 impl BackendScanner for RustScanner {
-    async fn scan(&self, project_path: &Path, _options: &ScanOptions) -> SecurityResult<Vec<Vulnerability>> {
+    async fn scan(
+        &self,
+        project_path: &Path,
+        _options: &ScanOptions,
+    ) -> SecurityResult<Vec<Vulnerability>> {
         let lock_file = project_path.join("Cargo.lock");
         if !lock_file.exists() {
-            return Err(SecurityError::LockFileNotFound("Cargo.lock not found".to_string()));
+            return Err(SecurityError::LockFileNotFound(
+                "Cargo.lock not found".to_string(),
+            ));
         }
 
         // Parse Cargo.lock and check against RustSec database
@@ -49,10 +59,16 @@ impl NpmScanner {
 }
 
 impl BackendScanner for NpmScanner {
-    async fn scan(&self, project_path: &Path, _options: &ScanOptions) -> SecurityResult<Vec<Vulnerability>> {
+    async fn scan(
+        &self,
+        project_path: &Path,
+        _options: &ScanOptions,
+    ) -> SecurityResult<Vec<Vulnerability>> {
         let lock_file = project_path.join("package-lock.json");
         if !lock_file.exists() {
-            return Err(SecurityError::LockFileNotFound("package-lock.json not found".to_string()));
+            return Err(SecurityError::LockFileNotFound(
+                "package-lock.json not found".to_string(),
+            ));
         }
 
         // Parse package-lock.json and check against NPM audit API
@@ -72,10 +88,16 @@ impl MavenScanner {
 }
 
 impl BackendScanner for MavenScanner {
-    async fn scan(&self, project_path: &Path, _options: &ScanOptions) -> SecurityResult<Vec<Vulnerability>> {
+    async fn scan(
+        &self,
+        project_path: &Path,
+        _options: &ScanOptions,
+    ) -> SecurityResult<Vec<Vulnerability>> {
         let pom_file = project_path.join("pom.xml");
         if !pom_file.exists() {
-            return Err(SecurityError::LockFileNotFound("pom.xml not found".to_string()));
+            return Err(SecurityError::LockFileNotFound(
+                "pom.xml not found".to_string(),
+            ));
         }
 
         // Parse pom.xml and check against Maven OSS Index

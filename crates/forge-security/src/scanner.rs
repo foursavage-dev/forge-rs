@@ -1,12 +1,12 @@
 // Main vulnerability scanner
 
-use crate::backend::{BackendScanner, RustScanner, NpmScanner, MavenScanner};
+use crate::backend::{BackendScanner, MavenScanner, NpmScanner, RustScanner};
 use crate::error::SecurityResult;
 use crate::vulnerability::{Severity, Vulnerability};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use std::collections::HashMap;
+use std::path::Path;
 
 /// Scan options
 #[derive(Debug, Clone, Default)]
@@ -58,7 +58,11 @@ impl VulnerabilityScanner {
     }
 
     /// Scan a project for vulnerabilities
-    pub async fn scan(&self, project_path: &Path, options: &ScanOptions) -> SecurityResult<ScanReport> {
+    pub async fn scan(
+        &self,
+        project_path: &Path,
+        options: &ScanOptions,
+    ) -> SecurityResult<ScanReport> {
         let start_time = std::time::Instant::now();
         let mut all_vulnerabilities = Vec::new();
 
@@ -95,7 +99,9 @@ impl VulnerabilityScanner {
         }
 
         let should_block = options.block_on_vulnerabilities
-            && vulnerabilities.iter().any(|v| v.severity >= options.min_severity);
+            && vulnerabilities
+                .iter()
+                .any(|v| v.severity >= options.min_severity);
 
         let scan_duration = start_time.elapsed().as_secs_f64();
 
@@ -123,7 +129,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_scanner_creation() {
-        let scanner = VulnerabilityScanner::new();
+        let _scanner = VulnerabilityScanner::new();
         assert!(true);
     }
 }
