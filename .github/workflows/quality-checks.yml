@@ -9,9 +9,9 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
 
 jobs:
-  # Code Formatting Check
   formatting-check:
     name: Code Formatting Check
     runs-on: ubuntu-latest
@@ -20,21 +20,12 @@ jobs:
       
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          components: rustfmt
       
       - name: Check formatting
         run: cargo fmt --all -- --check
-      
-      - name: Format if needed (development only)
-        if: github.event_name == 'workflow_dispatch'
-        run: cargo fmt --all
 
-  # Linting with Clippy
   clippy-check:
     name: Clippy Linting
     runs-on: ubuntu-latest
@@ -43,6 +34,8 @@ jobs:
       
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
       
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -64,17 +57,7 @@ jobs:
       
       - name: Run clippy
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
-      
-      - name: Generate clippy report
-        run: cargo clippy --workspace --all-targets --all-features --message-format=json > clippy-report.json
-      
-      - name: Upload clippy report
-        uses: actions/upload-artifact@v4
-        with:
-          name: clippy-report
-          path: clippy-report.json
 
-  # Documentation Check
   documentation-check:
     name: Documentation Check
     runs-on: ubuntu-latest
@@ -105,16 +88,9 @@ jobs:
       - name: Check documentation
         run: cargo doc --workspace --no-deps --all-features
       
-      - name: Build documentation
-        run: cargo doc --workspace --all-features
-      
-      - name: Upload documentation
-        uses: actions/upload-artifact@v4
-        with:
-          name: documentation
-          path: target/doc
+      - name: Run documentation tests
+        run: cargo test --workspace --doc
 
-  # Code Coverage
   code-coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
@@ -125,7 +101,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       
       - name: Install tarpaulin
-        run: cargo install cargo-tarpaulin
+        uses: taiki-e/install-action@cargo-tarpaulin
       
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -146,22 +122,24 @@ jobs:
           key: ${{ runner.os }}-cargo-coverage-target-${{ hashFiles('**/Cargo.lock') }}
       
       - name: Run code coverage
-        run: cargo tarpaulin --workspace --all-features --out Html
+        run: cargo tarpaulin --workspace --all-features --out Xml --output-dir ./coverage
       
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: tarpaulin-report.html
+          path: ./coverage/cobertura.xml
+          if-no-files-found: ignore
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
+        continue-on-error: true
         with:
-          files: ./tarpaulin-report.html
+          files: ./coverage/cobertura.xml
           flags: unittests
-          name: codecov-umbrella
+          name: codecov-forge
+          token: ${{ secrets.CODECOV_TOKEN }}
 
-  # Unused Dependencies Check
   unused-dependencies:
     name: Unused Dependencies Check
     runs-on: ubuntu-latest
@@ -172,38 +150,15 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       
       - name: Install cargo-machete
-        run: cargo install cargo-machete
+        uses: taiki-e/install-action@cargo-machete
       
       - name: Check for unused dependencies
         run: cargo machete
 
-  # Outdated Dependencies Check
-  outdated-dependencies:
-    name: Outdated Dependencies Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Check for outdated dependencies
-        run: cargo outdated
-      
-      - name: Generate outdated report
-        run: cargo outdated > outdated-report.txt
-      
-      - name: Upload outdated report
-        uses: actions/upload-artifact@v4
-        with:
-          name: outdated-report
-          path: outdated-report.txt
-
-  # Quality Summary
   quality-summary:
     name: Quality Summary
     runs-on: ubuntu-latest
-    needs: [formatting-check, clippy-check, documentation-check]
+    needs: [formatting-check, clippy-check, documentation-check, unused-dependencies]
     if: always()
     steps:
       - name: Check quality results
@@ -211,12 +166,14 @@ jobs:
           echo "Formatting: ${{ needs.formatting-check.result }}"
           echo "Clippy: ${{ needs.clippy-check.result }}"
           echo "Documentation: ${{ needs.documentation-check.result }}"
+          echo "Unused Dependencies: ${{ needs.unused-dependencies.result }}"
           
           if [ "${{ needs.formatting-check.result }}" != "success" ] || \
              [ "${{ needs.clippy-check.result }}" != "success" ] || \
-             [ "${{ needs.documentation-check.result }}" != "success" ]; then
-            echo "❌ Quality checks failed"
+             [ "${{ needs.documentation-check.result }}" != "success" ] || \
+             [ "${{ needs.unused-dependencies.result }}" != "success" ]; then
+            echo "Quality checks failed"
             exit 1
           else
-            echo "✅ All quality checks passed"
+            echo "All quality checks passed"
           fi

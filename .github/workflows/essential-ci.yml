@@ -10,9 +10,9 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  CARGO_INCREMENTAL: "0"
 
 jobs:
-  # Critical Quality Checks - NO continue-on-error
   critical-quality-checks:
     name: Critical Quality Checks
     runs-on: ubuntu-latest
@@ -51,7 +51,6 @@ jobs:
       - name: Check documentation
         run: cargo doc --workspace --no-deps --all-features
 
-  # Critical Crates Testing - NO continue-on-error
   critical-crates:
     name: Critical Crates Testing
     runs-on: ubuntu-latest
@@ -64,6 +63,7 @@ jobs:
           - forge-executor
           - forge-scheduler
           - forge-cache
+          - forge-cas
     steps:
       - uses: actions/checkout@v4
       
@@ -88,10 +88,9 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-critical-${{ matrix.crate }}-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Test critical crate ${{ matrix.crate }}
+      - name: Test critical crate
         run: cargo test -p ${{ matrix.crate }}
 
-  # Build Verification - NO continue-on-error
   critical-build:
     name: Critical Build Verification
     runs-on: ubuntu-latest
@@ -120,13 +119,12 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-critical-build-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Build workspace (debug)
+      - name: Build workspace debug
         run: cargo build --workspace
       
-      - name: Build workspace (release)
+      - name: Build workspace release
         run: cargo build --workspace --release
 
-  # Rust Version Matrix - NO continue-on-error
   rust-version-matrix:
     name: Rust Version Matrix
     runs-on: ubuntu-latest
@@ -160,10 +158,9 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-rust-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Test critical crates with Rust ${{ matrix.rust }}
-        run: cargo test -p forge-core -p forge-cache -p forge-executor -p forge-scheduler
+      - name: Test critical crates
+        run: cargo test -p forge-core -p forge-cache -p forge-executor -p forge-scheduler -p forge-graph -p forge-cas
 
-  # Essential CI Status
   essential-status:
     name: Essential CI Status
     runs-on: ubuntu-latest
@@ -181,8 +178,8 @@ jobs:
              [ "${{ needs.critical-crates.result }}" != "success" ] || \
              [ "${{ needs.critical-build.result }}" != "success" ] || \
              [ "${{ needs.rust-version-matrix.result }}" != "success" ]; then
-            echo "❌ Essential CI Failed - Critical quality gates not met"
+            echo "Essential CI Failed"
             exit 1
           else
-            echo "✅ Essential CI Passed - All critical quality gates met"
+            echo "Essential CI Passed"
           fi

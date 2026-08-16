@@ -157,7 +157,9 @@ impl Default for AsyncProcessExecutor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::task::Task;
+    use crate::command::CommandSpec;
+    use crate::task::{Task, TaskStatus};
+    use std::time::{Duration, Instant};
 
     fn task_for(spec: CommandSpec) -> Task {
         Task::new("test".to_string(), spec.command_line(), spec)

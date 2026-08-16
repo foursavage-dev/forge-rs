@@ -10,9 +10,9 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  CARGO_INCREMENTAL: "0"
 
 jobs:
-  # Stage 1: Quality Checks
   quality-checks:
     name: Quality Checks
     runs-on: ubuntu-latest
@@ -51,33 +51,10 @@ jobs:
       - name: Check documentation
         run: cargo doc --workspace --no-deps --all-features
 
-  # Stage 2: Unit Tests
-  unit-tests:
-    name: Unit Tests
+  workspace-tests:
+    name: Workspace Tests
     runs-on: ubuntu-latest
     needs: quality-checks
-    strategy:
-      matrix:
-        crate:
-          - forge-core
-          - forge-graph
-          - forge-executor
-          - forge-scheduler
-          - forge-cache
-          - forge-cas
-          - forge-backend-rust
-          - forge-backend-cc
-          - forge-backend-java
-          - forge-backend-go
-          - forge-backend-ts
-          - forge-backend-py
-          - forge-backend-dotnet
-          - forge-backend-swift
-          - forge-backend-dart
-          - forge-backend-zig
-          - forge-backend-docker
-          - forge-signing
-          - forge-security
     steps:
       - uses: actions/checkout@v4
       
@@ -102,15 +79,16 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Run unit tests for ${{ matrix.crate }}
-        run: cargo test -p ${{ matrix.crate }} --lib
-        continue-on-error: true
+      - name: Run all workspace tests
+        run: cargo test --workspace --all-targets --all-features
+      
+      - name: Run doc tests
+        run: cargo test --workspace --doc
 
-  # Stage 3: Integration Tests
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
-    needs: unit-tests
+    needs: workspace-tests
     steps:
       - uses: actions/checkout@v4
       
@@ -137,49 +115,7 @@ jobs:
       
       - name: Run integration tests
         run: cargo test --workspace --test '*'
-        continue-on-error: true
 
-  # Stage 4: Performance Benchmarks
-  performance-benchmarks:
-    name: Performance Benchmarks
-    runs-on: ubuntu-latest
-    needs: quality-checks
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-bench-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Run cache benchmarks
-        run: cargo bench -p forge-cache -- --test-threads=1
-        continue-on-error: true
-      
-      - name: Upload benchmark results
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: benchmark-results
-          path: target/criterion
-
-  # Stage 5: Build Verification
   build-verification:
     name: Build Verification
     runs-on: ubuntu-latest
@@ -208,10 +144,10 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-release-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Build workspace (debug)
+      - name: Build workspace debug
         run: cargo build --workspace
       
-      - name: Build workspace (release)
+      - name: Build workspace release
         run: cargo build --workspace --release
       
       - name: Build CLI binary
@@ -223,7 +159,6 @@ jobs:
           name: forge-cli-binary
           path: target/release/forge
 
-  # Stage 6: Backend-Specific Tests
   backend-tests:
     name: Backend Tests
     runs-on: ubuntu-latest
@@ -235,8 +170,13 @@ jobs:
           - java
           - go
           - rust
-          - python
-          - typescript
+          - py
+          - ts
+          - dotnet
+          - swift
+          - dart
+          - zig
+          - docker
     steps:
       - uses: actions/checkout@v4
       
@@ -266,11 +206,9 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Test ${{ matrix.backend }} backend
+      - name: Test backend
         run: cargo test -p forge-backend-${{ matrix.backend }}
-        continue-on-error: true
 
-  # Stage 7: Security Features Tests
   security-tests:
     name: Security Features Tests
     runs-on: ubuntu-latest
@@ -301,17 +239,13 @@ jobs:
       
       - name: Test signing features
         run: cargo test -p forge-signing
-        continue-on-error: true
       
       - name: Test security features
         run: cargo test -p forge-security
-        continue-on-error: true
       
       - name: Test secrets management
         run: cargo test -p forge-secrets
-        continue-on-error: true
 
-  # Stage 8: Dogfood Testing
   dogfood-tests:
     name: Dogfood Tests
     runs-on: ubuntu-latest
@@ -329,42 +263,41 @@ jobs:
       
       - name: Test forge build
         run: ./forge build --no-cache
-        continue-on-error: true
       
       - name: Test forge check
         run: ./forge check --no-cache
-        continue-on-error: true
       
       - name: Test forge test
         run: ./forge test --no-cache
-        continue-on-error: true
       
       - name: Test forge graph
         run: ./forge graph --format dot
-        continue-on-error: true
 
-  # Final Status
   ci-status:
     name: CI Status
     runs-on: ubuntu-latest
-    needs: [quality-checks, unit-tests, integration-tests, build-verification, dogfood-tests]
+    needs: [quality-checks, workspace-tests, integration-tests, build-verification, backend-tests, security-tests, dogfood-tests]
     if: always()
     steps:
       - name: Check all jobs status
         run: |
           echo "Quality Checks: ${{ needs.quality-checks.result }}"
-          echo "Unit Tests: ${{ needs.unit-tests.result }}"
+          echo "Workspace Tests: ${{ needs.workspace-tests.result }}"
           echo "Integration Tests: ${{ needs.integration-tests.result }}"
           echo "Build Verification: ${{ needs.build-verification.result }}"
+          echo "Backend Tests: ${{ needs.backend-tests.result }}"
+          echo "Security Tests: ${{ needs.security-tests.result }}"
           echo "Dogfood Tests: ${{ needs.dogfood-tests.result }}"
           
           if [ "${{ needs.quality-checks.result }}" != "success" ] || \
-             [ "${{ needs.unit-tests.result }}" != "success" ] || \
+             [ "${{ needs.workspace-tests.result }}" != "success" ] || \
              [ "${{ needs.integration-tests.result }}" != "success" ] || \
              [ "${{ needs.build-verification.result }}" != "success" ] || \
+             [ "${{ needs.backend-tests.result }}" != "success" ] || \
+             [ "${{ needs.security-tests.result }}" != "success" ] || \
              [ "${{ needs.dogfood-tests.result }}" != "success" ]; then
-            echo "❌ CI Pipeline Failed"
+            echo "CI Pipeline Failed"
             exit 1
           else
-            echo "✅ CI Pipeline Passed"
+            echo "CI Pipeline Passed"
           fi

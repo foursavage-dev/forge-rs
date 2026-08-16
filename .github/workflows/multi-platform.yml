@@ -9,15 +9,15 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
 
 jobs:
-  # Linux Testing
   test-linux:
     name: Test Linux
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust: [stable, beta, nightly]
+        rust: [stable, beta]
     steps:
       - uses: actions/checkout@v4
       
@@ -51,13 +51,10 @@ jobs:
       
       - name: Run tests
         run: cargo test --workspace --all-features
-        continue-on-error: ${{ matrix.rust == 'nightly' }}
       
       - name: Build release
         run: cargo build --workspace --release
-        continue-on-error: ${{ matrix.rust == 'nightly' }}
 
-  # macOS Testing
   test-macos:
     name: Test macOS
     runs-on: macos-latest
@@ -90,17 +87,12 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Install system dependencies
-        run: |
-          brew install python3 node go openjdk@17
-      
       - name: Run tests
-        run: cargo test --workspace --all-features
+        run: cargo test --workspace
       
       - name: Build release
         run: cargo build --workspace --release
 
-  # Windows Testing
   test-windows:
     name: Test Windows
     runs-on: windows-latest
@@ -133,17 +125,12 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Install system dependencies
-        run: |
-          choco install python nodejs golang openjdk17
-      
       - name: Run tests
-        run: cargo test --workspace --all-features
+        run: cargo test --workspace
       
       - name: Build release
         run: cargo build --workspace --release
 
-  # Cross-Platform Summary
   platform-summary:
     name: Platform Summary
     runs-on: ubuntu-latest
@@ -159,8 +146,8 @@ jobs:
           if [ "${{ needs.test-linux.result }}" != "success" ] || \
              [ "${{ needs.test-macos.result }}" != "success" ] || \
              [ "${{ needs.test-windows.result }}" != "success" ]; then
-            echo "❌ Some platform tests failed"
+            echo "Some platform tests failed"
             exit 1
           else
-            echo "✅ All platform tests passed"
+            echo "All platform tests passed"
           fi

@@ -23,9 +23,6 @@ tempfile = "3"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 criterion = { version = "0.5", features = ["html_reports"] }
 
-[profile.bench]
-debug = true
-
 [[bench]]
 name = "cache_performance"
 harness = false

@@ -9,9 +9,9 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
 
 jobs:
-  # C/C++ Backend Testing
   cc-backend:
     name: C/C++ Backend Testing
     runs-on: ubuntu-latest
@@ -38,14 +38,9 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Test C/C++ backend integration
-        run: cargo test -p forge-backend-cc
-      
       - name: Test C/C++ backend
         run: cargo test -p forge-backend-cc
-        continue-on-error: true
 
-  # Java Backend Testing
   java-backend:
     name: Java Backend Testing
     runs-on: ubuntu-latest
@@ -74,9 +69,7 @@ jobs:
       
       - name: Test Java backend
         run: cargo test -p forge-backend-java
-        continue-on-error: true
 
-  # Go Backend Testing
   go-backend:
     name: Go Backend Testing
     runs-on: ubuntu-latest
@@ -105,15 +98,13 @@ jobs:
       
       - name: Test Go backend
         run: cargo test -p forge-backend-go
-        continue-on-error: true
 
-  # Python Backend Testing
   python-backend:
     name: Python Backend Testing
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.10', '3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
       
@@ -124,11 +115,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pipenv poetry
       
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -144,15 +130,13 @@ jobs:
       
       - name: Test Python backend
         run: cargo test -p forge-backend-py
-        continue-on-error: true
 
-  # TypeScript/JavaScript Backend Testing
   typescript-backend:
     name: TypeScript/JavaScript Backend Testing
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: ['16', '18', '20']
+        node-version: ['18', '20', '22']
     steps:
       - uses: actions/checkout@v4
       
@@ -163,9 +147,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      
-      - name: Install Node dependencies
-        run: npm install -g yarn pnpm
       
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -181,9 +162,7 @@ jobs:
       
       - name: Test TypeScript backend
         run: cargo test -p forge-backend-ts
-        continue-on-error: true
 
-  # Rust Backend Testing
   rust-backend:
     name: Rust Backend Testing
     runs-on: ubuntu-latest
@@ -207,9 +186,7 @@ jobs:
       
       - name: Test Rust backend
         run: cargo test -p forge-backend-rust
-        continue-on-error: true
 
-  # .NET Backend Testing
   dotnet-backend:
     name: .NET Backend Testing
     runs-on: ubuntu-latest
@@ -222,7 +199,7 @@ jobs:
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '7.0.x'
+          dotnet-version: '8.0.x'
       
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -238,13 +215,38 @@ jobs:
       
       - name: Test .NET backend
         run: cargo test -p forge-backend-dotnet
-        continue-on-error: true
 
-  # Backend Summary
+  other-backends:
+    name: Other Language Backends Testing
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        backend: [swift, dart, zig, docker]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Test backend
+        run: cargo test -p forge-backend-${{ matrix.backend }}
+
   backend-summary:
     name: Backend Summary
     runs-on: ubuntu-latest
-    needs: [cc-backend, java-backend, go-backend, python-backend, typescript-backend, rust-backend, dotnet-backend]
+    needs: [cc-backend, java-backend, go-backend, python-backend, typescript-backend, rust-backend, dotnet-backend, other-backends]
     if: always()
     steps:
       - name: Check backend test results
@@ -256,19 +258,18 @@ jobs:
           echo "TypeScript Backend: ${{ needs.typescript-backend.result }}"
           echo "Rust Backend: ${{ needs.rust-backend.result }}"
           echo ".NET Backend: ${{ needs.dotnet-backend.result }}"
+          echo "Other Backends: ${{ needs.other-backends.result }}"
           
-          failed_backends=0
-          [ "${{ needs.cc-backend.result }}" != "success" ] && ((failed_backends++))
-          [ "${{ needs.java-backend.result }}" != "success" ] && ((failed_backends++))
-          [ "${{ needs.go-backend.result }}" != "success" ] && ((failed_backends++))
-          [ "${{ needs.python-backend.result }}" != "success" ] && ((failed_backends++))
-          [ "${{ needs.typescript-backend.result }}" != "success" ] && ((failed_backends++))
-          [ "${{ needs.rust-backend.result }}" != "success" ] && ((failed_backends++))
-          [ "${{ needs.dotnet-backend.result }}" != "success" ] && ((failed_backends++))
-          
-          if [ $failed_backends -gt 0 ]; then
-            echo "❌ $failed_backends backend(s) failed"
+          if [ "${{ needs.cc-backend.result }}" != "success" ] || \
+             [ "${{ needs.java-backend.result }}" != "success" ] || \
+             [ "${{ needs.go-backend.result }}" != "success" ] || \
+             [ "${{ needs.python-backend.result }}" != "success" ] || \
+             [ "${{ needs.typescript-backend.result }}" != "success" ] || \
+             [ "${{ needs.rust-backend.result }}" != "success" ] || \
+             [ "${{ needs.dotnet-backend.result }}" != "success" ] || \
+             [ "${{ needs.other-backends.result }}" != "success" ]; then
+            echo "Backend testing failed"
             exit 1
           else
-            echo "✅ All backends passed"
+            echo "All backends passed"
           fi

@@ -9,9 +9,9 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
 
 jobs:
-  # Basic Integration Tests
   basic-integration:
     name: Basic Integration Tests
     runs-on: ubuntu-latest
@@ -45,9 +45,8 @@ jobs:
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
       - name: Run integration tests
-        run: cargo test --workspace --test '*_test.rs' -- --test-threads=1
+        run: cargo test --workspace --test '*' -- --test-threads=1
 
-  # CLI Integration Tests
   cli-integration:
     name: CLI Integration Tests
     runs-on: ubuntu-latest
@@ -81,27 +80,21 @@ jobs:
       
       - name: Test CLI build command
         run: ./target/release/forge build --no-cache
-        continue-on-error: true
       
       - name: Test CLI check command
         run: ./target/release/forge check --no-cache
-        continue-on-error: true
       
       - name: Test CLI test command
         run: ./target/release/forge test --no-cache
-        continue-on-error: true
       
       - name: Test CLI graph command
-        run: ./target/release/forge graph --format tree
-        continue-on-error: true
+        run: ./target/release/forge graph --format dot
       
       - name: Test CLI cache commands
         run: |
           ./target/release/forge cache stats
-          ./target/release/forge cache prune --max-size 1MB
-        continue-on-error: true
+          ./target/release/forge cache prune --max-size 10MB
 
-  # Cache Integration Tests
   cache-integration:
     name: Cache Integration Tests
     runs-on: ubuntu-latest
@@ -131,10 +124,8 @@ jobs:
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
       - name: Test cache integration
-        run: cargo test -p forge-cache
-        continue-on-error: true
+        run: cargo test -p forge-cache -p forge-cas -p forge-remote-cache
 
-  # Scheduler Integration Tests
   scheduler-integration:
     name: Scheduler Integration Tests
     runs-on: ubuntu-latest
@@ -164,43 +155,8 @@ jobs:
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       
       - name: Test scheduler integration
-        run: cargo test -p forge-scheduler
-        continue-on-error: true
+        run: cargo test -p forge-scheduler -p forge-executor
 
-  # Executor Integration Tests
-  executor-integration:
-    name: Executor Integration Tests
-    runs-on: ubuntu-latest
-    needs: basic-integration
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Test executor integration
-        run: cargo test -p forge-executor
-        continue-on-error: true
-
-  # Security Integration Tests
   security-integration:
     name: Security Integration Tests
     runs-on: ubuntu-latest
@@ -231,17 +187,14 @@ jobs:
       
       - name: Test signing integration
         run: cargo test -p forge-signing
-        continue-on-error: true
       
       - name: Test security integration
-        run: cargo test -p forge-security
-        continue-on-error: true
+        run: cargo test -p forge-security -p forge-secrets -p forge-sandbox
 
-  # End-to-End Integration Tests
   e2e-integration:
     name: End-to-End Integration Tests
     runs-on: ubuntu-latest
-    needs: [cli-integration, cache-integration, scheduler-integration, executor-integration]
+    needs: [cli-integration, cache-integration, scheduler-integration, security-integration]
     steps:
       - uses: actions/checkout@v4
       
@@ -287,15 +240,13 @@ jobs:
           cd test-project
           ../target/release/forge build --no-cache
           ../target/release/forge test --no-cache
-          ../target/release/forge graph --format tree
-        continue-on-error: true
+          ../target/release/forge graph --format dot
       
       - name: Test cache functionality
         run: |
           cd test-project
-          ../target/release/forge build --no-cache
+          ../target/release/forge build
           ../target/release/forge cache stats
-        continue-on-error: true
       
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -303,11 +254,10 @@ jobs:
           name: e2e-test-results
           path: test-project/
 
-  # Integration Summary
   integration-summary:
     name: Integration Summary
     runs-on: ubuntu-latest
-    needs: [basic-integration, cli-integration, cache-integration, scheduler-integration, executor-integration, security-integration, e2e-integration]
+    needs: [basic-integration, cli-integration, cache-integration, scheduler-integration, security-integration, e2e-integration]
     if: always()
     steps:
       - name: Check integration test results
@@ -316,22 +266,17 @@ jobs:
           echo "CLI Integration: ${{ needs.cli-integration.result }}"
           echo "Cache Integration: ${{ needs.cache-integration.result }}"
           echo "Scheduler Integration: ${{ needs.scheduler-integration.result }}"
-          echo "Executor Integration: ${{ needs.executor-integration.result }}"
           echo "Security Integration: ${{ needs.security-integration.result }}"
           echo "E2E Integration: ${{ needs.e2e-integration.result }}"
           
-          failed_tests=0
-          [ "${{ needs.basic-integration.result }}" != "success" ] && ((failed_tests++))
-          [ "${{ needs.cli-integration.result }}" != "success" ] && ((failed_tests++))
-          [ "${{ needs.cache-integration.result }}" != "success" ] && ((failed_tests++))
-          [ "${{ needs.scheduler-integration.result }}" != "success" ] && ((failed_tests++))
-          [ "${{ needs.executor-integration.result }}" != "success" ] && ((failed_tests++))
-          [ "${{ needs.security-integration.result }}" != "success" ] && ((failed_tests++))
-          [ "${{ needs.e2e-integration.result }}" != "success" ] && ((failed_tests++))
-          
-          if [ $failed_tests -gt 0 ]; then
-            echo "❌ $failed_tests integration test(s) failed"
+          if [ "${{ needs.basic-integration.result }}" != "success" ] || \
+             [ "${{ needs.cli-integration.result }}" != "success" ] || \
+             [ "${{ needs.cache-integration.result }}" != "success" ] || \
+             [ "${{ needs.scheduler-integration.result }}" != "success" ] || \
+             [ "${{ needs.security-integration.result }}" != "success" ] || \
+             [ "${{ needs.e2e-integration.result }}" != "success" ]; then
+            echo "Integration tests failed"
             exit 1
           else
-            echo "✅ All integration tests passed"
+            echo "All integration tests passed"
           fi
