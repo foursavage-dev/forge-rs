@@ -2,19 +2,22 @@ use std::path::Path;
 use std::process::ExitCode;
 
 use forge_backend_cc::{CcBackend, CcProjectConfig};
+use forge_backend_dart::{DartBackend, DartProjectConfig};
+use forge_backend_docker::DockerBackend;
+use forge_backend_dotnet::{DotnetBackend, DotnetProjectConfig};
 use forge_backend_go::{GoBackend, GoProjectConfig};
+use forge_backend_java::{JavaBackend, JavaProjectConfig};
 use forge_backend_py::{PyBackend, PyProjectConfig};
 use forge_backend_rust::BuildMode;
-use forge_backend_ts::{TsBackend, TsProjectConfig};
-use forge_backend_java::{JavaBackend, JavaProjectConfig};
-use forge_backend_dotnet::{DotnetBackend, DotnetProjectConfig};
 use forge_backend_swift::{SwiftBackend, SwiftProjectConfig};
-use forge_backend_dart::{DartBackend, DartProjectConfig};
+use forge_backend_ts::{TsBackend, TsProjectConfig};
 use forge_backend_zig::{ZigBackend, ZigProjectConfig};
-use forge_backend_docker::DockerBackend;
 
 use forge_executor::Task;
-use forge_plugin::{PluginBackend, PluginRulesManifest, scripting::{PluginManager, PluginError}};
+use forge_plugin::{
+    PluginBackend, PluginRulesManifest,
+    scripting::{PluginError, PluginManager},
+};
 
 use crate::args::CommonArgs;
 use crate::render;
@@ -296,7 +299,7 @@ pub(crate) fn run_zig_build(start_dir: &Path, args: &CommonArgs) -> ExitCode {
 
 pub(crate) fn run_docker_build(start_dir: &Path, args: &CommonArgs) -> ExitCode {
     let start_dir = utils::plain_path(start_dir);
-    
+
     let config = match DockerBackend::detect_config(&start_dir) {
         Some(cfg) => cfg,
         None => {
@@ -371,7 +374,7 @@ pub(crate) fn has_script_plugins(start_dir: &Path) -> bool {
     if !plugin_dir.exists() {
         return false;
     }
-    
+
     match detect_and_load_plugins(start_dir) {
         Ok(manager) => !manager.list_plugins().is_empty(),
         Err(_) => false,
@@ -381,12 +384,11 @@ pub(crate) fn has_script_plugins(start_dir: &Path) -> bool {
 /// Lists all available script plugins in the project
 pub(crate) fn list_script_plugins(start_dir: &Path) -> Vec<String> {
     match detect_and_load_plugins(start_dir) {
-        Ok(manager) => {
-            manager.list_plugins()
-                .iter()
-                .map(|p| p.name.clone())
-                .collect()
-        }
+        Ok(manager) => manager
+            .list_plugins()
+            .iter()
+            .map(|p| p.name.clone())
+            .collect(),
         Err(_) => vec![],
     }
 }

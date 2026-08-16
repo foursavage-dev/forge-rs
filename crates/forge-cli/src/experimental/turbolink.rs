@@ -58,7 +58,10 @@ impl TurboLinker {
             multithreading_enabled: true,
             split_dwarf_enabled: true,
             thin_lto_enabled: true,
-            compress_debug_sections: matches!(linker_type, FastLinkerType::Mold | FastLinkerType::Lld),
+            compress_debug_sections: matches!(
+                linker_type,
+                FastLinkerType::Mold | FastLinkerType::Lld
+            ),
             response_file_support: true,
         }
     }

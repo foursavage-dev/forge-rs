@@ -9,7 +9,7 @@ pub mod builder;
 pub mod image;
 pub mod registry;
 
-pub use builder::{DockerBuilder, BuildOptions};
+pub use builder::{BuildOptions, DockerBuilder};
 pub use image::{DockerImage, ImageMetadata};
 pub use registry::{Registry, RegistryConfig};
 
@@ -25,7 +25,11 @@ impl DockerBuilderService {
         }
     }
 
-    pub async fn build(&self, dockerfile_path: &str, options: BuildOptions) -> Result<DockerImage, Box<dyn std::error::Error>> {
+    pub async fn build(
+        &self,
+        dockerfile_path: &str,
+        options: BuildOptions,
+    ) -> Result<DockerImage, Box<dyn std::error::Error>> {
         self.builder.build(dockerfile_path, options).await
     }
 }

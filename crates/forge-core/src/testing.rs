@@ -1,17 +1,17 @@
 #![forbid(unsafe_code)]
 
 //! Comprehensive testing framework
-//! 
+//!
 //! This module provides testing utilities and frameworks for validating
 //! build system functionality, including unit tests, integration tests,
 //! and property-based testing.
 
+use spin::Mutex as SpinMutex;
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Condvar, Mutex};
-use spin::Mutex as SpinMutex;
 
 #[derive(Debug, Clone)]
 pub struct TestResult {
@@ -58,17 +58,17 @@ impl TestRunner {
         let start = std::time::Instant::now();
         let result = test_fn();
         let duration = start.elapsed();
-        
+
         let passed = result.is_ok();
         let error_message = result.err().map(|e| e.to_string());
-        
+
         self.total_tests.fetch_add(1, Ordering::SeqCst);
         if passed {
             self.passed_tests.fetch_add(1, Ordering::SeqCst);
         } else {
             self.failed_tests.fetch_add(1, Ordering::SeqCst);
         }
-        
+
         TestResult {
             name: test_name,
             passed,
@@ -86,15 +86,19 @@ impl TestRunner {
         let total = self.total_tests.load(Ordering::SeqCst);
         let passed = self.passed_tests.load(Ordering::SeqCst);
         let failed = self.failed_tests.load(Ordering::SeqCst);
-        
+
         let suites = self.suites.lock();
         let suite_count = suites.len();
-        
+
         TestSummary {
             total_tests: total,
             passed_tests: passed,
             failed_tests: failed,
-            success_rate: if total > 0 { passed as f64 / total as f64 } else { 0.0 },
+            success_rate: if total > 0 {
+                passed as f64 / total as f64
+            } else {
+                0.0
+            },
             suite_count,
         }
     }
@@ -130,10 +134,10 @@ impl PropertyTestRunner {
         let mut passed = 0;
         let mut failed = 0;
         let mut counter_example = None;
-        
+
         for i in 0..self.max_iterations {
             self.iterations = i + 1;
-            
+
             if test_fn() {
                 passed += 1;
             } else {
@@ -142,7 +146,7 @@ impl PropertyTestRunner {
                 break;
             }
         }
-        
+
         PropertyTestResult {
             property_name: property_name.to_string(),
             iterations: self.iterations,
@@ -228,14 +232,14 @@ impl Benchmark {
         F: Fn(),
     {
         let start = std::time::Instant::now();
-        
+
         for _ in 0..self.iterations {
             benchmark_fn();
         }
-        
+
         let duration = start.elapsed();
         let avg_duration = duration / self.iterations as u32;
-        
+
         BenchmarkResult {
             name: self.name.clone(),
             iterations: self.iterations,
@@ -296,7 +300,11 @@ impl Semaphore {
 }
 
 /// Type alias for test case to reduce type complexity
-pub type TestCase = (String, String, Box<dyn FnOnce() -> Result<(), Box<dyn std::error::Error>> + Send>);
+pub type TestCase = (
+    String,
+    String,
+    Box<dyn FnOnce() -> Result<(), Box<dyn std::error::Error>> + Send>,
+);
 
 /// Parallel test runner for concurrent test execution
 pub struct ParallelTestRunner {
@@ -316,8 +324,7 @@ impl ParallelTestRunner {
         }
     }
 
-    pub fn run_parallel(&self, test_cases: Vec<TestCase>) -> Vec<TestResult>
-    {
+    pub fn run_parallel(&self, test_cases: Vec<TestCase>) -> Vec<TestResult> {
         use std::sync::mpsc;
 
         let (tx, rx) = mpsc::channel();
@@ -379,7 +386,11 @@ impl ParallelTestRunner {
             total_tests: total,
             passed_tests: passed,
             failed_tests: failed,
-            success_rate: if total > 0 { passed as f64 / total as f64 } else { 0.0 },
+            success_rate: if total > 0 {
+                passed as f64 / total as f64
+            } else {
+                0.0
+            },
             suite_count: 0, // Parallel runner doesn't track suites
         }
     }
@@ -392,14 +403,12 @@ mod tests {
     #[test]
     fn test_test_runner() {
         let runner = TestRunner::new();
-        
-        let result = runner.run_test("test_suite".to_string(), "test_case".to_string(), || {
-            Ok(())
-        });
-        
+
+        let result = runner.run_test("test_suite".to_string(), "test_case".to_string(), || Ok(()));
+
         assert!(result.passed);
         assert!(result.error_message.is_none());
-        
+
         let summary = runner.get_summary();
         assert_eq!(summary.total_tests, 1);
         assert_eq!(summary.passed_tests, 1);
@@ -408,9 +417,9 @@ mod tests {
     #[test]
     fn test_property_test() {
         let mut runner = PropertyTestRunner::new(100);
-        
+
         let result = runner.run_property("always_true", || true);
-        
+
         assert!(result.success);
         assert_eq!(result.iterations, 100);
         assert_eq!(result.passed, 100);
@@ -423,11 +432,14 @@ mod tests {
 
         // Test setting environment variables
         env.set_env_var("FORGE_TEST_VAR".to_string(), "test_value".to_string());
-        
+
         // Verify the structure stores the variables correctly
         assert!(env.environment_vars.contains_key("FORGE_TEST_VAR"));
-        assert_eq!(env.environment_vars.get("FORGE_TEST_VAR"), Some(&"test_value".to_string()));
-        
+        assert_eq!(
+            env.environment_vars.get("FORGE_TEST_VAR"),
+            Some(&"test_value".to_string())
+        );
+
         // Setup and teardown should not panic
         env.setup().unwrap();
         env.teardown();
@@ -450,9 +462,21 @@ mod tests {
         let runner = ParallelTestRunner::new(2);
 
         let test_cases: Vec<TestCase> = vec![
-            ("suite1".to_string(), "test1".to_string(), Box::new(|| Ok::<(), Box<dyn std::error::Error>>(()))),
-            ("suite1".to_string(), "test2".to_string(), Box::new(|| Ok::<(), Box<dyn std::error::Error>>(()))),
-            ("suite1".to_string(), "test3".to_string(), Box::new(|| Ok::<(), Box<dyn std::error::Error>>(()))),
+            (
+                "suite1".to_string(),
+                "test1".to_string(),
+                Box::new(|| Ok::<(), Box<dyn std::error::Error>>(())),
+            ),
+            (
+                "suite1".to_string(),
+                "test2".to_string(),
+                Box::new(|| Ok::<(), Box<dyn std::error::Error>>(())),
+            ),
+            (
+                "suite1".to_string(),
+                "test3".to_string(),
+                Box::new(|| Ok::<(), Box<dyn std::error::Error>>(())),
+            ),
         ];
 
         let results = runner.run_parallel(test_cases);
@@ -465,4 +489,3 @@ mod tests {
         assert_eq!(summary.passed_tests, 3);
     }
 }
-

@@ -1,15 +1,12 @@
-use std::process::ExitCode;
-use forge_cache::LocalCache;
 use crate::utils::human_bytes;
+use forge_cache::LocalCache;
+use std::process::ExitCode;
 
 pub fn run_doctor() -> ExitCode {
     println!("🦀 Forge Doctor");
     let mut all_ok = true;
 
-    for (tool, version_args) in [
-        ("cargo", &["--version"][..]),
-        ("git", &["--version"][..]),
-    ] {
+    for (tool, version_args) in [("cargo", &["--version"][..]), ("git", &["--version"][..])] {
         match std::process::Command::new(tool).args(version_args).output() {
             Ok(output) if output.status.success() => {
                 let version = String::from_utf8_lossy(&output.stdout)
@@ -18,7 +15,14 @@ pub fn run_doctor() -> ExitCode {
                     .unwrap_or("")
                     .trim()
                     .to_string();
-                println!("  [ok] {tool} found{version}", version = if version.is_empty() { String::new() } else { format!(": {version}") });
+                println!(
+                    "  [ok] {tool} found{version}",
+                    version = if version.is_empty() {
+                        String::new()
+                    } else {
+                        format!(": {version}")
+                    }
+                );
             }
             _ => {
                 println!("  [fail] {tool} is not available on PATH");

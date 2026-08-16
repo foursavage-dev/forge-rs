@@ -5,13 +5,13 @@
 #![allow(missing_docs)]
 #![warn(clippy::all)]
 
-pub mod metrics;
-pub mod dashboard;
 pub mod aggregator;
+pub mod dashboard;
+pub mod metrics;
 
-pub use metrics::{CacheMetrics, BuildMetrics};
-pub use dashboard::{AnalyticsDashboard, DashboardConfig};
 pub use aggregator::MetricsAggregator;
+pub use dashboard::{AnalyticsDashboard, DashboardConfig};
+pub use metrics::{BuildMetrics, CacheMetrics};
 
 use std::path::Path;
 
@@ -28,7 +28,10 @@ impl AnalyticsService {
         }
     }
 
-    pub async fn collect_metrics(&self, project_path: &Path) -> Result<CacheMetrics, Box<dyn std::error::Error>> {
+    pub async fn collect_metrics(
+        &self,
+        project_path: &Path,
+    ) -> Result<CacheMetrics, Box<dyn std::error::Error>> {
         self.aggregator.collect(project_path).await
     }
 }

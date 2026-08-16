@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use forge_core::{FingerprintUtils, DEFAULT_EXCLUDED_DIRS};
 use crate::DartBackendError;
 use crate::config::DartProjectType;
+use forge_core::{DEFAULT_EXCLUDED_DIRS, FingerprintUtils};
 
 pub fn compute_dart_fingerprint(
     project_dir: &Path,
@@ -74,12 +74,8 @@ mod tests {
         let pubspec_file = temp.path().join("pubspec.yaml");
         fs::write(&pubspec_file, "name: test_app").unwrap();
 
-        let fingerprint = compute_dart_fingerprint(
-            temp.path(),
-            "3.0.0",
-            &None,
-            &DartProjectType::Dart,
-        ).unwrap();
+        let fingerprint =
+            compute_dart_fingerprint(temp.path(), "3.0.0", &None, &DartProjectType::Dart).unwrap();
 
         assert!(!fingerprint.is_empty());
         assert_eq!(fingerprint.len(), 64);
@@ -94,21 +90,13 @@ mod tests {
         let dart_file = lib_dir.join("main.dart");
         fs::write(&dart_file, "void main() { print('Hello'); }").unwrap();
 
-        let fp1 = compute_dart_fingerprint(
-            temp.path(),
-            "3.0.0",
-            &None,
-            &DartProjectType::Dart,
-        ).unwrap();
+        let fp1 =
+            compute_dart_fingerprint(temp.path(), "3.0.0", &None, &DartProjectType::Dart).unwrap();
 
         fs::write(&dart_file, "void main() { print('Goodbye'); }").unwrap();
 
-        let fp2 = compute_dart_fingerprint(
-            temp.path(),
-            "3.0.0",
-            &None,
-            &DartProjectType::Dart,
-        ).unwrap();
+        let fp2 =
+            compute_dart_fingerprint(temp.path(), "3.0.0", &None, &DartProjectType::Dart).unwrap();
 
         assert_ne!(fp1, fp2);
     }

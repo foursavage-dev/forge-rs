@@ -6,12 +6,12 @@
 #![warn(clippy::all)]
 
 pub mod detector;
-pub mod retry;
 pub mod history;
+pub mod retry;
 
 pub use detector::{FlakyDetector, FlakyTest};
-pub use retry::{RetryPolicy, RetryExecutor};
 pub use history::TestHistory;
+pub use retry::{RetryExecutor, RetryPolicy};
 
 /// Main flaky detection service
 pub struct FlakyDetectionService {
@@ -27,7 +27,10 @@ impl FlakyDetectionService {
         }
     }
 
-    pub async fn detect_and_retry(&self, test_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
+    pub async fn detect_and_retry(
+        &self,
+        test_name: &str,
+    ) -> Result<bool, Box<dyn std::error::Error>> {
         let is_flaky = self.detector.is_flaky(test_name).await?;
         if is_flaky {
             self.retry_executor.retry(test_name).await?;

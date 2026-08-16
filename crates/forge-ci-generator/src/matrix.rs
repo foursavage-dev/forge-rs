@@ -46,51 +46,57 @@ impl CIMatrix {
             },
         }
     }
-    
+
     pub fn add_job(&mut self, job: CIJob) {
-        self.dependencies.insert(job.id.clone(), job.dependencies.clone());
+        self.dependencies
+            .insert(job.id.clone(), job.dependencies.clone());
         self.jobs.push(job);
     }
-    
+
     pub fn topological_sort(&self) -> Vec<String> {
         let mut sorted = Vec::new();
         let mut visited = std::collections::HashSet::new();
-        
+
         for job in &self.jobs {
             self.visit(&job.id, &mut sorted, &mut visited);
         }
-        
+
         sorted
     }
-    
-    fn visit(&self, job_id: &str, sorted: &mut Vec<String>, visited: &mut std::collections::HashSet<String>) {
+
+    fn visit(
+        &self,
+        job_id: &str,
+        sorted: &mut Vec<String>,
+        visited: &mut std::collections::HashSet<String>,
+    ) {
         if visited.contains(job_id) {
             return;
         }
-        
+
         visited.insert(job_id.to_string());
-        
+
         if let Some(deps) = self.dependencies.get(job_id) {
             for dep in deps {
                 self.visit(dep, sorted, visited);
             }
         }
-        
+
         sorted.push(job_id.to_string());
     }
-    
+
     pub fn get_parallel_levels(&self) -> Vec<Vec<String>> {
         let sorted = self.topological_sort();
         let mut levels = Vec::new();
         let mut current_level = Vec::new();
         let mut completed = std::collections::HashSet::new();
-        
+
         for job_id in &sorted {
             let deps = self.dependencies.get(job_id).cloned().unwrap_or_default();
-            
+
             // Check if all dependencies are completed
             let can_run = deps.iter().all(|dep| completed.contains(dep));
-            
+
             if can_run {
                 current_level.push(job_id.clone());
                 completed.insert(job_id.clone());
@@ -103,11 +109,11 @@ impl CIMatrix {
                 completed.insert(job_id.clone());
             }
         }
-        
+
         if !current_level.is_empty() {
             levels.push(current_level);
         }
-        
+
         levels
     }
 }
@@ -116,13 +122,13 @@ impl CIMatrix {
 mod tests {
     use super::*;
     use crate::CIJob;
-    
+
     #[test]
     fn test_matrix_creation() {
         let matrix = CIMatrix::new();
         assert_eq!(matrix.jobs.len(), 0);
     }
-    
+
     #[test]
     fn test_job_addition() {
         let mut matrix = CIMatrix::new();
@@ -135,15 +141,15 @@ mod tests {
             dependencies: vec![],
             cache_key: "test-key".to_string(),
         };
-        
+
         matrix.add_job(job);
         assert_eq!(matrix.jobs.len(), 1);
     }
-    
+
     #[test]
     fn test_topological_sort() {
         let mut matrix = CIMatrix::new();
-        
+
         matrix.add_job(CIJob {
             id: "job1".to_string(),
             name: "Job 1".to_string(),
@@ -153,7 +159,7 @@ mod tests {
             dependencies: vec![],
             cache_key: "key1".to_string(),
         });
-        
+
         matrix.add_job(CIJob {
             id: "job2".to_string(),
             name: "Job 2".to_string(),
@@ -163,7 +169,7 @@ mod tests {
             dependencies: vec!["job1".to_string()],
             cache_key: "key2".to_string(),
         });
-        
+
         let sorted = matrix.topological_sort();
         assert_eq!(sorted.len(), 2);
         assert_eq!(sorted[0], "job1");

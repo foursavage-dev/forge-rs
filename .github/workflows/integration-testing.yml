@@ -232,8 +232,7 @@ jobs:
           mkdir -p test-project
           cd test-project
           cargo init --name test-project
-          echo '[dependencies]' >> Cargo.toml
-          echo 'serde = "1.0"' >> Cargo.toml
+          cargo add serde --features derive
       
       - name: Test Forge CLI on real project
         run: |

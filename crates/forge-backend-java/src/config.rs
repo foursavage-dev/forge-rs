@@ -29,12 +29,11 @@ impl JavaProjectConfig {
             .map_err(|e| format!("Failed to read pom.xml: {}", e))?;
 
         // Simple XML parsing for group ID, artifact ID, and version
-        let group_id = extract_xml_tag(&content, "groupId")
-            .unwrap_or_else(|| "com.example".to_string());
-        let artifact_id = extract_xml_tag(&content, "artifactId")
-            .ok_or("artifactId not found in pom.xml")?;
-        let version = extract_xml_tag(&content, "version")
-            .unwrap_or_else(|| "1.0.0".to_string());
+        let group_id =
+            extract_xml_tag(&content, "groupId").unwrap_or_else(|| "com.example".to_string());
+        let artifact_id =
+            extract_xml_tag(&content, "artifactId").ok_or("artifactId not found in pom.xml")?;
+        let version = extract_xml_tag(&content, "version").unwrap_or_else(|| "1.0.0".to_string());
 
         Ok(JavaProjectConfig {
             group_id,
@@ -62,16 +61,17 @@ impl JavaProjectConfig {
 
         let group_id = extract_gradle_property(&content, &["group", "grouping"])
             .unwrap_or_else(|| "com.example".to_string());
-        let artifact_id = extract_gradle_property(&content, &["name", "artifactId", "rootProject.name"])
-            .or_else(|| {
-                project_dir
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .map(|s| s.to_string())
-            })
-            .unwrap_or_else(|| "app".to_string());
-        let version = extract_gradle_property(&content, &["version"])
-            .unwrap_or_else(|| "1.0.0".to_string());
+        let artifact_id =
+            extract_gradle_property(&content, &["name", "artifactId", "rootProject.name"])
+                .or_else(|| {
+                    project_dir
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .map(|s| s.to_string())
+                })
+                .unwrap_or_else(|| "app".to_string());
+        let version =
+            extract_gradle_property(&content, &["version"]).unwrap_or_else(|| "1.0.0".to_string());
 
         Ok(JavaProjectConfig {
             group_id,
@@ -87,7 +87,9 @@ impl JavaProjectConfig {
             return Self::from_maven_pom(project_dir);
         }
 
-        if project_dir.join("build.gradle").exists() || project_dir.join("build.gradle.kts").exists() {
+        if project_dir.join("build.gradle").exists()
+            || project_dir.join("build.gradle.kts").exists()
+        {
             return Self::from_gradle_build(project_dir);
         }
 
@@ -98,12 +100,12 @@ impl JavaProjectConfig {
 fn extract_xml_tag(content: &str, tag: &str) -> Option<String> {
     let start_tag = format!("<{}>", tag);
     let end_tag = format!("</{}>", tag);
-    
+
     content.find(&start_tag).and_then(|start| {
         let start = start + start_tag.len();
-        content.find(&end_tag).map(|end| {
-            content[start..end].trim().to_string()
-        })
+        content
+            .find(&end_tag)
+            .map(|end| content[start..end].trim().to_string())
     })
 }
 

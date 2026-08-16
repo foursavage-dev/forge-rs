@@ -11,5 +11,5 @@ pub use artifact::{Artifact, ArtifactHash, ArtifactMetadata};
 pub use backend::{CasBackend, LocalCasBackend, RemoteCasBackend};
 pub use compression::{CompressionAlgorithm, CompressionLevel};
 pub use error::{CasError, Result};
-pub use reflink::{reflink_or_copy, ReflinkMode};
+pub use reflink::{ReflinkMode, reflink_or_copy};
 pub use storage::{CasStorage, CasStorageConfig, CleanupPolicy};

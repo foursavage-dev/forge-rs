@@ -41,7 +41,8 @@ impl BuildBackend for JavaBackend {
 
 impl JavaBackend {
     pub fn new() -> Result<Self, JavaBackendError> {
-        let toolchain = JavaToolchain::detect().map_err(|e| JavaBackendError::Toolchain(e.to_string()))?;
+        let toolchain =
+            JavaToolchain::detect().map_err(|e| JavaBackendError::Toolchain(e.to_string()))?;
         Ok(Self { toolchain })
     }
 
@@ -69,10 +70,24 @@ impl JavaBackend {
 
         match &config.build_system {
             JavaBuildSystem::Maven => {
-                self.create_maven_tasks(config, project_dir, output_dir, &namespace, &fp, &mut graph)?;
+                self.create_maven_tasks(
+                    config,
+                    project_dir,
+                    output_dir,
+                    &namespace,
+                    &fp,
+                    &mut graph,
+                )?;
             }
             JavaBuildSystem::Gradle => {
-                self.create_gradle_tasks(config, project_dir, output_dir, &namespace, &fp, &mut graph)?;
+                self.create_gradle_tasks(
+                    config,
+                    project_dir,
+                    output_dir,
+                    &namespace,
+                    &fp,
+                    &mut graph,
+                )?;
             }
         }
 
@@ -88,7 +103,10 @@ impl JavaBackend {
         fp: &str,
         graph: &mut BuildGraph<Task>,
     ) -> Result<(), JavaBackendError> {
-        let maven = self.toolchain.maven_executable.as_ref()
+        let maven = self
+            .toolchain
+            .maven_executable
+            .as_ref()
             .ok_or_else(|| JavaBackendError::Toolchain("Maven not found".to_string()))?;
 
         let clean_args = vec!["clean".to_string()];
@@ -106,14 +124,20 @@ impl JavaBackend {
         }
         let compile_spec = CommandSpec::new(maven).args(compile_args).cwd(project_dir);
         let compile_cache = CacheEntry {
-            key: FingerprintUtils::format_cache_key("java/maven", namespace, "compile", &config.artifact_id),
+            key: FingerprintUtils::format_cache_key(
+                "java/maven",
+                namespace,
+                "compile",
+                &config.artifact_id,
+            ),
             fingerprint: fp.to_string(),
         };
         let compile_task = Task::new(
             format!("mvn compile {}", config.artifact_id),
             compile_spec.command_line(),
             compile_spec,
-        ).with_cache(compile_cache);
+        )
+        .with_cache(compile_cache);
         let compile_node_id = graph.add_node(compile_task);
         graph.add_dependency(clean_node_id, compile_node_id)?;
 
@@ -123,14 +147,20 @@ impl JavaBackend {
         }
         let package_spec = CommandSpec::new(maven).args(package_args).cwd(project_dir);
         let package_cache = CacheEntry {
-            key: FingerprintUtils::format_cache_key("java/maven", namespace, "package", &config.artifact_id),
+            key: FingerprintUtils::format_cache_key(
+                "java/maven",
+                namespace,
+                "package",
+                &config.artifact_id,
+            ),
             fingerprint: fp.to_string(),
         };
         let package_task = Task::new(
             format!("mvn package {}", config.artifact_id),
             package_spec.command_line(),
             package_spec,
-        ).with_cache(package_cache);
+        )
+        .with_cache(package_cache);
         let package_node_id = graph.add_node(package_task);
         graph.add_dependency(compile_node_id, package_node_id)?;
 
@@ -138,14 +168,20 @@ impl JavaBackend {
             let test_args = vec!["test".to_string()];
             let test_spec = CommandSpec::new(maven).args(test_args).cwd(project_dir);
             let test_cache = CacheEntry {
-                key: FingerprintUtils::format_cache_key("java/maven", namespace, "test", &config.artifact_id),
+                key: FingerprintUtils::format_cache_key(
+                    "java/maven",
+                    namespace,
+                    "test",
+                    &config.artifact_id,
+                ),
                 fingerprint: fp.to_string(),
             };
             let test_task = Task::new(
                 format!("mvn test {}", config.artifact_id),
                 test_spec.command_line(),
                 test_spec,
-            ).with_cache(test_cache);
+            )
+            .with_cache(test_cache);
             let test_node_id = graph.add_node(test_task);
             graph.add_dependency(compile_node_id, test_node_id)?;
         }
@@ -162,7 +198,10 @@ impl JavaBackend {
         fp: &str,
         graph: &mut BuildGraph<Task>,
     ) -> Result<(), JavaBackendError> {
-        let gradle = self.toolchain.gradle_executable.as_ref()
+        let gradle = self
+            .toolchain
+            .gradle_executable
+            .as_ref()
             .ok_or_else(|| JavaBackendError::Toolchain("Gradle not found".to_string()))?;
 
         let clean_args = vec!["clean".to_string()];
@@ -181,14 +220,20 @@ impl JavaBackend {
         }
         let build_spec = CommandSpec::new(gradle).args(build_args).cwd(project_dir);
         let build_cache = CacheEntry {
-            key: FingerprintUtils::format_cache_key("java/gradle", namespace, "build", &config.artifact_id),
+            key: FingerprintUtils::format_cache_key(
+                "java/gradle",
+                namespace,
+                "build",
+                &config.artifact_id,
+            ),
             fingerprint: fp.to_string(),
         };
         let build_task = Task::new(
             format!("gradle build {}", config.artifact_id),
             build_spec.command_line(),
             build_spec,
-        ).with_cache(build_cache);
+        )
+        .with_cache(build_cache);
         let build_node_id = graph.add_node(build_task);
         graph.add_dependency(clean_node_id, build_node_id)?;
 
@@ -196,14 +241,20 @@ impl JavaBackend {
             let test_args = vec!["test".to_string()];
             let test_spec = CommandSpec::new(gradle).args(test_args).cwd(project_dir);
             let test_cache = CacheEntry {
-                key: FingerprintUtils::format_cache_key("java/gradle", namespace, "test", &config.artifact_id),
+                key: FingerprintUtils::format_cache_key(
+                    "java/gradle",
+                    namespace,
+                    "test",
+                    &config.artifact_id,
+                ),
                 fingerprint: fp.to_string(),
             };
             let test_task = Task::new(
                 format!("gradle test {}", config.artifact_id),
                 test_spec.command_line(),
                 test_spec,
-            ).with_cache(test_cache);
+            )
+            .with_cache(test_cache);
             let test_node_id = graph.add_node(test_task);
             graph.add_dependency(build_node_id, test_node_id)?;
         }

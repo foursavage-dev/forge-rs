@@ -41,7 +41,8 @@ impl BuildBackend for ZigBackend {
 
 impl ZigBackend {
     pub fn new() -> Result<Self, ZigBackendError> {
-        let toolchain = ZigToolchain::detect().map_err(|e| ZigBackendError::Toolchain(e.to_string()))?;
+        let toolchain =
+            ZigToolchain::detect().map_err(|e| ZigBackendError::Toolchain(e.to_string()))?;
         Ok(Self { toolchain })
     }
 
@@ -72,18 +73,24 @@ impl ZigBackend {
             .args(fetch_args)
             .cwd(project_dir);
         let fetch_cache = CacheEntry {
-            key: FingerprintUtils::format_cache_key("zig", &namespace, "fetch", &config.project_name),
+            key: FingerprintUtils::format_cache_key(
+                "zig",
+                &namespace,
+                "fetch",
+                &config.project_name,
+            ),
             fingerprint: fp.clone(),
         };
         let fetch_task = Task::new(
             format!("zig fetch {}", config.project_name),
             fetch_spec.command_line(),
             fetch_spec,
-        ).with_cache(fetch_cache);
+        )
+        .with_cache(fetch_cache);
         let fetch_node_id = graph.add_node(fetch_task);
 
         let mut build_args = vec!["build".to_string()];
-        
+
         if config.release {
             build_args.push("-Doptimize".to_string());
             build_args.push("ReleaseFast".to_string());
@@ -128,14 +135,20 @@ impl ZigBackend {
             .args(build_args)
             .cwd(project_dir);
         let build_cache = CacheEntry {
-            key: FingerprintUtils::format_cache_key("zig", &namespace, "build", &config.project_name),
+            key: FingerprintUtils::format_cache_key(
+                "zig",
+                &namespace,
+                "build",
+                &config.project_name,
+            ),
             fingerprint: fp.clone(),
         };
         let build_task = Task::new(
             format!("zig build {}", config.project_name),
             build_spec.command_line(),
             build_spec,
-        ).with_cache(build_cache);
+        )
+        .with_cache(build_cache);
         let build_node_id = graph.add_node(build_task);
         graph.add_dependency(fetch_node_id, build_node_id)?;
 
@@ -145,14 +158,20 @@ impl ZigBackend {
                 .args(test_args)
                 .cwd(project_dir);
             let test_cache = CacheEntry {
-                key: FingerprintUtils::format_cache_key("zig", &namespace, "test", &config.project_name),
+                key: FingerprintUtils::format_cache_key(
+                    "zig",
+                    &namespace,
+                    "test",
+                    &config.project_name,
+                ),
                 fingerprint: fp,
             };
             let test_task = Task::new(
                 format!("zig test {}", config.project_name),
                 test_spec.command_line(),
                 test_spec,
-            ).with_cache(test_cache);
+            )
+            .with_cache(test_cache);
             let test_node_id = graph.add_node(test_task);
             graph.add_dependency(build_node_id, test_node_id)?;
         }

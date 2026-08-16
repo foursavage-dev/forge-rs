@@ -32,8 +32,9 @@ impl TcpRemoteCacheClient {
     }
 
     fn send_request(&self, req: CacheRequest) -> Result<CacheResponse, RemoteCacheError> {
-        let mut stream = TcpStream::connect(&self.server_addr)
-            .map_err(|e| RemoteCacheError::Network(format!("cannot connect to {}: {e}", self.server_addr)))?;
+        let mut stream = TcpStream::connect(&self.server_addr).map_err(|e| {
+            RemoteCacheError::Network(format!("cannot connect to {}: {e}", self.server_addr))
+        })?;
 
         let _ = stream.set_read_timeout(Some(self.timeout));
         let _ = stream.set_write_timeout(Some(self.timeout));
@@ -58,7 +59,9 @@ impl TcpRemoteCacheClient {
             .map_err(|e| RemoteCacheError::Network(format!("failed to read response: {e}")))?
             == 0
         {
-            return Err(RemoteCacheError::Protocol("empty response from server".to_string()));
+            return Err(RemoteCacheError::Protocol(
+                "empty response from server".to_string(),
+            ));
         }
 
         let resp: CacheResponse = serde_json::from_str(line.trim())
@@ -80,7 +83,9 @@ impl TcpRemoteCacheClient {
                 }
             }
             CacheResponse::Error { message } => Err(RemoteCacheError::Protocol(message)),
-            _ => Err(RemoteCacheError::Protocol("unexpected response to ping".to_string())),
+            _ => Err(RemoteCacheError::Protocol(
+                "unexpected response to ping".to_string(),
+            )),
         }
     }
 
@@ -114,7 +119,9 @@ impl TcpRemoteCacheClient {
                 }
             }
             CacheResponse::Error { message } => Err(RemoteCacheError::Protocol(message)),
-            _ => Err(RemoteCacheError::Protocol("unexpected response to get_artifact".to_string())),
+            _ => Err(RemoteCacheError::Protocol(
+                "unexpected response to get_artifact".to_string(),
+            )),
         }
     }
 
@@ -133,11 +140,15 @@ impl TcpRemoteCacheClient {
                 } else if success {
                     Ok(())
                 } else {
-                    Err(RemoteCacheError::Protocol("failed to put artifact".to_string()))
+                    Err(RemoteCacheError::Protocol(
+                        "failed to put artifact".to_string(),
+                    ))
                 }
             }
             CacheResponse::Error { message } => Err(RemoteCacheError::Protocol(message)),
-            _ => Err(RemoteCacheError::Protocol("unexpected response to put_artifact".to_string())),
+            _ => Err(RemoteCacheError::Protocol(
+                "unexpected response to put_artifact".to_string(),
+            )),
         }
     }
 }
@@ -165,7 +176,9 @@ impl RemoteCacheClient for TcpRemoteCacheClient {
                 }
             }
             CacheResponse::Error { message } => Err(RemoteCacheError::Protocol(message)),
-            _ => Err(RemoteCacheError::Protocol("unexpected response to get_fingerprint".to_string())),
+            _ => Err(RemoteCacheError::Protocol(
+                "unexpected response to get_fingerprint".to_string(),
+            )),
         }
     }
 
@@ -183,11 +196,15 @@ impl RemoteCacheClient for TcpRemoteCacheClient {
                 } else if success {
                     Ok(())
                 } else {
-                    Err(RemoteCacheError::Protocol("failed to put fingerprint".to_string()))
+                    Err(RemoteCacheError::Protocol(
+                        "failed to put fingerprint".to_string(),
+                    ))
                 }
             }
             CacheResponse::Error { message } => Err(RemoteCacheError::Protocol(message)),
-            _ => Err(RemoteCacheError::Protocol("unexpected response to put_fingerprint".to_string())),
+            _ => Err(RemoteCacheError::Protocol(
+                "unexpected response to put_fingerprint".to_string(),
+            )),
         }
     }
 }

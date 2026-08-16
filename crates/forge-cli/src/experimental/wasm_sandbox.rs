@@ -1,10 +1,10 @@
 #![allow(dead_code)]
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WasmIsolationPolicy {
@@ -94,7 +94,10 @@ impl WasmPluginRunner {
         if !plugin_wasm.exists() {
             let parent = plugin_wasm.parent().unwrap_or_else(|| Path::new("."));
             fs::create_dir_all(parent)?;
-            fs::write(plugin_wasm, [0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00])?;
+            fs::write(
+                plugin_wasm,
+                [0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00],
+            )?;
         }
 
         let wasm_bytes = fs::read(plugin_wasm)?;

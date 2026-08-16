@@ -23,7 +23,7 @@ pub enum DartTargetPlatform {
 
 impl FromStr for DartTargetPlatform {
     type Err = String;
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "apk" => Ok(DartTargetPlatform::APK),
@@ -74,8 +74,8 @@ impl DartProjectConfig {
             .map_err(|e| format!("Failed to read pubspec.yaml: {}", e))?;
 
         // Extract project name from pubspec.yaml
-        let project_name = Self::extract_project_name(&content)
-            .unwrap_or_else(|| "dart_project".to_string());
+        let project_name =
+            Self::extract_project_name(&content).unwrap_or_else(|| "dart_project".to_string());
 
         // Detect if it's a Flutter project
         let is_flutter = Self::is_flutter_project(&content);
@@ -138,9 +138,9 @@ impl DartProjectConfig {
 
     fn is_flutter_project(content: &str) -> bool {
         // Check for flutter SDK dependency
-        content.contains("flutter:") || 
-        content.contains("sdk: flutter") ||
-        content.contains("flutter_sdk")
+        content.contains("flutter:")
+            || content.contains("sdk: flutter")
+            || content.contains("flutter_sdk")
     }
 
     fn detect_flutter_platform(content: &str) -> DartTargetPlatform {
@@ -163,7 +163,7 @@ impl DartProjectConfig {
         if content.contains("linux") {
             return DartTargetPlatform::Linux;
         }
-        
+
         // Default to all platforms
         DartTargetPlatform::All
     }
@@ -222,8 +222,17 @@ dependencies:
 
     #[test]
     fn test_target_platform_parsing() {
-        assert_eq!(DartTargetPlatform::from_str("apk").unwrap(), DartTargetPlatform::APK);
-        assert_eq!(DartTargetPlatform::from_str("ios").unwrap(), DartTargetPlatform::IOS);
-        assert_eq!(DartTargetPlatform::from_str("web").unwrap(), DartTargetPlatform::Web);
+        assert_eq!(
+            DartTargetPlatform::from_str("apk").unwrap(),
+            DartTargetPlatform::APK
+        );
+        assert_eq!(
+            DartTargetPlatform::from_str("ios").unwrap(),
+            DartTargetPlatform::IOS
+        );
+        assert_eq!(
+            DartTargetPlatform::from_str("web").unwrap(),
+            DartTargetPlatform::Web
+        );
     }
 }

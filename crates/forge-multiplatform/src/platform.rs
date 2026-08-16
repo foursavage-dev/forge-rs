@@ -23,7 +23,10 @@ pub struct Target {
 
 impl Target {
     pub fn new(platform: Platform, architecture: Architecture) -> Self {
-        Self { platform, architecture }
+        Self {
+            platform,
+            architecture,
+        }
     }
 
     pub fn to_rust_target(&self) -> String {

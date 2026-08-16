@@ -22,7 +22,10 @@ impl IncrementalAnalyzer {
         Self
     }
 
-    pub async fn analyze(&self, project_path: &str) -> Result<BuildAnalysis, Box<dyn std::error::Error>> {
+    pub async fn analyze(
+        &self,
+        project_path: &str,
+    ) -> Result<BuildAnalysis, Box<dyn std::error::Error>> {
         Ok(BuildAnalysis {
             project_path: project_path.to_string(),
             analysis_timestamp: Utc::now(),

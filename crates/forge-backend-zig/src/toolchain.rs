@@ -17,7 +17,7 @@ impl ZigToolchain {
     pub fn detect() -> Result<Self, ZigBackendError> {
         let zig_executable = Self::find_executable("zig")
             .ok_or_else(|| ZigBackendError::Toolchain("Zig not found in PATH".to_string()))?;
-        
+
         let zig_version = Self::get_version(&zig_executable, &["version"])
             .unwrap_or_else(|_| "unknown".to_string());
 
@@ -28,9 +28,9 @@ impl ZigToolchain {
     }
 
     pub fn with_zig(executable: String) -> Self {
-        let zig_version = Self::get_version(&executable, &["version"])
-            .unwrap_or_else(|_| "unknown".to_string());
-        
+        let zig_version =
+            Self::get_version(&executable, &["version"]).unwrap_or_else(|_| "unknown".to_string());
+
         ZigToolchain {
             executable: executable.clone(),
             zig_version,
@@ -39,16 +39,13 @@ impl ZigToolchain {
 
     fn find_executable(name: &str) -> Option<String> {
         // Check if executable exists in PATH
-        if let Ok(output) = std::process::Command::new("where")
-            .arg(name)
-            .output()
-        {
+        if let Ok(output) = std::process::Command::new("where").arg(name).output() {
             if output.status.success() {
                 let paths = String::from_utf8_lossy(&output.stdout);
                 return paths.lines().next().map(|s| s.to_string());
             }
         }
-        
+
         // Try direct execution
         if std::process::Command::new(name)
             .arg("version")
@@ -65,12 +62,15 @@ impl ZigToolchain {
         let output = std::process::Command::new(executable)
             .args(args)
             .output()
-            .map_err(|e| ZigBackendError::Toolchain(format!("Failed to run {}: {}", executable, e)))?;
+            .map_err(|e| {
+                ZigBackendError::Toolchain(format!("Failed to run {}: {}", executable, e))
+            })?;
 
         if !output.status.success() {
             return Err(ZigBackendError::Toolchain(format!(
                 "{} exited with error code: {:?}",
-                executable, output.status.code()
+                executable,
+                output.status.code()
             )));
         }
 
@@ -86,7 +86,9 @@ impl ZigCompiler {
             return Ok(ZigCompiler::Zig(zig));
         }
 
-        Err(ZigBackendError::Toolchain("Zig compiler not found".to_string()))
+        Err(ZigBackendError::Toolchain(
+            "Zig compiler not found".to_string(),
+        ))
     }
 
     pub fn executable(&self) -> &str {

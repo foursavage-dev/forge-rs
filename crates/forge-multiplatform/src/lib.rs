@@ -5,13 +5,13 @@
 #![allow(missing_docs)]
 #![warn(clippy::all)]
 
-pub mod platform;
-pub mod matrix;
 pub mod generator;
+pub mod matrix;
+pub mod platform;
 
-pub use platform::{Platform, Architecture, Target};
-pub use matrix::{TestMatrix, MatrixConfig};
 pub use generator::MatrixGenerator;
+pub use matrix::{MatrixConfig, TestMatrix};
+pub use platform::{Architecture, Platform, Target};
 
 /// Main multiplatform service
 #[derive(Clone)]

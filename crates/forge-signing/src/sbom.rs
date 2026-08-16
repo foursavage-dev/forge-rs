@@ -113,7 +113,10 @@ impl SbomGenerator {
         sbom.push_str(&format!("PackageName: {}\n", metadata.name));
         sbom.push_str(&format!("PackageVersion: {}\n", metadata.version));
         sbom.push_str(&format!("BuildID: {}\n", metadata.build_id));
-        sbom.push_str(&format!("BuildTimestamp: {}\n", metadata.build_timestamp.to_rfc3339()));
+        sbom.push_str(&format!(
+            "BuildTimestamp: {}\n",
+            metadata.build_timestamp.to_rfc3339()
+        ));
 
         for dep in &metadata.dependencies {
             sbom.push_str(&format!("Dependency: {}@{}\n", dep.name, dep.version));
@@ -124,26 +127,30 @@ impl SbomGenerator {
 
     /// Generate CycloneDX format SBOM
     fn generate_cyclonedx(&self, metadata: &SbomMetadata) -> SigningResult<String> {
-        let components: Vec<serde_json::Value> = metadata.dependencies.iter().map(|dep| {
-            let mut comp = serde_json::json!({
-                "name": dep.name,
-                "version": dep.version,
-                "type": "library"
-            });
+        let components: Vec<serde_json::Value> = metadata
+            .dependencies
+            .iter()
+            .map(|dep| {
+                let mut comp = serde_json::json!({
+                    "name": dep.name,
+                    "version": dep.version,
+                    "type": "library"
+                });
 
-            if let Some(license) = &dep.license {
-                comp["licenses"] = serde_json::json!([{"license": {"id": license}}]);
-            }
+                if let Some(license) = &dep.license {
+                    comp["licenses"] = serde_json::json!([{"license": {"id": license}}]);
+                }
 
-            if let Some(repo) = &dep.repository {
-                comp["externalReferences"] = serde_json::json!([{
-                    "type": "vcs",
-                    "url": repo
-                }]);
-            }
+                if let Some(repo) = &dep.repository {
+                    comp["externalReferences"] = serde_json::json!([{
+                        "type": "vcs",
+                        "url": repo
+                    }]);
+                }
 
-            comp
-        }).collect();
+                comp
+            })
+            .collect();
 
         let bom = serde_json::json!({
             "bomFormat": "CycloneDX",

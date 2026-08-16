@@ -158,7 +158,9 @@ fn reports_error_for_nonexistent_manifest() {
     let dir = tempfile::tempdir().expect("create temp dir");
     let missing = dir.path().join("Cargo.toml");
     let error = Project::load(&missing).expect_err("loading must fail");
-    assert!(error.to_string().contains("Cargo metadata") || error.to_string().contains("load_metadata"));
+    assert!(
+        error.to_string().contains("Cargo metadata") || error.to_string().contains("load_metadata")
+    );
 }
 
 #[test]
@@ -411,7 +413,10 @@ fn packages_for_paths_handles_multiple_files() {
     let affected = project
         .packages_for_paths(&[network.as_path(), app.as_path()])
         .expect("both files belong to packages");
-    assert_eq!(name(&affected), vec!["network".to_string(), "app".to_string()]);
+    assert_eq!(
+        name(&affected),
+        vec!["network".to_string(), "app".to_string()]
+    );
 }
 
 #[test]
@@ -423,7 +428,9 @@ fn packages_for_paths_returns_none_for_unowned_files() {
 
     let root_manifest = dir.path().join("Cargo.toml");
     assert!(
-        project.packages_for_paths(&[root_manifest.as_path()]).is_none(),
+        project
+            .packages_for_paths(&[root_manifest.as_path()])
+            .is_none(),
         "workspace-root files affect every package"
     );
 

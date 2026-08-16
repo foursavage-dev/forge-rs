@@ -31,7 +31,11 @@ impl DockerBuilder {
         Self
     }
 
-    pub async fn build(&self, _dockerfile_path: &str, _options: BuildOptions) -> Result<DockerImage, Box<dyn std::error::Error>> {
+    pub async fn build(
+        &self,
+        _dockerfile_path: &str,
+        _options: BuildOptions,
+    ) -> Result<DockerImage, Box<dyn std::error::Error>> {
         // Docker build logic would go here
         Ok(DockerImage {
             id: "placeholder".to_string(),

@@ -1,20 +1,20 @@
 #![forbid(unsafe_code)]
 
 //! Async process executor for improved I/O performance
-//! 
+//!
 //! This module provides an async executor that reduces blocking during
 //! process execution and output handling.
-//! 
+//!
 //! Performance optimizations:
 //! - Async process spawning with Tokio
 //! - Non-blocking stdout/stderr capture
 //! - Better resource utilization during I/O-bound operations
 
-use std::time::{Duration, Instant};
-use tokio::process::Command as TokioCommand;
-use tokio::io::AsyncReadExt;
-use crate::task::{Task, TaskOutcome, TaskStatus};
 use crate::executor::ExecutorError;
+use crate::task::{Task, TaskOutcome, TaskStatus};
+use std::time::{Duration, Instant};
+use tokio::io::AsyncReadExt;
+use tokio::process::Command as TokioCommand;
 
 /// Async process executor
 pub struct AsyncProcessExecutor {
@@ -38,13 +38,13 @@ impl AsyncProcessExecutor {
     pub async fn execute_async(&self, task: &Task) -> Result<TaskOutcome, ExecutorError> {
         let start = Instant::now();
         let mut command: TokioCommand = self.spec_to_tokio_command(&task.spec);
-        
+
         let output = if let Some(timeout) = self.timeout {
             self.run_with_timeout_async(&mut command, timeout).await
         } else {
             self.run_async(&mut command).await
         };
-        
+
         let output = match output {
             Ok(output) => output,
             Err(source) => {
@@ -54,7 +54,7 @@ impl AsyncProcessExecutor {
                 });
             }
         };
-        
+
         let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
         let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
         let status = if output.status.success() {
@@ -62,7 +62,7 @@ impl AsyncProcessExecutor {
         } else {
             TaskStatus::Failed
         };
-        
+
         if self.verbose {
             if !stdout.is_empty() {
                 eprint!("{stdout}");
@@ -71,7 +71,7 @@ impl AsyncProcessExecutor {
                 eprint!("{stderr}");
             }
         }
-        
+
         Ok(TaskOutcome {
             status,
             exit_code: output.status.code(),
@@ -85,28 +85,31 @@ impl AsyncProcessExecutor {
     fn spec_to_tokio_command(&self, spec: &crate::CommandSpec) -> TokioCommand {
         let mut command = TokioCommand::new(&spec.program);
         command.args(&spec.args);
-        
+
         if let Some(cwd) = &spec.cwd {
             command.current_dir(cwd);
         }
-        
+
         for (key, value) in &spec.env {
             command.env(key, value);
         }
-        
+
         command
     }
 
     /// Run command asynchronously with basic output capture
-    async fn run_async(&self, command: &mut TokioCommand) -> Result<std::process::Output, std::io::Error> {
+    async fn run_async(
+        &self,
+        command: &mut TokioCommand,
+    ) -> Result<std::process::Output, std::io::Error> {
         command.stdout(std::process::Stdio::piped());
         command.stderr(std::process::Stdio::piped());
-        
+
         let mut child = command.spawn()?;
-        
+
         let stdout = child.stdout.take().expect("piped stdout");
         let stderr = child.stderr.take().expect("piped stderr");
-        
+
         // Use Tokio's async I/O for reading
         let (stdout_result, stderr_result) = tokio::join!(
             async {
@@ -120,12 +123,12 @@ impl AsyncProcessExecutor {
                 stderr.read_to_end(&mut buf).await.map(|_| buf)
             }
         );
-        
+
         let stdout = stdout_result?;
         let stderr = stderr_result?;
-        
+
         let status = child.wait().await?;
-        
+
         Ok(std::process::Output {
             status,
             stdout,
@@ -141,10 +144,12 @@ impl AsyncProcessExecutor {
     ) -> Result<std::process::Output, std::io::Error> {
         tokio::time::timeout(timeout, self.run_async(command))
             .await
-            .map_err(|_| std::io::Error::new(
-                std::io::ErrorKind::TimedOut,
-                format!("timed out after {timeout:?}"),
-            ))?
+            .map_err(|_| {
+                std::io::Error::new(
+                    std::io::ErrorKind::TimedOut,
+                    format!("timed out after {timeout:?}"),
+                )
+            })?
     }
 }
 
@@ -171,7 +176,10 @@ mod tests {
         rt.block_on(async {
             let executor = AsyncProcessExecutor::new(false);
             let task = task_for(CommandSpec::new("cargo").arg("--version"));
-            let outcome = executor.execute_async(&task).await.expect("cargo must spawn");
+            let outcome = executor
+                .execute_async(&task)
+                .await
+                .expect("cargo must spawn");
             assert_eq!(outcome.status, TaskStatus::Executed);
             assert_eq!(outcome.exit_code, Some(0));
             assert!(outcome.stdout.contains("cargo"));
@@ -182,7 +190,8 @@ mod tests {
     fn test_async_executor_timeout() {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
-            let executor = AsyncProcessExecutor::with_timeout(false, Some(Duration::from_millis(100)));
+            let executor =
+                AsyncProcessExecutor::with_timeout(false, Some(Duration::from_millis(100)));
             let (prog, args) = if cfg!(windows) {
                 (
                     "powershell",

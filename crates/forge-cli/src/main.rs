@@ -37,12 +37,12 @@ use args::CacheServerArgs;
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
-    
+
     // Enable experimental features if flag is set
     if cli.experimental {
         experimental::enable();
     }
-    
+
     match cli.command {
         Command::Version => {
             println!("forge {}", env!("CARGO_PKG_VERSION"));

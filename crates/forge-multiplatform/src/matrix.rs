@@ -14,9 +14,18 @@ impl Default for MatrixConfig {
     fn default() -> Self {
         Self {
             platforms: vec![
-                Target::new(crate::platform::Platform::Linux, crate::platform::Architecture::X86_64),
-                Target::new(crate::platform::Platform::MacOS, crate::platform::Architecture::ARM64),
-                Target::new(crate::platform::Platform::Windows, crate::platform::Architecture::X86_64),
+                Target::new(
+                    crate::platform::Platform::Linux,
+                    crate::platform::Architecture::X86_64,
+                ),
+                Target::new(
+                    crate::platform::Platform::MacOS,
+                    crate::platform::Architecture::ARM64,
+                ),
+                Target::new(
+                    crate::platform::Platform::Windows,
+                    crate::platform::Architecture::X86_64,
+                ),
             ],
             include_rust_versions: vec!["stable".to_string(), "nightly".to_string()],
             include_node_versions: vec!["lts/*".to_string()],

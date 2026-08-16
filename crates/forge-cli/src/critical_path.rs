@@ -48,11 +48,7 @@ impl CriticalPathScheduler {
         weights
     }
 
-    fn longest_downstream_path(
-        &self,
-        node: &str,
-        adjacency: &HashMap<String, Vec<String>>,
-    ) -> u64 {
+    fn longest_downstream_path(&self, node: &str, adjacency: &HashMap<String, Vec<String>>) -> u64 {
         if let Some(neighbors) = adjacency.get(node) {
             let mut max_cost = 0;
             for neighbor in neighbors {
@@ -72,7 +68,11 @@ impl CriticalPathScheduler {
         }
     }
 
-    pub fn prioritize_ready_tasks(&self, ready_tasks: &mut [String], weights: &HashMap<String, u64>) {
+    pub fn prioritize_ready_tasks(
+        &self,
+        ready_tasks: &mut [String],
+        weights: &HashMap<String, u64>,
+    ) {
         ready_tasks.sort_by(|a, b| {
             let w_a = weights.get(a).copied().unwrap_or(0);
             let w_b = weights.get(b).copied().unwrap_or(0);
@@ -107,7 +107,11 @@ mod tests {
         assert_eq!(*weights.get("task_b").unwrap(), 1000 + 200);
         assert_eq!(*weights.get("task_c").unwrap(), 200);
 
-        let mut ready = vec!["task_c".to_string(), "task_a".to_string(), "task_b".to_string()];
+        let mut ready = vec![
+            "task_c".to_string(),
+            "task_a".to_string(),
+            "task_b".to_string(),
+        ];
         scheduler.prioritize_ready_tasks(&mut ready, &weights);
         assert_eq!(ready, vec!["task_a", "task_b", "task_c"]);
     }

@@ -5,13 +5,13 @@
 #![allow(missing_docs)]
 #![warn(clippy::all)]
 
-pub mod template;
 pub mod registry;
 pub mod renderer;
+pub mod template;
 
-pub use template::{PipelineTemplate, TemplateContext};
 pub use registry::TemplateRegistry;
 pub use renderer::TemplateRenderer;
+pub use template::{PipelineTemplate, TemplateContext};
 
 /// Main templates service
 pub struct TemplatesService {
@@ -27,7 +27,11 @@ impl TemplatesService {
         }
     }
 
-    pub async fn render_template(&self, template_name: &str, context: TemplateContext) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn render_template(
+        &self,
+        template_name: &str,
+        context: TemplateContext,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let template = self.registry.get_template(template_name)?;
         self.renderer.render(&template, context).await
     }

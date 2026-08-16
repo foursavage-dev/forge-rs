@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use forge_core::{FingerprintUtils, DEFAULT_EXCLUDED_DIRS};
 use crate::DotnetBackendError;
 use crate::config::DotnetTargetFramework;
+use forge_core::{DEFAULT_EXCLUDED_DIRS, FingerprintUtils};
 
 pub fn compute_dotnet_fingerprint(
     project_dir: &Path,
@@ -14,7 +14,10 @@ pub fn compute_dotnet_fingerprint(
     hasher.update(dotnet_version.as_bytes());
     hasher.update(target_framework.as_str().as_bytes());
 
-    let extensions = &["cs", "fs", "vb", "xaml", "csproj", "fsproj", "vbproj", "sln", "props", "targets", "json", "config"];
+    let extensions = &[
+        "cs", "fs", "vb", "xaml", "csproj", "fsproj", "vbproj", "sln", "props", "targets", "json",
+        "config",
+    ];
     FingerprintUtils::hash_directory_with_extensions(
         project_dir,
         extensions,
@@ -23,7 +26,12 @@ pub fn compute_dotnet_fingerprint(
     )
     .map_err(DotnetBackendError::Io)?;
 
-    for name in &["Directory.Build.props", "Directory.Build.targets", "NuGet.Config", "global.json"] {
+    for name in &[
+        "Directory.Build.props",
+        "Directory.Build.targets",
+        "NuGet.Config",
+        "global.json",
+    ] {
         let path = project_dir.join(name);
         if path.exists() {
             let _ = FingerprintUtils::hash_file_into(&path, &mut hasher);
@@ -46,16 +54,18 @@ mod tests {
         fs::create_dir_all(&src_dir).unwrap();
 
         let cs_file = src_dir.join("Program.cs");
-        fs::write(&cs_file, "using System; class Program { static void Main() {} }").unwrap();
+        fs::write(
+            &cs_file,
+            "using System; class Program { static void Main() {} }",
+        )
+        .unwrap();
 
         let csproj_file = temp.path().join("TestApp.csproj");
         fs::write(&csproj_file, "<Project></Project>").unwrap();
 
-        let fingerprint = compute_dotnet_fingerprint(
-            temp.path(),
-            "8.0.0",
-            &DotnetTargetFramework::Net8_0,
-        ).unwrap();
+        let fingerprint =
+            compute_dotnet_fingerprint(temp.path(), "8.0.0", &DotnetTargetFramework::Net8_0)
+                .unwrap();
 
         assert!(!fingerprint.is_empty());
         assert_eq!(fingerprint.len(), 64);
@@ -68,21 +78,23 @@ mod tests {
         fs::create_dir_all(&src_dir).unwrap();
 
         let cs_file = src_dir.join("Program.cs");
-        fs::write(&cs_file, "using System; class Program { static void Main() {} }").unwrap();
+        fs::write(
+            &cs_file,
+            "using System; class Program { static void Main() {} }",
+        )
+        .unwrap();
 
-        let fp1 = compute_dotnet_fingerprint(
-            temp.path(),
-            "8.0.0",
-            &DotnetTargetFramework::Net8_0,
-        ).unwrap();
+        let fp1 = compute_dotnet_fingerprint(temp.path(), "8.0.0", &DotnetTargetFramework::Net8_0)
+            .unwrap();
 
-        fs::write(&cs_file, "using System; class Program { static void Main() { Console.WriteLine(); } }").unwrap();
+        fs::write(
+            &cs_file,
+            "using System; class Program { static void Main() { Console.WriteLine(); } }",
+        )
+        .unwrap();
 
-        let fp2 = compute_dotnet_fingerprint(
-            temp.path(),
-            "8.0.0",
-            &DotnetTargetFramework::Net8_0,
-        ).unwrap();
+        let fp2 = compute_dotnet_fingerprint(temp.path(), "8.0.0", &DotnetTargetFramework::Net8_0)
+            .unwrap();
 
         assert_ne!(fp1, fp2);
     }

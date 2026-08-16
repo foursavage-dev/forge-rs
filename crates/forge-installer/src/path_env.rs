@@ -35,17 +35,20 @@ pub fn remove_dir_from_user_path(dir: &Path) -> Result<bool, String> {
 
 #[cfg(windows)]
 fn to_wide_chars(s: &str) -> Vec<u16> {
-    OsStr::new(s).encode_wide().chain(std::iter::once(0)).collect()
+    OsStr::new(s)
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect()
 }
 
 #[cfg(windows)]
 fn add_to_windows_user_path(new_entry: &str) -> Result<bool, String> {
     use windows_sys::Win32::System::Registry::{
-        RegCloseKey, RegOpenKeyExW, RegQueryValueExW, RegSetValueExW, HKEY, HKEY_CURRENT_USER,
-        KEY_QUERY_VALUE, KEY_SET_VALUE, REG_EXPAND_SZ, REG_SZ,
+        HKEY, HKEY_CURRENT_USER, KEY_QUERY_VALUE, KEY_SET_VALUE, REG_EXPAND_SZ, REG_SZ,
+        RegCloseKey, RegOpenKeyExW, RegQueryValueExW, RegSetValueExW,
     };
     use windows_sys::Win32::UI::WindowsAndMessaging::{
-        SendMessageTimeoutW, SMTO_ABORTIFHUNG, WM_SETTINGCHANGE,
+        SMTO_ABORTIFHUNG, SendMessageTimeoutW, WM_SETTINGCHANGE,
     };
 
     let subkey = to_wide_chars("Environment");
@@ -63,7 +66,9 @@ fn add_to_windows_user_path(new_entry: &str) -> Result<bool, String> {
     };
 
     if status != 0 {
-        return Err(format!("Failed to open Windows User Environment registry key: code {status}"));
+        return Err(format!(
+            "Failed to open Windows User Environment registry key: code {status}"
+        ));
     }
 
     let mut val_type: u32 = 0;
@@ -101,7 +106,11 @@ fn add_to_windows_user_path(new_entry: &str) -> Result<bool, String> {
         }
     }
 
-    let entries: Vec<&str> = current_path.split(';').map(|s| s.trim()).filter(|s| !s.is_empty()).collect();
+    let entries: Vec<&str> = current_path
+        .split(';')
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .collect();
     if entries.iter().any(|&e| e.eq_ignore_ascii_case(new_entry)) {
         unsafe { RegCloseKey(hkey) };
         return Ok(false);
@@ -116,7 +125,11 @@ fn add_to_windows_user_path(new_entry: &str) -> Result<bool, String> {
     let wide_updated = to_wide_chars(&updated_path);
     let bytes_len = (wide_updated.len() * 2) as u32;
 
-    let write_type = if val_type == REG_EXPAND_SZ { REG_EXPAND_SZ } else { REG_SZ };
+    let write_type = if val_type == REG_EXPAND_SZ {
+        REG_EXPAND_SZ
+    } else {
+        REG_SZ
+    };
     let set_res = unsafe {
         RegSetValueExW(
             hkey,
@@ -131,12 +144,14 @@ fn add_to_windows_user_path(new_entry: &str) -> Result<bool, String> {
     unsafe { RegCloseKey(hkey) };
 
     if set_res != 0 {
-        return Err(format!("Failed to write updated PATH to registry: code {set_res}"));
+        return Err(format!(
+            "Failed to write updated PATH to registry: code {set_res}"
+        ));
     }
 
     let env_wide = to_wide_chars("Environment");
     let mut result: usize = 0;
-    let hwnd_broadcast = 0xffff as usize as *mut std::ffi::c_void;
+    let hwnd_broadcast = 0xffff_usize as *mut std::ffi::c_void;
     unsafe {
         SendMessageTimeoutW(
             hwnd_broadcast,
@@ -155,11 +170,11 @@ fn add_to_windows_user_path(new_entry: &str) -> Result<bool, String> {
 #[cfg(windows)]
 fn remove_from_windows_user_path(entry_to_remove: &str) -> Result<bool, String> {
     use windows_sys::Win32::System::Registry::{
-        RegCloseKey, RegOpenKeyExW, RegQueryValueExW, RegSetValueExW, HKEY, HKEY_CURRENT_USER,
-        KEY_QUERY_VALUE, KEY_SET_VALUE, REG_EXPAND_SZ, REG_SZ,
+        HKEY, HKEY_CURRENT_USER, KEY_QUERY_VALUE, KEY_SET_VALUE, REG_EXPAND_SZ, REG_SZ,
+        RegCloseKey, RegOpenKeyExW, RegQueryValueExW, RegSetValueExW,
     };
     use windows_sys::Win32::UI::WindowsAndMessaging::{
-        SendMessageTimeoutW, SMTO_ABORTIFHUNG, WM_SETTINGCHANGE,
+        SMTO_ABORTIFHUNG, SendMessageTimeoutW, WM_SETTINGCHANGE,
     };
 
     let subkey = to_wide_chars("Environment");
@@ -177,7 +192,9 @@ fn remove_from_windows_user_path(entry_to_remove: &str) -> Result<bool, String> 
     };
 
     if status != 0 {
-        return Err(format!("Failed to open Windows User Environment registry key: code {status}"));
+        return Err(format!(
+            "Failed to open Windows User Environment registry key: code {status}"
+        ));
     }
 
     let mut val_type: u32 = 0;
@@ -221,7 +238,11 @@ fn remove_from_windows_user_path(entry_to_remove: &str) -> Result<bool, String> 
     }
     let current_path = String::from_utf16_lossy(&buffer);
 
-    let entries: Vec<&str> = current_path.split(';').map(|s| s.trim()).filter(|s| !s.is_empty()).collect();
+    let entries: Vec<&str> = current_path
+        .split(';')
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .collect();
     let initial_count = entries.len();
     let filtered_entries: Vec<&str> = entries
         .into_iter()
@@ -237,7 +258,11 @@ fn remove_from_windows_user_path(entry_to_remove: &str) -> Result<bool, String> 
     let wide_updated = to_wide_chars(&updated_path);
     let bytes_len = (wide_updated.len() * 2) as u32;
 
-    let write_type = if val_type == REG_EXPAND_SZ { REG_EXPAND_SZ } else { REG_SZ };
+    let write_type = if val_type == REG_EXPAND_SZ {
+        REG_EXPAND_SZ
+    } else {
+        REG_SZ
+    };
     let set_res = unsafe {
         RegSetValueExW(
             hkey,
@@ -257,7 +282,7 @@ fn remove_from_windows_user_path(entry_to_remove: &str) -> Result<bool, String> 
 
     let env_wide = to_wide_chars("Environment");
     let mut result: usize = 0;
-    let hwnd_broadcast = 0xffff as usize as *mut std::ffi::c_void;
+    let hwnd_broadcast = 0xffff_usize as *mut std::ffi::c_void;
     unsafe {
         SendMessageTimeoutW(
             hwnd_broadcast,
@@ -276,7 +301,11 @@ fn remove_from_windows_user_path(entry_to_remove: &str) -> Result<bool, String> 
 #[cfg(not(windows))]
 fn add_to_unix_user_path(new_entry: &str) -> Result<bool, String> {
     let home = std::env::var("HOME").map_err(|e| e.to_string())?;
-    let rc_files = [format!("{home}/.bashrc"), format!("{home}/.zshrc"), format!("{home}/.profile")];
+    let rc_files = [
+        format!("{home}/.bashrc"),
+        format!("{home}/.zshrc"),
+        format!("{home}/.profile"),
+    ];
     let export_line = format!("\nexport PATH=\"{new_entry}:$PATH\"\n");
 
     let mut modified = false;
@@ -290,7 +319,8 @@ fn add_to_unix_user_path(new_entry: &str) -> Result<bool, String> {
                     .open(path)
                     .map_err(|e| e.to_string())?;
                 use std::io::Write;
-                f.write_all(export_line.as_bytes()).map_err(|e| e.to_string())?;
+                f.write_all(export_line.as_bytes())
+                    .map_err(|e| e.to_string())?;
                 modified = true;
             }
         }
@@ -301,7 +331,11 @@ fn add_to_unix_user_path(new_entry: &str) -> Result<bool, String> {
 #[cfg(not(windows))]
 fn remove_from_unix_user_path(entry_to_remove: &str) -> Result<bool, String> {
     let home = std::env::var("HOME").map_err(|e| e.to_string())?;
-    let rc_files = [format!("{home}/.bashrc"), format!("{home}/.zshrc"), format!("{home}/.profile")];
+    let rc_files = [
+        format!("{home}/.bashrc"),
+        format!("{home}/.zshrc"),
+        format!("{home}/.profile"),
+    ];
 
     let mut modified = false;
     for rc in &rc_files {

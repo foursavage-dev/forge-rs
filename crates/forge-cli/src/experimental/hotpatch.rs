@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
+use serde::{Deserialize, Serialize};
 use std::io;
 use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TargetArch {
@@ -49,10 +49,7 @@ pub struct LivePatchReport {
 pub struct HotPatchEngine;
 
 impl HotPatchEngine {
-    pub fn compute_patch_delta(
-        old_binary: &Path,
-        new_binary: &Path,
-    ) -> io::Result<PatchDelta> {
+    pub fn compute_patch_delta(old_binary: &Path, new_binary: &Path) -> io::Result<PatchDelta> {
         Self::compute_patch_delta_with_arch(old_binary, new_binary, TargetArch::X86_64)
     }
 
@@ -120,20 +117,14 @@ impl HotPatchEngine {
                 }
             }
             TargetArch::AArch64 => {
-                let mut bytes = vec![
-                    0x50, 0x00, 0x00, 0x58,
-                    0x00, 0x02, 0x1F, 0xD6,
-                ];
+                let mut bytes = vec![0x50, 0x00, 0x00, 0x58, 0x00, 0x02, 0x1F, 0xD6];
                 bytes.extend_from_slice(&new_addr.to_le_bytes());
                 bytes
             }
         }
     }
 
-    pub fn apply_live_patch(
-        delta: &PatchDelta,
-        process_id: u32,
-    ) -> io::Result<usize> {
+    pub fn apply_live_patch(delta: &PatchDelta, process_id: u32) -> io::Result<usize> {
         let report = Self::apply_live_patch_detailed(delta, process_id)?;
         Ok(report.relocated_symbols)
     }
@@ -183,7 +174,8 @@ mod tests {
         assert_eq!(rel32.len(), 5);
         assert_eq!(rel32[0], 0xE9);
 
-        let abs64 = HotPatchEngine::generate_trampoline(TargetArch::X86_64, 0x1000, 0x7FFF_FFFF_0000);
+        let abs64 =
+            HotPatchEngine::generate_trampoline(TargetArch::X86_64, 0x1000, 0x7FFF_FFFF_0000);
         assert_eq!(abs64.len(), 14);
         assert_eq!(&abs64[0..6], &[0xFF, 0x25, 0x00, 0x00, 0x00, 0x00]);
     }

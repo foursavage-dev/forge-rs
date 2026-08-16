@@ -3,7 +3,7 @@
 use std::path::Path;
 use thiserror::Error;
 
-use forge_core::{BuildBackend, BinaryUtils, FingerprintUtils};
+use forge_core::{BinaryUtils, BuildBackend, FingerprintUtils};
 use forge_executor::{CacheEntry, CommandSpec, Task};
 use forge_graph::BuildGraph;
 
@@ -77,7 +77,8 @@ impl CcBackend {
                 .and_then(|s| s.to_str())
                 .unwrap_or("source");
 
-            let obj_ext = BinaryUtils::object_extension(self.compiler.family == CompilerFamily::Msvc);
+            let obj_ext =
+                BinaryUtils::object_extension(self.compiler.family == CompilerFamily::Msvc);
             let obj_filename = format!("{stem}.{obj_ext}");
             let obj_path = output_dir.join("objs").join(&obj_filename);
             object_paths.push(obj_path.clone());
@@ -88,9 +89,13 @@ impl CcBackend {
                 Some(output_dir.join("objs").join(format!("{stem}.d")))
             };
 
-            let (prog, args) = self
-                .compiler
-                .compile_object_args(source, &obj_path, &includes, flags, depfile.as_deref());
+            let (prog, args) = self.compiler.compile_object_args(
+                source,
+                &obj_path,
+                &includes,
+                flags,
+                depfile.as_deref(),
+            );
 
             let spec = CommandSpec::new(prog).args(args).cwd(project_dir);
 

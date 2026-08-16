@@ -9,6 +9,11 @@ on:
     - cron: '0 0 * * 0'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: "0"
@@ -95,10 +100,13 @@ jobs:
         with:
           fetch-depth: 0
       
+      - name: Install Gitleaks
+        uses: taiki-e/install-action@v2
+        with:
+          tool: gitleaks
+      
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gitleaks detect --verbose --redact --no-banner
 
   security-docs:
     name: Security Documentation

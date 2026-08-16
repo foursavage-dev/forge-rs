@@ -20,7 +20,11 @@ pub fn read_depfile(path: &Path) -> Option<Vec<PathBuf>> {
         }
 
         let continued = line.ends_with('\\');
-        let piece = if continued { &line[..line.len() - 1] } else { line };
+        let piece = if continued {
+            &line[..line.len() - 1]
+        } else {
+            line
+        };
         if !piece.trim().is_empty() {
             logical.push_str(piece);
             logical.push(' ');
@@ -39,11 +43,7 @@ pub fn read_depfile(path: &Path) -> Option<Vec<PathBuf>> {
         logical.clear();
     }
 
-    if saw_target {
-        Some(deps)
-    } else {
-        None
-    }
+    if saw_target { Some(deps) } else { None }
 }
 
 /// Splits the dependency part of a `.d` line into paths, honouring the

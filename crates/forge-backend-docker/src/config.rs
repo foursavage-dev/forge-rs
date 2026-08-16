@@ -22,10 +22,11 @@ pub struct DockerProjectConfig {
 
 impl DockerProjectConfig {
     pub fn from_dockerfile(dockerfile: PathBuf) -> Self {
-        let context_path = dockerfile.parent()
+        let context_path = dockerfile
+            .parent()
             .unwrap_or(&PathBuf::from("."))
             .to_path_buf();
-        
+
         Self {
             dockerfile_path: Some(dockerfile),
             context_path,
@@ -35,22 +36,22 @@ impl DockerProjectConfig {
             cache_to: Vec::new(),
         }
     }
-    
+
     pub fn with_build_arg(mut self, key: String, value: String) -> Self {
         self.build_args.insert(key, value);
         self
     }
-    
+
     pub fn with_target(mut self, target: String) -> Self {
         self.target = Some(target);
         self
     }
-    
+
     pub fn with_cache_from(mut self, cache: String) -> Self {
         self.cache_from.push(cache);
         self
     }
-    
+
     pub fn with_cache_to(mut self, cache: String) -> Self {
         self.cache_to.push(cache);
         self
@@ -60,19 +61,19 @@ impl DockerProjectConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_docker_config_creation() {
         let config = DockerProjectConfig::from_dockerfile(PathBuf::from("Dockerfile"));
         assert!(config.dockerfile_path.is_some());
         assert_eq!(config.build_args.len(), 0);
     }
-    
+
     #[test]
     fn test_docker_config_build_args() {
         let config = DockerProjectConfig::from_dockerfile(PathBuf::from("Dockerfile"))
             .with_build_arg("VERSION".to_string(), "1.0".to_string());
-        
+
         assert_eq!(config.build_args.get("VERSION"), Some(&"1.0".to_string()));
     }
 }

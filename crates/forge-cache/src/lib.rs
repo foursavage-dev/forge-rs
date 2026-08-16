@@ -1,15 +1,15 @@
 #![cfg_attr(not(test), forbid(unsafe_code))]
 
+pub mod async_io;
 pub mod file_level;
 pub mod file_level_adapter;
-pub mod strategies;
 pub mod pool;
-pub mod async_io;
+pub mod strategies;
 
-pub use strategies::{LruCache, TieredCache, PredictiveCache, SpinLockLruCache};
+pub use async_io::{AsyncCache, AsyncFileReader, AsyncFileWriter, AsyncIoError};
 pub use file_level_adapter::{FileLevelCacheAdapter, HybridCachingExecutor};
-pub use pool::{BufferPool, ScopedBuffer, PoolStats};
-pub use async_io::{AsyncCache, AsyncFileWriter, AsyncFileReader, AsyncIoError};
+pub use pool::{BufferPool, PoolStats, ScopedBuffer};
+pub use strategies::{LruCache, PredictiveCache, SpinLockLruCache, TieredCache};
 
 use std::fmt;
 use std::fs;
@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
 
 // CAS-related types for future async integration
 #[allow(dead_code)]
-pub use forge_cas::{CasStorage, CasStorageConfig, Artifact, ArtifactHash};
+pub use forge_cas::{Artifact, ArtifactHash, CasStorage, CasStorageConfig};
 
 #[derive(Debug)]
 pub enum CacheError {
@@ -155,7 +155,7 @@ impl LocalCache {
 
         let _ = fs::create_dir_all(root.join("objects"));
         let _ = fs::create_dir_all(root.join("artifacts"));
-        
+
         Ok(Self {
             root,
             stats: Arc::new(CacheStats::default()),
@@ -163,16 +163,16 @@ impl LocalCache {
             buffer_pool: Arc::new(BufferPool::new()),
         })
     }
-    
+
     pub fn with_cas(mut self, enable: bool) -> Self {
         self.cas_enabled = enable;
         self
     }
-    
+
     pub fn is_cas_enabled(&self) -> bool {
         self.cas_enabled
     }
-    
+
     pub fn cas_path(&self) -> PathBuf {
         self.root.join("cas")
     }
@@ -263,10 +263,10 @@ impl LocalCache {
     pub fn put_object(&self, hash: &str, bytes: &[u8]) -> Result<(), CacheError> {
         let path = self.objects_dir().join(hash);
         let tmp = self.objects_dir().join(format!("{hash}.tmp"));
-        
+
         // Use scoped buffer for better memory efficiency
         let _scoped_buffer = ScopedBuffer::new(bytes.len(), self.buffer_pool.clone());
-        
+
         fs::write(&tmp, bytes).map_err(|source| CacheError::Write {
             key: hash.to_string(),
             source,
@@ -280,20 +280,20 @@ impl LocalCache {
     pub fn get_object(&self, hash: &str) -> Option<Vec<u8>> {
         let path = self.objects_dir().join(hash);
         let metadata = fs::metadata(&path).ok()?;
-        
+
         // Use buffer pool for reading large files efficiently
         let file_size = metadata.len() as usize;
         if file_size < 4096 {
             // For small files, use standard read
             return fs::read(&path).ok();
         }
-        
+
         let mut scoped_buffer = ScopedBuffer::new(file_size, self.buffer_pool.clone());
         let buffer = scoped_buffer.as_mut();
         buffer.resize(file_size, 0);
-        
+
         fs::File::open(&path).ok()?.read_exact(buffer).ok()?;
-        
+
         Some(scoped_buffer.into_inner())
     }
 
@@ -328,8 +328,7 @@ impl LocalCache {
             return out;
         };
         for path in entries {
-            let Some(extension) = path.extension().map(|e| e.to_string_lossy().to_string())
-            else {
+            let Some(extension) = path.extension().map(|e| e.to_string_lossy().to_string()) else {
                 continue;
             };
             if extension != "json" {
@@ -367,16 +366,18 @@ impl LocalCache {
     pub fn disk_stats(&self) -> CacheDiskStats {
         let records = self.records();
         let objects: Vec<PathBuf> = walk_files(&self.objects_dir()).unwrap_or_default();
-        
+
         // Single-pass computation for better performance
         let (object_count, objects_bytes) = objects
             .iter()
             .filter_map(|p| fs::metadata(p).ok())
-            .fold((0u64, 0u64), |(count, total), m| (count + 1, total + m.len()));
-        
+            .fold((0u64, 0u64), |(count, total), m| {
+                (count + 1, total + m.len())
+            });
+
         let record_count = records.len() as u64;
         let fingerprints_bytes: u64 = records.iter().map(|r| r.size).sum();
-        
+
         CacheDiskStats {
             record_count,
             fingerprints_bytes,
@@ -418,7 +419,7 @@ impl LocalCache {
             .iter()
             .filter_map(|p| fs::metadata(p).ok().map(|m| (p.clone(), m.len())))
             .collect();
-        
+
         let total_records_size: u64 = records.iter().map(|r| r.size).sum();
         let total_objects_size: u64 = object_bytes.iter().map(|(_, size)| *size).sum();
         let mut total = total_records_size + total_objects_size;
@@ -509,7 +510,7 @@ impl<I: TaskExecutor> TaskExecutor for CachingExecutor<I> {
                 if let Err(_error) = self.cache.put(key, fingerprint) {
                     self.cache.stats().record_error();
                 }
-                
+
                 // Note: CAS artifact storage will be handled by the caller/CLI
                 // for now, we skip async operations in sync context
             }
@@ -628,7 +629,9 @@ mod tests {
     #[test]
     fn artifact_hash_is_persisted_in_the_record() {
         let (cache, _dir) = cache();
-        cache.put_with_artifact("k", "fp", Some("blob-hash".to_string())).unwrap();
+        cache
+            .put_with_artifact("k", "fp", Some("blob-hash".to_string()))
+            .unwrap();
         assert_eq!(cache.artifact_hash("k").as_deref(), Some("blob-hash"));
         assert_eq!(cache.get("k").as_deref(), Some("fp"));
         assert!(cache.matches("k", "fp"));
@@ -648,7 +651,10 @@ mod tests {
         assert_eq!(stats.record_count, 2);
         assert_eq!(stats.object_count, 1);
         assert!(stats.fingerprints_bytes > 0);
-        assert_eq!(stats.total_bytes, stats.fingerprints_bytes + stats.objects_bytes);
+        assert_eq!(
+            stats.total_bytes,
+            stats.fingerprints_bytes + stats.objects_bytes
+        );
 
         let records = cache.records();
         assert_eq!(records.len(), 2);
@@ -674,7 +680,9 @@ mod tests {
         let path = cache.fingerprint_path("old");
         fs::write(&path, serde_json::to_vec(&old_record).unwrap()).unwrap();
 
-        let report = cache.prune(Some(Duration::from_secs(60 * 60)), None).unwrap();
+        let report = cache
+            .prune(Some(Duration::from_secs(60 * 60)), None)
+            .unwrap();
         assert_eq!(report.removed_records, 1);
         assert_eq!(report.removed_objects, 0);
         assert!(report.freed_bytes > 0);

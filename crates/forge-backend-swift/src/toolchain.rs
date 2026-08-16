@@ -20,12 +20,13 @@ impl SwiftToolchain {
     pub fn detect() -> Result<Self, SwiftBackendError> {
         let swift_executable = Self::find_executable("swift")
             .ok_or_else(|| SwiftBackendError::Toolchain("Swift not found in PATH".to_string()))?;
-        
+
         let swift_version = Self::get_version(&swift_executable, &["--version"])
             .unwrap_or_else(|_| "unknown".to_string());
 
         let clang_executable = Self::find_executable("clang");
-        let clang_version = clang_executable.as_ref()
+        let clang_version = clang_executable
+            .as_ref()
             .and_then(|c| Self::get_version(c, &["--version"]).ok());
 
         Ok(SwiftToolchain {
@@ -39,7 +40,7 @@ impl SwiftToolchain {
     pub fn with_swift(executable: String) -> Self {
         let swift_version = Self::get_version(&executable, &["--version"])
             .unwrap_or_else(|_| "unknown".to_string());
-        
+
         SwiftToolchain {
             executable: executable.clone(),
             swift_version,
@@ -54,25 +55,22 @@ impl SwiftToolchain {
 
     fn find_executable(name: &str) -> Option<String> {
         // Check if executable exists in PATH
-        if let Ok(output) = std::process::Command::new("where")
-            .arg(name)
-            .output()
-        {
+        if let Ok(output) = std::process::Command::new("where").arg(name).output() {
             if output.status.success() {
                 let paths = String::from_utf8_lossy(&output.stdout);
                 return paths.lines().next().map(|s| s.to_string());
             }
         }
-        
+
         // Try direct execution
         if std::process::Command::new(name)
             .arg("--version")
             .output()
             .is_ok()
             || std::process::Command::new(name)
-            .arg("-version")
-            .output()
-            .is_ok()
+                .arg("-version")
+                .output()
+                .is_ok()
         {
             return Some(name.to_string());
         }
@@ -84,12 +82,15 @@ impl SwiftToolchain {
         let output = std::process::Command::new(executable)
             .args(args)
             .output()
-            .map_err(|e| SwiftBackendError::Toolchain(format!("Failed to run {}: {}", executable, e)))?;
+            .map_err(|e| {
+                SwiftBackendError::Toolchain(format!("Failed to run {}: {}", executable, e))
+            })?;
 
         if !output.status.success() {
             return Err(SwiftBackendError::Toolchain(format!(
                 "{} exited with error code: {:?}",
-                executable, output.status.code()
+                executable,
+                output.status.code()
             )));
         }
 
@@ -110,7 +111,9 @@ impl SwiftCompiler {
             return Ok(SwiftCompiler::Clang(clang));
         }
 
-        Err(SwiftBackendError::Toolchain("No Swift compiler found (swift or clang)".to_string()))
+        Err(SwiftBackendError::Toolchain(
+            "No Swift compiler found (swift or clang)".to_string(),
+        ))
     }
 
     pub fn executable(&self) -> &str {

@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::client::RemoteWorkerClient;
 use forge_executor::{ExecutorError, ProcessExecutor, Task, TaskExecutor, TaskOutcome};

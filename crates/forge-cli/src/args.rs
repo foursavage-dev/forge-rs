@@ -4,11 +4,11 @@
 //!
 //! This module contains all argument structures and enums for CLI subcommands.
 
-use std::path::PathBuf;
 use clap::{Args, Parser, Subcommand, ValueEnum};
+use std::path::PathBuf;
 
-use forge_backend_rust::BuildMode;
 use crate::watch;
+use forge_backend_rust::BuildMode;
 
 /// CLI entry point
 #[derive(Debug, Parser)]

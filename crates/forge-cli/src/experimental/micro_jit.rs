@@ -51,10 +51,13 @@ impl MicroJitEngine {
         constant_value: i32,
     ) -> io::Result<CompiledJitFunction> {
         let ops = vec![
-            JitOpcode::MovImm(match self.target {
-                ArchitectureTarget::X86_64 => JitRegister::Rax,
-                ArchitectureTarget::AArch64 => JitRegister::X0,
-            }, constant_value as i64),
+            JitOpcode::MovImm(
+                match self.target {
+                    ArchitectureTarget::X86_64 => JitRegister::Rax,
+                    ArchitectureTarget::AArch64 => JitRegister::X0,
+                },
+                constant_value as i64,
+            ),
             JitOpcode::Ret,
         ];
 

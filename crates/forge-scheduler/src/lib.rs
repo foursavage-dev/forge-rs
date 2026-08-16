@@ -766,9 +766,21 @@ mod tests {
         assert_eq!(ram_capped_workers(8000, 10000, 8, 1, 20), 8);
         assert_eq!(ram_capped_workers(1000, 10000, 8, 1, 20), 1);
         assert_eq!(ram_capped_workers(0, 10000, 8, 2, 10), 2);
-        assert_eq!(ram_capped_workers(1000, 0, 8, 2, 10), 8, "unknown totals never throttle");
-        assert_eq!(ram_capped_workers(1, 100, 4, 1, 100), 1, "100% free always throttles");
-        assert_eq!(ram_capped_workers(1, 100, 4, 4, 100), 4, "floor is capped by requested");
+        assert_eq!(
+            ram_capped_workers(1000, 0, 8, 2, 10),
+            8,
+            "unknown totals never throttle"
+        );
+        assert_eq!(
+            ram_capped_workers(1, 100, 4, 1, 100),
+            1,
+            "100% free always throttles"
+        );
+        assert_eq!(
+            ram_capped_workers(1, 100, 4, 4, 100),
+            4,
+            "floor is capped by requested"
+        );
         assert_eq!(ram_capped_workers(99, 100, 4, 2, 100), 2);
     }
 

@@ -6,7 +6,7 @@ use cargo_metadata::camino::Utf8Path;
 use cargo_metadata::{DependencyKind, Metadata, MetadataCommand, Package, PackageId};
 use forge_graph::{BuildGraph, NodeId};
 
-use crate::error::{ForgeError, Result, ErrorContext, ErrorKind, ErrorSeverity};
+use crate::error::{ErrorContext, ErrorKind, ErrorSeverity, ForgeError, Result};
 use crate::project::detect::find_manifest;
 
 #[derive(Debug, Clone)]
@@ -24,23 +24,26 @@ impl Project {
     }
 
     pub fn load(manifest_path: &Path) -> Result<Project> {
-        let manifest = Utf8Path::from_path(manifest_path)
-            .ok_or_else(|| ForgeError::new(
+        let manifest = Utf8Path::from_path(manifest_path).ok_or_else(|| {
+            ForgeError::new(
                 ErrorKind::NonUtf8ManifestPath(manifest_path.display().to_string()),
                 ErrorContext::new("load_project", "project_loader")
                     .with_file(manifest_path.display().to_string())
-                    .with_severity(ErrorSeverity::Error)
-            ))?;
+                    .with_severity(ErrorSeverity::Error),
+            )
+        })?;
 
         let metadata = MetadataCommand::new()
             .manifest_path(manifest)
             .exec()
-            .map_err(|source| ForgeError::new(
-                ErrorKind::CargoMetadata(source.to_string()),
-                ErrorContext::new("load_metadata", "project_loader")
-                    .with_file(manifest_path.display().to_string())
-                    .with_severity(ErrorSeverity::Error)
-            ))?;
+            .map_err(|source| {
+                ForgeError::new(
+                    ErrorKind::CargoMetadata(source.to_string()),
+                    ErrorContext::new("load_metadata", "project_loader")
+                        .with_file(manifest_path.display().to_string())
+                        .with_severity(ErrorSeverity::Error),
+                )
+            })?;
 
         Ok(Project {
             manifest_path: manifest_path.to_path_buf(),
@@ -88,7 +91,8 @@ impl Project {
     /// manifest directory or is one of the package's declared targets.
     /// Returns `None` when the caller should treat the whole workspace as
     /// affected (e.g. a workspace-root `Cargo.toml`/`Cargo.lock` change).
-    pub fn packages_for_paths(&self, paths: &[&Path]) -> Option<Vec<PackageId>> {        let members: Vec<&Package> = self
+    pub fn packages_for_paths(&self, paths: &[&Path]) -> Option<Vec<PackageId>> {
+        let members: Vec<&Package> = self
             .metadata
             .workspace_members
             .iter()

@@ -18,9 +18,10 @@ pub enum DotnetCompiler {
 
 impl DotnetToolchain {
     pub fn detect() -> Result<Self, DotnetBackendError> {
-        let dotnet_executable = Self::find_executable("dotnet")
-            .ok_or_else(|| DotnetBackendError::Toolchain(".NET CLI not found in PATH".to_string()))?;
-        
+        let dotnet_executable = Self::find_executable("dotnet").ok_or_else(|| {
+            DotnetBackendError::Toolchain(".NET CLI not found in PATH".to_string())
+        })?;
+
         let dotnet_version = Self::get_version(&dotnet_executable, &["--version"])
             .unwrap_or_else(|_| "unknown".to_string());
 
@@ -38,7 +39,7 @@ impl DotnetToolchain {
     pub fn with_dotnet(executable: String) -> Self {
         let dotnet_version = Self::get_version(&executable, &["--version"])
             .unwrap_or_else(|_| "unknown".to_string());
-        
+
         DotnetToolchain {
             executable: executable.clone(),
             dotnet_version,
@@ -57,25 +58,22 @@ impl DotnetToolchain {
 
     fn find_executable(name: &str) -> Option<String> {
         // Check if executable exists in PATH
-        if let Ok(output) = std::process::Command::new("where")
-            .arg(name)
-            .output()
-        {
+        if let Ok(output) = std::process::Command::new("where").arg(name).output() {
             if output.status.success() {
                 let paths = String::from_utf8_lossy(&output.stdout);
                 return paths.lines().next().map(|s| s.to_string());
             }
         }
-        
+
         // Try direct execution
         if std::process::Command::new(name)
             .arg("--version")
             .output()
             .is_ok()
             || std::process::Command::new(name)
-            .arg("-version")
-            .output()
-            .is_ok()
+                .arg("-version")
+                .output()
+                .is_ok()
         {
             return Some(name.to_string());
         }
@@ -87,12 +85,15 @@ impl DotnetToolchain {
         let output = std::process::Command::new(executable)
             .args(args)
             .output()
-            .map_err(|e| DotnetBackendError::Toolchain(format!("Failed to run {}: {}", executable, e)))?;
+            .map_err(|e| {
+                DotnetBackendError::Toolchain(format!("Failed to run {}: {}", executable, e))
+            })?;
 
         if !output.status.success() {
             return Err(DotnetBackendError::Toolchain(format!(
                 "{} exited with error code: {:?}",
-                executable, output.status.code()
+                executable,
+                output.status.code()
             )));
         }
 
@@ -113,7 +114,9 @@ impl DotnetCompiler {
             return Ok(DotnetCompiler::Fsc(fsc));
         }
 
-        Err(DotnetBackendError::Toolchain("No .NET compiler found (csc or fsc)".to_string()))
+        Err(DotnetBackendError::Toolchain(
+            "No .NET compiler found (csc or fsc)".to_string(),
+        ))
     }
 
     pub fn executable(&self) -> &str {

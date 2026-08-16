@@ -30,7 +30,7 @@ impl CompressionAlgorithm {
 
 impl FromStr for CompressionAlgorithm {
     type Err = String;
-    
+
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "none" => Ok(Self::None),
@@ -75,9 +75,9 @@ pub fn compress(data: &[u8], algorithm: CompressionAlgorithm) -> Result<Vec<u8>>
 pub fn decompress(data: &[u8], algorithm: CompressionAlgorithm) -> Result<Vec<u8>> {
     match algorithm {
         CompressionAlgorithm::None => Ok(data.to_vec()),
-        CompressionAlgorithm::Zstd | CompressionAlgorithm::ZstdMax | CompressionAlgorithm::ZstdFast => {
-            decompress_zstd(data)
-        }
+        CompressionAlgorithm::Zstd
+        | CompressionAlgorithm::ZstdMax
+        | CompressionAlgorithm::ZstdFast => decompress_zstd(data),
     }
 }
 
@@ -97,16 +97,16 @@ pub fn estimate_compression_ratio(data: &[u8], algorithm: CompressionAlgorithm) 
     if algorithm == CompressionAlgorithm::None {
         return None;
     }
-    
+
     // For small data, compression might not help
     if data.len() < 1024 {
         return None;
     }
-    
+
     // Sample a portion to estimate
     let sample_size = std::cmp::min(data.len(), 4096);
     let sample = &data[..sample_size];
-    
+
     match compress(sample, algorithm) {
         Ok(compressed) => {
             let ratio = compressed.len() as f64 / sample.len() as f64;
@@ -119,42 +119,52 @@ pub fn estimate_compression_ratio(data: &[u8], algorithm: CompressionAlgorithm) 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_compression_none() {
         let data = b"test data";
         let compressed = compress(data, CompressionAlgorithm::None).unwrap();
         assert_eq!(compressed, data);
     }
-    
+
     #[test]
     fn test_zstd_compression() {
         let data = vec![0u8; 10000]; // Highly compressible data
         let compressed = compress(&data, CompressionAlgorithm::Zstd).unwrap();
         assert!(compressed.len() < data.len());
-        
+
         let decompressed = decompress(&compressed, CompressionAlgorithm::Zstd).unwrap();
         assert_eq!(decompressed, data);
     }
-    
+
     #[test]
     fn test_compression_roundtrip() {
         let original = b"This is some test data that should compress reasonably well with zstd compression algorithm because it contains repetitive patterns and text.";
-        
-        for algorithm in [CompressionAlgorithm::Zstd, CompressionAlgorithm::ZstdMax, CompressionAlgorithm::ZstdFast] {
+
+        for algorithm in [
+            CompressionAlgorithm::Zstd,
+            CompressionAlgorithm::ZstdMax,
+            CompressionAlgorithm::ZstdFast,
+        ] {
             let compressed = compress(original, algorithm).unwrap();
             let decompressed = decompress(&compressed, algorithm).unwrap();
             assert_eq!(decompressed, original);
         }
     }
-    
+
     #[test]
     fn test_compression_algorithm_parsing() {
-        assert_eq!(CompressionAlgorithm::from_str("zstd").unwrap(), CompressionAlgorithm::Zstd);
-        assert_eq!(CompressionAlgorithm::from_str("none").unwrap(), CompressionAlgorithm::None);
+        assert_eq!(
+            CompressionAlgorithm::from_str("zstd").unwrap(),
+            CompressionAlgorithm::Zstd
+        );
+        assert_eq!(
+            CompressionAlgorithm::from_str("none").unwrap(),
+            CompressionAlgorithm::None
+        );
         assert!(CompressionAlgorithm::from_str("invalid").is_err());
     }
-    
+
     #[test]
     fn test_compression_level() {
         assert_eq!(CompressionLevel::Fast.as_i32(), 1);

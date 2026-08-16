@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 
 //! Diagnostic logging and health check system
-//! 
+//!
 //! This module provides comprehensive diagnostic logging, health monitoring,
 //! and system observability for production readiness.
 
@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime};
 
-use crate::error::{HealthCheckResult, HealthStatus, HealthCheck};
+use crate::error::{HealthCheck, HealthCheckResult, HealthStatus};
 
 /// Diagnostic log entry
 #[derive(Debug, Clone)]
@@ -166,10 +166,7 @@ impl HealthCheckRegistry {
 
     pub fn check_all(&self) -> Vec<HealthCheckResult> {
         let checks = self.checks.read().unwrap();
-        checks
-            .values()
-            .map(|check| check.check_health())
-            .collect()
+        checks.values().map(|check| check.check_health()).collect()
     }
 
     pub fn check_component(&self, name: &str) -> Option<HealthCheckResult> {
@@ -337,10 +334,15 @@ impl SystemDiagnostics {
         }
     }
 
-    pub fn record_performance(&self, operation: impl Into<String>, duration: Duration, success: bool) {
+    pub fn record_performance(
+        &self,
+        operation: impl Into<String>,
+        duration: Duration,
+        success: bool,
+    ) {
         let mut metrics = self.performance_metrics.write().unwrap();
         let operation = operation.into();
-        let entry = metrics.entry(operation).or_insert_with(OpPerformanceMetrics::new);
+        let entry = metrics.entry(operation).or_default();
         entry.record_operation(duration, success);
     }
 
@@ -414,9 +416,9 @@ mod tests {
     fn test_diagnostic_logger() {
         let logger = DiagnosticLogger::new(100);
         logger.log(LogLevel::Info, "test", "Test message");
-        
+
         assert_eq!(logger.log_count(), 1);
-        
+
         let logs = logger.get_logs();
         assert_eq!(logs.len(), 1);
         assert_eq!(logs[0].level, LogLevel::Info);
@@ -428,9 +430,9 @@ mod tests {
     fn test_diagnostic_logger_max_logs() {
         let logger = DiagnosticLogger::new(5);
         for i in 0..10 {
-            logger.log(LogLevel::Info, "test", &format!("Message {}", i));
+            logger.log(LogLevel::Info, "test", format!("Message {}", i));
         }
-        
+
         assert_eq!(logger.log_count(), 5);
     }
 
@@ -446,7 +448,7 @@ mod tests {
         metrics.record_operation(Duration::from_millis(100), true);
         metrics.record_operation(Duration::from_millis(200), true);
         metrics.record_operation(Duration::from_millis(50), false);
-        
+
         assert_eq!(metrics.operation_count, 3);
         assert_eq!(metrics.success_count, 2);
         assert_eq!(metrics.failure_count, 1);
@@ -459,7 +461,7 @@ mod tests {
         let mut metrics = OpPerformanceMetrics::new();
         metrics.record_operation(Duration::from_millis(100), true);
         metrics.record_operation(Duration::from_millis(200), true);
-        
+
         let avg = metrics.average_duration();
         assert_eq!(avg, Duration::from_millis(150));
     }
@@ -470,7 +472,7 @@ mod tests {
         metrics.record_operation(Duration::from_millis(100), true);
         metrics.record_operation(Duration::from_millis(200), false);
         metrics.record_operation(Duration::from_millis(150), true);
-        
+
         let rate = metrics.success_rate();
         assert!((rate - 0.6666).abs() < 0.01);
     }
@@ -479,13 +481,13 @@ mod tests {
     fn test_system_diagnostics() {
         let diagnostics = SystemDiagnostics::new(100);
         let logger = diagnostics.logger();
-        
+
         logger.log(LogLevel::Info, "test", "Test message");
         logger.log(LogLevel::Error, "test", "Error message");
         logger.log(LogLevel::Warn, "test", "Warning message");
-        
+
         diagnostics.record_performance("test_op", Duration::from_millis(100), true);
-        
+
         let report = diagnostics.generate_report();
         assert_eq!(report.log_count, 3);
         assert_eq!(report.error_count, 1);

@@ -42,7 +42,11 @@ mod tests {
         fs::write(&src, b"fast block data").unwrap();
 
         let mode = reflink_or_copy(&src, &dst).unwrap();
-        assert!(mode == ReflinkMode::Hardlink || mode == ReflinkMode::Copy || mode == ReflinkMode::Reflink);
+        assert!(
+            mode == ReflinkMode::Hardlink
+                || mode == ReflinkMode::Copy
+                || mode == ReflinkMode::Reflink
+        );
         assert_eq!(fs::read(&dst).unwrap(), b"fast block data");
     }
 
@@ -57,6 +61,10 @@ mod tests {
         let mode = reflink_or_copy(&src, &dst).unwrap();
         assert!(dst.exists());
         assert_eq!(fs::read(&dst).unwrap(), b"nested block payload");
-        assert!(mode == ReflinkMode::Hardlink || mode == ReflinkMode::Copy || mode == ReflinkMode::Reflink);
+        assert!(
+            mode == ReflinkMode::Hardlink
+                || mode == ReflinkMode::Copy
+                || mode == ReflinkMode::Reflink
+        );
     }
 }

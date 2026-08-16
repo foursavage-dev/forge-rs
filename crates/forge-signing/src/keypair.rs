@@ -78,21 +78,19 @@ impl SigningKeyPair {
 
     /// Convert to ed25519-dalek SigningKey
     pub fn to_signing_key(&self) -> SigningResult<SigningKey> {
-        let secret_bytes: [u8; 32] = self
-            .secret_key
-            .clone()
-            .try_into()
-            .map_err(|_| SigningError::InvalidKeyFormat("Invalid secret key length".to_string()))?;
+        let secret_bytes: [u8; 32] =
+            self.secret_key.clone().try_into().map_err(|_| {
+                SigningError::InvalidKeyFormat("Invalid secret key length".to_string())
+            })?;
         Ok(SigningKey::from_bytes(&secret_bytes))
     }
 
     /// Convert to ed25519-dalek VerifyingKey
     pub fn to_verifying_key(&self) -> SigningResult<VerifyingKey> {
-        let public_bytes: [u8; 32] = self
-            .public_key
-            .clone()
-            .try_into()
-            .map_err(|_| SigningError::InvalidKeyFormat("Invalid public key length".to_string()))?;
+        let public_bytes: [u8; 32] =
+            self.public_key.clone().try_into().map_err(|_| {
+                SigningError::InvalidKeyFormat("Invalid public key length".to_string())
+            })?;
         VerifyingKey::from_bytes(&public_bytes)
             .map_err(|e| SigningError::InvalidKeyFormat(e.to_string()))
     }

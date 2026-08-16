@@ -61,7 +61,11 @@ impl SemanticNormalizer {
 
         while i < len {
             let ch = chars[i];
-            let next_ch = if i + 1 < len { Some(chars[i + 1]) } else { None };
+            let next_ch = if i + 1 < len {
+                Some(chars[i + 1])
+            } else {
+                None
+            };
 
             if in_line_comment {
                 if ch == '\n' {
@@ -174,8 +178,10 @@ mod tests {
             }
         "#;
 
-        let norm_a = SemanticNormalizer::strip_comments_and_whitespace(code_a, SourceLanguage::Rust);
-        let norm_b = SemanticNormalizer::strip_comments_and_whitespace(code_b, SourceLanguage::Rust);
+        let norm_a =
+            SemanticNormalizer::strip_comments_and_whitespace(code_a, SourceLanguage::Rust);
+        let norm_b =
+            SemanticNormalizer::strip_comments_and_whitespace(code_b, SourceLanguage::Rust);
 
         assert_eq!(norm_a, norm_b);
     }

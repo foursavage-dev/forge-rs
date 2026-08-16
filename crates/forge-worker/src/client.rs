@@ -7,8 +7,8 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use crate::protocol::{
-    RemoteTaskRequest, RemoteTaskResponse, SourceContext, WorkerHealthInfo, WorkerPingRequest,
-    WorkerPingResponse, VfsFileRequest, VfsFileResponse,
+    RemoteTaskRequest, RemoteTaskResponse, SourceContext, VfsFileRequest, VfsFileResponse,
+    WorkerHealthInfo, WorkerPingRequest, WorkerPingResponse,
 };
 use forge_executor::{ExecutorError, Task, TaskExecutor, TaskOutcome, TaskStatus};
 use forge_remote_cache::artifact::pack_tree;
@@ -109,10 +109,13 @@ impl RemoteWorkerClient {
 
         let mut reader = BufReader::new(stream);
         let mut line = String::new();
-        if reader.read_line(&mut line).map_err(|e| ExecutorError::Spawn {
-            command: format!("read ping from {}", self.server_addr),
-            source: e,
-        })? == 0
+        if reader
+            .read_line(&mut line)
+            .map_err(|e| ExecutorError::Spawn {
+                command: format!("read ping from {}", self.server_addr),
+                source: e,
+            })?
+            == 0
         {
             return Err(ExecutorError::Spawn {
                 command: format!("ping to {}", self.server_addr),
@@ -141,7 +144,9 @@ impl RemoteWorkerClient {
                 command: format!("health check for {}", self.server_addr),
                 source: std::io::Error::new(
                     std::io::ErrorKind::PermissionDenied,
-                    ping_resp.error.unwrap_or_else(|| "unhealthy worker".to_string()),
+                    ping_resp
+                        .error
+                        .unwrap_or_else(|| "unhealthy worker".to_string()),
                 ),
             })
         }
@@ -210,10 +215,13 @@ impl RemoteWorkerClient {
 
         let mut reader = BufReader::new(stream);
         let mut line = String::new();
-        if reader.read_line(&mut line).map_err(|e| ExecutorError::Spawn {
-            command: task.label.clone(),
-            source: e,
-        })? == 0
+        if reader
+            .read_line(&mut line)
+            .map_err(|e| ExecutorError::Spawn {
+                command: task.label.clone(),
+                source: e,
+            })?
+            == 0
         {
             return Err(ExecutorError::Spawn {
                 command: task.label.clone(),
@@ -247,8 +255,8 @@ impl RemoteWorkerClient {
 
     /// Request a file from the remote worker's VFS
     pub fn request_vfs_file(&self, file_path: &str) -> Result<VfsFileResponse, ExecutorError> {
-        let mut stream = TcpStream::connect(&self.server_addr)
-            .map_err(|e| ExecutorError::Spawn {
+        let mut stream =
+            TcpStream::connect(&self.server_addr).map_err(|e| ExecutorError::Spawn {
                 command: "vfs_request".to_string(),
                 source: std::io::Error::other(e),
             })?;
@@ -261,38 +269,37 @@ impl RemoteWorkerClient {
             auth_token: self.auth_token.clone(),
         };
 
-        let req_json = serde_json::to_string(&req)
-            .map_err(|e| ExecutorError::Spawn {
-                command: "vfs_request".to_string(),
-                source: std::io::Error::other(e),
-            })?;
+        let req_json = serde_json::to_string(&req).map_err(|e| ExecutorError::Spawn {
+            command: "vfs_request".to_string(),
+            source: std::io::Error::other(e),
+        })?;
 
-        stream.write_all(req_json.as_bytes())
+        stream
+            .write_all(req_json.as_bytes())
             .map_err(|e| ExecutorError::Spawn {
                 command: "vfs_request".to_string(),
                 source: std::io::Error::other(e),
             })?;
-        stream.write_all(b"\n")
-            .map_err(|e| ExecutorError::Spawn {
-                command: "vfs_request".to_string(),
-                source: std::io::Error::other(e),
-            })?;
-        stream.flush()
-            .map_err(|e| ExecutorError::Spawn {
-                command: "vfs_request".to_string(),
-                source: std::io::Error::other(e),
-            })?;
+        stream.write_all(b"\n").map_err(|e| ExecutorError::Spawn {
+            command: "vfs_request".to_string(),
+            source: std::io::Error::other(e),
+        })?;
+        stream.flush().map_err(|e| ExecutorError::Spawn {
+            command: "vfs_request".to_string(),
+            source: std::io::Error::other(e),
+        })?;
 
         let mut reader = BufReader::new(stream);
         let mut line = String::new();
-        reader.read_line(&mut line)
+        reader
+            .read_line(&mut line)
             .map_err(|e| ExecutorError::Spawn {
                 command: "vfs_request".to_string(),
                 source: std::io::Error::other(e),
             })?;
 
-        let response: VfsFileResponse = serde_json::from_str(line.trim())
-            .map_err(|e| ExecutorError::Spawn {
+        let response: VfsFileResponse =
+            serde_json::from_str(line.trim()).map_err(|e| ExecutorError::Spawn {
                 command: "vfs_request".to_string(),
                 source: std::io::Error::other(e),
             })?;
@@ -307,7 +314,10 @@ impl TaskExecutor for RemoteWorkerClient {
     }
 }
 
-fn pack_source_context(cwd: &Option<PathBuf>, use_vfs: bool) -> Result<Option<SourceContext>, String> {
+fn pack_source_context(
+    cwd: &Option<PathBuf>,
+    use_vfs: bool,
+) -> Result<Option<SourceContext>, String> {
     use base64::Engine;
 
     let Some(cwd) = cwd else {
@@ -323,6 +333,10 @@ fn pack_source_context(cwd: &Option<PathBuf>, use_vfs: bool) -> Result<Option<So
         data_base64,
         format: "tar.zst".to_string(),
         use_vfs: Some(use_vfs),
-        vfs_mount: if use_vfs { Some("/vfs".to_string()) } else { None },
+        vfs_mount: if use_vfs {
+            Some("/vfs".to_string())
+        } else {
+            None
+        },
     }))
 }

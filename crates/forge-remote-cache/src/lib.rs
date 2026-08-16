@@ -127,13 +127,10 @@ impl CompositeCache {
         self.put_with_artifact(key, fingerprint, None);
     }
 
-    pub fn put_with_artifact(
-        &self,
-        key: &str,
-        fingerprint: &str,
-        artifact_hash: Option<String>,
-    ) {
-        let _ = self.local.put_with_artifact(key, fingerprint, artifact_hash.clone());
+    pub fn put_with_artifact(&self, key: &str, fingerprint: &str, artifact_hash: Option<String>) {
+        let _ = self
+            .local
+            .put_with_artifact(key, fingerprint, artifact_hash.clone());
         if let Some(remote) = &self.remote {
             let _ = remote.put_fingerprint(key, fingerprint);
             if let Some(hash) = artifact_hash {
@@ -154,10 +151,7 @@ impl CompositeCache {
         }
         if let Some(remote) = &self.remote {
             if let Ok(Some(blob)) = remote.get_artifact(key) {
-                let _ = self.local.put_object(
-                    &blob_hash_of(&blob),
-                    &blob,
-                );
+                let _ = self.local.put_object(&blob_hash_of(&blob), &blob);
                 return Some(blob);
             }
         }
@@ -198,11 +192,7 @@ impl<I: TaskExecutor> CompositeCachingExecutor<I> {
         let Some(blob) = self.cache.get_artifact(&cache_key) else {
             return;
         };
-        let root = task
-            .spec
-            .cwd
-            .clone()
-            .unwrap_or_else(|| PathBuf::from("."));
+        let root = task.spec.cwd.clone().unwrap_or_else(|| PathBuf::from("."));
         if let Err(error) = artifact::unpack_artifacts(&blob, &root) {
             self.cache.local.stats().record_error();
             let _ = error;
@@ -214,11 +204,7 @@ impl<I: TaskExecutor> CompositeCachingExecutor<I> {
             return None;
         }
         let cache_key = task.cache.as_ref().map(|e| e.key.clone())?;
-        let root = task
-            .spec
-            .cwd
-            .clone()
-            .unwrap_or_else(|| PathBuf::from("."));
+        let root = task.spec.cwd.clone().unwrap_or_else(|| PathBuf::from("."));
         let blob = match artifact::pack_artifacts(&root, &task.artifacts) {
             Ok(blob) => blob,
             Err(_) => return None,
@@ -245,7 +231,8 @@ impl<I: TaskExecutor> TaskExecutor for CompositeCachingExecutor<I> {
         if outcome.status == TaskStatus::Executed {
             if let Some(CacheEntry { key, fingerprint }) = &task.cache {
                 let artifact_hash = self.store_artifacts(task);
-                self.cache.put_with_artifact(key, fingerprint, artifact_hash);
+                self.cache
+                    .put_with_artifact(key, fingerprint, artifact_hash);
             }
         }
         Ok(outcome)
@@ -283,7 +270,11 @@ mod tests {
         drop(listener);
 
         let temp = tempdir().unwrap();
-        let server = RemoteCacheServer::new(&addr, Some("secret123".to_string()), Some(temp.path().to_path_buf()));
+        let server = RemoteCacheServer::new(
+            &addr,
+            Some("secret123".to_string()),
+            Some(temp.path().to_path_buf()),
+        );
         let _server_handle = server.start_background().unwrap();
 
         thread::sleep(Duration::from_millis(50));
@@ -376,8 +367,14 @@ mod tests {
         let handle2 = restarted.start_background().unwrap();
         thread::sleep(Duration::from_millis(50));
         let client2 = TcpRemoteCacheClient::new(&addr, None);
-        assert_eq!(client2.get_fingerprint("fp_key").unwrap().as_deref(), Some("fp_val"));
-        assert_eq!(client2.get_artifact("persist_me").unwrap().as_deref(), Some(&b"durable"[..]));
+        assert_eq!(
+            client2.get_fingerprint("fp_key").unwrap().as_deref(),
+            Some("fp_val")
+        );
+        assert_eq!(
+            client2.get_artifact("persist_me").unwrap().as_deref(),
+            Some(&b"durable"[..])
+        );
         restarted.stop();
         handle2.join().unwrap();
     }
@@ -405,7 +402,9 @@ mod tests {
         let local = LocalCache::new(temp.path().join("cache")).unwrap();
         let composite = CompositeCache::new(local, Some(Box::new(remote)));
 
-        let producing = ProducingExecutor { dir: temp.path().to_path_buf() };
+        let producing = ProducingExecutor {
+            dir: temp.path().to_path_buf(),
+        };
         let caching = CompositeCachingExecutor::new(producing, composite);
 
         let spec = CommandSpec::new("true").cwd(temp.path());
@@ -443,16 +442,17 @@ mod tests {
         let composite = CompositeCache::new(local, Some(Box::new(remote)));
 
         let caching = CompositeCachingExecutor::new(
-            ProducingExecutor { dir: temp.path().to_path_buf() },
+            ProducingExecutor {
+                dir: temp.path().to_path_buf(),
+            },
             composite,
         );
 
         let spec = CommandSpec::new("true").cwd(temp.path());
-        let task = Task::new("plain", "plain", spec)
-            .with_cache(CacheEntry {
-                key: "task/plain".to_string(),
-                fingerprint: "fp-1".to_string(),
-            });
+        let task = Task::new("plain", "plain", spec).with_cache(CacheEntry {
+            key: "task/plain".to_string(),
+            fingerprint: "fp-1".to_string(),
+        });
 
         let first = caching.execute(&task).unwrap();
         assert_eq!(first.status, TaskStatus::Executed);

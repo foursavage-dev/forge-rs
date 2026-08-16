@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 
 //! Enhanced error handling with structured context
-//! 
+//!
 //! This module provides comprehensive error handling with structured context,
 //! recovery strategies, and diagnostic information for production readiness.
 
@@ -98,10 +98,7 @@ pub struct ForgeError {
 
 impl ForgeError {
     pub fn new(kind: ErrorKind, context: ErrorContext) -> Self {
-        Self {
-            kind,
-            context,
-        }
+        Self { kind, context }
     }
 
     pub fn context(&self) -> &ErrorContext {
@@ -138,16 +135,13 @@ impl std::fmt::Display for ForgeError {
         write!(
             f,
             "[{}] {} in {}: {}",
-            self.context.severity,
-            self.context.operation,
-            self.context.component,
-            self.kind
+            self.context.severity, self.context.operation, self.context.component, self.kind
         )?;
-        
+
         if !self.context.suggestions.is_empty() {
             write!(f, "\nSuggestions: {}", self.context.suggestions.join(", "))?;
         }
-        
+
         Ok(())
     }
 }
@@ -157,40 +151,40 @@ impl std::fmt::Display for ForgeError {
 pub enum ErrorKind {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    
+
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
-    
+
     #[error("Graph error: {0}")]
     Graph(String),
-    
+
     #[error("Configuration error: {0}")]
     Config(String),
-    
+
     #[error("Cache error: {0}")]
     Cache(String),
-    
+
     #[error("Executor error: {0}")]
     Executor(String),
-    
+
     #[error("Security error: {0}")]
     Security(String),
-    
+
     #[error("Network error: {0}")]
     Network(String),
-    
+
     #[error("Recoverable: {0}")]
     Recoverable(String),
-    
+
     #[error("Validation error: {0}")]
     Validation(String),
-    
+
     #[error("Timeout error: {0}")]
     Timeout(String),
-    
+
     #[error("Non-UTF-8 manifest path: {0}")]
     NonUtf8ManifestPath(String),
-    
+
     #[error("Cargo metadata error: {0}")]
     CargoMetadata(String),
 }
@@ -353,7 +347,7 @@ mod tests {
             .with_line(42)
             .with_suggestion("Check your configuration")
             .with_severity(ErrorSeverity::Warning);
-        
+
         assert_eq!(context.operation, "test_operation");
         assert_eq!(context.component, "test_component");
         assert_eq!(context.file, Some("test.rs".to_string()));
@@ -370,9 +364,9 @@ mod tests {
                 .with_file("config.toml")
                 .with_line(10)
                 .with_suggestion("Check configuration syntax")
-                .with_severity(ErrorSeverity::Error)
+                .with_severity(ErrorSeverity::Error),
         );
-        
+
         assert_eq!(error.operation(), "load_config");
         assert_eq!(error.component(), "config_loader");
         assert_eq!(error.severity(), ErrorSeverity::Error);
@@ -384,25 +378,24 @@ mod tests {
     fn test_diagnostic_info_generation() {
         let error = ForgeError::new(
             ErrorKind::Recoverable("Temporary failure".to_string()),
-            ErrorContext::new("cache_read", "cache")
-                .with_severity(ErrorSeverity::Warning)
+            ErrorContext::new("cache_read", "cache").with_severity(ErrorSeverity::Warning),
         );
-        
+
         let diagnostic = DiagnosticInfo::from_error(&error);
         assert_eq!(diagnostic.component, "cache");
         assert_eq!(diagnostic.operation, "cache_read");
         assert_eq!(diagnostic.severity, ErrorSeverity::Warning);
-        assert!(diagnostic.error_id.len() > 0);
+        assert!(!diagnostic.error_id.is_empty());
     }
 
     #[test]
     fn test_health_check_results() {
         let healthy = HealthCheckResult::healthy("test", "All good");
         assert_eq!(healthy.status, HealthStatus::Healthy);
-        
+
         let degraded = HealthCheckResult::degraded("test", "Running slowly");
         assert_eq!(degraded.status, HealthStatus::Degraded);
-        
+
         let unhealthy = HealthCheckResult::unhealthy("test", "Failed");
         assert_eq!(unhealthy.status, HealthStatus::Unhealthy);
     }
@@ -411,12 +404,15 @@ mod tests {
     fn test_recovery_strategy_selection() {
         let recoverable_error = ForgeError::new(
             ErrorKind::Recoverable("Temporary failure".to_string()),
-            ErrorContext::new("cache_get", "cache")
+            ErrorContext::new("cache_get", "cache"),
         );
-        
+
         let strategy = RecoveryStrategy::from_error(&recoverable_error);
         match strategy {
-            RecoveryStrategy::Retry { max_attempts, backoff_ms } => {
+            RecoveryStrategy::Retry {
+                max_attempts,
+                backoff_ms,
+            } => {
                 assert_eq!(max_attempts, 3);
                 assert_eq!(backoff_ms, 1000);
             }

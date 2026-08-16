@@ -29,7 +29,10 @@ pub fn run_attest(args: AttestArgs) -> ExitCode {
             let path = attestation::AttestationEngine::save_attestation(&start_dir, &attestation);
             match path {
                 Ok(saved_path) => {
-                    println!("🔒 SLSA Level 3 Attestation generated: {}", saved_path.display());
+                    println!(
+                        "🔒 SLSA Level 3 Attestation generated: {}",
+                        saved_path.display()
+                    );
                     println!("   Merkle Root: {}", attestation.merkle_root);
                     ExitCode::SUCCESS
                 }

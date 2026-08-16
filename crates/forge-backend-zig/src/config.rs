@@ -18,7 +18,7 @@ pub enum ZigTarget {
 
 impl FromStr for ZigTarget {
     type Err = String;
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "native" => Ok(ZigTarget::Native),
@@ -67,8 +67,8 @@ impl ZigProjectConfig {
             .map_err(|e| format!("Failed to read build.zig: {}", e))?;
 
         // Extract project name from build.zig
-        let project_name = Self::extract_project_name(&content)
-            .unwrap_or_else(|| "zig_project".to_string());
+        let project_name =
+            Self::extract_project_name(&content).unwrap_or_else(|| "zig_project".to_string());
 
         // Detect target (default to native)
         let target = Self::detect_target(&content);
@@ -94,14 +94,18 @@ impl ZigProjectConfig {
             let trimmed = line.trim();
             if let Some(rest) = trimmed.strip_prefix(".name") {
                 let rest = rest.trim().strip_prefix('=').unwrap_or(rest).trim();
-                let val = rest.trim_matches(|c| c == ',' || c == ' ').trim_matches(|c| c == '\'' || c == '"');
+                let val = rest
+                    .trim_matches(|c| c == ',' || c == ' ')
+                    .trim_matches(|c| c == '\'' || c == '"');
                 if !val.is_empty() {
                     return Some(val.to_string());
                 }
             }
             if let Some(rest) = trimmed.strip_prefix("name") {
                 let rest = rest.trim().strip_prefix('=').unwrap_or(rest).trim();
-                let val = rest.trim_matches(|c| c == ',' || c == ' ').trim_matches(|c| c == '\'' || c == '"');
+                let val = rest
+                    .trim_matches(|c| c == ',' || c == ' ')
+                    .trim_matches(|c| c == '\'' || c == '"');
                 if !val.is_empty() {
                     return Some(val.to_string());
                 }
@@ -130,7 +134,7 @@ impl ZigProjectConfig {
         if content.contains("wasm32") {
             return ZigTarget::Wasm32;
         }
-        
+
         // Default to native
         ZigTarget::Native
     }
@@ -171,7 +175,10 @@ pub fn build(b: *std.Build) void {
     #[test]
     fn test_target_parsing() {
         assert_eq!(ZigTarget::from_str("native").unwrap(), ZigTarget::Native);
-        assert_eq!(ZigTarget::from_str("x86_64-linux").unwrap(), ZigTarget::X86_64Linux);
+        assert_eq!(
+            ZigTarget::from_str("x86_64-linux").unwrap(),
+            ZigTarget::X86_64Linux
+        );
         assert_eq!(ZigTarget::from_str("wasm32").unwrap(), ZigTarget::Wasm32);
     }
 }

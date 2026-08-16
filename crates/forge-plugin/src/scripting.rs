@@ -1,13 +1,13 @@
 #![forbid(unsafe_code)]
 
 //! Advanced plugin scripting system
-//! 
+//!
 //! This module provides a more powerful plugin system that goes beyond
 //! basic JSON configuration, allowing for custom build rules and logic.
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
 use std::process::Command;
 
 /// Script-based plugin that can execute custom logic
@@ -58,12 +58,12 @@ impl ScriptPlugin {
     fn execute_shell(&self, command: &str, args: &[String]) -> Result<PluginOutput, PluginError> {
         let mut cmd = Command::new(command);
         cmd.args(args);
-        
+
         let output = cmd.output().map_err(|e| PluginError::Execution {
             command: command.to_string(),
             message: e.to_string(),
         })?;
-        
+
         Ok(PluginOutput {
             exit_code: output.status.code().unwrap_or(-1),
             stdout: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -74,15 +74,13 @@ impl ScriptPlugin {
 
     fn execute_python(&self, command: &str, args: &[String]) -> Result<PluginOutput, PluginError> {
         let mut cmd = Command::new("python3");
-        cmd.arg(self.entry_point.clone())
-           .arg(command)
-           .args(args);
-        
+        cmd.arg(self.entry_point.clone()).arg(command).args(args);
+
         let output = cmd.output().map_err(|e| PluginError::Execution {
             command: "python3".to_string(),
             message: e.to_string(),
         })?;
-        
+
         Ok(PluginOutput {
             exit_code: output.status.code().unwrap_or(-1),
             stdout: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -93,15 +91,13 @@ impl ScriptPlugin {
 
     fn execute_node(&self, command: &str, args: &[String]) -> Result<PluginOutput, PluginError> {
         let mut cmd = Command::new("node");
-        cmd.arg(self.entry_point.clone())
-           .arg(command)
-           .args(args);
-        
+        cmd.arg(self.entry_point.clone()).arg(command).args(args);
+
         let output = cmd.output().map_err(|e| PluginError::Execution {
             command: "node".to_string(),
             message: e.to_string(),
         })?;
-        
+
         Ok(PluginOutput {
             exit_code: output.status.code().unwrap_or(-1),
             stdout: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -113,20 +109,20 @@ impl ScriptPlugin {
     fn execute_wasm(&self, _command: &str, _args: &[String]) -> Result<PluginOutput, PluginError> {
         // WASM execution would require a WASM runtime
         // For now, return an error
-        Err(PluginError::Unsupported("WASM execution not yet implemented".to_string()))
+        Err(PluginError::Unsupported(
+            "WASM execution not yet implemented".to_string(),
+        ))
     }
 
     fn execute_lua(&self, command: &str, args: &[String]) -> Result<PluginOutput, PluginError> {
         let mut cmd = Command::new("lua");
-        cmd.arg(self.entry_point.clone())
-           .arg(command)
-           .args(args);
-        
+        cmd.arg(self.entry_point.clone()).arg(command).args(args);
+
         let output = cmd.output().map_err(|e| PluginError::Execution {
             command: "lua".to_string(),
             message: e.to_string(),
         })?;
-        
+
         Ok(PluginOutput {
             exit_code: output.status.code().unwrap_or(-1),
             stdout: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -192,13 +188,16 @@ impl PluginManager {
             return Ok(());
         }
 
-        let entries = std::fs::read_dir(&self.plugin_dir)
-            .map_err(|e| PluginError::InvalidConfig(format!("Cannot read plugin directory: {}", e)))?;
+        let entries = std::fs::read_dir(&self.plugin_dir).map_err(|e| {
+            PluginError::InvalidConfig(format!("Cannot read plugin directory: {}", e))
+        })?;
 
         for entry in entries {
-            let entry = entry.map_err(|e| PluginError::InvalidConfig(format!("Cannot read plugin entry: {}", e)))?;
+            let entry = entry.map_err(|e| {
+                PluginError::InvalidConfig(format!("Cannot read plugin entry: {}", e))
+            })?;
             let path = entry.path();
-            
+
             if path.is_dir() {
                 if let Ok(plugin) = self.load_plugin_from_dir(&path) {
                     self.plugins.insert(plugin.name.clone(), plugin);
@@ -214,8 +213,9 @@ impl PluginManager {
         let config_content = std::fs::read_to_string(&config_path)
             .map_err(|e| PluginError::InvalidConfig(format!("Cannot read plugin config: {}", e)))?;
 
-        let plugin: ScriptPlugin = serde_json::from_str(&config_content)
-            .map_err(|e| PluginError::InvalidConfig(format!("Cannot parse plugin config: {}", e)))?;
+        let plugin: ScriptPlugin = serde_json::from_str(&config_content).map_err(|e| {
+            PluginError::InvalidConfig(format!("Cannot parse plugin config: {}", e))
+        })?;
 
         // Validate dependencies
         for dep in &plugin.dependencies {
@@ -229,10 +229,7 @@ impl PluginManager {
 
     fn check_dependency(&self, dep: &str) -> bool {
         // Check if the dependency command exists
-        Command::new(dep)
-            .arg("--version")
-            .output()
-            .is_ok()
+        Command::new(dep).arg("--version").output().is_ok()
     }
 
     pub fn get_plugin(&self, name: &str) -> Option<&ScriptPlugin> {
@@ -243,8 +240,14 @@ impl PluginManager {
         self.plugins.values().collect()
     }
 
-    pub fn execute_plugin(&self, name: &str, command: &str, args: &[String]) -> Result<PluginOutput, PluginError> {
-        let plugin = self.get_plugin(name)
+    pub fn execute_plugin(
+        &self,
+        name: &str,
+        command: &str,
+        args: &[String],
+    ) -> Result<PluginOutput, PluginError> {
+        let plugin = self
+            .get_plugin(name)
             .ok_or_else(|| PluginError::InvalidConfig(format!("Plugin '{}' not found", name)))?;
 
         plugin.execute(command, args)
