@@ -7,6 +7,10 @@ on:
     branches: [ main, develop ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
@@ -55,46 +59,6 @@ jobs:
     name: Critical Crates Testing
     runs-on: ubuntu-latest
     needs: critical-quality-checks
-    strategy:
-      matrix:
-        crate:
-          - forge-core
-          - forge-graph
-          - forge-executor
-          - forge-scheduler
-          - forge-cache
-          - forge-cas
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-critical-${{ matrix.crate }}-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Test critical crate
-        run: cargo test -p ${{ matrix.crate }}
-
-  critical-build:
-    name: Critical Build Verification
-    runs-on: ubuntu-latest
-    needs: critical-quality-checks
     steps:
       - uses: actions/checkout@v4
       
@@ -119,8 +83,8 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-critical-build-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Build workspace debug
-        run: cargo build --workspace
+      - name: Test critical crates
+        run: cargo test -p forge-core -p forge-graph -p forge-executor -p forge-scheduler -p forge-cache -p forge-cas
       
       - name: Build workspace release
         run: cargo build --workspace --release
@@ -164,19 +128,17 @@ jobs:
   essential-status:
     name: Essential CI Status
     runs-on: ubuntu-latest
-    needs: [critical-quality-checks, critical-crates, critical-build, rust-version-matrix]
+    needs: [critical-quality-checks, critical-crates, rust-version-matrix]
     if: always()
     steps:
       - name: Check essential CI status
         run: |
           echo "Quality Checks: ${{ needs.critical-quality-checks.result }}"
           echo "Critical Crates: ${{ needs.critical-crates.result }}"
-          echo "Critical Build: ${{ needs.critical-build.result }}"
           echo "Rust Matrix: ${{ needs.rust-version-matrix.result }}"
           
           if [ "${{ needs.critical-quality-checks.result }}" != "success" ] || \
              [ "${{ needs.critical-crates.result }}" != "success" ] || \
-             [ "${{ needs.critical-build.result }}" != "success" ] || \
              [ "${{ needs.rust-version-matrix.result }}" != "success" ]; then
             echo "Essential CI Failed"
             exit 1

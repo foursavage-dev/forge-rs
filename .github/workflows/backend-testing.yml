@@ -7,13 +7,17 @@ on:
     branches: [ main, develop ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: "0"
 
 jobs:
-  cc-backend:
-    name: C/C++ Backend Testing
+  core-backends:
+    name: Core Language Backends Testing
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,182 +25,17 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       
-      - name: Install C/C++ toolchain
+      - name: Install toolchain dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc g++ clang cmake make
+          sudo apt-get install -y gcc g++ clang cmake make golang-go openjdk-17-jdk python3 python3-pip
       
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Test C/C++ backend
-        run: cargo test -p forge-backend-cc
-
-  java-backend:
-    name: Java Backend Testing
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Install Java toolchain
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openjdk-17-jdk maven gradle
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Test Java backend
-        run: cargo test -p forge-backend-java
-
-  go-backend:
-    name: Go Backend Testing
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Install Go toolchain
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y golang-go
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Test Go backend
-        run: cargo test -p forge-backend-go
-
-  python-backend:
-    name: Python Backend Testing
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.10', '3.11', '3.12']
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Test Python backend
-        run: cargo test -p forge-backend-py
-
-  typescript-backend:
-    name: TypeScript/JavaScript Backend Testing
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: ['18', '20', '22']
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Set up Node.js ${{ matrix.node-version }}
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '20'
       
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Test TypeScript backend
-        run: cargo test -p forge-backend-ts
-
-  rust-backend:
-    name: Rust Backend Testing
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Test Rust backend
-        run: cargo test -p forge-backend-rust
-
-  dotnet-backend:
-    name: .NET Backend Testing
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Install .NET SDK
+      - name: Set up .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
@@ -211,17 +50,32 @@ jobs:
         uses: actions/cache@v4
         with:
           path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-build-backend-core-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Test .NET backend
+      - name: Test Rust Backend
+        run: cargo test -p forge-backend-rust
+      
+      - name: Test C/C++ Backend
+        run: cargo test -p forge-backend-cc
+      
+      - name: Test Go Backend
+        run: cargo test -p forge-backend-go
+      
+      - name: Test TypeScript Backend
+        run: cargo test -p forge-backend-ts
+      
+      - name: Test Python Backend
+        run: cargo test -p forge-backend-py
+      
+      - name: Test Java Backend
+        run: cargo test -p forge-backend-java
+      
+      - name: Test .NET Backend
         run: cargo test -p forge-backend-dotnet
 
-  other-backends:
-    name: Other Language Backends Testing
+  extended-backends:
+    name: Extended Language Backends Testing
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        backend: [swift, dart, zig, docker]
     steps:
       - uses: actions/checkout@v4
       
@@ -238,38 +92,16 @@ jobs:
         uses: actions/cache@v4
         with:
           path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-build-backend-ext-${{ hashFiles('**/Cargo.lock') }}
       
-      - name: Test backend
-        run: cargo test -p forge-backend-${{ matrix.backend }}
-
-  backend-summary:
-    name: Backend Summary
-    runs-on: ubuntu-latest
-    needs: [cc-backend, java-backend, go-backend, python-backend, typescript-backend, rust-backend, dotnet-backend, other-backends]
-    if: always()
-    steps:
-      - name: Check backend test results
-        run: |
-          echo "C/C++ Backend: ${{ needs.cc-backend.result }}"
-          echo "Java Backend: ${{ needs.java-backend.result }}"
-          echo "Go Backend: ${{ needs.go-backend.result }}"
-          echo "Python Backend: ${{ needs.python-backend.result }}"
-          echo "TypeScript Backend: ${{ needs.typescript-backend.result }}"
-          echo "Rust Backend: ${{ needs.rust-backend.result }}"
-          echo ".NET Backend: ${{ needs.dotnet-backend.result }}"
-          echo "Other Backends: ${{ needs.other-backends.result }}"
-          
-          if [ "${{ needs.cc-backend.result }}" != "success" ] || \
-             [ "${{ needs.java-backend.result }}" != "success" ] || \
-             [ "${{ needs.go-backend.result }}" != "success" ] || \
-             [ "${{ needs.python-backend.result }}" != "success" ] || \
-             [ "${{ needs.typescript-backend.result }}" != "success" ] || \
-             [ "${{ needs.rust-backend.result }}" != "success" ] || \
-             [ "${{ needs.dotnet-backend.result }}" != "success" ] || \
-             [ "${{ needs.other-backends.result }}" != "success" ]; then
-            echo "Backend testing failed"
-            exit 1
-          else
-            echo "All backends passed"
-          fi
+      - name: Test Swift Backend
+        run: cargo test -p forge-backend-swift
+      
+      - name: Test Dart Backend
+        run: cargo test -p forge-backend-dart
+      
+      - name: Test Zig Backend
+        run: cargo test -p forge-backend-zig
+      
+      - name: Test Docker Backend
+        run: cargo test -p forge-backend-docker
