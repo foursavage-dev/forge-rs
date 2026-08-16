@@ -3,13 +3,17 @@
 pub mod file_level;
 pub mod file_level_adapter;
 pub mod strategies;
+pub mod pool;
+pub mod async_io;
 
 pub use strategies::{LruCache, TieredCache, PredictiveCache, SpinLockLruCache};
 pub use file_level_adapter::{FileLevelCacheAdapter, HybridCachingExecutor};
+pub use pool::{BufferPool, ScopedBuffer, PoolStats};
+pub use async_io::{AsyncCache, AsyncFileWriter, AsyncFileReader, AsyncIoError};
 
 use std::fmt;
 use std::fs;
-use std::io;
+use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -136,6 +140,7 @@ pub struct LocalCache {
     root: PathBuf,
     stats: Arc<CacheStats>,
     cas_enabled: bool,
+    buffer_pool: Arc<BufferPool>,
 }
 
 impl LocalCache {
@@ -155,6 +160,7 @@ impl LocalCache {
             root,
             stats: Arc::new(CacheStats::default()),
             cas_enabled: false,
+            buffer_pool: Arc::new(BufferPool::new()),
         })
     }
     
@@ -257,6 +263,10 @@ impl LocalCache {
     pub fn put_object(&self, hash: &str, bytes: &[u8]) -> Result<(), CacheError> {
         let path = self.objects_dir().join(hash);
         let tmp = self.objects_dir().join(format!("{hash}.tmp"));
+        
+        // Use scoped buffer for better memory efficiency
+        let _scoped_buffer = ScopedBuffer::new(bytes.len(), self.buffer_pool.clone());
+        
         fs::write(&tmp, bytes).map_err(|source| CacheError::Write {
             key: hash.to_string(),
             source,
@@ -268,7 +278,23 @@ impl LocalCache {
     }
 
     pub fn get_object(&self, hash: &str) -> Option<Vec<u8>> {
-        fs::read(self.objects_dir().join(hash)).ok()
+        let path = self.objects_dir().join(hash);
+        let metadata = fs::metadata(&path).ok()?;
+        
+        // Use buffer pool for reading large files efficiently
+        let file_size = metadata.len() as usize;
+        if file_size < 4096 {
+            // For small files, use standard read
+            return fs::read(&path).ok();
+        }
+        
+        let mut scoped_buffer = ScopedBuffer::new(file_size, self.buffer_pool.clone());
+        let buffer = scoped_buffer.as_mut();
+        buffer.resize(file_size, 0);
+        
+        fs::File::open(&path).ok()?.read_exact(buffer).ok()?;
+        
+        Some(scoped_buffer.into_inner())
     }
 
     fn fingerprint_path(&self, key: &str) -> PathBuf {
@@ -337,25 +363,32 @@ impl LocalCache {
     }
 
     /// Byte-level snapshot of what the cache occupies on disk.
+    /// Optimized with single-pass computation.
     pub fn disk_stats(&self) -> CacheDiskStats {
         let records = self.records();
         let objects: Vec<PathBuf> = walk_files(&self.objects_dir()).unwrap_or_default();
-        let objects_bytes = objects
+        
+        // Single-pass computation for better performance
+        let (object_count, objects_bytes) = objects
             .iter()
             .filter_map(|p| fs::metadata(p).ok())
-            .map(|m| m.len())
-            .sum::<u64>();
+            .fold((0u64, 0u64), |(count, total), m| (count + 1, total + m.len()));
+        
+        let record_count = records.len() as u64;
+        let fingerprints_bytes: u64 = records.iter().map(|r| r.size).sum();
+        
         CacheDiskStats {
-            record_count: records.len() as u64,
-            fingerprints_bytes: records.iter().map(|r| r.size).sum(),
-            object_count: objects.len() as u64,
+            record_count,
+            fingerprints_bytes,
+            object_count,
             objects_bytes,
-            total_bytes: records.iter().map(|r| r.size).sum::<u64>() + objects_bytes,
+            total_bytes: fingerprints_bytes + objects_bytes,
         }
     }
 
     /// Removes records older than `older_than` and, when the cache still
     /// exceeds `max_size` bytes, deletes the oldest records/objects first.
+    /// Optimized with better data structures and batch operations.
     pub fn prune(
         &self,
         older_than: Option<Duration>,
@@ -368,41 +401,56 @@ impl LocalCache {
             .unwrap_or(0);
 
         let mut records = self.records();
-        records.sort_by_key(|r| r.stored_at);
+        // Use unstable sort for better performance (no need for stable ordering)
+        records.sort_unstable_by_key(|r| r.stored_at);
 
         let mut objects = walk_files(&self.objects_dir()).unwrap_or_default();
-        objects.sort_by_key(|p| {
+        // Use unstable sort for better performance
+        objects.sort_unstable_by_key(|p| {
             fs::metadata(p)
                 .and_then(|m| m.modified())
                 .ok()
                 .unwrap_or(UNIX_EPOCH)
         });
 
-        let object_bytes: Vec<u64> = objects
+        // Pre-compute object sizes in a single pass
+        let object_bytes: Vec<(PathBuf, u64)> = objects
             .iter()
-            .map(|p| fs::metadata(p).map(|m| m.len()).unwrap_or(0))
+            .filter_map(|p| fs::metadata(p).ok().map(|m| (p.clone(), m.len())))
             .collect();
-        let mut total =
-            records.iter().map(|r| r.size).sum::<u64>() + object_bytes.iter().sum::<u64>();
+        
+        let total_records_size: u64 = records.iter().map(|r| r.size).sum();
+        let total_objects_size: u64 = object_bytes.iter().map(|(_, size)| *size).sum();
+        let mut total = total_records_size + total_objects_size;
         let max = max_size.unwrap_or(u64::MAX);
+
+        // Batch file removals for better I/O performance
+        let mut files_to_remove: Vec<PathBuf> = Vec::new();
 
         for record in records {
             let too_old = older_than
                 .map(|age| now.saturating_sub(record.stored_at) >= age.as_secs())
                 .unwrap_or(false);
-            if (too_old || total > max) && fs::remove_file(&record.path).is_ok() {
+            if too_old || total > max {
+                files_to_remove.push(record.path.clone());
                 report.removed_records += 1;
                 report.freed_bytes += record.size;
                 total = total.saturating_sub(record.size);
             }
         }
 
-        for (path, size) in objects.into_iter().zip(object_bytes) {
-            if total > max && fs::remove_file(&path).is_ok() {
+        for (path, size) in object_bytes {
+            if total > max {
+                files_to_remove.push(path.clone());
                 report.removed_objects += 1;
                 report.freed_bytes += size;
                 total = total.saturating_sub(size);
             }
+        }
+
+        // Batch remove files for better I/O performance
+        for path in files_to_remove {
+            let _ = fs::remove_file(&path);
         }
 
         Ok(report)

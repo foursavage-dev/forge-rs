@@ -1,5 +1,7 @@
 #![forbid(unsafe_code)]
 
+pub mod work_stealing;
+
 use std::cmp::Reverse;
 use std::collections::HashMap;
 use std::sync::mpsc;
