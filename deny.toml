@@ -1,11 +1,6 @@
 [advisories]
 ignore = [
     "RUSTSEC-2025-0134",
-    "RUSTSEC-2021-0124",
-    "RUSTSEC-2023-0071",
-    "RUSTSEC-2020-0159",
-    "RUSTSEC-2020-0071",
-    "RUSTSEC-2024-0370",
 ]
 
 [licenses]
