@@ -7,6 +7,30 @@ use forge_executor::{CommandSpec, ProcessExecutor, Task, TaskExecutor, TaskStatu
 use forge_worker::virtual_fs::VirtualFileSystem;
 use forge_worker::{ClusterExecutor, RemoteWorkerClient, WorkerServer};
 
+fn start_worker_server(
+    token: Option<String>,
+    name: &str,
+    concurrency: usize,
+) -> (WorkerServer, String, std::thread::JoinHandle<()>) {
+    for _ in 0..10 {
+        let addr = match TcpListener::bind("127.0.0.1:0") {
+            Ok(l) => {
+                let a = l.local_addr().unwrap().to_string();
+                drop(l);
+                thread::sleep(Duration::from_millis(5));
+                a
+            }
+            Err(_) => continue,
+        };
+        let server = WorkerServer::with_options(&addr, token.clone(), name, concurrency);
+        if let Ok(handle) = server.start_background() {
+            thread::sleep(Duration::from_millis(30));
+            return (server, addr, handle);
+        }
+    }
+    panic!("Failed to start worker server after retries");
+}
+
 #[test]
 fn remote_worker_executes_task_over_tcp() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
@@ -31,18 +55,8 @@ fn remote_worker_executes_task_over_tcp() {
 
 #[test]
 fn remote_worker_ping_and_health() {
-    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-    let addr = listener.local_addr().unwrap().to_string();
-    drop(listener);
-
-    let server = WorkerServer::with_options(
-        &addr,
-        Some("auth_token_xyz".to_string()),
-        "test-worker-1",
-        4,
-    );
-    let _handle = server.start_background().unwrap();
-    thread::sleep(Duration::from_millis(50));
+    let (server, addr, _handle) =
+        start_worker_server(Some("auth_token_xyz".to_string()), "test-worker-1", 4);
 
     let client = RemoteWorkerClient::new(&addr, Some("auth_token_xyz".to_string()));
     let ping = client.ping().unwrap();
@@ -130,19 +144,16 @@ fn cluster_source_packaging_is_forwarded_to_workers() {
 
 #[test]
 fn vfs_integration_mounts_and_streams_files() {
-    let vfs = Arc::new(VirtualFileSystem::new(1024 * 1024 * 50)); // 50MB cache
+    let vfs = Arc::new(VirtualFileSystem::new(1024 * 1024 * 50));
 
-    // Create a test directory structure
     let test_dir = tempfile::tempdir().unwrap();
     std::fs::write(test_dir.path().join("test.txt"), "vfs content").unwrap();
     std::fs::create_dir_all(test_dir.path().join("subdir")).unwrap();
     std::fs::write(test_dir.path().join("subdir/nested.txt"), "nested content").unwrap();
 
-    // Mount to VFS
     vfs.mount_local(test_dir.path(), std::path::Path::new("/vfs"))
         .unwrap();
 
-    // Test file reading
     let content = vfs
         .read_file(std::path::Path::new("/vfs/test.txt"))
         .unwrap();
@@ -153,30 +164,22 @@ fn vfs_integration_mounts_and_streams_files() {
         .unwrap();
     assert_eq!(String::from_utf8_lossy(&nested_content), "nested content");
 
-    // Test directory listing
     let children = vfs.list_directory(std::path::Path::new("/vfs")).unwrap();
     assert!(children.contains(&"test.txt".to_string()));
     assert!(children.contains(&"subdir".to_string()));
 
-    // Test cache stats
     let stats = vfs.cache_stats();
     assert!(stats.entries > 0);
 }
 
 #[test]
 fn vfs_mode_worker_request() {
-    let addr = "127.0.0.1:49998"; // Use fixed port for testing
+    let (server, addr, _handle) = start_worker_server(None, "test-worker", 8);
 
-    let server = WorkerServer::with_options(addr, None, "test-worker", 8);
-    let _handle = server.start_background().unwrap();
-    thread::sleep(Duration::from_millis(50));
+    let client = RemoteWorkerClient::new(&addr, None).with_vfs(true);
 
-    let client = RemoteWorkerClient::new(addr, None).with_vfs(true);
-
-    // Test that VFS mode is enabled
     assert!(client.use_vfs);
 
-    // Test that server has VFS (write a test file first)
     let vfs = server.vfs();
     vfs.write_file(
         std::path::Path::new("/test.txt"),
