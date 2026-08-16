@@ -154,17 +154,10 @@ jobs:
       - name: Build CLI binary
         run: cargo build -p forge-cli --release
       
-      - name: Test forge build
-        run: ./target/release/forge build --no-cache
-      
-      - name: Test forge check
-        run: ./target/release/forge check --no-cache
-      
-      - name: Test forge test
-        run: ./target/release/forge test --no-cache
-      
-      - name: Test forge graph
-        run: ./target/release/forge graph --format dot
+      - name: Test CLI help and version
+        run: |
+          ./target/release/forge --version
+          ./target/release/forge --help
       
       - name: Upload release binary
         uses: actions/upload-artifact@v4

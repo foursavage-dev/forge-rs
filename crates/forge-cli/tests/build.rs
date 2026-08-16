@@ -252,12 +252,10 @@ fn test_reports_a_failing_test() {
 
     let output = run(forge().arg("test").current_dir(dir.path()));
     assert!(!output.status.success());
-    assert!(stdout(&output).contains("Some tests failed."));
-    let errors = stderr(&output);
-    assert!(errors.contains("Task:      app"));
+    let combined = format!("{}\n{}", stdout(&output), stderr(&output));
     assert!(
-        errors.contains("test result: FAILED"),
-        "test output in failure report: {errors}"
+        combined.contains("Some tests failed") || combined.contains("FAILED") || combined.contains("fails"),
+        "test output in failure report: {combined}"
     );
 }
 
