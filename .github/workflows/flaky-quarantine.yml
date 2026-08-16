@@ -1,0 +1,40 @@
+name: Flaky Test Detection & Stress Testing
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  flaky-stress-test:
+    name: Flaky Test Stress Run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-flaky-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-flaky-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Stress Test Iterations
+        run: |
+          for i in {1..5}; do
+            echo "Running test iteration $i of 5..."
+            cargo test -p forge-executor -p forge-scheduler -p forge-cache -p forge-flaky-detection -- --test-threads=4
+          done
+          echo "All stress test iterations passed without flakiness."
