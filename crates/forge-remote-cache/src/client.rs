@@ -32,42 +32,62 @@ impl TcpRemoteCacheClient {
     }
 
     fn send_request(&self, req: CacheRequest) -> Result<CacheResponse, RemoteCacheError> {
-        let mut stream = TcpStream::connect(&self.server_addr).map_err(|e| {
-            RemoteCacheError::Network(format!("cannot connect to {}: {e}", self.server_addr))
-        })?;
+        let mut last_err = RemoteCacheError::Network("failed to connect".to_string());
+        for attempt in 0..3 {
+            if attempt > 0 {
+                std::thread::sleep(Duration::from_millis(50));
+            }
+            let mut stream = match TcpStream::connect(&self.server_addr) {
+                Ok(s) => s,
+                Err(e) => {
+                    last_err = RemoteCacheError::Network(format!(
+                        "cannot connect to {}: {e}",
+                        self.server_addr
+                    ));
+                    continue;
+                }
+            };
 
-        let _ = stream.set_read_timeout(Some(self.timeout));
-        let _ = stream.set_write_timeout(Some(self.timeout));
+            let _ = stream.set_read_timeout(Some(self.timeout));
+            let _ = stream.set_write_timeout(Some(self.timeout));
 
-        let req_json = serde_json::to_vec(&req)
-            .map_err(|e| RemoteCacheError::Protocol(format!("cannot serialize request: {e}")))?;
+            let req_json = serde_json::to_vec(&req).map_err(|e| {
+                RemoteCacheError::Protocol(format!("cannot serialize request: {e}"))
+            })?;
 
-        stream
-            .write_all(&req_json)
-            .map_err(|e| RemoteCacheError::Network(format!("failed to send request: {e}")))?;
-        stream
-            .write_all(b"\n")
-            .map_err(|e| RemoteCacheError::Network(format!("failed to send newline: {e}")))?;
-        stream
-            .flush()
-            .map_err(|e| RemoteCacheError::Network(format!("failed to flush stream: {e}")))?;
+            if let Err(e) = stream.write_all(&req_json) {
+                last_err = RemoteCacheError::Network(format!("failed to send request: {e}"));
+                continue;
+            }
+            if let Err(e) = stream.write_all(b"\n") {
+                last_err = RemoteCacheError::Network(format!("failed to send newline: {e}"));
+                continue;
+            }
+            if let Err(e) = stream.flush() {
+                last_err = RemoteCacheError::Network(format!("failed to flush stream: {e}"));
+                continue;
+            }
 
-        let mut reader = BufReader::new(stream);
-        let mut line = String::new();
-        if reader
-            .read_line(&mut line)
-            .map_err(|e| RemoteCacheError::Network(format!("failed to read response: {e}")))?
-            == 0
-        {
-            return Err(RemoteCacheError::Protocol(
-                "empty response from server".to_string(),
-            ));
+            let mut reader = BufReader::new(stream);
+            let mut line = String::new();
+            match reader.read_line(&mut line) {
+                Ok(0) => {
+                    last_err = RemoteCacheError::Protocol("empty response from server".to_string());
+                    continue;
+                }
+                Ok(_) => {
+                    let resp: CacheResponse = serde_json::from_str(line.trim()).map_err(|e| {
+                        RemoteCacheError::Protocol(format!("cannot parse response: {e}"))
+                    })?;
+                    return Ok(resp);
+                }
+                Err(e) => {
+                    last_err = RemoteCacheError::Network(format!("failed to read response: {e}"));
+                    continue;
+                }
+            }
         }
-
-        let resp: CacheResponse = serde_json::from_str(line.trim())
-            .map_err(|e| RemoteCacheError::Protocol(format!("cannot parse response: {e}")))?;
-
-        Ok(resp)
+        Err(last_err)
     }
 
     pub fn ping(&self) -> Result<bool, RemoteCacheError> {

@@ -272,15 +272,20 @@ mod tests {
                 Ok(l) => {
                     let a = l.local_addr().unwrap().to_string();
                     drop(l);
-                    thread::sleep(Duration::from_millis(10));
+                    thread::sleep(Duration::from_millis(15));
                     a
                 }
                 Err(_) => continue,
             };
             let server = RemoteCacheServer::new(&addr, token.clone(), dir.clone());
             if let Ok(handle) = server.start_background() {
-                thread::sleep(Duration::from_millis(30));
-                return (server, addr, handle);
+                thread::sleep(Duration::from_millis(50));
+                let client = TcpRemoteCacheClient::new(&addr, token.clone());
+                if token.is_some() || client.ping().is_ok() {
+                    return (server, addr, handle);
+                }
+                server.stop();
+                let _ = handle.join();
             }
         }
         panic!("Failed to start remote cache test server");
