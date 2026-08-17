@@ -222,7 +222,10 @@ impl RemoteCacheServer {
         if key.contains("..") || key.contains('/') || key.contains('\\') || key.contains('\0') {
             return None;
         }
-        if key.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-' || c == '.') {
+        if key
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '_' || c == '-' || c == '.')
+        {
             Some(key.to_string())
         } else {
             None
@@ -348,11 +351,11 @@ impl RemoteCacheServer {
                         let guard = artifact_index.read().unwrap();
                         guard.get(&hash).cloned()
                     };
-                    content_hash
-                        .and_then(|h| {
-                            Self::safe_key_identifier(&h)
-                                .and_then(|safe_h| fs::read(dir.join("artifacts").join("objects").join(safe_h)).ok())
+                    content_hash.and_then(|h| {
+                        Self::safe_key_identifier(&h).and_then(|safe_h| {
+                            fs::read(dir.join("artifacts").join("objects").join(safe_h)).ok()
                         })
+                    })
                 } else {
                     None
                 };

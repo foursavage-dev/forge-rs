@@ -92,12 +92,11 @@ impl RustScanner {
         for (pkg_name, pkg_ver) in packages {
             if let Ok(ver) = Version::parse(pkg_ver) {
                 for (name, fix_ver_str, id, severity, desc) in known_rules {
-                    if pkg_name == name && Version::parse(fix_ver_str).is_ok_and(|fix_ver| ver < fix_ver) {
-                        let mut vuln = Vulnerability::new(
-                            id.to_string(),
-                            pkg_name.clone(),
-                            *severity,
-                        );
+                    if pkg_name == name
+                        && Version::parse(fix_ver_str).is_ok_and(|fix_ver| ver < fix_ver)
+                    {
+                        let mut vuln =
+                            Vulnerability::new(id.to_string(), pkg_name.clone(), *severity);
                         vuln.source = VulnerabilitySource::RustSec;
                         vuln.description = desc.to_string();
                         vuln.affected_versions = format!("< {fix_ver_str}");
@@ -184,12 +183,11 @@ impl NpmScanner {
         for (pkg_name, pkg_ver) in packages {
             if let Ok(ver) = Version::parse(pkg_ver) {
                 for (name, fix_ver_str, id, severity, desc) in known_rules {
-                    if pkg_name == name && Version::parse(fix_ver_str).is_ok_and(|fix_ver| ver < fix_ver) {
-                        let mut vuln = Vulnerability::new(
-                            id.to_string(),
-                            pkg_name.clone(),
-                            *severity,
-                        );
+                    if pkg_name == name
+                        && Version::parse(fix_ver_str).is_ok_and(|fix_ver| ver < fix_ver)
+                    {
+                        let mut vuln =
+                            Vulnerability::new(id.to_string(), pkg_name.clone(), *severity);
                         vuln.source = VulnerabilitySource::NPM;
                         vuln.description = desc.to_string();
                         vuln.affected_versions = format!("< {fix_ver_str}");
@@ -232,7 +230,11 @@ impl BackendScanner for NpmScanner {
             if let Some(pkgs) = val.get("packages").and_then(|p| p.as_object()) {
                 for (path, info) in pkgs {
                     let name = path.trim_start_matches("node_modules/").to_string();
-                    if let Some(ver) = info.get("version").and_then(|v| v.as_str()).filter(|_| !name.is_empty()) {
+                    if let Some(ver) = info
+                        .get("version")
+                        .and_then(|v| v.as_str())
+                        .filter(|_| !name.is_empty())
+                    {
                         packages.push((name, ver.to_string()));
                     }
                 }
@@ -270,7 +272,9 @@ impl BackendScanner for MavenScanner {
             .map_err(SecurityError::IoError)?;
 
         let mut results = Vec::new();
-        if content.contains("log4j-core") && (content.contains("2.14.") || content.contains("2.15.")) {
+        if content.contains("log4j-core")
+            && (content.contains("2.14.") || content.contains("2.15."))
+        {
             let mut vuln = Vulnerability::new(
                 "CVE-2021-44228".to_string(),
                 "log4j-core".to_string(),
@@ -316,7 +320,10 @@ version = "1.0.219"
 "#;
         tokio::fs::write(&lock_path, lock_content).await.unwrap();
 
-        let report = scanner.scan(temp_dir.path(), &ScanOptions::default()).await.unwrap();
+        let report = scanner
+            .scan(temp_dir.path(), &ScanOptions::default())
+            .await
+            .unwrap();
         assert_eq!(report.len(), 1);
         assert_eq!(report[0].package, "lru");
         assert_eq!(report[0].id, "GHSA-rhfx-m35p-ff5j");
@@ -341,7 +348,10 @@ version = "0.30.2"
 "#;
         tokio::fs::write(&lock_path, lock_content).await.unwrap();
 
-        let report = scanner.scan(temp_dir.path(), &ScanOptions::default()).await.unwrap();
+        let report = scanner
+            .scan(temp_dir.path(), &ScanOptions::default())
+            .await
+            .unwrap();
         assert_eq!(report.len(), 0);
     }
 }
