@@ -48,6 +48,8 @@ fn main() -> ExitCode {
             println!("forge {}", env!("CARGO_PKG_VERSION"));
             ExitCode::SUCCESS
         }
+        Command::Init(args) => commands::run_init(args.path, args.force),
+        Command::New(args) => commands::run_new(&args.name, args.template.as_deref(), args.path),
         Command::Build(args) => run_build_mode(args.common, BuildMode::Build),
         Command::Check(args) => run_build_mode(args.common, BuildMode::Check),
         Command::Test(args) => run_build_mode(args.common, BuildMode::Test),
@@ -57,7 +59,7 @@ fn main() -> ExitCode {
         Command::CacheServer(args) => run_cache_server(args),
         Command::Worker(args) => commands::run_worker(args),
         Command::Affected(args) => commands::run_affected(args),
-        Command::Doctor => commands::run_doctor(),
+        Command::Doctor(args) => commands::run_doctor_with_ai(args.ai),
         Command::Cache(args) => commands::run_cache(args),
         Command::Watch(args) => {
             let start_dir = match resolve_start_dir(args.common.path.as_deref()) {

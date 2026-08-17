@@ -31,6 +31,8 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 pub enum Command {
     Version,
+    Init(InitArgs),
+    New(NewArgs),
     Build(BuildArgs),
     Check(CheckArgs),
     Test(TestArgs),
@@ -41,7 +43,7 @@ pub enum Command {
     CacheServer(CacheServerArgs),
     Worker(WorkerArgs),
     Affected(AffectedArgs),
-    Doctor,
+    Doctor(DoctorArgs),
     Cache(CacheArgs),
     Ci(CiArgs),
     History(HistoryArgs),
@@ -52,6 +54,29 @@ pub enum Command {
     Jit(JitArgs),
     SuperOpt(SuperOptArgs),
     Plugin(PluginArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct InitArgs {
+    #[arg(long, short)]
+    pub path: Option<PathBuf>,
+    #[arg(long, short)]
+    pub force: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct NewArgs {
+    pub name: String,
+    #[arg(long, short)]
+    pub template: Option<String>,
+    #[arg(long, short)]
+    pub path: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct DoctorArgs {
+    #[arg(long)]
+    pub ai: bool,
 }
 
 /// Arguments for affected command
