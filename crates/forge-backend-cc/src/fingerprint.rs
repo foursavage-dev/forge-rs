@@ -2,8 +2,8 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use forge_core::FingerprintUtils;
 use crate::depfile::read_depfile;
+use forge_core::FingerprintUtils;
 
 pub fn compute_source_fingerprint(
     source_path: &Path,
@@ -131,8 +131,7 @@ mod tests {
         .unwrap();
 
         let includes = vec![dir.path().to_path_buf()];
-        let before =
-            compute_source_fingerprint(&source, &includes, &[], "gcc 13", None).unwrap();
+        let before = compute_source_fingerprint(&source, &includes, &[], "gcc 13", None).unwrap();
 
         fs::write(dir.path().join("util.h"), "#define VALUE 2\n").unwrap();
         let after = compute_source_fingerprint(&source, &includes, &[], "gcc 13", None).unwrap();
@@ -164,11 +163,7 @@ mod tests {
         let source = dir.path().join("main.c");
 
         let depfile = dir.path().join("main.d");
-        fs::write(
-            &depfile,
-            "main.o: main.c generated.h\n",
-        )
-        .unwrap();
+        fs::write(&depfile, "main.o: main.c generated.h\n").unwrap();
 
         let before =
             compute_source_fingerprint(&source, &[], &[], "gcc 13", Some(&depfile)).unwrap();

@@ -7,7 +7,10 @@ pub fn get_default_install_dir() -> PathBuf {
     #[cfg(windows)]
     {
         if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
-            PathBuf::from(local_app_data).join("Programs").join("Forge").join("bin")
+            PathBuf::from(local_app_data)
+                .join("Programs")
+                .join("Forge")
+                .join("bin")
         } else if let Ok(user_profile) = std::env::var("USERPROFILE") {
             PathBuf::from(user_profile).join(".forge").join("bin")
         } else {
@@ -58,23 +61,34 @@ pub fn find_source_forge_binary() -> Option<PathBuf> {
 }
 
 pub fn perform_installation(target_dir: &Path, source_binary: Option<&Path>) -> Result<(), String> {
-    fs::create_dir_all(target_dir).map_err(|e| format!("Failed to create installation directory: {e}"))?;
+    fs::create_dir_all(target_dir)
+        .map_err(|e| format!("Failed to create installation directory: {e}"))?;
 
     let target_binary_name = if cfg!(windows) { "forge.exe" } else { "forge" };
     let destination_file = target_dir.join(target_binary_name);
 
     if let Some(src) = source_binary {
         if src != destination_file {
-            fs::copy(src, &destination_file)
-                .map_err(|e| format!("Failed to copy binary from {} to {}: {e}", src.display(), destination_file.display()))?;
+            fs::copy(src, &destination_file).map_err(|e| {
+                format!(
+                    "Failed to copy binary from {} to {}: {e}",
+                    src.display(),
+                    destination_file.display()
+                )
+            })?;
         }
     } else if let Ok(current_exe) = std::env::current_exe() {
         if let Some(name) = current_exe.file_name() {
-            if name.to_string_lossy().eq_ignore_ascii_case("forge.exe") || name.to_string_lossy() == "forge" {
-                if current_exe != destination_file {
-                    fs::copy(&current_exe, &destination_file)
-                        .map_err(|e| format!("Failed to copy current executable to {}: {e}", destination_file.display()))?;
-                }
+            if (name.to_string_lossy().eq_ignore_ascii_case("forge.exe")
+                || name.to_string_lossy() == "forge")
+                && current_exe != destination_file
+            {
+                fs::copy(&current_exe, &destination_file).map_err(|e| {
+                    format!(
+                        "Failed to copy current executable to {}: {e}",
+                        destination_file.display()
+                    )
+                })?;
             }
         }
     }
@@ -87,7 +101,11 @@ pub fn perform_installation(target_dir: &Path, source_binary: Option<&Path>) -> 
         }
     }
 
-    let uninstaller_name = if cfg!(windows) { "forge-uninstall.exe" } else { "forge-uninstall" };
+    let uninstaller_name = if cfg!(windows) {
+        "forge-uninstall.exe"
+    } else {
+        "forge-uninstall"
+    };
     if let Ok(current_exe) = std::env::current_exe() {
         let uninstaller_dest = target_dir.join(uninstaller_name);
         if current_exe != uninstaller_dest && current_exe.exists() {
@@ -105,7 +123,10 @@ pub fn perform_installation(target_dir: &Path, source_binary: Option<&Path>) -> 
     });
 
     let meta_path = target_dir.join("forge-install.json");
-    let _ = fs::write(meta_path, serde_json::to_string_pretty(&metadata).unwrap_or_default());
+    let _ = fs::write(
+        meta_path,
+        serde_json::to_string_pretty(&metadata).unwrap_or_default(),
+    );
 
     path_env::add_dir_to_user_path(target_dir)?;
 

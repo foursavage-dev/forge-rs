@@ -80,7 +80,11 @@ impl AttestationEngine {
                         let hash = blake3::hash(&content).to_hex().to_string();
                         merkle_hasher.update(hash.as_bytes());
                         materials.push(SlsaSubject {
-                            name: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
+                            name: path
+                                .file_name()
+                                .unwrap_or_default()
+                                .to_string_lossy()
+                                .to_string(),
                             digest: SlsaDigest { blake3: hash },
                         });
                     }
@@ -91,8 +95,18 @@ impl AttestationEngine {
         let merkle_root = merkle_hasher.finalize().to_hex().to_string();
 
         let mut builder_info = HashMap::new();
-        builder_info.insert("id".to_string(), "https://github.com/requla11/forge-rs@v0.1.0".to_string());
-        builder_info.insert("timestamp".to_string(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs().to_string());
+        builder_info.insert(
+            "id".to_string(),
+            "https://github.com/requla11/forge-rs@v0.1.0".to_string(),
+        );
+        builder_info.insert(
+            "timestamp".to_string(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs()
+                .to_string(),
+        );
 
         let mut config_source = HashMap::new();
         config_source.insert("uri".to_string(), project_root.display().to_string());
@@ -130,10 +144,7 @@ impl AttestationEngine {
         Ok(path)
     }
 
-    pub fn verify_attestation(
-        attestation_path: &Path,
-        artifacts_dir: &Path,
-    ) -> io::Result<bool> {
+    pub fn verify_attestation(attestation_path: &Path, artifacts_dir: &Path) -> io::Result<bool> {
         let content = fs::read_to_string(attestation_path)?;
         let attestation: SlsaAttestation = serde_json::from_str(&content)
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
@@ -171,7 +182,9 @@ mod tests {
         let bin_path = out_dir.join("app.exe");
         fs::write(&bin_path, b"pristine binary artifact").unwrap();
 
-        let attestation = AttestationEngine::generate_attestation(temp.path(), std::slice::from_ref(&bin_path)).unwrap();
+        let attestation =
+            AttestationEngine::generate_attestation(temp.path(), std::slice::from_ref(&bin_path))
+                .unwrap();
         assert!(!attestation.merkle_root.is_empty());
         assert_eq!(attestation.subject.len(), 1);
 
@@ -182,7 +195,8 @@ mod tests {
         assert!(is_valid);
 
         fs::write(&bin_path, b"tampered binary artifact").unwrap();
-        let is_valid_after_tamper = AttestationEngine::verify_attestation(&att_file, &out_dir).unwrap();
+        let is_valid_after_tamper =
+            AttestationEngine::verify_attestation(&att_file, &out_dir).unwrap();
         assert!(!is_valid_after_tamper);
     }
 }

@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use forge_core::{FingerprintUtils, DEFAULT_EXCLUDED_DIRS};
 use crate::SwiftBackendError;
 use crate::config::SwiftPlatform;
+use forge_core::{DEFAULT_EXCLUDED_DIRS, FingerprintUtils};
 
 pub fn compute_swift_fingerprint(
     project_dir: &Path,
@@ -23,7 +23,14 @@ pub fn compute_swift_fingerprint(
     )
     .map_err(SwiftBackendError::Io)?;
 
-    for name in &["Package.swift", "Package.resolved", "Podfile", "Podfile.lock", "Cartfile", "Cartfile.resolved"] {
+    for name in &[
+        "Package.swift",
+        "Package.resolved",
+        "Podfile",
+        "Podfile.lock",
+        "Cartfile",
+        "Cartfile.resolved",
+    ] {
         let path = project_dir.join(name);
         if path.exists() {
             let _ = FingerprintUtils::hash_file_into(&path, &mut hasher);
@@ -51,11 +58,8 @@ mod tests {
         let package_file = temp.path().join("Package.swift");
         fs::write(&package_file, "// swift-tools-version: 5.9").unwrap();
 
-        let fingerprint = compute_swift_fingerprint(
-            temp.path(),
-            "5.9.0",
-            &SwiftPlatform::MacOS,
-        ).unwrap();
+        let fingerprint =
+            compute_swift_fingerprint(temp.path(), "5.9.0", &SwiftPlatform::MacOS).unwrap();
 
         assert!(!fingerprint.is_empty());
         assert_eq!(fingerprint.len(), 64);
@@ -70,19 +74,11 @@ mod tests {
         let swift_file = sources_dir.join("main.swift");
         fs::write(&swift_file, "print(\"Hello, World!\")").unwrap();
 
-        let fp1 = compute_swift_fingerprint(
-            temp.path(),
-            "5.9.0",
-            &SwiftPlatform::MacOS,
-        ).unwrap();
+        let fp1 = compute_swift_fingerprint(temp.path(), "5.9.0", &SwiftPlatform::MacOS).unwrap();
 
         fs::write(&swift_file, "print(\"Goodbye, World!\")").unwrap();
 
-        let fp2 = compute_swift_fingerprint(
-            temp.path(),
-            "5.9.0",
-            &SwiftPlatform::MacOS,
-        ).unwrap();
+        let fp2 = compute_swift_fingerprint(temp.path(), "5.9.0", &SwiftPlatform::MacOS).unwrap();
 
         assert_ne!(fp1, fp2);
     }

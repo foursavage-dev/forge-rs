@@ -5,9 +5,9 @@
 //! This module provides hierarchical configuration management with validation,
 //! environment variable support, and profile-based configurations.
 
-use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ForgeConfig {
@@ -118,32 +118,31 @@ impl Default for ForgeConfig {
 
 impl ForgeConfig {
     pub fn load_from_file(path: &Path) -> Result<Self, ConfigError> {
-        let content = fs::read_to_string(path)
-            .map_err(|e| ConfigError::IoError(e.to_string()))?;
-        
-        let config: ForgeConfig = toml::from_str(&content)
-            .map_err(|e| ConfigError::ParseError(e.to_string()))?;
-        
+        let content = fs::read_to_string(path).map_err(|e| ConfigError::IoError(e.to_string()))?;
+
+        let config: ForgeConfig =
+            toml::from_str(&content).map_err(|e| ConfigError::ParseError(e.to_string()))?;
+
         config.validate()?;
         Ok(config)
     }
 
     pub fn load_from_env() -> Result<Self, ConfigError> {
         let mut config = Self::default();
-        
+
         // Override with environment variables
         if let Ok(level) = std::env::var("FORGE_LOG_LEVEL") {
             config.general.log_level = level;
         }
-        
+
         if let Ok(jobs) = std::env::var("FORGE_MAX_JOBS") {
             config.general.max_parallel_jobs = jobs.parse().unwrap_or(4);
         }
-        
+
         if let Ok(cache_enabled) = std::env::var("FORGE_CACHE_ENABLED") {
             config.cache.enabled = cache_enabled.parse().unwrap_or(true);
         }
-        
+
         config.validate()?;
         Ok(config)
     }
@@ -162,7 +161,7 @@ impl ForgeConfig {
         if other.general.max_parallel_jobs != 4 {
             self.general.max_parallel_jobs = other.general.max_parallel_jobs;
         }
-        
+
         // Cache config
         if other.cache.local_path.is_some() {
             self.cache.local_path = other.cache.local_path;
@@ -170,16 +169,16 @@ impl ForgeConfig {
         if other.cache.remote_url.is_some() {
             self.cache.remote_url = other.cache.remote_url;
         }
-        
+
         // Build config
         self.build.level_batching = other.build.level_batching;
         self.build.incremental = other.build.incremental;
-        
+
         // CI config
         if other.ci.platform != "github" {
             self.ci.platform = other.ci.platform;
         }
-        
+
         // Security config
         if other.security.level != "strict" {
             self.security.level = other.security.level;
@@ -187,7 +186,7 @@ impl ForgeConfig {
         if !other.security.allowed_executables.is_empty() {
             self.security.allowed_executables = other.security.allowed_executables;
         }
-        
+
         // Experimental config
         self.experimental.hotpatch_enabled = other.experimental.hotpatch_enabled;
         self.experimental.kernel_bypass_enabled = other.experimental.kernel_bypass_enabled;
@@ -196,35 +195,47 @@ impl ForgeConfig {
     pub fn validate(&self) -> Result<(), ConfigError> {
         // Validate parallel jobs
         if self.general.max_parallel_jobs == 0 {
-            return Err(ConfigError::Validation("max_parallel_jobs must be greater than 0".to_string()));
+            return Err(ConfigError::Validation(
+                "max_parallel_jobs must be greater than 0".to_string(),
+            ));
         }
-        
+
         if self.general.max_parallel_jobs > 128 {
-            return Err(ConfigError::Validation("max_parallel_jobs cannot exceed 128".to_string()));
+            return Err(ConfigError::Validation(
+                "max_parallel_jobs cannot exceed 128".to_string(),
+            ));
         }
-        
+
         // Validate cache size
         if let Some(max_size) = self.cache.max_size_gb {
             if max_size <= 0.0 {
-                return Err(ConfigError::Validation("max_size_gb must be positive".to_string()));
+                return Err(ConfigError::Validation(
+                    "max_size_gb must be positive".to_string(),
+                ));
             }
             if max_size > 1000.0 {
-                return Err(ConfigError::Validation("max_size_gb cannot exceed 1000GB".to_string()));
+                return Err(ConfigError::Validation(
+                    "max_size_gb cannot exceed 1000GB".to_string(),
+                ));
             }
         }
-        
+
         // Validate security level
         match self.security.level.as_str() {
-            "allow" | "strict" | "paranoid" => {},
-            _ => return Err(ConfigError::Validation("security level must be 'allow', 'strict', or 'paranoid'".to_string())),
+            "allow" | "strict" | "paranoid" => {}
+            _ => {
+                return Err(ConfigError::Validation(
+                    "security level must be 'allow', 'strict', or 'paranoid'".to_string(),
+                ));
+            }
         }
-        
+
         Ok(())
     }
 
     pub fn get_profile(&self, profile: &str) -> ForgeConfig {
         let mut profile_config = self.clone();
-        
+
         match profile {
             "development" => {
                 profile_config.general.log_level = "debug".to_string();
@@ -243,7 +254,7 @@ impl ForgeConfig {
             }
             _ => {}
         }
-        
+
         profile_config
     }
 }
@@ -286,7 +297,7 @@ mod tests {
         let mut config = ForgeConfig::default();
         config.general.max_parallel_jobs = 0;
         assert!(config.validate().is_err());
-        
+
         config.general.max_parallel_jobs = 4;
         assert!(config.validate().is_ok());
     }
@@ -296,7 +307,7 @@ mod tests {
         let mut config1 = ForgeConfig::default();
         let mut config2 = ForgeConfig::default();
         config2.general.max_parallel_jobs = 8;
-        
+
         config1.merge(config2);
         assert_eq!(config1.general.max_parallel_jobs, 8);
     }
@@ -305,10 +316,10 @@ mod tests {
     fn test_profile_selection() {
         let config = ForgeConfig::default();
         let dev_profile = config.get_profile("development");
-        
+
         assert_eq!(dev_profile.general.log_level, "debug");
         assert!(dev_profile.experimental.hotpatch_enabled);
-        
+
         let prod_profile = config.get_profile("production");
         assert_eq!(prod_profile.general.log_level, "warn");
         assert!(!prod_profile.experimental.hotpatch_enabled);
@@ -319,22 +330,22 @@ mod tests {
         // Test the parsing logic used in load_from_env
         // Since we can't set environment variables due to #![forbid(unsafe_code)],
         // we test the parsing behavior directly
-        
+
         // Test default values when env vars are not set
         let config = ForgeConfig::load_from_env().unwrap();
         assert_eq!(config.general.max_parallel_jobs, 4);
         assert_eq!(config.general.log_level, "info");
         assert!(config.cache.enabled);
-        
+
         // Test parsing logic (simulate what load_from_env does)
         let jobs_str = "8";
         let parsed_jobs: usize = jobs_str.parse().unwrap_or(4);
         assert_eq!(parsed_jobs, 8);
-        
+
         let cache_str = "false";
         let parsed_cache: bool = cache_str.parse().unwrap_or(true);
         assert!(!parsed_cache);
-        
+
         let log_str = "debug";
         let parsed_log = log_str.to_string();
         assert_eq!(parsed_log, "debug");

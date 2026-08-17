@@ -1,16 +1,16 @@
 #![forbid(unsafe_code)]
 
+pub mod bitbucket;
+pub mod circleci;
 pub mod github;
 pub mod gitlab;
-pub mod circleci;
-pub mod bitbucket;
 pub mod matrix;
 
+pub use bitbucket::BitbucketPipelineGenerator;
+pub use circleci::CircleCIGenerator;
 pub use github::GitHubActionsGenerator;
 pub use gitlab::GitLabCIGenerator;
-pub use circleci::CircleCIGenerator;
-pub use bitbucket::BitbucketPipelineGenerator;
-pub use matrix::{CIMatrix, CIJob, CacheConfig};
+pub use matrix::{CIJob, CIMatrix, CacheConfig};
 
 use thiserror::Error;
 
@@ -18,10 +18,10 @@ use thiserror::Error;
 pub enum CIGeneratorError {
     #[error("Failed to generate CI configuration: {0}")]
     GenerationError(String),
-    
+
     #[error("Template error: {0}")]
     TemplateError(String),
-    
+
     #[error("Analysis error: {0}")]
     AnalysisError(String),
 }
@@ -69,17 +69,17 @@ impl CIConfig {
         self.platform = platform;
         self
     }
-    
+
     pub fn with_cache(mut self, enabled: bool) -> Self {
         self.cache_enabled = enabled;
         self
     }
-    
+
     pub fn with_remote_cache(mut self, url: String) -> Self {
         self.remote_cache_url = Some(url);
         self
     }
-    
+
     pub fn generate_ci(&self, matrix: &CIMatrix) -> Result<String> {
         match self.platform {
             CIPlatform::GitHubActions => {
@@ -101,22 +101,22 @@ impl CIConfig {
             CIPlatform::All => {
                 // Generate all configurations and return them as a combined output
                 let mut output = String::new();
-                
+
                 let github_gen = GitHubActionsGenerator::new(self.clone());
                 output.push_str(&github_gen.generate_workflow(matrix)?);
                 output.push_str("\n---\n\n");
-                
+
                 let gitlab_gen = GitLabCIGenerator::new(self.clone());
                 output.push_str(&gitlab_gen.generate_pipeline(matrix)?);
                 output.push_str("\n---\n\n");
-                
+
                 let circle_gen = CircleCIGenerator::new(self.clone());
                 output.push_str(&circle_gen.generate_config(matrix)?);
                 output.push_str("\n---\n\n");
-                
+
                 let bitbucket_gen = BitbucketPipelineGenerator::new(self.clone());
                 output.push_str(&bitbucket_gen.generate_config(matrix)?);
-                
+
                 Ok(output)
             }
         }

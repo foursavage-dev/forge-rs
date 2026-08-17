@@ -1,7 +1,7 @@
 use std::io;
 use std::path::Path;
 
-use forge_core::{FingerprintUtils, DEFAULT_EXCLUDED_DIRS};
+use forge_core::{DEFAULT_EXCLUDED_DIRS, FingerprintUtils};
 
 pub fn compute_ts_fingerprint(root: &Path, source_dirs: &[String]) -> Result<String, io::Error> {
     let mut hasher = blake3::Hasher::new();

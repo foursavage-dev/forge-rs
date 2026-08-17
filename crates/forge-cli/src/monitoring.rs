@@ -2,15 +2,15 @@
 #![allow(dead_code)]
 
 //! Real-time build monitoring and dashboard
-//! 
+//!
 //! This module provides live monitoring capabilities for build operations,
 //! including progress tracking, status updates, and metrics visualization.
 
+use spin::Mutex as SpinMutex;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, Instant};
-use spin::Mutex as SpinMutex;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BuildStatus {
@@ -55,14 +55,17 @@ impl BuildMonitor {
     pub fn add_task(&self, name: String) {
         self.total_tasks.fetch_add(1, Ordering::SeqCst);
         let mut tasks = self.tasks.lock();
-        tasks.insert(name.clone(), TaskProgress {
-            name,
-            status: BuildStatus::Pending,
-            progress: 0.0,
-            message: "Waiting to start".to_string(),
-            start_time: None,
-            duration: None,
-        });
+        tasks.insert(
+            name.clone(),
+            TaskProgress {
+                name,
+                status: BuildStatus::Pending,
+                progress: 0.0,
+                message: "Waiting to start".to_string(),
+                start_time: None,
+                duration: None,
+            },
+        );
     }
 
     pub fn update_task(&self, name: &str, status: BuildStatus, progress: f64, message: String) {
@@ -71,16 +74,16 @@ impl BuildMonitor {
             task.status = status;
             task.progress = progress;
             task.message = message;
-            
+
             if status == BuildStatus::Running && task.start_time.is_none() {
                 task.start_time = Some(Instant::now());
             }
-            
+
             if status == BuildStatus::Completed {
                 task.duration = task.start_time.map(|t| t.elapsed());
                 self.completed_tasks.fetch_add(1, Ordering::SeqCst);
             }
-            
+
             if status == BuildStatus::Failed {
                 task.duration = task.start_time.map(|t| t.elapsed());
                 self.failed_tasks.fetch_add(1, Ordering::SeqCst);
@@ -122,17 +125,21 @@ impl BuildMonitor {
 
     /// Batch add multiple tasks at once to reduce lock contention
     pub fn add_tasks_batch(&self, names: Vec<String>) {
-        self.total_tasks.fetch_add(names.len() as u64, Ordering::SeqCst);
+        self.total_tasks
+            .fetch_add(names.len() as u64, Ordering::SeqCst);
         let mut tasks = self.tasks.lock();
         for name in names {
-            tasks.insert(name.clone(), TaskProgress {
-                name,
-                status: BuildStatus::Pending,
-                progress: 0.0,
-                message: "Waiting to start".to_string(),
-                start_time: None,
-                duration: None,
-            });
+            tasks.insert(
+                name.clone(),
+                TaskProgress {
+                    name,
+                    status: BuildStatus::Pending,
+                    progress: 0.0,
+                    message: "Waiting to start".to_string(),
+                    start_time: None,
+                    duration: None,
+                },
+            );
         }
     }
 
@@ -186,7 +193,7 @@ mod tests {
     fn test_task_addition() {
         let monitor = BuildMonitor::new();
         monitor.add_task("test_task".to_string());
-        
+
         let progress = monitor.get_progress();
         assert_eq!(progress.total_tasks, 1);
         assert_eq!(progress.tasks.len(), 1);
@@ -196,8 +203,13 @@ mod tests {
     fn test_task_updates() {
         let monitor = BuildMonitor::new();
         monitor.add_task("test_task".to_string());
-        monitor.update_task("test_task", BuildStatus::Running, 0.5, "Processing".to_string());
-        
+        monitor.update_task(
+            "test_task",
+            BuildStatus::Running,
+            0.5,
+            "Processing".to_string(),
+        );
+
         let progress = monitor.get_progress();
         assert_eq!(progress.tasks[0].status, BuildStatus::Running);
         assert_eq!(progress.tasks[0].progress, 0.5);
@@ -220,7 +232,11 @@ mod tests {
     #[test]
     fn test_batch_task_addition() {
         let monitor = BuildMonitor::new();
-        let tasks = vec!["task1".to_string(), "task2".to_string(), "task3".to_string()];
+        let tasks = vec![
+            "task1".to_string(),
+            "task2".to_string(),
+            "task3".to_string(),
+        ];
         monitor.add_tasks_batch(tasks);
 
         let progress = monitor.get_progress();

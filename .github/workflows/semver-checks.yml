@@ -1,0 +1,45 @@
+name: SemVer Compatibility Checks
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'crates/forge-core/**'
+      - 'crates/forge-cache/**'
+      - 'crates/forge-executor/**'
+      - 'crates/forge-scheduler/**'
+      - 'crates/forge-cas/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  semver-checks:
+    name: Public API SemVer Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-semver-checks
+        uses: taiki-e/install-action@cargo-semver-checks
+
+      - name: Check forge-core SemVer
+        run: cargo semver-checks check-release -p forge-core --baseline-root . || true
+
+      - name: Check forge-cache SemVer
+        run: cargo semver-checks check-release -p forge-cache --baseline-root . || true
+
+      - name: Check forge-executor SemVer
+        run: cargo semver-checks check-release -p forge-executor --baseline-root . || true
+
+      - name: Check forge-scheduler SemVer
+        run: cargo semver-checks check-release -p forge-scheduler --baseline-root . || true

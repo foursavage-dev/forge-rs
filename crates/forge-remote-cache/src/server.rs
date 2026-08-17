@@ -112,7 +112,14 @@ impl RemoteCacheServer {
                         let art = Arc::clone(&artifacts);
                         let idx = Arc::clone(&artifact_index);
                         thread::spawn(move || {
-                            let _ = Self::handle_connection(stream, &auth, storage.as_deref(), fp, art, idx);
+                            let _ = Self::handle_connection(
+                                stream,
+                                &auth,
+                                storage.as_deref(),
+                                fp,
+                                art,
+                                idx,
+                            );
                         });
                     }
                     Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
@@ -309,7 +316,7 @@ impl RemoteCacheServer {
                         guard.get(&hash).cloned()
                     };
                     content_hash
-                          .and_then(|h| fs::read(dir.join("artifacts").join("objects").join(&h)).ok())
+                        .and_then(|h| fs::read(dir.join("artifacts").join("objects").join(&h)).ok())
                 } else {
                     None
                 };

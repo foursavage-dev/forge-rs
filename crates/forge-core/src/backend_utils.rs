@@ -54,7 +54,12 @@ impl FingerprintUtils {
         hasher.finalize().to_hex().to_string()
     }
 
-    pub fn format_cache_key(backend: &str, namespace: &str, mode: &str, identifier: &str) -> String {
+    pub fn format_cache_key(
+        backend: &str,
+        namespace: &str,
+        mode: &str,
+        identifier: &str,
+    ) -> String {
         format!("{}/{}/{}/{}", backend, namespace, mode, identifier)
     }
 
@@ -193,7 +198,10 @@ impl ToolchainUtils {
     }
 
     pub fn find_first_available(tools: &[&str]) -> Option<String> {
-        tools.iter().find(|tool| Self::tool_available(tool)).map(|s| s.to_string())
+        tools
+            .iter()
+            .find(|tool| Self::tool_available(tool))
+            .map(|s| s.to_string())
     }
 
     pub fn resolve_executable(tool: &str) -> Option<PathBuf> {
@@ -226,11 +234,7 @@ pub struct BinaryUtils;
 
 impl BinaryUtils {
     pub fn binary_extension() -> &'static str {
-        if cfg!(windows) {
-            ".exe"
-        } else {
-            ""
-        }
+        if cfg!(windows) { ".exe" } else { "" }
     }
 
     pub fn add_binary_extension(name: &str) -> String {
@@ -242,19 +246,11 @@ impl BinaryUtils {
     }
 
     pub fn object_extension(is_msvc: bool) -> &'static str {
-        if is_msvc {
-            "obj"
-        } else {
-            "o"
-        }
+        if is_msvc { "obj" } else { "o" }
     }
 
     pub fn static_lib_extension(is_msvc: bool) -> &'static str {
-        if is_msvc {
-            "lib"
-        } else {
-            "a"
-        }
+        if is_msvc { "lib" } else { "a" }
     }
 
     pub fn shared_lib_extension() -> &'static str {

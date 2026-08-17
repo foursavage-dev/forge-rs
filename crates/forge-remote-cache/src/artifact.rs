@@ -174,8 +174,11 @@ mod tests {
     fn pack_skips_missing_files() {
         let dir = tempdir().unwrap();
         fs::write(dir.path().join("real.bin"), b"x").unwrap();
-        let blob = pack_artifacts(dir.path(), &[PathBuf::from("real.bin"), PathBuf::from("missing.bin")])
-            .unwrap();
+        let blob = pack_artifacts(
+            dir.path(),
+            &[PathBuf::from("real.bin"), PathBuf::from("missing.bin")],
+        )
+        .unwrap();
         let dest = dir.path().join("r");
         unpack_artifacts(&blob, &dest).unwrap();
         assert!(dest.join("real.bin").exists());

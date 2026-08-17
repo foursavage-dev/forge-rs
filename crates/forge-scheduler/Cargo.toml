@@ -13,3 +13,4 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 sysinfo = "0.30"
 thiserror = { workspace = true }
+dashmap = { version = "6" }

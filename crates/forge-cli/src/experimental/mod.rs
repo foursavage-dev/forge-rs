@@ -1,16 +1,16 @@
 #![allow(dead_code)]
 
 //! # Experimental Features
-//! 
+//!
 //! ⚠️ **WARNING**: These features are highly experimental and potentially dangerous.
 //! They are disabled by default and should only be used in development environments.
-//! 
+//!
 //! ## Known Issues:
 //! - **hotpatch**: Can cause SIGSEGV/crash if code changes struct layout or calling conventions
 //! - **kernel_bypass**: Requires Linux with raw memory/DMA access, blocked by container security
 //! - **turbolink**: mold linker compatibility issues on Windows/macOS
 //! - **daemon_pool**: May have race conditions in multi-process scenarios
-//! 
+//!
 //! ## Safety:
 //! These features require `#[allow(unsafe_code)]` and bypass normal safety checks.
 //! Use at your own risk in isolated development environments only.

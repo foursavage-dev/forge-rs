@@ -1,0 +1,51 @@
+name: PR Hygiene
+
+on:
+  pull_request:
+    branches: [ dev ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semantic-title:
+    name: Semantic PR Title Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  blocked-files:
+    name: Prohibited & Binary Files Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for disallowed files
+        run: |
+          BLOCKED_EXTS="\.exe$|\.dll$|\.so$|\.dylib$|\.zip$|\.tar$|\.gz$|\.env$|\.pem$|id_rsa"
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          FOUND=0
+          for file in $CHANGED_FILES; do
+            if echo "$file" | grep -qE "$BLOCKED_EXTS"; then
+              echo "Error: Blocked file pattern detected: $file"
+              FOUND=1
+            fi
+          done
+          if [ $FOUND -eq 1 ]; then
+            exit 1
+          fi
+          echo "No prohibited files detected"
+
+  lockfile-check:
+    name: Cargo Lockfile Synchronization Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Check Cargo.lock is updated
+        run: cargo check --locked --workspace

@@ -15,7 +15,7 @@ pub enum SwiftPlatform {
 
 impl FromStr for SwiftPlatform {
     type Err = String;
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "ios" => Ok(SwiftPlatform::IOS),
@@ -59,8 +59,8 @@ impl SwiftProjectConfig {
             .map_err(|e| format!("Failed to read Package.swift: {}", e))?;
 
         // Extract package name from Package.swift
-        let package_name = Self::extract_package_name(&content)
-            .unwrap_or_else(|| "SwiftPackage".to_string());
+        let package_name =
+            Self::extract_package_name(&content).unwrap_or_else(|| "SwiftPackage".to_string());
 
         // Detect platform based on available SDKs
         let platform = Self::detect_platform();
@@ -125,22 +125,20 @@ impl SwiftProjectConfig {
     }
 
     fn detect_platform() -> SwiftPlatform {
-        // Detect platform based on the current system
         #[cfg(target_os = "macos")]
         {
-            return SwiftPlatform::MacOS;
+            SwiftPlatform::MacOS
         }
         #[cfg(target_os = "ios")]
         {
-            return SwiftPlatform::IOS;
+            SwiftPlatform::IOS
         }
         #[cfg(target_os = "linux")]
         {
-            return SwiftPlatform::Linux;
+            SwiftPlatform::Linux
         }
         #[cfg(not(any(target_os = "macos", target_os = "ios", target_os = "linux")))]
         {
-            // Default to macOS for unknown platforms
             SwiftPlatform::MacOS
         }
     }
@@ -190,7 +188,13 @@ let package = Package(
     #[test]
     fn test_platform_parsing() {
         assert_eq!(SwiftPlatform::from_str("ios").unwrap(), SwiftPlatform::IOS);
-        assert_eq!(SwiftPlatform::from_str("macos").unwrap(), SwiftPlatform::MacOS);
-        assert_eq!(SwiftPlatform::from_str("linux").unwrap(), SwiftPlatform::Linux);
+        assert_eq!(
+            SwiftPlatform::from_str("macos").unwrap(),
+            SwiftPlatform::MacOS
+        );
+        assert_eq!(
+            SwiftPlatform::from_str("linux").unwrap(),
+            SwiftPlatform::Linux
+        );
     }
 }

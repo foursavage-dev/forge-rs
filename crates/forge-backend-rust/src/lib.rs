@@ -5,8 +5,8 @@ use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 use cargo_metadata::PackageId;
-use forge_core::{BinaryUtils, BuildBackend, FingerprintUtils, ToolchainUtils};
 use forge_core::project::Project;
+use forge_core::{BinaryUtils, BuildBackend, FingerprintUtils, ToolchainUtils};
 use forge_executor::{CacheEntry, CommandSpec, Task};
 use forge_graph::{BuildGraph, NodeId};
 
@@ -117,7 +117,8 @@ impl RustBackend {
                     &self.toolchain,
                     mode,
                 )?;
-                let dep_fingerprints: Vec<String> = package_graph.deps(id)?
+                let dep_fingerprints: Vec<String> = package_graph
+                    .deps(id)?
                     .iter()
                     .filter_map(|dep| fingerprints.get(dep).cloned())
                     .collect();

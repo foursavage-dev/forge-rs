@@ -14,8 +14,10 @@ spin = { workspace = true }
 toml = { workspace = true }
 tempfile = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 regex = { workspace = true }
 blake3 = { workspace = true }
+uuid = { version = "1.6", features = ["v4", "serde"] }
 
 [dev-dependencies]
 tempfile = { workspace = true }

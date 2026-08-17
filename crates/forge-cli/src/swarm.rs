@@ -71,7 +71,11 @@ impl SwarmCache {
         Ok(())
     }
 
-    pub fn broadcast_compute_worker(&self, worker_port: u16, concurrency: usize) -> std::io::Result<()> {
+    pub fn broadcast_compute_worker(
+        &self,
+        worker_port: u16,
+        concurrency: usize,
+    ) -> std::io::Result<()> {
         if !self.enabled {
             return Ok(());
         }

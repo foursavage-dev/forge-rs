@@ -19,12 +19,14 @@ pub enum DartCompiler {
 impl DartToolchain {
     pub fn detect() -> Result<Self, DartBackendError> {
         let dart_executable = Self::find_executable("dart");
-        let dart_version = dart_executable.as_ref()
+        let dart_version = dart_executable
+            .as_ref()
             .and_then(|d| Self::get_version(d, &["--version"]).ok())
             .unwrap_or_else(|| "unknown".to_string());
 
         let flutter_executable = Self::find_executable("flutter");
-        let flutter_version = flutter_executable.as_ref()
+        let flutter_version = flutter_executable
+            .as_ref()
             .and_then(|f| Self::get_version(f, &["--version"]).ok());
 
         Ok(DartToolchain {
@@ -38,7 +40,7 @@ impl DartToolchain {
     pub fn with_dart(executable: String) -> Self {
         let dart_version = Self::get_version(&executable, &["--version"])
             .unwrap_or_else(|_| "unknown".to_string());
-        
+
         DartToolchain {
             dart_executable: Some(executable.clone()),
             dart_version,
@@ -57,25 +59,22 @@ impl DartToolchain {
 
     fn find_executable(name: &str) -> Option<String> {
         // Check if executable exists in PATH
-        if let Ok(output) = std::process::Command::new("where")
-            .arg(name)
-            .output()
-        {
+        if let Ok(output) = std::process::Command::new("where").arg(name).output() {
             if output.status.success() {
                 let paths = String::from_utf8_lossy(&output.stdout);
                 return paths.lines().next().map(|s| s.to_string());
             }
         }
-        
+
         // Try direct execution
         if std::process::Command::new(name)
             .arg("--version")
             .output()
             .is_ok()
             || std::process::Command::new(name)
-            .arg("-version")
-            .output()
-            .is_ok()
+                .arg("-version")
+                .output()
+                .is_ok()
         {
             return Some(name.to_string());
         }
@@ -87,12 +86,15 @@ impl DartToolchain {
         let output = std::process::Command::new(executable)
             .args(args)
             .output()
-            .map_err(|e| DartBackendError::Toolchain(format!("Failed to run {}: {}", executable, e)))?;
+            .map_err(|e| {
+                DartBackendError::Toolchain(format!("Failed to run {}: {}", executable, e))
+            })?;
 
         if !output.status.success() {
             return Err(DartBackendError::Toolchain(format!(
                 "{} exited with error code: {:?}",
-                executable, output.status.code()
+                executable,
+                output.status.code()
             )));
         }
 
@@ -113,7 +115,9 @@ impl DartCompiler {
             return Ok(DartCompiler::Dart(dart));
         }
 
-        Err(DartBackendError::Toolchain("No Dart compiler found (dart or flutter)".to_string()))
+        Err(DartBackendError::Toolchain(
+            "No Dart compiler found (dart or flutter)".to_string(),
+        ))
     }
 
     pub fn executable(&self) -> &str {

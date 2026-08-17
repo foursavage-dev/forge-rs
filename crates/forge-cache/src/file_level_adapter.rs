@@ -10,9 +10,9 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use forge_executor::{CacheEntry, Task, TaskExecutor, TaskOutcome, TaskStatus, ExecutorError};
+use forge_executor::{CacheEntry, ExecutorError, Task, TaskExecutor, TaskOutcome, TaskStatus};
 
-use super::file_level::{FileLevelCache, FileDependencyGraph};
+use super::file_level::{FileDependencyGraph, FileLevelCache};
 
 /// Adapter that wraps FileLevelCache to work with CachingExecutor interface
 ///
@@ -55,7 +55,8 @@ impl FileLevelCacheAdapter {
         let task_files = self.task_files.read().unwrap();
         if let Some(files) = task_files.get(task_key) {
             for file in files {
-                self.dep_graph.invalidate_with_dependents(file, &self.file_cache);
+                self.dep_graph
+                    .invalidate_with_dependents(file, &self.file_cache);
             }
         }
     }
@@ -147,10 +148,7 @@ mod tests {
         let dep_graph = Arc::new(FileDependencyGraph::new());
         let adapter = FileLevelCacheAdapter::new(file_cache, dep_graph);
 
-        let files = vec![
-            PathBuf::from("/src/main.rs"),
-            PathBuf::from("/src/lib.rs"),
-        ];
+        let files = vec![PathBuf::from("/src/main.rs"), PathBuf::from("/src/lib.rs")];
         adapter.register_task_files("build_crate".to_string(), files);
 
         assert!(!adapter.is_task_files_cached("build_crate"));

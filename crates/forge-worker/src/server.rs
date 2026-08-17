@@ -3,19 +3,19 @@
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
 use crate::protocol::{
-    RemoteTaskRequest, RemoteTaskResponse, SourceContext, WorkerHealthInfo, WorkerPingRequest,
-    WorkerPingResponse, VfsFileRequest, VfsFileResponse,
+    RemoteTaskRequest, RemoteTaskResponse, SourceContext, VfsFileRequest, VfsFileResponse,
+    WorkerHealthInfo, WorkerPingRequest, WorkerPingResponse,
 };
 use crate::virtual_fs::VirtualFileSystem;
+use base64::Engine;
 use forge_executor::{CommandSpec, ProcessExecutor, Task, TaskExecutor};
 use forge_remote_cache::artifact::unpack_artifacts;
-use base64::Engine;
 
 pub struct WorkerServer {
     addr: String,
@@ -224,20 +224,13 @@ impl WorkerServer {
                 })
                 .transpose()?;
             if let Some(ref root) = source_dir {
-                spec.cwd = Some(
-                    match req.cwd.as_ref().map(Path::new) {
-                        Some(cwd) => cwd
-                            .strip_prefix(
-                                &req.source
-                                    .as_ref()
-                                    .expect("source_dir implies source")
-                                    .root,
-                            )
-                            .map(|relative| root.join(relative))
-                            .unwrap_or_else(|_| root.clone()),
-                        None => root.clone(),
-                    },
-                );
+                spec.cwd = Some(match req.cwd.as_ref().map(Path::new) {
+                    Some(cwd) => cwd
+                        .strip_prefix(&req.source.as_ref().expect("source_dir implies source").root)
+                        .map(|relative| root.join(relative))
+                        .unwrap_or_else(|_| root.clone()),
+                    None => root.clone(),
+                });
             } else if let Some(cwd) = req.cwd {
                 spec.cwd = Some(std::path::PathBuf::from(cwd));
             }
@@ -258,7 +251,13 @@ impl WorkerServer {
             let response = match outcome {
                 Ok(out) => RemoteTaskResponse {
                     task_id: req.task_id,
-                    exit_code: out.exit_code.or(if out.status == forge_executor::TaskStatus::Failed { Some(1) } else { Some(0) }),
+                    exit_code: out.exit_code.or(
+                        if out.status == forge_executor::TaskStatus::Failed {
+                            Some(1)
+                        } else {
+                            Some(0)
+                        },
+                    ),
                     stdout: out.stdout,
                     stderr: out.stderr,
                     duration_ms,
@@ -305,7 +304,9 @@ impl WorkerServer {
                     let metadata = vfs.metadata(file_path).ok();
                     VfsFileResponse {
                         success: true,
-                        content_base64: Some(base64::engine::general_purpose::STANDARD.encode(&content)),
+                        content_base64: Some(
+                            base64::engine::general_purpose::STANDARD.encode(&content),
+                        ),
                         error: None,
                         metadata: metadata.map(|m| crate::protocol::VfsFileMetadata {
                             size: m.size,
@@ -406,11 +407,14 @@ fn unpack_source(ctx: &SourceContext) -> Result<PathBuf, Box<dyn std::error::Err
 }
 
 /// Decodes and extracts a packed source snapshot into VFS for on-demand streaming
-fn unpack_source_to_vfs(ctx: &SourceContext, vfs: &VirtualFileSystem) -> Result<PathBuf, Box<dyn std::error::Error>> {
+fn unpack_source_to_vfs(
+    ctx: &SourceContext,
+    vfs: &VirtualFileSystem,
+) -> Result<PathBuf, Box<dyn std::error::Error>> {
     if ctx.format != "tar.zst" {
         return Err(format!("unsupported source format: {}", ctx.format).into());
     }
-    
+
     let mut decoder = base64::read::DecoderReader::new(
         ctx.data_base64.as_bytes(),
         &base64::engine::general_purpose::STANDARD,
@@ -429,7 +433,8 @@ fn unpack_source_to_vfs(ctx: &SourceContext, vfs: &VirtualFileSystem) -> Result<
     // Mount to VFS
     let vfs_mount = ctx.vfs_mount.as_deref().unwrap_or("/vfs");
     let vfs_path = Path::new(vfs_mount);
-    vfs.mount_local(&temp_root, vfs_path).map_err(|e| e.to_string())?;
+    vfs.mount_local(&temp_root, vfs_path)
+        .map_err(|e| e.to_string())?;
 
     Ok(temp_root)
 }

@@ -50,23 +50,36 @@ fn test_semantic_token_invariance_rust() {
     fs::write(&file_b, code_commented).unwrap();
 
     let output_a = run(forge().arg("build").arg("--semantic").arg(temp_dir.path()));
-    assert!(output_a.status.success() || stdout(&output_a).contains("Semantic") || stderr(&output_a).is_empty());
+    assert!(
+        output_a.status.success()
+            || stdout(&output_a).contains("Semantic")
+            || stderr(&output_a).is_empty()
+    );
 }
 
 #[test]
 fn test_semantic_multi_language_ast_normalization() {
     let dir = fixture(&[
         ("Cargo.toml", CARGO_MANIFEST),
-        ("src/lib.rs", "pub fn calculate(a: i32, b: i32) -> i32 {\n    // Calculate sum\n    a + b\n}\n"),
-        ("native/math.cpp", "int multiply(int a, int b) {\n    /* Multi-line comment */\n    return a * b;\n}\n"),
-        ("web/index.ts", "export function greet(name: string): string {\n    // Greet user\n    return `Hello, ${name}`;\n}\n"),
-        ("scripts/util.py", "def compute(val):\n    # Python comment\n    return val * 10\n"),
+        (
+            "src/lib.rs",
+            "pub fn calculate(a: i32, b: i32) -> i32 {\n    // Calculate sum\n    a + b\n}\n",
+        ),
+        (
+            "native/math.cpp",
+            "int multiply(int a, int b) {\n    /* Multi-line comment */\n    return a * b;\n}\n",
+        ),
+        (
+            "web/index.ts",
+            "export function greet(name: string): string {\n    // Greet user\n    return `Hello, ${name}`;\n}\n",
+        ),
+        (
+            "scripts/util.py",
+            "def compute(val):\n    # Python comment\n    return val * 10\n",
+        ),
     ]);
 
-    let output = run(forge()
-        .arg("build")
-        .arg("--semantic")
-        .arg(dir.path()));
+    let output = run(forge().arg("build").arg("--semantic").arg(dir.path()));
 
     let out = stdout(&output);
     let err = stderr(&output);
@@ -78,13 +91,13 @@ fn test_semantic_multi_language_ast_normalization() {
 fn test_ramdisk_real_artifact_isolation_and_sync() {
     let dir = fixture(&[
         ("Cargo.toml", CARGO_MANIFEST),
-        ("src/lib.rs", "pub fn high_throughput_operation() -> u64 { 1_000_000 }\n"),
+        (
+            "src/lib.rs",
+            "pub fn high_throughput_operation() -> u64 { 1_000_000 }\n",
+        ),
     ]);
 
-    let output = run(forge()
-        .arg("build")
-        .arg("--ramdisk")
-        .arg(dir.path()));
+    let output = run(forge().arg("build").arg("--ramdisk").arg(dir.path()));
 
     let out = stdout(&output);
     let err = stderr(&output);
@@ -99,10 +112,7 @@ fn test_swarm_cache_p2p_network_broadcast() {
         ("src/lib.rs", "pub fn distributed_node() -> bool { true }\n"),
     ]);
 
-    let output = run(forge()
-        .arg("build")
-        .arg("--swarm")
-        .arg(dir.path()));
+    let output = run(forge().arg("build").arg("--swarm").arg(dir.path()));
 
     let out = stdout(&output);
     let err = stderr(&output);
@@ -160,10 +170,7 @@ fn test_reflink_hardware_engine_cli() {
         ("src/lib.rs", "pub fn reflink_data() -> usize { 1024 }\n"),
     ]);
 
-    let output = run(forge()
-        .arg("build")
-        .arg("--reflink")
-        .arg(dir.path()));
+    let output = run(forge().arg("build").arg("--reflink").arg(dir.path()));
 
     let out = stdout(&output);
     let err = stderr(&output);
@@ -178,10 +185,7 @@ fn test_hermetic_trace_sandbox_cli() {
         ("src/lib.rs", "pub fn hermetic_fn() {}\n"),
     ]);
 
-    let output = run(forge()
-        .arg("build")
-        .arg("--hermetic-trace")
-        .arg(dir.path()));
+    let output = run(forge().arg("build").arg("--hermetic-trace").arg(dir.path()));
 
     let out = stdout(&output);
     let err = stderr(&output);
@@ -196,10 +200,7 @@ fn test_distributed_compute_swarm_cli() {
         ("src/lib.rs", "pub fn remote_job() -> u32 { 999 }\n"),
     ]);
 
-    let output = run(forge()
-        .arg("build")
-        .arg("--swarm-compute")
-        .arg(dir.path()));
+    let output = run(forge().arg("build").arg("--swarm-compute").arg(dir.path()));
 
     let out = stdout(&output);
     let err = stderr(&output);
@@ -214,10 +215,7 @@ fn test_critical_path_scheduler_cli() {
         ("src/lib.rs", "pub fn critical_task() -> u32 { 100 }\n"),
     ]);
 
-    let output = run(forge()
-        .arg("build")
-        .arg("--critical-path")
-        .arg(dir.path()));
+    let output = run(forge().arg("build").arg("--critical-path").arg(dir.path()));
 
     let out = stdout(&output);
     let err = stderr(&output);
@@ -251,10 +249,7 @@ fn test_slsa_attestation_and_verification_cli() {
     let attestation_path = dir.path().join(".forge/attestation.json");
     assert!(attestation_path.exists());
 
-    let verify_output = run(forge()
-        .arg("verify")
-        .arg(&attestation_path)
-        .arg(dir.path()));
+    let verify_output = run(forge().arg("verify").arg(&attestation_path).arg(dir.path()));
 
     assert!(verify_output.status.success());
     assert!(stdout(&verify_output).contains("SLSA Provenance Verified"));
@@ -264,7 +259,10 @@ fn test_slsa_attestation_and_verification_cli() {
 fn test_full_combined_turbo_stack() {
     let dir = fixture(&[
         ("Cargo.toml", CARGO_MANIFEST),
-        ("src/lib.rs", "pub fn full_turbo() -> &'static str { \"blazing fast\" }\n"),
+        (
+            "src/lib.rs",
+            "pub fn full_turbo() -> &'static str { \"blazing fast\" }\n",
+        ),
     ]);
 
     let output = run(forge()

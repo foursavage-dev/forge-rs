@@ -14,8 +14,14 @@ impl TemplateRenderer {
         Self { handlebars }
     }
 
-    pub async fn render(&self, template: &PipelineTemplate, context: TemplateContext) -> Result<String, Box<dyn std::error::Error>> {
-        let result = self.handlebars.render_template(&template.template_content, &context)?;
+    pub async fn render(
+        &self,
+        template: &PipelineTemplate,
+        context: TemplateContext,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        let result = self
+            .handlebars
+            .render_template(&template.template_content, &context)?;
         Ok(result)
     }
 }

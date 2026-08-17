@@ -17,7 +17,7 @@ pub enum DotnetTargetFramework {
 
 impl FromStr for DotnetTargetFramework {
     type Err = String;
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "net6.0" => Ok(DotnetTargetFramework::Net6_0),
@@ -73,8 +73,8 @@ impl DotnetProjectConfig {
             .unwrap_or("Project")
             .to_string();
 
-        let target_framework = Self::extract_target_framework(&content)
-            .unwrap_or(DotnetTargetFramework::Net8_0);
+        let target_framework =
+            Self::extract_target_framework(&content).unwrap_or(DotnetTargetFramework::Net8_0);
 
         Ok(DotnetProjectConfig {
             project_name,
@@ -155,7 +155,7 @@ impl DotnetProjectConfig {
         // Try to extract <TargetFramework>...</TargetFramework>
         let start_tag = "<TargetFramework>";
         let end_tag = "</TargetFramework>";
-        
+
         if let Some(start) = content.find(start_tag) {
             let start = start + start_tag.len();
             if let Some(end) = content.find(end_tag) {
@@ -167,7 +167,7 @@ impl DotnetProjectConfig {
         // Try <TargetFrameworks> (multiple frameworks)
         let start_tag = "<TargetFrameworks>";
         let end_tag = "</TargetFrameworks>";
-        
+
         if let Some(start) = content.find(start_tag) {
             let start = start + start_tag.len();
             if let Some(end) = content.find(end_tag) {
@@ -207,8 +207,17 @@ mod tests {
 
     #[test]
     fn test_target_framework_parsing() {
-        assert_eq!(DotnetTargetFramework::from_str("net6.0").unwrap(), DotnetTargetFramework::Net6_0);
-        assert_eq!(DotnetTargetFramework::from_str("net8.0").unwrap(), DotnetTargetFramework::Net8_0);
-        assert_eq!(DotnetTargetFramework::from_str("custom").unwrap(), DotnetTargetFramework::Custom("custom".to_string()));
+        assert_eq!(
+            DotnetTargetFramework::from_str("net6.0").unwrap(),
+            DotnetTargetFramework::Net6_0
+        );
+        assert_eq!(
+            DotnetTargetFramework::from_str("net8.0").unwrap(),
+            DotnetTargetFramework::Net8_0
+        );
+        assert_eq!(
+            DotnetTargetFramework::from_str("custom").unwrap(),
+            DotnetTargetFramework::Custom("custom".to_string())
+        );
     }
 }

@@ -14,7 +14,11 @@ impl RamDisk {
     pub fn create_turbo_workspace(preferred_name: &str) -> io::Result<Self> {
         #[cfg(target_os = "linux")]
         {
-            let shm_path = Path::new("/dev/shm").join(format!("forge_{}_{}", preferred_name, std::process::id()));
+            let shm_path = Path::new("/dev/shm").join(format!(
+                "forge_{}_{}",
+                preferred_name,
+                std::process::id()
+            ));
             if shm_path.parent().map(|p| p.exists()).unwrap_or(false) {
                 fs::create_dir_all(&shm_path)?;
                 return Ok(Self {
@@ -24,7 +28,11 @@ impl RamDisk {
             }
         }
 
-        let temp_dir = std::env::temp_dir().join(format!("forge_ramdisk_{}_{}", preferred_name, std::process::id()));
+        let temp_dir = std::env::temp_dir().join(format!(
+            "forge_ramdisk_{}_{}",
+            preferred_name,
+            std::process::id()
+        ));
         fs::create_dir_all(&temp_dir)?;
 
         Ok(Self {

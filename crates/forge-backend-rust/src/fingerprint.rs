@@ -1,7 +1,7 @@
 use std::path::Path;
 
-use forge_core::{FingerprintUtils, DEFAULT_EXCLUDED_DIRS};
 use crate::{BackendError, BuildMode};
+use forge_core::{DEFAULT_EXCLUDED_DIRS, FingerprintUtils};
 
 pub const EXCLUDED_DIRS: &[&str] = DEFAULT_EXCLUDED_DIRS;
 

@@ -23,15 +23,16 @@ impl JavaToolchain {
     pub fn detect() -> Result<Self, JavaBackendError> {
         let java_executable = Self::find_executable("java")
             .ok_or_else(|| JavaBackendError::Toolchain("Java not found in PATH".to_string()))?;
-        
+
         let java_version = Self::get_version(&java_executable, &["-version"])
             .unwrap_or_else(|_| "unknown".to_string());
 
         let javac_executable = Self::find_executable("javac");
         let kotlin_executable = Self::find_executable("kotlinc");
-        let kotlin_version = kotlin_executable.as_ref()
+        let kotlin_version = kotlin_executable
+            .as_ref()
             .and_then(|k| Self::get_version(k, &["-version"]).ok());
-        
+
         let maven_executable = Self::find_executable("mvn");
         let gradle_executable = Self::find_executable("gradle");
 
@@ -47,9 +48,9 @@ impl JavaToolchain {
     }
 
     pub fn with_java(executable: String) -> Self {
-        let java_version = Self::get_version(&executable, &["-version"])
-            .unwrap_or_else(|_| "unknown".to_string());
-        
+        let java_version =
+            Self::get_version(&executable, &["-version"]).unwrap_or_else(|_| "unknown".to_string());
+
         JavaToolchain {
             java_executable: executable.clone(),
             java_version,
@@ -75,25 +76,22 @@ impl JavaToolchain {
 
     fn find_executable(name: &str) -> Option<String> {
         // Check if executable exists in PATH
-        if let Ok(output) = std::process::Command::new("where")
-            .arg(name)
-            .output()
-        {
+        if let Ok(output) = std::process::Command::new("where").arg(name).output() {
             if output.status.success() {
                 let paths = String::from_utf8_lossy(&output.stdout);
                 return paths.lines().next().map(|s| s.to_string());
             }
         }
-        
+
         // Try direct execution
         if std::process::Command::new(name)
             .arg("--version")
             .output()
             .is_ok()
             || std::process::Command::new(name)
-            .arg("-version")
-            .output()
-            .is_ok()
+                .arg("-version")
+                .output()
+                .is_ok()
         {
             return Some(name.to_string());
         }
@@ -105,12 +103,15 @@ impl JavaToolchain {
         let output = std::process::Command::new(executable)
             .args(args)
             .output()
-            .map_err(|e| JavaBackendError::Toolchain(format!("Failed to run {}: {}", executable, e)))?;
+            .map_err(|e| {
+                JavaBackendError::Toolchain(format!("Failed to run {}: {}", executable, e))
+            })?;
 
         if !output.status.success() {
             return Err(JavaBackendError::Toolchain(format!(
                 "{} exited with error code: {:?}",
-                executable, output.status.code()
+                executable,
+                output.status.code()
             )));
         }
 
@@ -131,7 +132,9 @@ impl JavaCompiler {
             return Ok(JavaCompiler::Javac(javac));
         }
 
-        Err(JavaBackendError::Toolchain("No Java compiler found (javac or kotlinc)".to_string()))
+        Err(JavaBackendError::Toolchain(
+            "No Java compiler found (javac or kotlinc)".to_string(),
+        ))
     }
 
     pub fn executable(&self) -> &str {

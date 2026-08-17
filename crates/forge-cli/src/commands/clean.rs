@@ -1,7 +1,7 @@
+use crate::utils::resolve_start_dir;
+use forge_core::project::Project;
 use std::path::Path;
 use std::process::ExitCode;
-use forge_core::project::Project;
-use crate::utils::resolve_start_dir;
 
 pub fn run_clean(path: Option<&Path>) -> ExitCode {
     let start_dir = match resolve_start_dir(path) {

@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use forge_core::{FingerprintUtils, DEFAULT_EXCLUDED_DIRS};
 use crate::JavaBackendError;
 use crate::config::JavaBuildSystem;
+use forge_core::{DEFAULT_EXCLUDED_DIRS, FingerprintUtils};
 
 pub fn compute_java_fingerprint(
     project_dir: &Path,
@@ -81,13 +81,9 @@ mod tests {
         let pom_file = temp.path().join("pom.xml");
         fs::write(&pom_file, "<project></project>").unwrap();
 
-        let fingerprint = compute_java_fingerprint(
-            temp.path(),
-            "openjdk 17",
-            &None,
-            &JavaBuildSystem::Maven,
-        )
-        .unwrap();
+        let fingerprint =
+            compute_java_fingerprint(temp.path(), "openjdk 17", &None, &JavaBuildSystem::Maven)
+                .unwrap();
 
         assert!(!fingerprint.is_empty());
         assert_eq!(fingerprint.len(), 64);
@@ -102,23 +98,15 @@ mod tests {
         let java_file = src_dir.join("Test.java");
         fs::write(&java_file, "public class Test {}").unwrap();
 
-        let fp1 = compute_java_fingerprint(
-            temp.path(),
-            "openjdk 17",
-            &None,
-            &JavaBuildSystem::Maven,
-        )
-        .unwrap();
+        let fp1 =
+            compute_java_fingerprint(temp.path(), "openjdk 17", &None, &JavaBuildSystem::Maven)
+                .unwrap();
 
         fs::write(&java_file, "public class Test { int x; }").unwrap();
 
-        let fp2 = compute_java_fingerprint(
-            temp.path(),
-            "openjdk 17",
-            &None,
-            &JavaBuildSystem::Maven,
-        )
-        .unwrap();
+        let fp2 =
+            compute_java_fingerprint(temp.path(), "openjdk 17", &None, &JavaBuildSystem::Maven)
+                .unwrap();
 
         assert_ne!(fp1, fp2);
     }

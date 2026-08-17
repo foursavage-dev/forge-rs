@@ -5,15 +5,15 @@
 #![allow(missing_docs)]
 #![warn(clippy::all)]
 
-pub mod notifier;
-pub mod slack;
 pub mod discord;
 pub mod email;
+pub mod notifier;
+pub mod slack;
 
-pub use notifier::{Notifier, NotificationConfig, Notification};
-pub use slack::SlackNotifier;
 pub use discord::DiscordNotifier;
 pub use email::EmailNotifier;
+pub use notifier::{Notification, NotificationConfig, Notifier};
+pub use slack::SlackNotifier;
 
 /// Main notification service
 pub struct NotificationService {

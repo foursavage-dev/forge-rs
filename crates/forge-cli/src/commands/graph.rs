@@ -3,8 +3,8 @@ use std::process::ExitCode;
 use forge_core::project::Project;
 
 use crate::args::{GraphArgs, GraphFormat};
-use crate::utils::resolve_start_dir;
 use crate::render;
+use crate::utils::resolve_start_dir;
 
 pub fn run_graph(args: GraphArgs) -> ExitCode {
     let start_dir = match resolve_start_dir(args.path.as_deref()) {

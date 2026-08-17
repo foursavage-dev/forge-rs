@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use forge_core::{FingerprintUtils, DEFAULT_EXCLUDED_DIRS};
 use crate::ZigBackendError;
 use crate::config::ZigTarget;
+use forge_core::{DEFAULT_EXCLUDED_DIRS, FingerprintUtils};
 
 pub fn compute_zig_fingerprint(
     project_dir: &Path,
@@ -46,16 +46,17 @@ mod tests {
         fs::create_dir_all(&src_dir).unwrap();
 
         let zig_file = src_dir.join("main.zig");
-        fs::write(&zig_file, "const std = @import(\"std\"); pub fn main() !void { std.debug.print(\"Hello\\n\"); }").unwrap();
+        fs::write(
+            &zig_file,
+            "const std = @import(\"std\"); pub fn main() !void { std.debug.print(\"Hello\\n\"); }",
+        )
+        .unwrap();
 
         let build_file = temp.path().join("build.zig");
         fs::write(&build_file, "const std = @import(\"std\");").unwrap();
 
-        let fingerprint = compute_zig_fingerprint(
-            temp.path(),
-            "0.11.0",
-            &ZigTarget::Native,
-        ).unwrap();
+        let fingerprint =
+            compute_zig_fingerprint(temp.path(), "0.11.0", &ZigTarget::Native).unwrap();
 
         assert!(!fingerprint.is_empty());
         assert_eq!(fingerprint.len(), 64);
@@ -68,21 +69,17 @@ mod tests {
         fs::create_dir_all(&src_dir).unwrap();
 
         let zig_file = src_dir.join("main.zig");
-        fs::write(&zig_file, "const std = @import(\"std\"); pub fn main() !void { std.debug.print(\"Hello\\n\"); }").unwrap();
+        fs::write(
+            &zig_file,
+            "const std = @import(\"std\"); pub fn main() !void { std.debug.print(\"Hello\\n\"); }",
+        )
+        .unwrap();
 
-        let fp1 = compute_zig_fingerprint(
-            temp.path(),
-            "0.11.0",
-            &ZigTarget::Native,
-        ).unwrap();
+        let fp1 = compute_zig_fingerprint(temp.path(), "0.11.0", &ZigTarget::Native).unwrap();
 
         fs::write(&zig_file, "const std = @import(\"std\"); pub fn main() !void { std.debug.print(\"Goodbye\\n\"); }").unwrap();
 
-        let fp2 = compute_zig_fingerprint(
-            temp.path(),
-            "0.11.0",
-            &ZigTarget::Native,
-        ).unwrap();
+        let fp2 = compute_zig_fingerprint(temp.path(), "0.11.0", &ZigTarget::Native).unwrap();
 
         assert_ne!(fp1, fp2);
     }

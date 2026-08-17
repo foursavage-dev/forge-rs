@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 
 //! Virtual File System for distributed workers
-//! 
+//!
 //! This module provides a virtual file system interface for distributed build workers,
 //! allowing on-demand file access without copying entire source trees.
 
@@ -55,24 +55,24 @@ impl VirtualFileSystem {
 
     /// Mount a local directory into the virtual file system
     pub fn mount_local(&self, local_path: &Path, vfs_path: &Path) -> Result<(), VfsError> {
-        let local_path = std::fs::canonicalize(local_path)
-            .map_err(|e| VfsError::IoError(e.to_string()))?;
+        let local_path =
+            std::fs::canonicalize(local_path).map_err(|e| VfsError::IoError(e.to_string()))?;
 
         self.mount_recursive(&local_path, vfs_path)
     }
 
     fn mount_recursive(&self, local_path: &Path, vfs_path: &Path) -> Result<(), VfsError> {
         if local_path.is_file() {
-            let content = std::fs::read(local_path)
-                .map_err(|e| VfsError::IoError(e.to_string()))?;
-            
+            let content =
+                std::fs::read(local_path).map_err(|e| VfsError::IoError(e.to_string()))?;
+
             let modified = std::fs::metadata(local_path)
                 .and_then(|m| m.modified())
                 .ok()
                 .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
                 .map(|d| d.as_secs())
                 .unwrap_or(0);
-            
+
             let metadata = FileMetadata {
                 size: content.len() as u64,
                 modified,
@@ -81,17 +81,15 @@ impl VirtualFileSystem {
 
             self.write_file(vfs_path, content, metadata)?;
         } else if local_path.is_dir() {
-            let entries = std::fs::read_dir(local_path)
-                .map_err(|e| VfsError::IoError(e.to_string()))?;
+            let entries =
+                std::fs::read_dir(local_path).map_err(|e| VfsError::IoError(e.to_string()))?;
 
             for entry in entries {
                 let entry = entry.map_err(|e| VfsError::IoError(e.to_string()))?;
                 let entry_path = entry.path();
-                let entry_name = entry.file_name()
-                    .to_string_lossy()
-                    .to_string();
+                let entry_name = entry.file_name().to_string_lossy().to_string();
                 let child_vfs_path = vfs_path.join(&entry_name);
-                
+
                 self.mount_recursive(&entry_path, &child_vfs_path)?;
             }
         }
@@ -121,9 +119,7 @@ impl VirtualFileSystem {
     }
 
     fn read_from_node(&self, node: &VfsNode, path: &Path) -> Result<Vec<u8>, VfsError> {
-        let components: Vec<&str> = path.iter()
-            .filter_map(|c| c.to_str())
-            .collect();
+        let components: Vec<&str> = path.iter().filter_map(|c| c.to_str()).collect();
 
         if components.is_empty() {
             return Err(VfsError::InvalidPath("Empty path".to_string()));
@@ -132,7 +128,12 @@ impl VirtualFileSystem {
         self.traverse_node(node, &components, 0)
     }
 
-    fn traverse_node(&self, node: &VfsNode, components: &[&str], index: usize) -> Result<Vec<u8>, VfsError> {
+    fn traverse_node(
+        &self,
+        node: &VfsNode,
+        components: &[&str],
+        index: usize,
+    ) -> Result<Vec<u8>, VfsError> {
         match node {
             VfsNode::File { content, .. } => {
                 if index == components.len() {
@@ -143,11 +144,14 @@ impl VirtualFileSystem {
             }
             VfsNode::Directory { children, .. } => {
                 if index >= components.len() {
-                    return Err(VfsError::InvalidPath("Path too short for directory".to_string()));
+                    return Err(VfsError::InvalidPath(
+                        "Path too short for directory".to_string(),
+                    ));
                 }
 
                 let child_name = components[index];
-                let child = children.get(child_name)
+                let child = children
+                    .get(child_name)
                     .ok_or_else(|| VfsError::NotFound(child_name.to_string()))?;
 
                 self.traverse_node(child, components, index + 1)
@@ -156,16 +160,25 @@ impl VirtualFileSystem {
     }
 
     /// Write a file to the virtual file system
-    pub fn write_file(&self, path: &Path, content: Vec<u8>, metadata: FileMetadata) -> Result<(), VfsError> {
+    pub fn write_file(
+        &self,
+        path: &Path,
+        content: Vec<u8>,
+        metadata: FileMetadata,
+    ) -> Result<(), VfsError> {
         let mut root = self.root.write().unwrap();
         self.write_to_node(&mut root, path, content, metadata)?;
         Ok(())
     }
 
-    fn write_to_node(&self, node: &mut VfsNode, path: &Path, content: Vec<u8>, metadata: FileMetadata) -> Result<(), VfsError> {
-        let components: Vec<&str> = path.iter()
-            .filter_map(|c| c.to_str())
-            .collect();
+    fn write_to_node(
+        &self,
+        node: &mut VfsNode,
+        path: &Path,
+        content: Vec<u8>,
+        metadata: FileMetadata,
+    ) -> Result<(), VfsError> {
+        let components: Vec<&str> = path.iter().filter_map(|c| c.to_str()).collect();
 
         if components.is_empty() {
             return Err(VfsError::InvalidPath("Empty path".to_string()));
@@ -174,7 +187,14 @@ impl VirtualFileSystem {
         self.traverse_and_write(node, &components, 0, content, metadata)
     }
 
-    fn traverse_and_write(&self, node: &mut VfsNode, components: &[&str], index: usize, content: Vec<u8>, metadata: FileMetadata) -> Result<(), VfsError> {
+    fn traverse_and_write(
+        &self,
+        node: &mut VfsNode,
+        components: &[&str],
+        index: usize,
+        content: Vec<u8>,
+        metadata: FileMetadata,
+    ) -> Result<(), VfsError> {
         match node {
             VfsNode::File { .. } => {
                 if index == components.len() {
@@ -182,7 +202,9 @@ impl VirtualFileSystem {
                     *node = VfsNode::File { content, metadata };
                     Ok(())
                 } else {
-                    Err(VfsError::InvalidPath("Cannot traverse through file".to_string()))
+                    Err(VfsError::InvalidPath(
+                        "Cannot traverse through file".to_string(),
+                    ))
                 }
             }
             VfsNode::Directory { children, .. } => {
@@ -191,23 +213,24 @@ impl VirtualFileSystem {
                 }
 
                 let child_name = components[index];
-                
+
                 if index == components.len() - 1 {
                     // This is the final component, create file
                     children.insert(child_name.to_string(), VfsNode::File { content, metadata });
                     Ok(())
                 } else {
                     // Need to traverse further
-                    let child = children.entry(child_name.to_string())
-                        .or_insert_with(|| VfsNode::Directory {
+                    let child = children.entry(child_name.to_string()).or_insert_with(|| {
+                        VfsNode::Directory {
                             children: HashMap::new(),
                             metadata: FileMetadata {
                                 size: 0,
                                 modified: 0,
                                 is_executable: false,
                             },
-                        });
-                    
+                        }
+                    });
+
                     self.traverse_and_write(child, components, index + 1, content, metadata)
                 }
             }
@@ -221,9 +244,7 @@ impl VirtualFileSystem {
     }
 
     fn check_exists(&self, node: &VfsNode, path: &Path) -> bool {
-        let components: Vec<&str> = path.iter()
-            .filter_map(|c| c.to_str())
-            .collect();
+        let components: Vec<&str> = path.iter().filter_map(|c| c.to_str()).collect();
 
         if components.is_empty() {
             return true; // Root exists
@@ -256,16 +277,23 @@ impl VirtualFileSystem {
         self.get_metadata_from_node(&root, path)
     }
 
-    fn get_metadata_from_node(&self, node: &VfsNode, path: &Path) -> Result<FileMetadata, VfsError> {
-        let components: Vec<&str> = path.iter()
-            .filter_map(|c| c.to_str())
-            .collect();
+    fn get_metadata_from_node(
+        &self,
+        node: &VfsNode,
+        path: &Path,
+    ) -> Result<FileMetadata, VfsError> {
+        let components: Vec<&str> = path.iter().filter_map(|c| c.to_str()).collect();
 
         let (_, metadata) = self.traverse_metadata(node, &components, 0)?;
         Ok(metadata)
     }
 
-    fn traverse_metadata(&self, node: &VfsNode, components: &[&str], index: usize) -> Result<(bool, FileMetadata), VfsError> {
+    fn traverse_metadata(
+        &self,
+        node: &VfsNode,
+        components: &[&str],
+        index: usize,
+    ) -> Result<(bool, FileMetadata), VfsError> {
         match node {
             VfsNode::File { metadata, .. } => {
                 if index == components.len() {
@@ -274,13 +302,16 @@ impl VirtualFileSystem {
                     Err(VfsError::InvalidPath("Path too long for file".to_string()))
                 }
             }
-            VfsNode::Directory { children, metadata, .. } => {
+            VfsNode::Directory {
+                children, metadata, ..
+            } => {
                 if index >= components.len() {
                     return Ok((false, metadata.clone()));
                 }
 
                 let child_name = components[index];
-                let child = children.get(child_name)
+                let child = children
+                    .get(child_name)
                     .ok_or_else(|| VfsError::NotFound(child_name.to_string()))?;
 
                 self.traverse_metadata(child, components, index + 1)
@@ -291,25 +322,27 @@ impl VirtualFileSystem {
     /// List directory contents
     pub fn list_directory(&self, path: &Path) -> Result<Vec<String>, VfsError> {
         let root = self.root.read().unwrap();
-        let components: Vec<&str> = path.iter()
-            .filter_map(|c| c.to_str())
-            .collect();
+        let components: Vec<&str> = path.iter().filter_map(|c| c.to_str()).collect();
 
         let children = self.traverse_list(&root, &components, 0)?;
         Ok(children)
     }
 
-    fn traverse_list(&self, node: &VfsNode, components: &[&str], index: usize) -> Result<Vec<String>, VfsError> {
+    fn traverse_list(
+        &self,
+        node: &VfsNode,
+        components: &[&str],
+        index: usize,
+    ) -> Result<Vec<String>, VfsError> {
         match node {
-            VfsNode::File { .. } => {
-                Err(VfsError::InvalidPath("Cannot list file".to_string()))
-            }
+            VfsNode::File { .. } => Err(VfsError::InvalidPath("Cannot list file".to_string())),
             VfsNode::Directory { children, .. } => {
                 if index >= components.len() {
                     Ok(children.keys().cloned().collect())
                 } else {
                     let child_name = components[index];
-                    let child = children.get(child_name)
+                    let child = children
+                        .get(child_name)
                         .ok_or_else(|| VfsError::NotFound(child_name.to_string()))?;
                     self.traverse_list(child, components, index + 1)
                 }
@@ -368,7 +401,7 @@ fn is_executable(path: &Path) -> bool {
             .map(|m| m.permissions().mode() & 0o111 != 0)
             .unwrap_or(false)
     }
-    
+
     #[cfg(windows)]
     {
         // On Windows, check file extension
@@ -377,7 +410,7 @@ fn is_executable(path: &Path) -> bool {
             .map(|ext| matches!(ext.to_lowercase().as_str(), "exe" | "bat" | "cmd" | "ps1"))
             .unwrap_or(false)
     }
-    
+
     #[cfg(not(any(unix, windows)))]
     {
         false
@@ -415,7 +448,7 @@ mod tests {
         };
 
         vfs.write_file(path, content.clone(), metadata).unwrap();
-        
+
         assert!(vfs.exists(path));
         let read_content = vfs.read_file(path).unwrap();
         assert_eq!(read_content, content);
@@ -426,7 +459,7 @@ mod tests {
         let vfs = VirtualFileSystem::new(100);
         let dir_path = Path::new("/test");
         let file_path = Path::new("/test/file.txt");
-        
+
         let content = b"test".to_vec();
         let metadata = FileMetadata {
             size: content.len() as u64,
@@ -435,7 +468,7 @@ mod tests {
         };
 
         vfs.write_file(file_path, content, metadata).unwrap();
-        
+
         let children = vfs.list_directory(dir_path).unwrap();
         assert_eq!(children.len(), 1);
         assert!(children.contains(&"file.txt".to_string()));
@@ -453,10 +486,10 @@ mod tests {
         };
 
         vfs.write_file(path, content.clone(), metadata).unwrap();
-        
+
         // First read caches the file
         vfs.read_file(path).unwrap();
-        
+
         let stats = vfs.cache_stats();
         assert_eq!(stats.entries, 1);
         assert!(stats.total_size > 0);

@@ -41,7 +41,8 @@ impl BuildBackend for DotnetBackend {
 
 impl DotnetBackend {
     pub fn new() -> Result<Self, DotnetBackendError> {
-        let toolchain = DotnetToolchain::detect().map_err(|e| DotnetBackendError::Toolchain(e.to_string()))?;
+        let toolchain =
+            DotnetToolchain::detect().map_err(|e| DotnetBackendError::Toolchain(e.to_string()))?;
         Ok(Self { toolchain })
     }
 
@@ -71,14 +72,20 @@ impl DotnetBackend {
             .args(restore_args)
             .cwd(project_dir);
         let restore_cache = CacheEntry {
-            key: FingerprintUtils::format_cache_key("dotnet", &namespace, "restore", &config.project_name),
+            key: FingerprintUtils::format_cache_key(
+                "dotnet",
+                &namespace,
+                "restore",
+                &config.project_name,
+            ),
             fingerprint: fp.clone(),
         };
         let restore_task = Task::new(
             format!("dotnet restore {}", config.project_name),
             restore_spec.command_line(),
             restore_spec,
-        ).with_cache(restore_cache);
+        )
+        .with_cache(restore_cache);
         let restore_node_id = graph.add_node(restore_task);
 
         let mut build_args = vec!["build".to_string()];
@@ -99,14 +106,20 @@ impl DotnetBackend {
             .args(build_args)
             .cwd(project_dir);
         let build_cache = CacheEntry {
-            key: FingerprintUtils::format_cache_key("dotnet", &namespace, "build", &config.project_name),
+            key: FingerprintUtils::format_cache_key(
+                "dotnet",
+                &namespace,
+                "build",
+                &config.project_name,
+            ),
             fingerprint: fp.clone(),
         };
         let build_task = Task::new(
             format!("dotnet build {}", config.project_name),
             build_spec.command_line(),
             build_spec,
-        ).with_cache(build_cache);
+        )
+        .with_cache(build_cache);
         let build_node_id = graph.add_node(build_task);
         graph.add_dependency(restore_node_id, build_node_id)?;
 
@@ -116,14 +129,20 @@ impl DotnetBackend {
                 .args(test_args)
                 .cwd(project_dir);
             let test_cache = CacheEntry {
-                key: FingerprintUtils::format_cache_key("dotnet", &namespace, "test", &config.project_name),
+                key: FingerprintUtils::format_cache_key(
+                    "dotnet",
+                    &namespace,
+                    "test",
+                    &config.project_name,
+                ),
                 fingerprint: fp.clone(),
             };
             let test_task = Task::new(
                 format!("dotnet test {}", config.project_name),
                 test_spec.command_line(),
                 test_spec,
-            ).with_cache(test_cache);
+            )
+            .with_cache(test_cache);
             let test_node_id = graph.add_node(test_task);
             graph.add_dependency(build_node_id, test_node_id)?;
         }
@@ -134,7 +153,7 @@ impl DotnetBackend {
                 publish_args.push("--configuration".to_string());
                 publish_args.push("Release".to_string());
             }
-            
+
             if let Some(runtime) = &config.runtime {
                 publish_args.push("--runtime".to_string());
                 publish_args.push(runtime.clone());
@@ -149,14 +168,20 @@ impl DotnetBackend {
                 .args(publish_args)
                 .cwd(project_dir);
             let publish_cache = CacheEntry {
-                key: FingerprintUtils::format_cache_key("dotnet", &namespace, "publish", &config.project_name),
+                key: FingerprintUtils::format_cache_key(
+                    "dotnet",
+                    &namespace,
+                    "publish",
+                    &config.project_name,
+                ),
                 fingerprint: fp,
             };
             let publish_task = Task::new(
                 format!("dotnet publish {}", config.project_name),
                 publish_spec.command_line(),
                 publish_spec,
-            ).with_cache(publish_cache);
+            )
+            .with_cache(publish_cache);
             let publish_node_id = graph.add_node(publish_task);
             graph.add_dependency(build_node_id, publish_node_id)?;
         }

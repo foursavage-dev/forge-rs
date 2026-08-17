@@ -1,7 +1,7 @@
 // Artifact verification service
 
 use crate::error::SigningResult;
-use crate::signature::{verify_signature, ArtifactSignature};
+use crate::signature::{ArtifactSignature, verify_signature};
 use base64::{Engine as _, engine::general_purpose};
 use sha2::Digest;
 use std::path::Path;
@@ -79,7 +79,9 @@ impl ArtifactVerifier {
 
         // Check if signer is trusted
         let signer_trusted = self.trusted_keys.iter().any(|key| {
-            key == &general_purpose::STANDARD.decode(&signature.signer_public_key).unwrap_or_default()
+            key == &general_purpose::STANDARD
+                .decode(&signature.signer_public_key)
+                .unwrap_or_default()
         });
 
         // Verify hash
@@ -134,10 +136,10 @@ impl ArtifactVerifier {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::SignatureAlgorithm;
     use crate::keypair::{KeyGenerationOptions, SigningKeyPair};
     use crate::sbom::SbomMetadata;
     use crate::signature::sign_artifact;
-    use crate::SignatureAlgorithm;
     use tempfile::NamedTempFile;
 
     #[tokio::test]

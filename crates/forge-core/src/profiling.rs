@@ -1,14 +1,14 @@
 #![forbid(unsafe_code)]
 
 //! Performance profiling and metrics collection
-//! 
+//!
 //! This module provides comprehensive performance profiling capabilities
 //! for build operations, including timing, memory usage, and resource tracking.
 
+use spin::Mutex as SpinMutex;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
-use spin::Mutex as SpinMutex;
 
 #[derive(Debug, Clone)]
 pub struct PerformanceMetrics {
@@ -62,11 +62,7 @@ impl Profiler {
     }
 
     pub fn start_task(&self, name: String) -> TaskGuard {
-        TaskGuard::new(
-            name,
-            self.task_profiles.clone(),
-            self.metrics.clone(),
-        )
+        TaskGuard::new(name, self.task_profiles.clone(), self.metrics.clone())
     }
 
     pub fn record_cache_hit(&self) {
@@ -83,11 +79,12 @@ impl Profiler {
 
     pub fn get_metrics(&self) -> PerformanceMetrics {
         let task_count = self.metrics.task_count.load(Ordering::SeqCst);
-        let total_duration = Duration::from_nanos(self.metrics.total_duration.load(Ordering::SeqCst));
+        let total_duration =
+            Duration::from_nanos(self.metrics.total_duration.load(Ordering::SeqCst));
         let peak_memory = self.metrics.peak_memory.load(Ordering::SeqCst);
         let cache_hits = self.metrics.cache_hits.load(Ordering::SeqCst);
         let cache_misses = self.metrics.cache_misses.load(Ordering::SeqCst);
-        
+
         let cache_hit_rate = if cache_hits + cache_misses > 0 {
             cache_hits as f64 / (cache_hits + cache_misses) as f64
         } else {
@@ -136,7 +133,7 @@ impl Profiler {
     pub fn get_cache_miss_rate(&self) -> f64 {
         let hits = self.metrics.cache_hits.load(Ordering::SeqCst);
         let misses = self.metrics.cache_misses.load(Ordering::SeqCst);
-        
+
         if hits + misses > 0 {
             misses as f64 / (hits + misses) as f64
         } else {
@@ -168,7 +165,7 @@ impl TaskGuard {
 
     pub fn finish(self, cache_hit: bool) {
         let duration = self.start_time.elapsed();
-        
+
         // Simulate memory and CPU tracking (in real implementation, use proper profiling)
         let memory_peak = 1024 * 1024; // 1MB placeholder
         let cpu_time = duration; // Simplified CPU time
@@ -184,11 +181,15 @@ impl TaskGuard {
 
         // Update metrics
         self.metrics.task_count.fetch_add(1, Ordering::SeqCst);
-        self.metrics.total_duration.fetch_add(duration.as_nanos() as u64, Ordering::SeqCst);
-        
+        self.metrics
+            .total_duration
+            .fetch_add(duration.as_nanos() as u64, Ordering::SeqCst);
+
         let current_peak = self.metrics.peak_memory.load(Ordering::SeqCst);
         if memory_peak > current_peak {
-            self.metrics.peak_memory.store(memory_peak, Ordering::SeqCst);
+            self.metrics
+                .peak_memory
+                .store(memory_peak, Ordering::SeqCst);
         }
 
         if cache_hit {
@@ -350,10 +351,10 @@ mod tests {
         let tracker = MemoryTracker::new();
         tracker.allocate(1024);
         tracker.allocate(2048);
-        
+
         assert_eq!(tracker.current_memory(), 3072);
         assert_eq!(tracker.peak_memory(), 3072);
-        
+
         tracker.deallocate(1024);
         assert_eq!(tracker.current_memory(), 2048);
         assert_eq!(tracker.peak_memory(), 3072);

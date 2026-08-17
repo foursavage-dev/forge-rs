@@ -1,0 +1,55 @@
+name: Essential CI
+
+on:
+  push:
+    branches: [ dev ]
+  pull_request:
+    branches: [ main, dev ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  critical-crates:
+    name: Critical Crates Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run Core Tests
+        run: cargo test -p forge-core -p forge-scheduler -p forge-cache -p forge-cas -p forge-executor --lib
+
+  critical-quality:
+    name: Critical Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Check format
+        run: cargo fmt --all -- --check
+      - name: Check clippy
+        run: cargo clippy -p forge-core -p forge-scheduler -p forge-cache -p forge-cas -p forge-executor -- -D warnings
+
+  essential-status:
+    name: Essential CI Status
+    runs-on: ubuntu-latest
+    needs: [critical-crates, critical-quality]
+    if: always()
+    steps:
+      - name: Check status
+        run: |
+          if [ "${{ needs.critical-crates.result }}" != "success" ] || \
+             [ "${{ needs.critical-quality.result }}" != "success" ]; then
+            echo "Essential CI Failed"
+            exit 1
+          fi
+          echo "Essential CI Passed"

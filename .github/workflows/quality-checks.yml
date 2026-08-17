@@ -1,0 +1,77 @@
+name: Quality Checks
+
+on:
+  push:
+    branches: [ dev ]
+  pull_request:
+    branches: [ main, dev ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  formatting:
+    name: Code Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Run rustfmt
+        run: cargo fmt --all -- --check
+
+  clippy:
+    name: Clippy Linting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Run clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+  documentation:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Check documentation
+        run: cargo doc --workspace --no-deps
+
+  msrv:
+    name: MSRV Compatibility Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust 1.86 (MSRV)
+        uses: dtolnay/rust-toolchain@1.86
+      - name: Check MSRV compilation
+        run: cargo check -p forge-core -p forge-scheduler -p forge-cache -p forge-cas -p forge-executor
+
+  quality-summary:
+    name: Quality Summary
+    runs-on: ubuntu-latest
+    needs: [formatting, clippy, documentation, msrv]
+    if: always()
+    steps:
+      - name: Check Status
+        run: |
+          if [ "${{ needs.formatting.result }}" != "success" ] || \
+             [ "${{ needs.clippy.result }}" != "success" ] || \
+             [ "${{ needs.documentation.result }}" != "success" ] || \
+             [ "${{ needs.msrv.result }}" != "success" ]; then
+            echo "Quality Checks Failed"
+            exit 1
+          fi
+          echo "All Quality Checks Passed"

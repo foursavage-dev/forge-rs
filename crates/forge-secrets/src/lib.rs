@@ -5,15 +5,15 @@
 #![allow(missing_docs)]
 #![warn(clippy::all)]
 
-pub mod manager;
-pub mod vault;
 pub mod aws;
 pub mod kubernetes;
+pub mod manager;
+pub mod vault;
 
-pub use manager::{SecretManager, Secret};
-pub use vault::VaultSecretManager;
 pub use aws::AwsSecretsManager;
 pub use kubernetes::KubernetesSecretManager;
+pub use manager::{Secret, SecretManager};
+pub use vault::VaultSecretManager;
 
 /// Main secrets service
 pub struct SecretsService {
@@ -29,7 +29,10 @@ impl SecretsService {
         self.manager.get_secret(key).await
     }
 
-    pub async fn inject_secrets(&self, command: &str) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn inject_secrets(
+        &self,
+        command: &str,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         self.manager.inject_secrets(command).await
     }
 }

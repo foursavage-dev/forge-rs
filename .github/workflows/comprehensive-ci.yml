@@ -1,0 +1,90 @@
+name: Comprehensive CI
+
+on:
+  push:
+    branches: [ dev ]
+  pull_request:
+    branches: [ main, dev ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  workspace-test:
+    name: Workspace Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-comp-${{ hashFiles('**/Cargo.lock') }}
+      - name: Run all workspace tests
+        run: cargo test --workspace
+
+  quality-gate:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Formatting check
+        run: cargo fmt --all -- --check
+      - name: Clippy check
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+  integration-gate:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run CLI integration tests
+        run: cargo test -p forge-cli --test build
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build release binaries
+        run: cargo build --release
+      - name: Verify CLI binary execution
+        run: |
+          ./target/release/forge --version
+          ./target/release/forge --help
+          ./target/release/forge doctor
+
+  ci-status:
+    name: CI Status
+    runs-on: ubuntu-latest
+    needs: [workspace-test, quality-gate, integration-gate, build]
+    if: always()
+    steps:
+      - name: Check status
+        run: |
+          if [ "${{ needs.workspace-test.result }}" != "success" ] || \
+             [ "${{ needs.quality-gate.result }}" != "success" ] || \
+             [ "${{ needs.integration-gate.result }}" != "success" ] || \
+             [ "${{ needs.build.result }}" != "success" ]; then
+            echo "CI Failed"
+            exit 1
+          fi
+          echo "All Comprehensive CI checks passed"

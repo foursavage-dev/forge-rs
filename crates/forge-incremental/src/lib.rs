@@ -9,7 +9,7 @@ pub mod analyzer;
 pub mod patterns;
 pub mod suggestions;
 
-pub use analyzer::{IncrementalAnalyzer, BuildAnalysis};
+pub use analyzer::{BuildAnalysis, IncrementalAnalyzer};
 pub use patterns::{BuildPattern, PatternType};
 pub use suggestions::{OptimizationSuggestion, SuggestionPriority};
 
@@ -25,7 +25,10 @@ impl IncrementalAnalysisService {
         }
     }
 
-    pub async fn analyze(&self, project_path: &str) -> Result<BuildAnalysis, Box<dyn std::error::Error>> {
+    pub async fn analyze(
+        &self,
+        project_path: &str,
+    ) -> Result<BuildAnalysis, Box<dyn std::error::Error>> {
         self.analyzer.analyze(project_path).await
     }
 }

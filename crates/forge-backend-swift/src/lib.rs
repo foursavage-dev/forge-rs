@@ -41,7 +41,8 @@ impl BuildBackend for SwiftBackend {
 
 impl SwiftBackend {
     pub fn new() -> Result<Self, SwiftBackendError> {
-        let toolchain = SwiftToolchain::detect().map_err(|e| SwiftBackendError::Toolchain(e.to_string()))?;
+        let toolchain =
+            SwiftToolchain::detect().map_err(|e| SwiftBackendError::Toolchain(e.to_string()))?;
         Ok(Self { toolchain })
     }
 
@@ -83,14 +84,20 @@ impl SwiftBackend {
             .args(resolve_args)
             .cwd(project_dir);
         let resolve_cache = CacheEntry {
-            key: FingerprintUtils::format_cache_key("swift", &namespace, "resolve", &config.package_name),
+            key: FingerprintUtils::format_cache_key(
+                "swift",
+                &namespace,
+                "resolve",
+                &config.package_name,
+            ),
             fingerprint: fp.clone(),
         };
         let resolve_task = Task::new(
             format!("swift package resolve {}", config.package_name),
             resolve_spec.command_line(),
             resolve_spec,
-        ).with_cache(resolve_cache);
+        )
+        .with_cache(resolve_cache);
         let resolve_node_id = graph.add_node(resolve_task);
         graph.add_dependency(clean_node_id, resolve_node_id)?;
 
@@ -130,14 +137,20 @@ impl SwiftBackend {
             .args(build_args)
             .cwd(project_dir);
         let build_cache = CacheEntry {
-            key: FingerprintUtils::format_cache_key("swift", &namespace, "build", &config.package_name),
+            key: FingerprintUtils::format_cache_key(
+                "swift",
+                &namespace,
+                "build",
+                &config.package_name,
+            ),
             fingerprint: fp.clone(),
         };
         let build_task = Task::new(
             format!("swift build {}", config.package_name),
             build_spec.command_line(),
             build_spec,
-        ).with_cache(build_cache);
+        )
+        .with_cache(build_cache);
         let build_node_id = graph.add_node(build_task);
         graph.add_dependency(resolve_node_id, build_node_id)?;
 
@@ -152,14 +165,20 @@ impl SwiftBackend {
                 .args(test_args)
                 .cwd(project_dir);
             let test_cache = CacheEntry {
-                key: FingerprintUtils::format_cache_key("swift", &namespace, "test", &config.package_name),
+                key: FingerprintUtils::format_cache_key(
+                    "swift",
+                    &namespace,
+                    "test",
+                    &config.package_name,
+                ),
                 fingerprint: fp,
             };
             let test_task = Task::new(
                 format!("swift test {}", config.package_name),
                 test_spec.command_line(),
                 test_spec,
-            ).with_cache(test_cache);
+            )
+            .with_cache(test_cache);
             let test_node_id = graph.add_node(test_task);
             graph.add_dependency(build_node_id, test_node_id)?;
         }

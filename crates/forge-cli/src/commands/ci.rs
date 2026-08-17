@@ -1,11 +1,18 @@
 use std::process::ExitCode;
 
 use crate::args::{CiArgs, CiCommand};
-use forge_ci_generator::{CIConfig, CIMatrix, CIJob, CIPlatform, GitHubActionsGenerator, GitLabCIGenerator, CircleCIGenerator, BitbucketPipelineGenerator};
+use forge_ci_generator::{
+    BitbucketPipelineGenerator, CIConfig, CIJob, CIMatrix, CIPlatform, CircleCIGenerator,
+    GitHubActionsGenerator, GitLabCIGenerator,
+};
 
 pub fn run_ci(args: CiArgs) -> ExitCode {
     match args.command {
-        CiCommand::Init { platform, cache, remote_cache } => {
+        CiCommand::Init {
+            platform,
+            cache,
+            remote_cache,
+        } => {
             let ci_config = CIConfig {
                 platform: match platform.as_str() {
                     "github" => CIPlatform::GitHubActions,
@@ -14,7 +21,10 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                     "bitbucket" => CIPlatform::BitbucketPipelines,
                     "all" => CIPlatform::All,
                     _ => {
-                        eprintln!("error: invalid platform '{}', expected 'github', 'gitlab', 'circleci', 'bitbucket', or 'all'", platform);
+                        eprintln!(
+                            "error: invalid platform '{}', expected 'github', 'gitlab', 'circleci', 'bitbucket', or 'all'",
+                            platform
+                        );
                         return ExitCode::FAILURE;
                     }
                 },
@@ -23,10 +33,10 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 jobs_per_run: 4,
                 timeout_minutes: 30,
             };
-            
+
             // Create a sample CI matrix
             let mut matrix = CIMatrix::new();
-            
+
             // Add sample jobs for demonstration
             matrix.add_job(CIJob {
                 id: "build".to_string(),
@@ -37,7 +47,7 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 dependencies: vec![],
                 cache_key: "build-cache".to_string(),
             });
-            
+
             matrix.add_job(CIJob {
                 id: "test".to_string(),
                 name: "Test".to_string(),
@@ -47,10 +57,10 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 dependencies: vec!["build".to_string()],
                 cache_key: "test-cache".to_string(),
             });
-            
+
             matrix.cache_config.enabled = cache;
             matrix.cache_config.remote_url = remote_cache.clone();
-            
+
             // Generate CI configuration files
             match ci_config.platform {
                 CIPlatform::GitHubActions => {
@@ -61,7 +71,10 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                             match std::fs::write(".github/workflows/forge.yml", workflow) {
                                 Ok(_) => println!("✓ Created .github/workflows/forge.yml"),
                                 Err(e) => {
-                                    eprintln!("error: failed to write GitHub Actions workflow: {}", e);
+                                    eprintln!(
+                                        "error: failed to write GitHub Actions workflow: {}",
+                                        e
+                                    );
                                     return ExitCode::FAILURE;
                                 }
                             }
@@ -75,15 +88,13 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 CIPlatform::GitLabCI => {
                     let generator = GitLabCIGenerator::new(ci_config.clone());
                     match generator.generate_pipeline(&matrix) {
-                        Ok(pipeline) => {
-                            match std::fs::write(".gitlab-ci.yml", pipeline) {
-                                Ok(_) => println!("✓ Created .gitlab-ci.yml"),
-                                Err(e) => {
-                                    eprintln!("error: failed to write GitLab CI pipeline: {}", e);
-                                    return ExitCode::FAILURE;
-                                }
+                        Ok(pipeline) => match std::fs::write(".gitlab-ci.yml", pipeline) {
+                            Ok(_) => println!("✓ Created .gitlab-ci.yml"),
+                            Err(e) => {
+                                eprintln!("error: failed to write GitLab CI pipeline: {}", e);
+                                return ExitCode::FAILURE;
                             }
-                        }
+                        },
                         Err(e) => {
                             eprintln!("error: failed to generate GitLab CI pipeline: {}", e);
                             return ExitCode::FAILURE;
@@ -93,15 +104,13 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 CIPlatform::CircleCI => {
                     let generator = CircleCIGenerator::new(ci_config.clone());
                     match generator.generate_config(&matrix) {
-                        Ok(config) => {
-                            match std::fs::write(".circleci/config.yml", config) {
-                                Ok(_) => println!("✓ Created .circleci/config.yml"),
-                                Err(e) => {
-                                    eprintln!("error: failed to write CircleCI config: {}", e);
-                                    return ExitCode::FAILURE;
-                                }
+                        Ok(config) => match std::fs::write(".circleci/config.yml", config) {
+                            Ok(_) => println!("✓ Created .circleci/config.yml"),
+                            Err(e) => {
+                                eprintln!("error: failed to write CircleCI config: {}", e);
+                                return ExitCode::FAILURE;
                             }
-                        }
+                        },
                         Err(e) => {
                             eprintln!("error: failed to generate CircleCI config: {}", e);
                             return ExitCode::FAILURE;
@@ -111,17 +120,21 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 CIPlatform::BitbucketPipelines => {
                     let generator = BitbucketPipelineGenerator::new(ci_config.clone());
                     match generator.generate_config(&matrix) {
-                        Ok(config) => {
-                            match std::fs::write("bitbucket-pipelines.yml", config) {
-                                Ok(_) => println!("✓ Created bitbucket-pipelines.yml"),
-                                Err(e) => {
-                                    eprintln!("error: failed to write Bitbucket Pipelines config: {}", e);
-                                    return ExitCode::FAILURE;
-                                }
+                        Ok(config) => match std::fs::write("bitbucket-pipelines.yml", config) {
+                            Ok(_) => println!("✓ Created bitbucket-pipelines.yml"),
+                            Err(e) => {
+                                eprintln!(
+                                    "error: failed to write Bitbucket Pipelines config: {}",
+                                    e
+                                );
+                                return ExitCode::FAILURE;
                             }
-                        }
+                        },
                         Err(e) => {
-                            eprintln!("error: failed to generate Bitbucket Pipelines config: {}", e);
+                            eprintln!(
+                                "error: failed to generate Bitbucket Pipelines config: {}",
+                                e
+                            );
                             return ExitCode::FAILURE;
                         }
                     }
@@ -134,7 +147,7 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                         (CIPlatform::CircleCI, ".circleci/config.yml"),
                         (CIPlatform::BitbucketPipelines, "bitbucket-pipelines.yml"),
                     ];
-                    
+
                     for (platform, file_path) in platforms {
                         let config = CIConfig {
                             platform,
@@ -143,7 +156,7 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                             jobs_per_run: 4,
                             timeout_minutes: 30,
                         };
-                        
+
                         let result = config.generate_ci(&matrix);
                         match result {
                             Ok(content) => {
@@ -166,14 +179,14 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                     }
                 }
             }
-            
+
             println!("✓ CI configuration initialized successfully");
             println!("  Platform: {}", platform);
             println!("  Cache: {}", if cache { "enabled" } else { "disabled" });
             if let Some(url) = &remote_cache {
                 println!("  Remote cache: {}", url);
             }
-            
+
             ExitCode::SUCCESS
         }
         CiCommand::Export { output, platform } => {
@@ -184,7 +197,10 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                     "circleci" => CIPlatform::CircleCI,
                     "bitbucket" => CIPlatform::BitbucketPipelines,
                     _ => {
-                        eprintln!("error: invalid platform '{}', expected 'github', 'gitlab', 'circleci', or 'bitbucket'", platform);
+                        eprintln!(
+                            "error: invalid platform '{}', expected 'github', 'gitlab', 'circleci', or 'bitbucket'",
+                            platform
+                        );
                         return ExitCode::FAILURE;
                     }
                 },
@@ -193,7 +209,7 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 jobs_per_run: 4,
                 timeout_minutes: 30,
             };
-            
+
             // Create a sample matrix for export
             let mut matrix = CIMatrix::new();
             matrix.add_job(CIJob {
@@ -205,7 +221,7 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 dependencies: vec![],
                 cache_key: "cache-key".to_string(),
             });
-            
+
             let result = match platform.as_str() {
                 "github" => {
                     let generator = GitHubActionsGenerator::new(ci_config);
@@ -225,20 +241,18 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 }
                 _ => unreachable!(),
             };
-            
+
             match result {
-                Ok(content) => {
-                    match std::fs::write(&output, content) {
-                        Ok(_) => {
-                            println!("✓ Exported CI configuration to {}", output.display());
-                            ExitCode::SUCCESS
-                        }
-                        Err(e) => {
-                            eprintln!("error: failed to write to {}: {}", output.display(), e);
-                            ExitCode::FAILURE
-                        }
+                Ok(content) => match std::fs::write(&output, content) {
+                    Ok(_) => {
+                        println!("✓ Exported CI configuration to {}", output.display());
+                        ExitCode::SUCCESS
                     }
-                }
+                    Err(e) => {
+                        eprintln!("error: failed to write to {}: {}", output.display(), e);
+                        ExitCode::FAILURE
+                    }
+                },
                 Err(e) => {
                     eprintln!("error: failed to generate CI configuration: {}", e);
                     ExitCode::FAILURE

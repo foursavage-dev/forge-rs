@@ -85,7 +85,10 @@ fn main() {
         for s in statuses {
             if s.detected {
                 let ver = s.version.unwrap_or_default();
-                println!("  [OK] {:<20} -> {} ({})", s.language, msg.toolchain_found, ver);
+                println!(
+                    "  [OK] {:<20} -> {} ({})",
+                    s.language, msg.toolchain_found, ver
+                );
             } else {
                 println!("  [--] {:<20} -> {}", s.language, msg.toolchain_not_found);
             }
@@ -177,7 +180,13 @@ mod tests {
 
     #[test]
     fn test_messages_retrieval() {
-        for lang in [Language::En, Language::Vi, Language::ZhCn, Language::ZhTw, Language::Ja] {
+        for lang in [
+            Language::En,
+            Language::Vi,
+            Language::ZhCn,
+            Language::ZhTw,
+            Language::Ja,
+        ] {
             let msg = Messages::get(lang);
             assert!(!msg.welcome_banner.is_empty());
             assert!(!msg.installation_complete.is_empty());

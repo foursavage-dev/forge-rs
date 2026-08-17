@@ -8,14 +8,14 @@
 
 pub mod error;
 pub mod keypair;
-pub mod signature;
 pub mod sbom;
+pub mod signature;
 pub mod verifier;
 
 pub use error::{SigningError, SigningResult};
-pub use keypair::{SigningKeyPair, KeyGenerationOptions};
+pub use keypair::{KeyGenerationOptions, SigningKeyPair};
+pub use sbom::{SbomFormat, SbomGenerator, SbomMetadata};
 pub use signature::{ArtifactSignature, SignatureAlgorithm};
-pub use sbom::{SbomGenerator, SbomFormat, SbomMetadata};
 pub use verifier::{ArtifactVerifier, VerificationResult, VerificationStatus};
 
 use std::path::Path;
@@ -37,9 +37,7 @@ impl SigningService {
     }
 
     /// Create signing service from key file
-    pub async fn from_key_file<P: AsRef<Path>>(
-        private_key_path: P,
-    ) -> SigningResult<Self> {
+    pub async fn from_key_file<P: AsRef<Path>>(private_key_path: P) -> SigningResult<Self> {
         let keypair = SigningKeyPair::from_file(private_key_path).await?;
         Ok(Self::new(keypair))
     }
@@ -50,12 +48,9 @@ impl SigningService {
         artifact_path: &Path,
         metadata: SbomMetadata,
     ) -> SigningResult<ArtifactSignature> {
-        let signature = signature::sign_artifact(
-            artifact_path,
-            &self.keypair,
-            self.algorithm,
-            &metadata,
-        ).await?;
+        let signature =
+            signature::sign_artifact(artifact_path, &self.keypair, self.algorithm, &metadata)
+                .await?;
         Ok(signature)
     }
 
