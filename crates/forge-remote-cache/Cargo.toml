@@ -7,7 +7,7 @@ license.workspace = true
 description = "Remote build cache client and tiered L1/L2 caching for forge"
 
 [dependencies]
-base64 = "0.22"
+base64 = "0.23"
 blake3 = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = { workspace = true }

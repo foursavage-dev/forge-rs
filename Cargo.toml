@@ -79,20 +79,20 @@ forge-secrets = { path = "crates/forge-secrets", version = "0.1.0" }
 forge-incremental = { path = "crates/forge-incremental", version = "0.1.0" }
 forge-templates = { path = "crates/forge-templates", version = "0.1.0" }
 
-cargo_metadata = "0.21"
+cargo_metadata = "0.23"
 thiserror = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-toml = "0.8"
-spin = "0.9"
+toml = "1.1"
+spin = "0.12"
 tempfile = "3"
 regex = "1"
 blake3 = "1"
 
 clap = { version = "4.5", features = ["derive"] }
-anstream = "0.6"
+anstream = "1.0"
 anstyle = "1.0"
-notify = "6"
-crossterm = "0.28"
+notify = "8"
+crossterm = "0.29"
 ratatui = { version = "0.30", default-features = false, features = ["crossterm"] }
 async-trait = "0.1"

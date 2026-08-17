@@ -20,7 +20,7 @@ anstream = { workspace = true }
 anstyle = { workspace = true }
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.59", default-features = false, features = [
+windows-sys = { version = "0.61", default-features = false, features = [
     "Win32_Foundation",
     "Win32_System_Registry",
     "Win32_UI_WindowsAndMessaging",

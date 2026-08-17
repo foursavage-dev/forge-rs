@@ -7,7 +7,7 @@ license.workspace = true
 description = "Distributed remote execution daemon and worker client for Forge"
 
 [dependencies]
-base64 = "0.22"
+base64 = "0.23"
 blake3 = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = { workspace = true }
