@@ -1,0 +1,51 @@
+name: LLVM Sanitizers
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  address-sanitizer:
+    name: Address & Leak Sanitizer (ASan/LSan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nightly Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
+
+      - name: Run ASan Tests on Core Crates
+        env:
+          RUSTFLAGS: "-Z sanitizer=address"
+          RUSTDOCFLAGS: "-Z sanitizer=address"
+          ASAN_OPTIONS: "detect_leaks=1"
+        run: |
+          cargo test -p forge-core -p forge-cache -p forge-cas --target x86_64-unknown-linux-gnu
+
+  thread-sanitizer:
+    name: Thread Sanitizer (TSan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nightly Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
+
+      - name: Run TSan Tests on Concurrency Crates
+        env:
+          RUSTFLAGS: "-Z sanitizer=thread"
+          RUSTDOCFLAGS: "-Z sanitizer=thread"
+        run: |
+          cargo test -p forge-executor -p forge-scheduler --target x86_64-unknown-linux-gnu
