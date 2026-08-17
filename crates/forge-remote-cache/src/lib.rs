@@ -263,21 +263,36 @@ mod tests {
         assert!(composite.local.matches("task_1", "hash_abc"));
     }
 
+    fn start_test_server(
+        token: Option<String>,
+        dir: Option<std::path::PathBuf>,
+    ) -> (RemoteCacheServer, String, std::thread::JoinHandle<()>) {
+        for _ in 0..10 {
+            let addr = match TcpListener::bind("127.0.0.1:0") {
+                Ok(l) => {
+                    let a = l.local_addr().unwrap().to_string();
+                    drop(l);
+                    thread::sleep(Duration::from_millis(10));
+                    a
+                }
+                Err(_) => continue,
+            };
+            let server = RemoteCacheServer::new(&addr, token.clone(), dir.clone());
+            if let Ok(handle) = server.start_background() {
+                thread::sleep(Duration::from_millis(30));
+                return (server, addr, handle);
+            }
+        }
+        panic!("Failed to start remote cache test server");
+    }
+
     #[test]
     fn test_tcp_remote_cache_server_and_client() {
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-        let addr = listener.local_addr().unwrap().to_string();
-        drop(listener);
-
         let temp = tempdir().unwrap();
-        let server = RemoteCacheServer::new(
-            &addr,
+        let (server, addr, _server_handle) = start_test_server(
             Some("secret123".to_string()),
             Some(temp.path().to_path_buf()),
         );
-        let _server_handle = server.start_background().unwrap();
-
-        thread::sleep(Duration::from_millis(50));
 
         let client = TcpRemoteCacheClient::new(&addr, Some("secret123".to_string()));
         assert!(client.ping().unwrap());
@@ -299,14 +314,8 @@ mod tests {
 
     #[test]
     fn test_tcp_remote_cache_auth_failure() {
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-        let addr = listener.local_addr().unwrap().to_string();
-        drop(listener);
-
-        let server = RemoteCacheServer::new(&addr, Some("correct_token".to_string()), None);
-        let _server_handle = server.start_background().unwrap();
-
-        thread::sleep(Duration::from_millis(50));
+        let (server, addr, _server_handle) =
+            start_test_server(Some("correct_token".to_string()), None);
 
         let client = TcpRemoteCacheClient::new(&addr, Some("wrong_token".to_string()));
         let err = client.ping().unwrap_err();
@@ -318,13 +327,8 @@ mod tests {
     #[test]
     fn test_server_cas_dedups_identical_blobs() {
         let temp = tempdir().unwrap();
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-        let addr = listener.local_addr().unwrap().to_string();
-        drop(listener);
-
-        let server = RemoteCacheServer::new(&addr, None, Some(temp.path().to_path_buf()));
-        let _server_handle = server.start_background().unwrap();
-        thread::sleep(Duration::from_millis(50));
+        let (server, addr, _server_handle) =
+            start_test_server(None, Some(temp.path().to_path_buf()));
 
         let client = TcpRemoteCacheClient::new(&addr, None);
         let payload = b"identical-artifact-payload";
@@ -344,27 +348,35 @@ mod tests {
         let count = std::fs::read_dir(&objects).unwrap().count();
         assert_eq!(count, 1, "identical content must be stored exactly once");
 
-        drop(server);
+        server.stop();
     }
 
     #[test]
     fn test_server_artifacts_survive_restart() {
         let temp = tempdir().unwrap();
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-        let addr = listener.local_addr().unwrap().to_string();
-        drop(listener);
-
-        let server = RemoteCacheServer::new(&addr, None, Some(temp.path().to_path_buf()));
-        let handle = server.start_background().unwrap();
-        thread::sleep(Duration::from_millis(50));
+        let (server, addr, handle) = start_test_server(None, Some(temp.path().to_path_buf()));
         let client = TcpRemoteCacheClient::new(&addr, None);
         client.put_artifact("persist_me", b"durable").unwrap();
         client.put_fingerprint("fp_key", "fp_val").unwrap();
         server.stop();
         handle.join().unwrap();
 
-        let restarted = RemoteCacheServer::new(&addr, None, Some(temp.path().to_path_buf()));
-        let handle2 = restarted.start_background().unwrap();
+        thread::sleep(Duration::from_millis(50));
+
+        let mut restarted_opt = None;
+        let mut handle2_opt = None;
+        for _ in 0..10 {
+            let s = RemoteCacheServer::new(&addr, None, Some(temp.path().to_path_buf()));
+            if let Ok(h) = s.start_background() {
+                restarted_opt = Some(s);
+                handle2_opt = Some(h);
+                break;
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
+
+        let restarted = restarted_opt.expect("failed to restart remote cache server");
+        let handle2 = handle2_opt.unwrap();
         thread::sleep(Duration::from_millis(50));
         let client2 = TcpRemoteCacheClient::new(&addr, None);
         assert_eq!(
