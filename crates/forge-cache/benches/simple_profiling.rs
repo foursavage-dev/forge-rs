@@ -1,6 +1,6 @@
 //! Simple profiling test for flamegraph analysis
 
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
 use forge_cache::{BufferPool, LocalCache};
 use tempfile::TempDir;
 
@@ -20,7 +20,7 @@ fn bench_cache_operations(c: &mut Criterion) {
             for i in 0..100 {
                 let key = format!("key_{}", i);
                 let fp = format!("fingerprint_{}", i);
-                black_box(cache.matches(&key, &fp));
+                std::hint::black_box(cache.matches(&key, &fp));
             }
         });
     });
@@ -33,7 +33,7 @@ fn bench_buffer_pool(c: &mut Criterion) {
         b.iter(|| {
             for _ in 0..1000 {
                 let buffer = pool.get_buffer(4096);
-                black_box(&buffer);
+                std::hint::black_box(&buffer);
                 pool.return_buffer(buffer);
             }
         });

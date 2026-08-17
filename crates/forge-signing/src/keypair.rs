@@ -2,7 +2,7 @@
 
 use crate::error::{SigningError, SigningResult};
 use ed25519_dalek::{SigningKey, VerifyingKey};
-use rand::rngs::OsRng;
+use rand::rngs::SysRng;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tokio::fs;
@@ -38,8 +38,8 @@ impl SigningKeyPair {
             }
         } else {
             let mut bytes = [0u8; 32];
-            use rand::RngCore;
-            OsRng.fill_bytes(&mut bytes);
+            use rand_core::{Rng, UnwrapErr};
+            UnwrapErr(SysRng).fill_bytes(&mut bytes);
             SigningKey::from_bytes(&bytes)
         };
 

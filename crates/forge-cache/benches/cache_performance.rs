@@ -5,7 +5,7 @@
 //! This module provides comprehensive benchmarks to measure the impact
 //! of performance optimizations.
 
-use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use forge_cache::{BufferPool, LocalCache, ScopedBuffer};
 use std::time::Duration;
 use tempfile::TempDir;
@@ -19,7 +19,7 @@ fn bench_buffer_pool_basic(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("get_return", size), size, |b, &size| {
             b.iter(|| {
                 let buffer = pool.get_buffer(size);
-                black_box(&buffer);
+                std::hint::black_box(&buffer);
                 pool.return_buffer(buffer);
             })
         });
@@ -38,7 +38,7 @@ fn bench_buffer_pool_scoped(c: &mut Criterion) {
             b.iter(|| {
                 let mut scoped = ScopedBuffer::new(size, pool.clone());
                 scoped.as_mut().resize(size, 0);
-                black_box(scoped.as_ref().len());
+                std::hint::black_box(scoped.as_ref().len());
             })
         });
     }
@@ -52,11 +52,11 @@ fn bench_cache_put_get(c: &mut Criterion) {
 
     c.bench_function("cache_put_get", |b| {
         b.iter(|| {
-            let key = format!("test_key_{}", black_box(42));
-            let fingerprint = format!("fingerprint_{}", black_box(42));
+            let key = format!("test_key_{}", std::hint::black_box(42));
+            let fingerprint = format!("fingerprint_{}", std::hint::black_box(42));
             cache.put(&key, &fingerprint).unwrap();
             let result = cache.get(&key);
-            black_box(result);
+            std::hint::black_box(result);
         })
     });
 }
@@ -75,14 +75,14 @@ fn bench_cache_matches(c: &mut Criterion) {
     c.bench_function("cache_matches_hit", |b| {
         b.iter(|| {
             let result = cache.matches("key_42", "fp_42");
-            black_box(result);
+            std::hint::black_box(result);
         })
     });
 
     c.bench_function("cache_matches_miss", |b| {
         b.iter(|| {
             let result = cache.matches("key_42", "wrong_fp");
-            black_box(result);
+            std::hint::black_box(result);
         })
     });
 }
@@ -98,7 +98,9 @@ fn bench_cache_put_object(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("put_object", size), size, |b, &size| {
             let hash = format!("hash_{}", size);
             b.iter(|| {
-                cache.put_object(&hash, black_box(&data)).unwrap();
+                cache
+                    .put_object(&hash, std::hint::black_box(&data))
+                    .unwrap();
             })
         });
     }
@@ -123,7 +125,7 @@ fn bench_cache_disk_stats(c: &mut Criterion) {
     c.bench_function("cache_disk_stats", |b| {
         b.iter(|| {
             let stats = cache.disk_stats();
-            black_box(stats);
+            std::hint::black_box(stats);
         })
     });
 }
@@ -145,14 +147,14 @@ fn bench_cache_prune(c: &mut Criterion) {
     c.bench_function("cache_prune_age", |b| {
         b.iter(|| {
             let report = cache.prune(Some(Duration::from_secs(3600)), None).unwrap();
-            black_box(report);
+            std::hint::black_box(report);
         })
     });
 
     c.bench_function("cache_prune_size", |b| {
         b.iter(|| {
             let report = cache.prune(None, Some(1024)).unwrap();
-            black_box(report);
+            std::hint::black_box(report);
         })
     });
 }
