@@ -54,6 +54,28 @@ pub enum Command {
     Jit(JitArgs),
     SuperOpt(SuperOptArgs),
     Plugin(PluginArgs),
+    Fix(FixArgs),
+    Ui(UiArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct FixArgs {
+    #[arg(long, short)]
+    pub path: Option<PathBuf>,
+    #[arg(long)]
+    pub apply: bool,
+    #[arg(long)]
+    pub ai: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct UiArgs {
+    #[arg(long, default_value_t = 4000)]
+    pub port: u16,
+    #[arg(long)]
+    pub open: bool,
+    #[arg(long, short)]
+    pub path: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]

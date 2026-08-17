@@ -88,6 +88,20 @@ fn main() -> ExitCode {
         Command::Jit(args) => commands::run_jit(args),
         Command::SuperOpt(args) => commands::run_super_opt(args),
         Command::Plugin(args) => commands::run_plugin(args),
+        Command::Fix(args) => match commands::run_fix(args.path, args.apply, args.ai) {
+            Ok(_) => ExitCode::SUCCESS,
+            Err(err) => {
+                eprintln!("error: fix diagnostic failed: {err}");
+                ExitCode::FAILURE
+            }
+        },
+        Command::Ui(args) => match commands::run_ui(args.port, args.open, args.path) {
+            Ok(_) => ExitCode::SUCCESS,
+            Err(err) => {
+                eprintln!("error: ui server failed: {err}");
+                ExitCode::FAILURE
+            }
+        },
     }
 }
 

@@ -125,12 +125,12 @@ impl CasBackend for LocalCasBackend {
                 (artifact.data().to_vec(), None)
             };
 
-        // Store data
-        tokio::fs::write(&data_path, &data_to_store)
+        let tmp_data = data_path.with_extension(format!("tmp.{}", std::process::id()));
+        tokio::fs::write(&tmp_data, &data_to_store)
             .await
             .map_err(CasError::Io)?;
+        let _ = tokio::fs::rename(&tmp_data, &data_path).await;
 
-        // Store metadata
         let mut metadata = artifact.metadata.clone();
         if let Some(size) = compressed_size {
             metadata = metadata.with_compression(size, self.compression.as_str().to_string());
@@ -139,9 +139,11 @@ impl CasBackend for LocalCasBackend {
         let metadata_json =
             serde_json::to_string(&metadata).map_err(|e| CasError::Serialization(e.to_string()))?;
 
-        tokio::fs::write(&metadata_path, metadata_json)
+        let tmp_meta = metadata_path.with_extension(format!("meta.tmp.{}", std::process::id()));
+        tokio::fs::write(&tmp_meta, metadata_json)
             .await
             .map_err(CasError::Io)?;
+        let _ = tokio::fs::rename(&tmp_meta, &metadata_path).await;
 
         Ok(())
     }

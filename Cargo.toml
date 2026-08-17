@@ -94,5 +94,5 @@ anstream = "0.6"
 anstyle = "1.0"
 notify = "6"
 crossterm = "0.28"
-ratatui = { version = "0.29", default-features = false, features = ["crossterm"] }
+ratatui = { version = "0.30", default-features = false, features = ["crossterm"] }
 async-trait = "0.1"

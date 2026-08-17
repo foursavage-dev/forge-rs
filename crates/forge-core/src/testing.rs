@@ -284,16 +284,16 @@ impl Semaphore {
 
     fn acquire(&self) {
         let (lock, cvar) = &*self.permits;
-        let mut permits = lock.lock().unwrap();
+        let mut permits = lock.lock().expect("semaphore lock poisoned");
         while *permits == 0 {
-            permits = cvar.wait(permits).unwrap();
+            permits = cvar.wait(permits).expect("condition variable wait failed");
         }
         *permits -= 1;
     }
 
     fn release(&self) {
         let (lock, cvar) = &*self.permits;
-        let mut permits = lock.lock().unwrap();
+        let mut permits = lock.lock().expect("semaphore lock poisoned");
         *permits += 1;
         cvar.notify_one();
     }
@@ -365,7 +365,8 @@ impl ParallelTestRunner {
                     error_message,
                 };
 
-                tx_clone.send(test_result).unwrap();
+                // Gracefully handle channel send failure
+                let _ = tx_clone.send(test_result);
 
                 // Release semaphore permit
                 semaphore_clone.release();
@@ -441,7 +442,7 @@ mod tests {
         );
 
         // Setup and teardown should not panic
-        env.setup().unwrap();
+        assert!(env.setup().is_ok(), "Environment setup should succeed");
         env.teardown();
     }
 

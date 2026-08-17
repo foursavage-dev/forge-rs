@@ -2,11 +2,21 @@
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Secret {
     pub key: String,
     pub value: String,
     pub version: Option<String>,
+}
+
+impl std::fmt::Debug for Secret {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Secret")
+            .field("key", &self.key)
+            .field("value", &"[REDACTED]")
+            .field("version", &self.version)
+            .finish()
+    }
 }
 
 #[async_trait::async_trait]

@@ -5,7 +5,7 @@
 //! This module provides comprehensive diagnostic logging, health monitoring,
 //! and system observability for production readiness.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime};
 
@@ -62,14 +62,14 @@ impl std::fmt::Display for LogLevel {
 
 /// Diagnostic logger
 pub struct DiagnosticLogger {
-    logs: Arc<RwLock<Vec<DiagnosticLog>>>,
+    logs: Arc<RwLock<VecDeque<DiagnosticLog>>>,
     max_logs: usize,
 }
 
 impl DiagnosticLogger {
     pub fn new(max_logs: usize) -> Self {
         Self {
-            logs: Arc::new(RwLock::new(Vec::with_capacity(max_logs))),
+            logs: Arc::new(RwLock::new(VecDeque::with_capacity(max_logs))),
             max_logs,
         }
     }
@@ -93,43 +93,54 @@ impl DiagnosticLogger {
     }
 
     fn add_log(&self, log: DiagnosticLog) {
-        let mut logs = self.logs.write().unwrap();
-        logs.push(log);
-        if logs.len() > self.max_logs {
-            logs.remove(0);
+        if let Ok(mut logs) = self.logs.write() {
+            logs.push_back(log);
+            if logs.len() > self.max_logs {
+                logs.pop_front();
+            }
         }
+        // If lock is poisoned, silently fail to avoid crashing
     }
 
     pub fn get_logs(&self) -> Vec<DiagnosticLog> {
-        self.logs.read().unwrap().clone()
+        self.logs
+            .read()
+            .map(|logs| logs.iter().cloned().collect())
+            .unwrap_or_default()
     }
 
     pub fn get_logs_by_component(&self, component: &str) -> Vec<DiagnosticLog> {
         self.logs
             .read()
-            .unwrap()
-            .iter()
-            .filter(|log| log.component == component)
-            .cloned()
-            .collect()
+            .map(|logs| {
+                logs.iter()
+                    .filter(|log| log.component == component)
+                    .cloned()
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     pub fn get_logs_by_level(&self, level: LogLevel) -> Vec<DiagnosticLog> {
         self.logs
             .read()
-            .unwrap()
-            .iter()
-            .filter(|log| log.level == level)
-            .cloned()
-            .collect()
+            .map(|logs| {
+                logs.iter()
+                    .filter(|log| log.level == level)
+                    .cloned()
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     pub fn clear(&self) {
-        self.logs.write().unwrap().clear();
+        if let Ok(mut logs) = self.logs.write() {
+            logs.clear();
+        }
     }
 
     pub fn log_count(&self) -> usize {
-        self.logs.read().unwrap().len()
+        self.logs.read().map(|logs| logs.len()).unwrap_or(0)
     }
 }
 
@@ -144,7 +155,7 @@ impl Clone for DiagnosticLogger {
 
 /// Health check registry
 pub struct HealthCheckRegistry {
-    checks: Arc<RwLock<HashMap<String, Box<dyn HealthCheck + Send + Sync>>>>,
+    checks: Arc<RwLock<HashMap<String, Arc<dyn HealthCheck + Send + Sync>>>>,
 }
 
 impl HealthCheckRegistry {
@@ -155,28 +166,40 @@ impl HealthCheckRegistry {
     }
 
     pub fn register(&self, check: Box<dyn HealthCheck + Send + Sync>) {
-        let mut checks = self.checks.write().unwrap();
-        checks.insert(check.name().to_string(), check);
+        if let Ok(mut checks) = self.checks.write() {
+            checks.insert(check.name().to_string(), Arc::from(check));
+        }
     }
 
     pub fn unregister(&self, name: &str) {
-        let mut checks = self.checks.write().unwrap();
-        checks.remove(name);
+        if let Ok(mut checks) = self.checks.write() {
+            checks.remove(name);
+        }
     }
 
     pub fn check_all(&self) -> Vec<HealthCheckResult> {
-        let checks = self.checks.read().unwrap();
-        checks.values().map(|check| check.check_health()).collect()
+        let checks: Vec<Arc<dyn HealthCheck + Send + Sync>> = self
+            .checks
+            .read()
+            .map(|checks| checks.values().cloned().collect())
+            .unwrap_or_default();
+        checks.iter().map(|check| check.check_health()).collect()
     }
 
     pub fn check_component(&self, name: &str) -> Option<HealthCheckResult> {
-        let checks = self.checks.read().unwrap();
-        checks.get(name).map(|check| check.check_health())
+        let check = self
+            .checks
+            .read()
+            .ok()
+            .and_then(|checks| checks.get(name).cloned());
+        check.map(|check| check.check_health())
     }
 
     pub fn get_component_names(&self) -> Vec<String> {
-        let checks = self.checks.read().unwrap();
-        checks.keys().cloned().collect()
+        self.checks
+            .read()
+            .map(|checks| checks.keys().cloned().collect())
+            .unwrap_or_default()
     }
 
     pub fn overall_health(&self) -> HealthStatus {
@@ -227,8 +250,12 @@ impl ComponentHealthMonitor {
     }
 
     pub fn record_check(&self, result: &HealthCheckResult) {
-        *self.last_check.write().unwrap() = Some(SystemTime::now());
-        *self.check_count.write().unwrap() += 1;
+        if let Ok(mut last_check) = self.last_check.write() {
+            *last_check = Some(SystemTime::now());
+        }
+        if let Ok(mut check_count) = self.check_count.write() {
+            *check_count += 1;
+        }
 
         let level = match result.status {
             HealthStatus::Healthy => LogLevel::Info,
@@ -241,11 +268,14 @@ impl ComponentHealthMonitor {
     }
 
     pub fn last_check_time(&self) -> Option<SystemTime> {
-        *self.last_check.read().unwrap()
+        self.last_check
+            .read()
+            .ok()
+            .and_then(|last_check| *last_check)
     }
 
     pub fn check_count(&self) -> u64 {
-        *self.check_count.read().unwrap()
+        self.check_count.read().map(|count| *count).unwrap_or(0)
     }
 }
 
@@ -254,7 +284,7 @@ impl ComponentHealthMonitor {
 pub struct OpPerformanceMetrics {
     pub operation_count: u64,
     pub total_duration: Duration,
-    pub min_duration: Duration,
+    pub min_duration: Option<Duration>,
     pub max_duration: Duration,
     pub success_count: u64,
     pub failure_count: u64,
@@ -265,7 +295,7 @@ impl OpPerformanceMetrics {
         Self {
             operation_count: 0,
             total_duration: Duration::ZERO,
-            min_duration: Duration::MAX,
+            min_duration: None,
             max_duration: Duration::ZERO,
             success_count: 0,
             failure_count: 0,
@@ -275,7 +305,7 @@ impl OpPerformanceMetrics {
     pub fn record_operation(&mut self, duration: Duration, success: bool) {
         self.operation_count += 1;
         self.total_duration += duration;
-        self.min_duration = self.min_duration.min(duration);
+        self.min_duration = Some(self.min_duration.map_or(duration, |m| m.min(duration)));
         self.max_duration = self.max_duration.max(duration);
 
         if success {
@@ -340,19 +370,25 @@ impl SystemDiagnostics {
         duration: Duration,
         success: bool,
     ) {
-        let mut metrics = self.performance_metrics.write().unwrap();
-        let operation = operation.into();
-        let entry = metrics.entry(operation).or_default();
-        entry.record_operation(duration, success);
+        if let Ok(mut metrics) = self.performance_metrics.write() {
+            let operation = operation.into();
+            let entry = metrics.entry(operation).or_default();
+            entry.record_operation(duration, success);
+        }
     }
 
     pub fn get_performance_metrics(&self, operation: &str) -> Option<OpPerformanceMetrics> {
-        let metrics = self.performance_metrics.read().unwrap();
-        metrics.get(operation).cloned()
+        self.performance_metrics
+            .read()
+            .ok()
+            .and_then(|metrics| metrics.get(operation).cloned())
     }
 
     pub fn all_performance_metrics(&self) -> HashMap<String, OpPerformanceMetrics> {
-        self.performance_metrics.read().unwrap().clone()
+        self.performance_metrics
+            .read()
+            .map(|metrics| metrics.clone())
+            .unwrap_or_default()
     }
 
     pub fn generate_report(&self) -> DiagnosticReport {
@@ -452,7 +488,7 @@ mod tests {
         assert_eq!(metrics.operation_count, 3);
         assert_eq!(metrics.success_count, 2);
         assert_eq!(metrics.failure_count, 1);
-        assert_eq!(metrics.min_duration, Duration::from_millis(50));
+        assert_eq!(metrics.min_duration, Some(Duration::from_millis(50)));
         assert_eq!(metrics.max_duration, Duration::from_millis(200));
     }
 
