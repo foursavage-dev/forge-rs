@@ -17,7 +17,7 @@ jobs:
         uses: actions/create-github-app-token@v1
         continue-on-error: true
         with:
-          app-id: ${{ secrets.BOT_APP_ID || '4594289' }}
+          app-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
 
       - name: Analyze Issue with AI Doctor
@@ -42,16 +42,15 @@ jobs:
 
           if [ -n "$GEMINI_API_KEY" ]; then
             PAYLOAD=$(jq -n --arg text "$PROMPT" '{"contents": [{"parts": [{"text": $text}]}]}')
-            RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${GEMINI_API_KEY}" \
-              -H "Content-Type: application/json" \
-              -d "$PAYLOAD")
-            AI_TEXT=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
-            if [ -z "$AI_TEXT" ]; then
-              RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}" \
+            for MODEL in "gemini-2.5-flash" "gemini-2.0-flash" "gemini-1.5-flash"; do
+              RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}" \
                 -H "Content-Type: application/json" \
                 -d "$PAYLOAD")
               AI_TEXT=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
-            fi
+              if [ -n "$AI_TEXT" ]; then
+                break
+              fi
+            done
           fi
 
           if [ -z "$AI_TEXT" ]; then
