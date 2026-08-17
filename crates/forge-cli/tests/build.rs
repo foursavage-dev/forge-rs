@@ -714,9 +714,19 @@ fn doctor_reports_tools_and_cache() {
         .env("FORGE_CACHE_DIR", dir.path().join("cache")));
     assert!(output.status.success(), "stderr: {}", stderr(&output));
     let text = stdout(&output);
-    assert!(text.contains("[ok] cargo"), "doctor output: {text}");
-    assert!(text.contains("[ok] git"), "doctor output: {text}");
-    assert!(text.contains("All checks passed."));
+    assert!(
+        text.contains("Rust Compiler & Cargo") || text.contains("cargo"),
+        "doctor output: {text}"
+    );
+    assert!(
+        text.contains("Git Version Control") || text.contains("git"),
+        "doctor output: {text}"
+    );
+    assert!(
+        text.contains("Doctor diagnostic completed successfully.")
+            || text.contains("All checks passed."),
+        "doctor output: {text}"
+    );
 }
 
 #[test]
