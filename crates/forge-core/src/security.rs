@@ -6,7 +6,7 @@
 //! permission checks, and security policies.
 
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 use std::sync::RwLock;
 
@@ -105,7 +105,10 @@ impl SecurityValidator {
     }
 
     pub fn validate_command(&self, command: &str, args: &[String]) -> Result<(), SecurityError> {
-        let policy = self.policy.read().map_err(|_| SecurityError::PolicyLockPoisoned)?;
+        let policy = self
+            .policy
+            .read()
+            .map_err(|_| SecurityError::PolicyLockPoisoned)?;
 
         // Extract executable from command
         let executable = command
@@ -115,6 +118,13 @@ impl SecurityValidator {
 
         if !policy.is_executable_allowed(executable) {
             return Err(SecurityError::ExecutableNotAllowed(executable.to_string()));
+        }
+
+        // Validate additional tokens embedded in the command string
+        for token in command.split_whitespace().skip(1) {
+            if self.is_suspicious_argument(token) {
+                return Err(SecurityError::SuspiciousArgument(token.to_string()));
+            }
         }
 
         // Validate arguments for suspicious patterns
@@ -128,15 +138,17 @@ impl SecurityValidator {
     }
 
     pub fn validate_path(&self, path: &Path) -> Result<(), SecurityError> {
-        let policy = self.policy.read().map_err(|_| SecurityError::PolicyLockPoisoned)?;
+        let policy = self
+            .policy
+            .read()
+            .map_err(|_| SecurityError::PolicyLockPoisoned)?;
 
         if !policy.is_path_allowed(path) {
             return Err(SecurityError::PathNotAllowed(path.to_path_buf()));
         }
 
         // Check for path traversal attempts
-        let path_str = path.to_string_lossy();
-        if path_str.contains("..") {
+        if path.components().any(|c| c == Component::ParentDir) {
             return Err(SecurityError::PathTraversalAttempt(path.to_path_buf()));
         }
 
@@ -144,7 +156,10 @@ impl SecurityValidator {
     }
 
     pub fn validate_file_size(&self, size: u64) -> Result<(), SecurityError> {
-        let policy = self.policy.read().map_err(|_| SecurityError::PolicyLockPoisoned)?;
+        let policy = self
+            .policy
+            .read()
+            .map_err(|_| SecurityError::PolicyLockPoisoned)?;
 
         if !policy.is_file_size_allowed(size) {
             return Err(SecurityError::FileSizeExceeded(size));
@@ -217,7 +232,10 @@ impl SecurityValidator {
     }
 
     pub fn update_policy(&self, new_policy: SecurityPolicy) -> Result<(), SecurityError> {
-        let mut policy = self.policy.write().map_err(|_| SecurityError::PolicyLockPoisoned)?;
+        let mut policy = self
+            .policy
+            .write()
+            .map_err(|_| SecurityError::PolicyLockPoisoned)?;
         *policy = new_policy;
         Ok(())
     }
@@ -291,10 +309,40 @@ impl InputValidator {
             ));
         }
 
-        // Prevent localhost access in some security contexts
-        if url.contains("localhost") || url.contains("127.0.0.1") {
+        // Prevent loopback and private network access in some security contexts
+        let host_part = url.split("://").nth(1).unwrap_or(url);
+        let blocked_prefixes = [
+            "localhost",
+            "127.",
+            "0.0.0.0",
+            "[::1]",
+            "::1",
+            "169.254.",
+            "10.",
+            "192.168.",
+            "172.16.",
+            "172.17.",
+            "172.18.",
+            "172.19.",
+            "172.20.",
+            "172.21.",
+            "172.22.",
+            "172.23.",
+            "172.24.",
+            "172.25.",
+            "172.26.",
+            "172.27.",
+            "172.28.",
+            "172.29.",
+            "172.30.",
+            "172.31.",
+        ];
+        if blocked_prefixes
+            .iter()
+            .any(|prefix| host_part.starts_with(prefix))
+        {
             return Err(SecurityError::InvalidCommand(
-                "Localhost access not allowed".to_string(),
+                "Localhost or private network access not allowed".to_string(),
             ));
         }
 

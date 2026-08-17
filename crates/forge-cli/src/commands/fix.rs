@@ -3,6 +3,9 @@
 use std::env;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::time::Duration;
+
+use wait_timeout::ChildExt;
 
 pub struct FixDiagnostics {
     pub error_count: usize,
@@ -207,20 +210,7 @@ fn render_diagnostics(diag: &FixDiagnostics) {
 
 fn is_safe_command(cmd: &str) -> bool {
     // Whitelist of safe commands that can be auto-executed
-    let safe_commands = [
-        "cargo",
-        "rustfmt",
-        "rustup",
-        "git",
-        "npm",
-        "yarn",
-        "pnpm",
-        "pip",
-        "pip3",
-        "python",
-        "python3",
-        "node",
-    ];
+    let safe_commands = ["cargo", "rustfmt", "rustup"];
 
     let parts: Vec<&str> = cmd.split_whitespace().collect();
     if parts.is_empty() {
@@ -228,7 +218,7 @@ fn is_safe_command(cmd: &str) -> bool {
     }
 
     let command = parts[0];
-    
+
     // Check if the base command is in the whitelist
     if !safe_commands.contains(&command) {
         return false;
@@ -238,7 +228,7 @@ fn is_safe_command(cmd: &str) -> bool {
     if command == "cargo" {
         // Only allow safe cargo subcommands
         let safe_cargo_subcommands = [
-            "fmt", "clippy", "check", "test", "build", "doc", "clean", "update",
+            "add", "fmt", "clippy", "check", "test", "build", "doc", "clean", "update",
         ];
         if parts.len() > 1 {
             let subcommand = parts[1];
@@ -274,7 +264,7 @@ fn apply_suggestions(
     for sugg in suggestions {
         if let Some(cmd_str) = &sugg.suggested_command {
             println!("⚡ Checking safety of command: {}", cmd_str);
-            
+
             if !is_safe_command(cmd_str) {
                 println!("⚠️  Command blocked for security reasons: {}", cmd_str);
                 println!("    Only whitelisted development tools can be auto-executed.");
@@ -284,18 +274,34 @@ fn apply_suggestions(
             println!("⚡ Executing safe command: {}", cmd_str);
             let parts: Vec<&str> = cmd_str.split_whitespace().collect();
             if !parts.is_empty() {
-                let status = Command::new(parts[0])
+                match Command::new(parts[0])
                     .args(&parts[1..])
                     .current_dir(root)
-                    .status();
-                if let Ok(st) = status {
-                    if st.success() {
-                        applied_count += 1;
-                    } else {
-                        println!("⚠️  Command failed with status: {:?}", st);
+                    .spawn()
+                {
+                    Ok(mut child) => match child.wait_timeout(Duration::from_secs(120)) {
+                        Ok(Some(st)) => {
+                            if st.success() {
+                                applied_count += 1;
+                            } else {
+                                println!("⚠️  Command failed with status: {:?}", st);
+                            }
+                        }
+                        Ok(None) => {
+                            let _ = child.kill();
+                            let _ = child.wait();
+                            println!(
+                                "⚠️  Command timed out after 120s and was killed: {}",
+                                cmd_str
+                            );
+                        }
+                        Err(e) => {
+                            println!("⚠️  Failed to wait for command: {} ({})", cmd_str, e);
+                        }
+                    },
+                    Err(e) => {
+                        println!("⚠️  Failed to execute command: {} ({})", cmd_str, e);
                     }
-                } else {
-                    println!("⚠️  Failed to execute command: {}", cmd_str);
                 }
             }
         }
@@ -323,20 +329,22 @@ fn query_gemini_healer(api_key: &str, raw_errors: &[String]) -> Option<String> {
     })
     .to_string();
 
-    let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={}",
-        api_key
-    );
+    let url =
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
     let output = Command::new("curl")
-        .arg("-s")
+        .arg("-sS")
+        .arg("--max-time")
+        .arg("15")
         .arg("-X")
         .arg("POST")
         .arg("-H")
         .arg("Content-Type: application/json")
+        .arg("-H")
+        .arg(format!("x-goog-api-key: {}", api_key))
         .arg("-d")
         .arg(&payload)
-        .arg(&url)
+        .arg(url)
         .output()
         .ok()?;
 
