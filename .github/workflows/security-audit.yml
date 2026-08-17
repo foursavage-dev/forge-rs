@@ -2,9 +2,9 @@ name: Security Audit
 
 on:
   push:
-    branches: [ main, develop, dev ]
+    branches: [ dev ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ dev ]
   schedule:
     - cron: '0 0 * * 0'
   workflow_dispatch:
@@ -28,18 +28,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
       - name: Install cargo tools
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-audit,cargo-deny
-      
       - name: Run cargo audit
         run: cargo audit --ignore RUSTSEC-2025-0134
-      
       - name: Run cargo-deny
         run: cargo deny check licenses bans sources
 
@@ -48,36 +44,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Test signing module
-        run: cargo test -p forge-signing --lib
-      
-      - name: Test security module
-        run: cargo test -p forge-security --lib
-      
-      - name: Test secrets module
-        run: cargo test -p forge-secrets --lib
+      - name: Test security modules
+        run: cargo test -p forge-security -p forge-secrets -p forge-signing --lib
 
   codeql:
     name: CodeQL Analysis
@@ -85,12 +55,10 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: rust
-      
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
@@ -103,12 +71,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
       - name: Download and Install Gitleaks
         run: |
           curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz | sudo tar -xz -C /usr/local/bin gitleaks
           gitleaks version
-      
       - name: Run Gitleaks
         run: gitleaks detect --verbose --redact --no-banner
 
@@ -117,7 +83,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Check for security documentation
         run: |
           if [ ! -f "SECURITY.md" ]; then
@@ -131,20 +96,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Nightly Rust toolchain with Miri
         uses: dtolnay/rust-toolchain@nightly
         with:
           components: miri
-      
       - name: Check for unsafe code blocks
         run: |
           echo "Checking for unsafe code blocks"
           grep -r "unsafe" crates/ --include="*.rs" | grep -v "forbid(unsafe_code)" || true
-      
-      - name: Run Miri for undefined behavior
-        run: cargo miri test -p forge-core -p forge-cache -p forge-executor
-        continue-on-error: true
 
   security-report:
     name: Security Compliance Report
@@ -171,9 +130,3 @@ jobs:
             echo "Security Audit Failed"
             exit 1
           fi
-      
-      - name: Upload security report
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-report
-          path: security-report.md

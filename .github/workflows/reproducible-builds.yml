@@ -2,9 +2,9 @@ name: Reproducible Builds & SBOM
 
 on:
   push:
-    branches: [ main, develop, dev ]
+    branches: [ dev ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ dev ]
   workflow_dispatch:
 
 concurrency:
@@ -13,7 +13,6 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  CARGO_INCREMENTAL: "0"
 
 jobs:
   sbom-generation:
@@ -21,22 +20,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
       - name: Install cargo-cyclonedx
         uses: taiki-e/install-action@cargo-cyclonedx
-      
       - name: Generate CycloneDX SBOM
-        run: |
-          cargo cyclonedx --format json --all
-      
+        run: cargo cyclonedx --format json --all
       - name: Upload SBOM Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: forge-sbom
-          path: ./**/*.cdx.json
+          name: cyclonedx-sbom
+          path: "*.cdx.json"
           if-no-files-found: ignore
 
   deterministic-build:
@@ -44,38 +38,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
-      - name: First Build in Directory A
+      - name: First build pass
         run: |
-          mkdir -p build-a
-          cp -r ./* build-a/ 2>/dev/null || true
-          cd build-a
-          cargo build -p forge-cli --release
-          sha256sum target/release/forge > ../hash-a.txt
-          cat ../hash-a.txt
-      
-      - name: Second Build in Directory B
+          cargo build --release -p forge-cli
+          sha256sum target/release/forge > build1.sha256
+      - name: Clean intermediate artifacts
+        run: cargo clean -p forge-cli
+      - name: Second build pass
         run: |
-          mkdir -p build-b
-          cp -r ./* build-b/ 2>/dev/null || true
-          cd build-b
-          cargo build -p forge-cli --release
-          sha256sum target/release/forge > ../hash-b.txt
-          cat ../hash-b.txt
-      
-      - name: Verify Reproducibility
+          cargo build --release -p forge-cli
+          sha256sum target/release/forge > build2.sha256
+      - name: Verify reproducibility hash
         run: |
-          HASH_A=$(awk '{print $1}' hash-a.txt)
-          HASH_B=$(awk '{print $1}' hash-b.txt)
-          
-          echo "Build A SHA-256: $HASH_A"
-          echo "Build B SHA-256: $HASH_B"
-          
-          if [ "$HASH_A" = "$HASH_B" ]; then
-            echo "Deterministic build verified successfully."
-          else
-            echo "Warning: Builds produced non-identical outputs."
-          fi
+          echo "Comparing build artifact hashes:"
+          diff -u build1.sha256 build2.sha256

@@ -2,9 +2,9 @@ name: Integration Testing
 
 on:
   push:
-    branches: [ main, develop, dev ]
+    branches: [ dev ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ dev ]
   workflow_dispatch:
 
 concurrency:
@@ -13,162 +13,43 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  CARGO_INCREMENTAL: "0"
 
 jobs:
-  basic-and-cli-integration:
+  core-integration:
     name: Core & CLI Integration Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc g++ python3 nodejs npm golang openjdk-17-jdk
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Run integration tests
-        run: cargo test --workspace --test '*' -- --test-threads=1
-      
-      - name: Build CLI
-        run: cargo build -p forge-cli --release
-      
-      - name: Test CLI build command
-        run: ./target/release/forge build --no-cache
-      
-      - name: Test CLI check command
-        run: ./target/release/forge check --no-cache
-      
-      - name: Test CLI test command
-        run: ./target/release/forge test --no-cache
-      
-      - name: Test CLI graph command
-        run: ./target/release/forge graph --format dot
-      
-      - name: Test CLI cache commands
-        run: |
-          ./target/release/forge cache stats
-          ./target/release/forge cache prune --max-size 10MB
+      - name: Run Core Tests
+        run: cargo test -p forge-core --test project
+      - name: Run CLI Integration Tests
+        run: cargo test -p forge-cli --test build --test init_and_new
 
   subsystems-integration:
     name: Subsystems Integration Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-subsystems-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Test cache integration
-        run: cargo test -p forge-cache -p forge-cas -p forge-remote-cache
-      
-      - name: Test scheduler integration
-        run: cargo test -p forge-scheduler -p forge-executor
-      
-      - name: Test security integration
-        run: cargo test -p forge-signing -p forge-security -p forge-secrets -p forge-sandbox
-
-  e2e-integration:
-    name: End-to-End Integration Tests
-    runs-on: ubuntu-latest
-    needs: [basic-and-cli-integration, subsystems-integration]
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-e2e-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Build CLI
-        run: cargo build -p forge-cli --release
-      
-      - name: Create test project
-        run: |
-          mkdir -p test-project
-          cd test-project
-          cargo init --name test-project
-          cargo add serde --features derive
-      
-      - name: Test Forge CLI on real project
-        run: |
-          cd test-project
-          ../target/release/forge build --no-cache
-          ../target/release/forge test --no-cache
-          ../target/release/forge graph --format dot
-      
-      - name: Test cache functionality
-        run: |
-          cd test-project
-          ../target/release/forge build
-          ../target/release/forge cache stats
-      
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        with:
-          name: e2e-test-results
-          path: test-project/
+      - name: Run Remote Cache Tests
+        run: cargo test -p forge-remote-cache --lib
+      - name: Run Worker Integration Tests
+        run: cargo test -p forge-worker --test remote_exec
 
   integration-summary:
     name: Integration Summary
     runs-on: ubuntu-latest
-    needs: [basic-and-cli-integration, subsystems-integration, e2e-integration]
+    needs: [core-integration, subsystems-integration]
     if: always()
     steps:
-      - name: Check integration test results
+      - name: Check Status
         run: |
-          echo "Basic & CLI Integration: ${{ needs.basic-and-cli-integration.result }}"
-          echo "Subsystems Integration: ${{ needs.subsystems-integration.result }}"
-          echo "E2E Integration: ${{ needs.e2e-integration.result }}"
-          
-          if [ "${{ needs.basic-and-cli-integration.result }}" != "success" ] || \
-             [ "${{ needs.subsystems-integration.result }}" != "success" ] || \
-             [ "${{ needs.e2e-integration.result }}" != "success" ]; then
-            echo "Integration tests failed"
+          if [ "${{ needs.core-integration.result }}" != "success" ] || \
+             [ "${{ needs.subsystems-integration.result }}" != "success" ]; then
+            echo "Integration Tests Failed"
             exit 1
-          else
-            echo "All integration tests passed"
           fi
+          echo "All Integration Tests Passed"

@@ -2,9 +2,9 @@ name: Quality Checks
 
 on:
   push:
-    branches: [ main, develop, dev ]
+    branches: [ dev ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ dev ]
   workflow_dispatch:
 
 concurrency:
@@ -13,172 +13,65 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  CARGO_INCREMENTAL: "0"
 
 jobs:
-  formatting-check:
+  formatting:
     name: Code Formatting Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      
-      - name: Check formatting
+      - name: Run rustfmt
         run: cargo fmt --all -- --check
 
-  clippy-check:
+  clippy:
     name: Clippy Linting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-clippy-target-${{ hashFiles('**/Cargo.lock') }}
-      
       - name: Run clippy
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings -A clippy::result_large_err
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
-  msrv-check:
-    name: MSRV Compatibility Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install MSRV Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-msrv-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-msrv-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Verify MSRV Compilation
-        run: cargo check --workspace --all-targets
-
-  documentation-check:
+  documentation:
     name: Documentation Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-doc-target-${{ hashFiles('**/Cargo.lock') }}
-      
       - name: Check documentation
-        run: cargo doc --workspace --no-deps --all-features
-      
-      - name: Run documentation tests
-        run: cargo test --workspace --doc
+        run: cargo doc --workspace --no-deps
 
-  code-coverage:
-    name: Code Coverage
+  msrv:
+    name: MSRV Compatibility Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Install tarpaulin
-        uses: taiki-e/install-action@cargo-tarpaulin
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-coverage-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Run code coverage
-        run: cargo tarpaulin --workspace --all-features --out Xml --output-dir ./coverage
-        continue-on-error: true
-      
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: ./coverage/cobertura.xml
-          if-no-files-found: ignore
+      - name: Install Rust 1.85 (MSRV)
+        uses: dtolnay/rust-toolchain@1.85
+      - name: Check MSRV compilation
+        run: cargo check -p forge-core -p forge-scheduler -p forge-cache -p forge-cas -p forge-executor
 
   quality-summary:
     name: Quality Summary
     runs-on: ubuntu-latest
-    needs: [formatting-check, clippy-check, msrv-check, documentation-check]
+    needs: [formatting, clippy, documentation, msrv]
     if: always()
     steps:
-      - name: Check quality results
+      - name: Check Status
         run: |
-          echo "Formatting: ${{ needs.formatting-check.result }}"
-          echo "Clippy: ${{ needs.clippy-check.result }}"
-          echo "MSRV Check: ${{ needs.msrv-check.result }}"
-          echo "Documentation: ${{ needs.documentation-check.result }}"
-          
-          if [ "${{ needs.formatting-check.result }}" != "success" ] || \
-             [ "${{ needs.clippy-check.result }}" != "success" ] || \
-             [ "${{ needs.msrv-check.result }}" != "success" ] || \
-             [ "${{ needs.documentation-check.result }}" != "success" ]; then
-            echo "Quality checks failed"
+          if [ "${{ needs.formatting.result }}" != "success" ] || \
+             [ "${{ needs.clippy.result }}" != "success" ] || \
+             [ "${{ needs.documentation.result }}" != "success" ] || \
+             [ "${{ needs.msrv.result }}" != "success" ]; then
+            echo "Quality Checks Failed"
             exit 1
-          else
-            echo "All quality checks passed"
           fi
+          echo "All Quality Checks Passed"

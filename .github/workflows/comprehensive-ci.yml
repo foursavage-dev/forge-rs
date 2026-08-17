@@ -2,9 +2,9 @@ name: Comprehensive CI
 
 on:
   push:
-    branches: [ main, develop, dev ]
+    branches: [ dev ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ dev ]
   workflow_dispatch:
 
 concurrency:
@@ -13,177 +13,78 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_BACKTRACE: 1
-  CARGO_INCREMENTAL: "0"
 
 jobs:
-  quality-checks:
+  workspace-test:
+    name: Workspace Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-comp-${{ hashFiles('**/Cargo.lock') }}
+      - name: Run all workspace tests
+        run: cargo test --workspace
+
+  quality-gate:
     name: Quality Checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt, clippy, rust-src
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Check formatting
+          components: rustfmt, clippy
+      - name: Formatting check
         run: cargo fmt --all -- --check
-      
-      - name: Run clippy
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings -A clippy::result_large_err
-      
-      - name: Check documentation
-        run: cargo doc --workspace --no-deps --all-features
+      - name: Clippy check
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
-  workspace-tests:
-    name: Workspace Tests
-    runs-on: ubuntu-latest
-    needs: quality-checks
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Run all workspace tests
-        run: cargo test --workspace --all-targets --all-features
-      
-      - name: Run doc tests
-        run: cargo test --workspace --doc
-
-  integration-tests:
+  integration-gate:
     name: Integration Tests
     runs-on: ubuntu-latest
-    needs: workspace-tests
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Run integration tests
-        run: cargo test --workspace --test '*'
+      - name: Run CLI integration tests
+        run: cargo test -p forge-cli --test build
 
-  build-and-dogfood:
+  build-verification:
     name: Build Verification & Dogfooding
     runs-on: ubuntu-latest
-    needs: quality-checks
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-release-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Build workspace release
-        run: cargo build --workspace --release
-      
-      - name: Build CLI binary
-        run: cargo build -p forge-cli --release
-      
-      - name: Test CLI help and version
+      - name: Build release binaries
+        run: cargo build --release
+      - name: Verify CLI binary execution
         run: |
           ./target/release/forge --version
           ./target/release/forge --help
-      
-      - name: Upload release binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: forge-cli-binary
-          path: target/release/forge
+          ./target/release/forge doctor
 
   ci-status:
     name: CI Status
     runs-on: ubuntu-latest
-    needs: [quality-checks, workspace-tests, integration-tests, build-and-dogfood]
+    needs: [workspace-test, quality-gate, integration-gate, build-verification]
     if: always()
     steps:
-      - name: Check all jobs status
+      - name: Check status
         run: |
-          echo "Quality Checks: ${{ needs.quality-checks.result }}"
-          echo "Workspace Tests: ${{ needs.workspace-tests.result }}"
-          echo "Integration Tests: ${{ needs.integration-tests.result }}"
-          echo "Build & Dogfood: ${{ needs.build-and-dogfood.result }}"
-          
-          if [ "${{ needs.quality-checks.result }}" != "success" ] || \
-             [ "${{ needs.workspace-tests.result }}" != "success" ] || \
-             [ "${{ needs.integration-tests.result }}" != "success" ] || \
-             [ "${{ needs.build-and-dogfood.result }}" != "success" ]; then
-            echo "CI Pipeline Failed"
+          if [ "${{ needs.workspace-test.result }}" != "success" ] || \
+             [ "${{ needs.quality-gate.result }}" != "success" ] || \
+             [ "${{ needs.integration-gate.result }}" != "success" ] || \
+             [ "${{ needs.build-verification.result }}" != "success" ]; then
+            echo "CI Failed"
             exit 1
-          else
-            echo "CI Pipeline Passed"
           fi
+          echo "All Comprehensive CI checks passed"

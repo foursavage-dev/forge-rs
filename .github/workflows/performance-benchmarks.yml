@@ -2,9 +2,9 @@ name: Performance Benchmarks
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ dev ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ dev ]
   schedule:
     - cron: '0 6 * * 1'
   workflow_dispatch:
@@ -23,31 +23,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-bench-target-${{ hashFiles('**/Cargo.lock') }}
-      
       - name: Run cache benchmarks
         run: cargo bench -p forge-cache
-      
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
@@ -60,28 +39,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-bench-target-${{ hashFiles('**/Cargo.lock') }}
-      
       - name: Run scheduler benchmarks
         run: cargo test -p forge-scheduler --release -- --nocapture
 
@@ -90,28 +49,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-bench-target-${{ hashFiles('**/Cargo.lock') }}
-      
       - name: Run concurrent executor benchmarks
         run: cargo test -p forge-executor --release -- --nocapture
 
@@ -123,15 +62,10 @@ jobs:
     steps:
       - name: Check benchmark results
         run: |
-          echo "Cache Benchmarks: ${{ needs.cache-benchmarks.result }}"
-          echo "Scheduler Benchmarks: ${{ needs.scheduler-benchmarks.result }}"
-          echo "Concurrent Performance: ${{ needs.concurrent-performance.result }}"
-          
           if [ "${{ needs.cache-benchmarks.result }}" != "success" ] || \
              [ "${{ needs.scheduler-benchmarks.result }}" != "success" ] || \
              [ "${{ needs.concurrent-performance.result }}" != "success" ]; then
             echo "Benchmarks Failed"
             exit 1
-          else
-            echo "All Benchmarks Passed"
           fi
+          echo "All Benchmarks Passed"

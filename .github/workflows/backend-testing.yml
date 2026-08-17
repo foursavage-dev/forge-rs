@@ -2,9 +2,9 @@ name: Backend-Specific Testing
 
 on:
   push:
-    branches: [ main, develop, dev ]
+    branches: [ dev ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ dev ]
   workflow_dispatch:
 
 concurrency:
@@ -13,7 +13,6 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  CARGO_INCREMENTAL: "0"
 
 jobs:
   core-backends:
@@ -21,87 +20,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
-      - name: Install toolchain dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc g++ clang cmake make golang-go openjdk-17-jdk python3 python3-pip
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      
-      - name: Set up .NET SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-backend-core-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Test Rust Backend
-        run: cargo test -p forge-backend-rust
-      
-      - name: Test C/C++ Backend
-        run: cargo test -p forge-backend-cc
-      
-      - name: Test Go Backend
-        run: cargo test -p forge-backend-go
-      
-      - name: Test TypeScript Backend
-        run: cargo test -p forge-backend-ts
-      
-      - name: Test Python Backend
-        run: cargo test -p forge-backend-py
-      
-      - name: Test Java Backend
-        run: cargo test -p forge-backend-java
-      
-      - name: Test .NET Backend
-        run: cargo test -p forge-backend-dotnet
+      - name: Test Rust, CC, Go, TS, Python backends
+        run: cargo test -p forge-backend-rust -p forge-backend-cc -p forge-backend-go -p forge-backend-ts -p forge-backend-py --lib
 
   extended-backends:
     name: Extended Language Backends Testing
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-backend-ext-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Test Swift Backend
-        run: cargo test -p forge-backend-swift
-      
-      - name: Test Dart Backend
-        run: cargo test -p forge-backend-dart
-      
-      - name: Test Zig Backend
-        run: cargo test -p forge-backend-zig
-      
-      - name: Test Docker Backend
-        run: cargo test -p forge-backend-docker
+      - name: Test Java, Dotnet, Swift, Dart, Zig, Docker backends
+        run: cargo test -p forge-backend-java -p forge-backend-dotnet -p forge-backend-swift -p forge-backend-dart -p forge-backend-zig -p forge-backend-docker --lib

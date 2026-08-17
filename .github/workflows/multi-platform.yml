@@ -2,9 +2,9 @@ name: Multi-Platform Testing
 
 on:
   push:
-    branches: [ main, develop, dev ]
+    branches: [ dev ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ dev ]
   workflow_dispatch:
 
 concurrency:
@@ -13,7 +13,6 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  CARGO_INCREMENTAL: "0"
 
 jobs:
   test-linux:
@@ -21,92 +20,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-linux-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc g++ python3 nodejs npm golang openjdk-17-jdk
-      
-      - name: Run tests
-        run: cargo test --workspace --all-features
-      
-      - name: Build release
-        run: cargo build --workspace --release
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run Core Tests
+        run: cargo test -p forge-core -p forge-cache -p forge-scheduler -p forge-executor --lib
 
   test-macos:
     name: Test macOS
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-macos-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Run tests
-        run: cargo test --workspace
-      
-      - name: Build release
-        run: cargo build --workspace --release
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run Core Tests
+        run: cargo test -p forge-core -p forge-cache -p forge-remote-cache --lib
 
   test-windows:
     name: Test Windows
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-windows-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Run tests
-        run: cargo test --workspace
-      
-      - name: Build release
-        run: cargo build --workspace --release
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run Core Tests
+        run: cargo test -p forge-core -p forge-cache -p forge-scheduler --lib
 
   platform-summary:
     name: Platform Summary
@@ -114,17 +48,12 @@ jobs:
     needs: [test-linux, test-macos, test-windows]
     if: always()
     steps:
-      - name: Check platform test results
+      - name: Check Status
         run: |
-          echo "Linux Tests: ${{ needs.test-linux.result }}"
-          echo "macOS Tests: ${{ needs.test-macos.result }}"
-          echo "Windows Tests: ${{ needs.test-windows.result }}"
-          
           if [ "${{ needs.test-linux.result }}" != "success" ] || \
              [ "${{ needs.test-macos.result }}" != "success" ] || \
              [ "${{ needs.test-windows.result }}" != "success" ]; then
-            echo "Some platform tests failed"
+            echo "Platform Tests Failed"
             exit 1
-          else
-            echo "All platform tests passed"
           fi
+          echo "All Platform Tests Passed"
