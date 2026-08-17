@@ -93,43 +93,51 @@ impl DiagnosticLogger {
     }
 
     fn add_log(&self, log: DiagnosticLog) {
-        let mut logs = self.logs.write().unwrap();
-        logs.push(log);
-        if logs.len() > self.max_logs {
-            logs.remove(0);
+        if let Ok(mut logs) = self.logs.write() {
+            logs.push(log);
+            if logs.len() > self.max_logs {
+                logs.remove(0);
+            }
         }
+        // If lock is poisoned, silently fail to avoid crashing
     }
 
     pub fn get_logs(&self) -> Vec<DiagnosticLog> {
-        self.logs.read().unwrap().clone()
+        self.logs.read().map(|logs| logs.clone()).unwrap_or_default()
     }
 
     pub fn get_logs_by_component(&self, component: &str) -> Vec<DiagnosticLog> {
         self.logs
             .read()
-            .unwrap()
-            .iter()
-            .filter(|log| log.component == component)
-            .cloned()
-            .collect()
+            .map(|logs| {
+                logs.iter()
+                    .filter(|log| log.component == component)
+                    .cloned()
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     pub fn get_logs_by_level(&self, level: LogLevel) -> Vec<DiagnosticLog> {
         self.logs
             .read()
-            .unwrap()
-            .iter()
-            .filter(|log| log.level == level)
-            .cloned()
-            .collect()
+            .map(|logs| {
+                logs.iter()
+                    .filter(|log| log.level == level)
+                    .cloned()
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     pub fn clear(&self) {
-        self.logs.write().unwrap().clear();
+        if let Ok(mut logs) = self.logs.write() {
+            logs.clear();
+        }
     }
 
     pub fn log_count(&self) -> usize {
-        self.logs.read().unwrap().len()
+        self.logs.read().map(|logs| logs.len()).unwrap_or(0)
     }
 }
 
@@ -155,23 +163,29 @@ impl HealthCheckRegistry {
     }
 
     pub fn register(&self, check: Box<dyn HealthCheck + Send + Sync>) {
-        let mut checks = self.checks.write().unwrap();
-        checks.insert(check.name().to_string(), check);
+        if let Ok(mut checks) = self.checks.write() {
+            checks.insert(check.name().to_string(), check);
+        }
     }
 
     pub fn unregister(&self, name: &str) {
-        let mut checks = self.checks.write().unwrap();
-        checks.remove(name);
+        if let Ok(mut checks) = self.checks.write() {
+            checks.remove(name);
+        }
     }
 
     pub fn check_all(&self) -> Vec<HealthCheckResult> {
-        let checks = self.checks.read().unwrap();
-        checks.values().map(|check| check.check_health()).collect()
+        self.checks
+            .read()
+            .map(|checks| checks.values().map(|check| check.check_health()).collect())
+            .unwrap_or_default()
     }
 
     pub fn check_component(&self, name: &str) -> Option<HealthCheckResult> {
-        let checks = self.checks.read().unwrap();
-        checks.get(name).map(|check| check.check_health())
+        self.checks
+            .read()
+            .ok()
+            .and_then(|checks| checks.get(name).map(|check| check.check_health()))
     }
 
     pub fn get_component_names(&self) -> Vec<String> {

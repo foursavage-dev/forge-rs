@@ -205,6 +205,67 @@ fn render_diagnostics(diag: &FixDiagnostics) {
     }
 }
 
+fn is_safe_command(cmd: &str) -> bool {
+    // Whitelist of safe commands that can be auto-executed
+    let safe_commands = [
+        "cargo",
+        "rustfmt",
+        "rustup",
+        "git",
+        "npm",
+        "yarn",
+        "pnpm",
+        "pip",
+        "pip3",
+        "python",
+        "python3",
+        "node",
+    ];
+
+    let parts: Vec<&str> = cmd.split_whitespace().collect();
+    if parts.is_empty() {
+        return false;
+    }
+
+    let command = parts[0];
+    
+    // Check if the base command is in the whitelist
+    if !safe_commands.contains(&command) {
+        return false;
+    }
+
+    // Additional safety checks for specific commands
+    if command == "cargo" {
+        // Only allow safe cargo subcommands
+        let safe_cargo_subcommands = [
+            "fmt", "clippy", "check", "test", "build", "doc", "clean", "update",
+        ];
+        if parts.len() > 1 {
+            let subcommand = parts[1];
+            if !safe_cargo_subcommands.contains(&subcommand) {
+                return false;
+            }
+        }
+    }
+
+    // Reject commands with shell operators to prevent injection
+    if cmd.contains(';') || cmd.contains('&') || cmd.contains('|') || cmd.contains('$') {
+        return false;
+    }
+
+    // Reject commands with backticks (command substitution)
+    if cmd.contains('`') {
+        return false;
+    }
+
+    // Reject commands with redirects (prevent file manipulation)
+    if cmd.contains('>') || cmd.contains('<') {
+        return false;
+    }
+
+    true
+}
+
 fn apply_suggestions(
     suggestions: &[FixSuggestion],
     root: &Path,
@@ -212,7 +273,15 @@ fn apply_suggestions(
     let mut applied_count = 0;
     for sugg in suggestions {
         if let Some(cmd_str) = &sugg.suggested_command {
-            println!("⚡ Automatically executing: {}", cmd_str);
+            println!("⚡ Checking safety of command: {}", cmd_str);
+            
+            if !is_safe_command(cmd_str) {
+                println!("⚠️  Command blocked for security reasons: {}", cmd_str);
+                println!("    Only whitelisted development tools can be auto-executed.");
+                continue;
+            }
+
+            println!("⚡ Executing safe command: {}", cmd_str);
             let parts: Vec<&str> = cmd_str.split_whitespace().collect();
             if !parts.is_empty() {
                 let status = Command::new(parts[0])
@@ -222,7 +291,11 @@ fn apply_suggestions(
                 if let Ok(st) = status {
                     if st.success() {
                         applied_count += 1;
+                    } else {
+                        println!("⚠️  Command failed with status: {:?}", st);
                     }
+                } else {
+                    println!("⚠️  Failed to execute command: {}", cmd_str);
                 }
             }
         }

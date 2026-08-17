@@ -105,7 +105,7 @@ impl SecurityValidator {
     }
 
     pub fn validate_command(&self, command: &str, args: &[String]) -> Result<(), SecurityError> {
-        let policy = self.policy.read().unwrap();
+        let policy = self.policy.read().map_err(|_| SecurityError::PolicyLockPoisoned)?;
 
         // Extract executable from command
         let executable = command
@@ -128,7 +128,7 @@ impl SecurityValidator {
     }
 
     pub fn validate_path(&self, path: &Path) -> Result<(), SecurityError> {
-        let policy = self.policy.read().unwrap();
+        let policy = self.policy.read().map_err(|_| SecurityError::PolicyLockPoisoned)?;
 
         if !policy.is_path_allowed(path) {
             return Err(SecurityError::PathNotAllowed(path.to_path_buf()));
@@ -144,7 +144,7 @@ impl SecurityValidator {
     }
 
     pub fn validate_file_size(&self, size: u64) -> Result<(), SecurityError> {
-        let policy = self.policy.read().unwrap();
+        let policy = self.policy.read().map_err(|_| SecurityError::PolicyLockPoisoned)?;
 
         if !policy.is_file_size_allowed(size) {
             return Err(SecurityError::FileSizeExceeded(size));
@@ -216,9 +216,10 @@ impl SecurityValidator {
         false
     }
 
-    pub fn update_policy(&self, new_policy: SecurityPolicy) {
-        let mut policy = self.policy.write().unwrap();
+    pub fn update_policy(&self, new_policy: SecurityPolicy) -> Result<(), SecurityError> {
+        let mut policy = self.policy.write().map_err(|_| SecurityError::PolicyLockPoisoned)?;
         *policy = new_policy;
+        Ok(())
     }
 }
 
@@ -231,6 +232,7 @@ pub enum SecurityError {
     FileSizeExceeded(u64),
     SuspiciousArgument(String),
     ExecutionTimeout,
+    PolicyLockPoisoned,
 }
 
 impl std::fmt::Display for SecurityError {
@@ -251,6 +253,7 @@ impl std::fmt::Display for SecurityError {
             }
             SecurityError::SuspiciousArgument(arg) => write!(f, "Suspicious argument: {}", arg),
             SecurityError::ExecutionTimeout => write!(f, "Execution timeout"),
+            SecurityError::PolicyLockPoisoned => write!(f, "Security policy lock poisoned"),
         }
     }
 }
