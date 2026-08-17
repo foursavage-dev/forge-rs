@@ -45,7 +45,7 @@ impl AsyncFileWriter {
     pub async fn write_atomic(&self, path: PathBuf, data: Vec<u8>) -> Result<(), AsyncIoError> {
         let _permit = self.semaphore.acquire().await.unwrap();
 
-        let tmp_path = path.with_extension("tmp");
+        let tmp_path = crate::unique_tmp_path(&path);
 
         // Write to temp file
         let mut file = fs::File::create(&tmp_path).await?;
