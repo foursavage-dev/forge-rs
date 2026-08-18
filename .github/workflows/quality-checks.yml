@@ -55,7 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Install Rust 1.86 (MSRV)
-        uses: dtolnay/rust-toolchain@1.100
+        uses: dtolnay/rust-toolchain@1.86
       - name: Check MSRV compilation
         run: cargo check -p forge-core -p forge-scheduler -p forge-cache -p forge-cas -p forge-executor
 
