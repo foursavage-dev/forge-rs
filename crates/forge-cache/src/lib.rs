@@ -501,16 +501,15 @@ impl LocalCache {
                         .and_then(|name| name.to_str())
                         .map(|name| !ref_counts.contains_key(name))
                         .unwrap_or(false);
-                if is_tmp || orphan {
-                    if let Ok(metadata) = fs::metadata(&path)
-                        && fs::remove_file(&path).is_ok()
-                    {
-                        removed.insert(path_str);
-                        if !is_tmp {
-                            report.removed_objects += 1;
-                        }
-                        report.freed_bytes += metadata.len();
+                if (is_tmp || orphan)
+                    && let Ok(metadata) = fs::metadata(&path)
+                    && fs::remove_file(&path).is_ok()
+                {
+                    removed.insert(path_str);
+                    if !is_tmp {
+                        report.removed_objects += 1;
                     }
+                    report.freed_bytes += metadata.len();
                 }
             }
 
@@ -794,10 +793,9 @@ impl<I: TaskExecutor> TaskExecutor for CachingExecutor<I> {
         let outcome = self.inner.execute(task)?;
         if outcome.status == TaskStatus::Executed
             && let Some(CacheEntry { key, fingerprint }) = &task.cache
+            && let Err(_error) = self.cache.put(key, fingerprint)
         {
-            if let Err(_error) = self.cache.put(key, fingerprint) {
-                self.cache.stats().record_error();
-            }
+            self.cache.stats().record_error();
 
             // Note: CAS artifact storage will be handled by the caller/CLI
             // for now, we skip async operations in sync context

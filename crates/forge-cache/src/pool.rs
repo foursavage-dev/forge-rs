@@ -78,13 +78,12 @@ impl BufferPool {
         if let Some(&tier_size) = SIZE_TIERS.get(tier_index)
             && capacity >= tier_size * 2 / 3
             && capacity <= tier_size * 3 / 2
+            && let Some(pool) = self.pools.get(tier_index)
         {
-            if let Some(pool) = self.pools.get(tier_index) {
-                let mut pool = pool.lock();
-                // Limit pool size to prevent unbounded growth
-                if pool.len() < 10 {
-                    pool.push_back(buffer);
-                }
+            let mut pool = pool.lock();
+            // Limit pool size to prevent unbounded growth
+            if pool.len() < 10 {
+                pool.push_back(buffer);
             }
         }
     }

@@ -127,10 +127,9 @@ impl<I: TaskExecutor> TaskExecutor for HybridCachingExecutor<I> {
         // Cache the result at task level
         if outcome.status == TaskStatus::Executed
             && let Some(CacheEntry { key, fingerprint }) = &task.cache
+            && let Err(_error) = self.local_cache.put(key, fingerprint)
         {
-            if let Err(_error) = self.local_cache.put(key, fingerprint) {
-                self.local_cache.stats().record_error();
-            }
+            self.local_cache.stats().record_error();
         }
 
         Ok(outcome)
