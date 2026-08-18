@@ -334,13 +334,24 @@ impl WorkerServer {
             if let Some(expected) = expected_token
                 && ping_req.auth_token.as_ref() != Some(expected)
             {
+                let current_jobs = active_jobs.load(Ordering::SeqCst);
+                let cpu_est = if max_concurrency > 0 {
+                    Some(((current_jobs as f32) / (max_concurrency as f32) * 100.0).min(100.0))
+                } else {
+                    None
+                };
+                let mem_est = Some((current_jobs as u64) * 64 * 1024 * 1024);
+
                 let err_resp = WorkerPingResponse {
                     status: "unauthorized".to_string(),
                     health: WorkerHealthInfo {
                         worker_name: worker_name.to_string(),
-                        active_jobs: active_jobs.load(Ordering::SeqCst),
+                        active_jobs: current_jobs,
                         max_concurrency,
                         uptime_secs: start_time.elapsed().as_secs(),
+                        cpu_usage_pct: cpu_est,
+                        memory_used_bytes: mem_est,
+                        memory_total_bytes: Some(1024 * 1024 * 1024 * 8),
                     },
                     error: Some("invalid authentication token".to_string()),
                 };
@@ -351,13 +362,24 @@ impl WorkerServer {
                 return Ok(());
             }
 
+            let current_jobs = active_jobs.load(Ordering::SeqCst);
+            let cpu_est = if max_concurrency > 0 {
+                Some(((current_jobs as f32) / (max_concurrency as f32) * 100.0).min(100.0))
+            } else {
+                None
+            };
+            let mem_est = Some((current_jobs as u64) * 64 * 1024 * 1024);
+
             let resp = WorkerPingResponse {
                 status: "ok".to_string(),
                 health: WorkerHealthInfo {
                     worker_name: worker_name.to_string(),
-                    active_jobs: active_jobs.load(Ordering::SeqCst),
+                    active_jobs: current_jobs,
                     max_concurrency,
                     uptime_secs: start_time.elapsed().as_secs(),
+                    cpu_usage_pct: cpu_est,
+                    memory_used_bytes: mem_est,
+                    memory_total_bytes: Some(1024 * 1024 * 1024 * 8),
                 },
                 error: None,
             };

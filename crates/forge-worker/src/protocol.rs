@@ -72,6 +72,12 @@ pub struct WorkerHealthInfo {
     pub active_jobs: usize,
     pub max_concurrency: usize,
     pub uptime_secs: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cpu_usage_pct: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub memory_used_bytes: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub memory_total_bytes: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

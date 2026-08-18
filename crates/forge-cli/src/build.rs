@@ -42,6 +42,9 @@ pub(crate) fn build_executor(
         if args.send_source {
             cluster = cluster.with_source_packaging();
         }
+        if args.swarm || args.swarm_compute {
+            cluster = cluster.with_strategy(forge_worker::LoadBalancingStrategy::LeastLoaded);
+        }
         Box::new(cluster)
     } else if args.sandbox {
         let sb_config = SandboxConfig::default();
