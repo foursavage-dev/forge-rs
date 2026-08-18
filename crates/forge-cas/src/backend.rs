@@ -336,12 +336,22 @@ impl RemoteCasBackendImpl {
 
     fn artifact_url(&self, hash: &ArtifactHash) -> String {
         let base = self.config.endpoint.trim_end_matches('/');
-        format!("{}/{}/artifacts/{}", base, self.config.bucket, hash.as_str())
+        format!(
+            "{}/{}/artifacts/{}",
+            base,
+            self.config.bucket,
+            hash.as_str()
+        )
     }
 
     fn metadata_url(&self, hash: &ArtifactHash) -> String {
         let base = self.config.endpoint.trim_end_matches('/');
-        format!("{}/{}/artifacts/{}/metadata", base, self.config.bucket, hash.as_str())
+        format!(
+            "{}/{}/artifacts/{}/metadata",
+            base,
+            self.config.bucket,
+            hash.as_str()
+        )
     }
 
     fn apply_auth(&self, mut request: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
@@ -370,7 +380,10 @@ impl CasBackend for RemoteCasBackendImpl {
     async fn metadata(&self, hash: &ArtifactHash) -> Result<ArtifactMetadata> {
         let meta_url = self.metadata_url(hash);
         let req = self.apply_auth(self.client.get(&meta_url));
-        let resp = req.send().await.map_err(|e| CasError::Network(e.to_string()))?;
+        let resp = req
+            .send()
+            .await
+            .map_err(|e| CasError::Network(e.to_string()))?;
         if resp.status() == reqwest::StatusCode::NOT_FOUND {
             return Err(CasError::ArtifactNotFound(hash.to_string()));
         }
@@ -408,7 +421,10 @@ impl CasBackend for RemoteCasBackendImpl {
         let base = self.config.endpoint.trim_end_matches('/');
         let url = format!("{}/{}/artifacts", base, self.config.bucket);
         let req = self.apply_auth(self.client.get(&url));
-        let resp = req.send().await.map_err(|e| CasError::Network(e.to_string()))?;
+        let resp = req
+            .send()
+            .await
+            .map_err(|e| CasError::Network(e.to_string()))?;
         if !resp.status().is_success() {
             return Ok(Vec::new());
         }
@@ -497,7 +513,10 @@ impl RemoteCasBackend for RemoteCasBackendImpl {
         let metadata = self.metadata(hash).await?;
         let url = self.artifact_url(hash);
         let req = self.apply_auth(self.client.get(&url));
-        let resp = req.send().await.map_err(|e| CasError::Network(e.to_string()))?;
+        let resp = req
+            .send()
+            .await
+            .map_err(|e| CasError::Network(e.to_string()))?;
         if resp.status() == reqwest::StatusCode::NOT_FOUND {
             return Err(CasError::ArtifactNotFound(hash.to_string()));
         }
@@ -794,14 +813,14 @@ mod tests {
             region: None,
         };
 
-        let backend = RemoteCasBackendImpl::new(
-            config,
-            crate::compression::CompressionAlgorithm::Zstd,
-        )
-        .await
-        .unwrap();
+        let backend =
+            RemoteCasBackendImpl::new(config, crate::compression::CompressionAlgorithm::Zstd)
+                .await
+                .unwrap();
 
-        let test_hash = ArtifactHash::new("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string());
+        let test_hash = ArtifactHash::new(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string(),
+        );
         assert_eq!(
             backend.artifact_url(&test_hash),
             "https://cas.example.com/api/v1/forge-cache/artifacts/0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"

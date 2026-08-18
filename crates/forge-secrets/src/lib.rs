@@ -53,7 +53,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_vault_secrets_manager() {
-        let mgr = VaultSecretManager::new("https://vault.local:8200".to_string(), "token123".to_string());
+        let mgr = VaultSecretManager::new(
+            "https://vault.local:8200".to_string(),
+            "token123".to_string(),
+        );
         let service = SecretsService::new(Box::new(mgr));
         let secret = service.get_secret("db_pass").await.unwrap();
         assert_eq!(secret, "secret_value_for_db_pass");

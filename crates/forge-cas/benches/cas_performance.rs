@@ -1,6 +1,6 @@
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use forge_cas::artifact::ArtifactHash;
-use forge_cas::compression::{compress, decompress, CompressionAlgorithm};
+use forge_cas::compression::{CompressionAlgorithm, compress, decompress};
 use std::hint::black_box;
 
 fn bench_artifact_hashing(c: &mut Criterion) {

@@ -35,10 +35,8 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 timeout_minutes: 30,
             };
 
-            // Create a sample CI matrix
             let mut matrix = CIMatrix::new();
 
-            // Add sample jobs for demonstration
             matrix.add_job(CIJob {
                 id: "build".to_string(),
                 name: "Build".to_string(),
@@ -62,7 +60,6 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
             matrix.cache_config.enabled = cache;
             matrix.cache_config.remote_url = remote_cache.clone();
 
-            // Generate CI configuration files
             match ci_config.platform {
                 CIPlatform::GitHubActions => {
                     let generator = GitHubActionsGenerator::new(ci_config.clone());
@@ -146,24 +143,17 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                         Ok(config) => match std::fs::write("azure-pipelines.yml", config) {
                             Ok(_) => println!("✓ Created azure-pipelines.yml"),
                             Err(e) => {
-                                eprintln!(
-                                    "error: failed to write Azure Pipelines config: {}",
-                                    e
-                                );
+                                eprintln!("error: failed to write Azure Pipelines config: {}", e);
                                 return ExitCode::FAILURE;
                             }
                         },
                         Err(e) => {
-                            eprintln!(
-                                "error: failed to generate Azure Pipelines config: {}",
-                                e
-                            );
+                            eprintln!("error: failed to generate Azure Pipelines config: {}", e);
                             return ExitCode::FAILURE;
                         }
                     }
                 }
                 CIPlatform::All => {
-                    // Generate all configurations
                     let platforms = vec![
                         (CIPlatform::GitHubActions, ".github/workflows/forge.yml"),
                         (CIPlatform::GitLabCI, ".gitlab-ci.yml"),
@@ -184,10 +174,10 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                         let result = config.generate_ci(&matrix);
                         match result {
                             Ok(content) => {
-                                if let Some(parent) = std::path::Path::new(file_path).parent() {
-                                    if !parent.as_os_str().is_empty() {
-                                        std::fs::create_dir_all(parent).ok();
-                                    }
+                                if let Some(parent) = std::path::Path::new(file_path).parent()
+                                    && !parent.as_os_str().is_empty()
+                                {
+                                    std::fs::create_dir_all(parent).ok();
                                 }
                                 if let Err(e) = std::fs::write(file_path, content) {
                                     eprintln!("error: failed to write {}: {}", file_path, e);
@@ -235,7 +225,6 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 timeout_minutes: 30,
             };
 
-            // Create a sample matrix for export
             let mut matrix = CIMatrix::new();
             matrix.add_job(CIJob {
                 id: "build".to_string(),
