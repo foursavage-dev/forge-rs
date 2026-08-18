@@ -19,9 +19,21 @@ impl TemplateRenderer {
         template: &PipelineTemplate,
         context: TemplateContext,
     ) -> Result<String, Box<dyn std::error::Error>> {
+        let mut map = serde_json::Map::new();
+        map.insert(
+            "environment".to_string(),
+            serde_json::Value::String(context.environment.clone()),
+        );
+        let mut vars_map = serde_json::Map::new();
+        for (k, v) in &context.variables {
+            map.insert(k.clone(), serde_json::Value::String(v.clone()));
+            vars_map.insert(k.clone(), serde_json::Value::String(v.clone()));
+        }
+        map.insert("variables".to_string(), serde_json::Value::Object(vars_map));
+        let root = serde_json::Value::Object(map);
         let result = self
             .handlebars
-            .render_template(&template.template_content, &context)?;
+            .render_template(&template.template_content, &root)?;
         Ok(result)
     }
 }

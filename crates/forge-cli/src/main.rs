@@ -59,7 +59,7 @@ fn main() -> ExitCode {
         Command::CacheServer(args) => run_cache_server(args),
         Command::Worker(args) => commands::run_worker(args),
         Command::Affected(args) => commands::run_affected(args),
-        Command::Doctor(args) => commands::run_doctor_with_ai(args.ai),
+        Command::Doctor(args) => commands::run_doctor_with_ai(args.ai, args.fix),
         Command::Cache(args) => commands::run_cache(args),
         Command::Watch(args) => {
             let start_dir = match resolve_start_dir(args.common.path.as_deref()) {

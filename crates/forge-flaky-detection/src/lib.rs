@@ -44,3 +44,36 @@ impl Default for FlakyDetectionService {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_flaky_detection_service() {
+        let service = FlakyDetectionService::new();
+        let result = service.detect_and_retry("tests::test_cache").await.unwrap();
+        assert!(!result);
+    }
+
+    #[test]
+    fn test_retry_policy_defaults() {
+        let policy = RetryPolicy::default();
+        assert_eq!(policy.max_retries, 3);
+        assert_eq!(policy.backoff_ms, 1000);
+    }
+
+    #[test]
+    fn test_flaky_test_serialization() {
+        let flaky = FlakyTest {
+            test_name: "tests::network_sync".to_string(),
+            failure_rate: 0.25,
+            total_runs: 20,
+            failed_runs: 5,
+            last_detected: chrono::Utc::now(),
+        };
+        let json = serde_json::to_string(&flaky).unwrap();
+        assert!(json.contains("tests::network_sync"));
+        assert!(json.contains("0.25"));
+    }
+}

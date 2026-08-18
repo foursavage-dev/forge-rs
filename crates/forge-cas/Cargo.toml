@@ -31,3 +31,8 @@ full = ["local", "gcs", "remote"]
 [dev-dependencies]
 tempfile = "3"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+criterion = { version = "0.8", features = ["html_reports"] }
+
+[[bench]]
+name = "cas_performance"
+harness = false

@@ -14,3 +14,11 @@ serde_json = { workspace = true }
 sysinfo = "0.36"
 thiserror = { workspace = true }
 dashmap = { version = "6" }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+criterion = { version = "0.8", features = ["html_reports"] }
+
+[[bench]]
+name = "scheduler_performance"
+harness = false

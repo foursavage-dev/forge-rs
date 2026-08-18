@@ -7,6 +7,7 @@ pub struct ToolProbe {
     pub backend: &'static str,
     pub binary: &'static str,
     pub version_args: &'static [&'static str],
+    pub install_hint: &'static str,
 }
 
 pub const TOOLCHAINS: &[ToolProbe] = &[
@@ -15,82 +16,95 @@ pub const TOOLCHAINS: &[ToolProbe] = &[
         backend: "rust",
         binary: "cargo",
         version_args: &["--version"],
+        install_hint: "winget install Rustlang.Rustup || curl https://sh.rustup.rs -sSf | sh",
     },
     ToolProbe {
         name: "C/C++ CMake Build System",
         backend: "cc",
         binary: "cmake",
         version_args: &["--version"],
+        install_hint: "winget install Kitware.CMake || sudo apt install cmake || brew install cmake",
     },
     ToolProbe {
         name: "C/C++ Clang / GCC",
         backend: "cc",
         binary: "clang",
         version_args: &["--version"],
+        install_hint: "winget install LLVM.LLVM || sudo apt install clang || brew install llvm",
     },
     ToolProbe {
         name: "Go Programming Language",
         backend: "go",
         binary: "go",
         version_args: &["version"],
+        install_hint: "winget install GoLang.Go || sudo apt install golang || brew install go",
     },
     ToolProbe {
         name: "Node.js JavaScript Runtime",
         backend: "ts",
         binary: "node",
         version_args: &["--version"],
+        install_hint: "winget install OpenJS.NodeJS.LTS || sudo apt install nodejs || brew install node",
     },
     ToolProbe {
         name: "Python Interpreter",
         backend: "py",
         binary: "python3",
         version_args: &["--version"],
+        install_hint: "winget install Python.Python.3.12 || sudo apt install python3 || brew install python",
     },
     ToolProbe {
         name: "Java Compiler (JDK)",
         backend: "java",
         binary: "javac",
         version_args: &["-version"],
+        install_hint: "winget install Oracle.JDK.21 || sudo apt install default-jdk || brew install openjdk",
     },
     ToolProbe {
         name: ".NET SDK",
         backend: "dotnet",
         binary: "dotnet",
         version_args: &["--version"],
+        install_hint: "winget install Microsoft.DotNet.SDK.8 || sudo apt install dotnet-sdk-8.0 || brew install dotnet-sdk",
     },
     ToolProbe {
         name: "Swift Compiler",
         backend: "swift",
         binary: "swift",
         version_args: &["--version"],
+        install_hint: "winget install Swift.Toolchain || sudo apt install swift || brew install swift",
     },
     ToolProbe {
         name: "Dart SDK",
         backend: "dart",
         binary: "dart",
         version_args: &["--version"],
+        install_hint: "winget install Dart.Dart || sudo apt install dart || brew install dart",
     },
     ToolProbe {
         name: "Zig Toolchain",
         backend: "zig",
         binary: "zig",
         version_args: &["version"],
+        install_hint: "winget install zig.zig || sudo apt install zig || brew install zig",
     },
     ToolProbe {
         name: "Docker Container Runtime",
         backend: "docker",
         binary: "docker",
         version_args: &["--version"],
+        install_hint: "winget install Docker.DockerDesktop || sudo apt install docker.io || brew install --cask docker",
     },
     ToolProbe {
         name: "Git Version Control",
         backend: "git",
         binary: "git",
         version_args: &["--version"],
+        install_hint: "winget install Git.Git || sudo apt install git || brew install git",
     },
 ];
 
-pub fn run_doctor_with_ai(ai_enabled: bool) -> ExitCode {
+pub fn run_doctor_with_ai(ai_enabled: bool, fix: bool) -> ExitCode {
     println!("🦀 Forge Doctor - System Health & Environment Diagnostics");
     println!("============================================================");
 
@@ -149,7 +163,7 @@ pub fn run_doctor_with_ai(ai_enabled: bool) -> ExitCode {
                     "  [--] {:<26} [{:<6}] (not installed / not in PATH)",
                     probe.name, probe.backend
                 );
-                missing_tools.push(probe.name);
+                missing_tools.push((probe.name, probe.install_hint));
             }
         }
     }
@@ -159,6 +173,14 @@ pub fn run_doctor_with_ai(ai_enabled: bool) -> ExitCode {
         TOOLCHAINS.len()
     );
     println!();
+
+    if !missing_tools.is_empty() || fix {
+        println!("🛠️ Toolchain Installation & Remediation Hints:");
+        for (name, hint) in &missing_tools {
+            println!("  • {:<26}: {}", name, hint);
+        }
+        println!();
+    }
 
     println!("💾 Checking Storage & Cache Integrity:");
     let mut cache_ok = true;
@@ -214,5 +236,20 @@ pub fn run_doctor_with_ai(ai_enabled: bool) -> ExitCode {
     } else {
         println!("⚠️ Some environment checks require attention.");
         ExitCode::FAILURE
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_toolchains_probe_definitions() {
+        assert!(!TOOLCHAINS.is_empty());
+        for probe in TOOLCHAINS {
+            assert!(!probe.name.is_empty());
+            assert!(!probe.binary.is_empty());
+            assert!(!probe.install_hint.is_empty());
+        }
     }
 }

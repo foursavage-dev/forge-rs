@@ -99,6 +99,8 @@ pub struct NewArgs {
 pub struct DoctorArgs {
     #[arg(long)]
     pub ai: bool,
+    #[arg(long)]
+    pub fix: bool,
 }
 
 /// Arguments for affected command
