@@ -105,22 +105,22 @@ impl SwarmCache {
                         let parts: Vec<&str> = payload.split(':').collect();
                         if parts.len() == 2 {
                             let peer_id = parts[0].to_string();
-                            if peer_id != self.peer_id {
-                                if let Ok(port) = parts[1].parse::<u16>() {
-                                    let mut peer_addr = src;
-                                    peer_addr.set_port(port);
-                                    if let Ok(mut peers) = self.peers.write() {
-                                        peers.insert(
-                                            peer_id.clone(),
-                                            SwarmPeer {
-                                                peer_id,
-                                                address: peer_addr,
-                                                compute_port: None,
-                                                concurrency: 0,
-                                                last_seen: Instant::now(),
-                                            },
-                                        );
-                                    }
+                            if peer_id != self.peer_id
+                                && let Ok(port) = parts[1].parse::<u16>()
+                            {
+                                let mut peer_addr = src;
+                                peer_addr.set_port(port);
+                                if let Ok(mut peers) = self.peers.write() {
+                                    peers.insert(
+                                        peer_id.clone(),
+                                        SwarmPeer {
+                                            peer_id,
+                                            address: peer_addr,
+                                            compute_port: None,
+                                            concurrency: 0,
+                                            last_seen: Instant::now(),
+                                        },
+                                    );
                                 }
                             }
                         }
@@ -128,23 +128,23 @@ impl SwarmCache {
                         let parts: Vec<&str> = payload.split(':').collect();
                         if parts.len() == 3 {
                             let peer_id = parts[0].to_string();
-                            if peer_id != self.peer_id {
-                                if let Ok(compute_port) = parts[1].parse::<u16>() {
-                                    let concurrency = parts[2].parse::<usize>().unwrap_or(4);
-                                    let mut peer_addr = src;
-                                    peer_addr.set_port(compute_port);
-                                    if let Ok(mut peers) = self.peers.write() {
-                                        peers.insert(
-                                            peer_id.clone(),
-                                            SwarmPeer {
-                                                peer_id,
-                                                address: peer_addr,
-                                                compute_port: Some(compute_port),
-                                                concurrency,
-                                                last_seen: Instant::now(),
-                                            },
-                                        );
-                                    }
+                            if peer_id != self.peer_id
+                                && let Ok(compute_port) = parts[1].parse::<u16>()
+                            {
+                                let concurrency = parts[2].parse::<usize>().unwrap_or(4);
+                                let mut peer_addr = src;
+                                peer_addr.set_port(compute_port);
+                                if let Ok(mut peers) = self.peers.write() {
+                                    peers.insert(
+                                        peer_id.clone(),
+                                        SwarmPeer {
+                                            peer_id,
+                                            address: peer_addr,
+                                            compute_port: Some(compute_port),
+                                            concurrency,
+                                            last_seen: Instant::now(),
+                                        },
+                                    );
                                 }
                             }
                         }

@@ -16,10 +16,10 @@ impl DockerFingerprinter {
     pub fn compute(&self) -> Result<String, Box<dyn std::error::Error>> {
         let mut hasher = blake3::Hasher::new();
 
-        if let Some(dockerfile) = &self.config.dockerfile_path {
-            if dockerfile.exists() {
-                let _ = FingerprintUtils::hash_file_into(dockerfile, &mut hasher);
-            }
+        if let Some(dockerfile) = &self.config.dockerfile_path
+            && dockerfile.exists()
+        {
+            let _ = FingerprintUtils::hash_file_into(dockerfile, &mut hasher);
         }
 
         if self.config.context_path.is_dir() {

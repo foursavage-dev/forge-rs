@@ -122,13 +122,13 @@ pub(crate) fn run_build_mode_with(
         super_opt: args.super_opt || config.super_opt,
     };
 
-    if merged.ramdisk {
-        if let Ok(rd) = crate::ramdisk::RamDisk::create_turbo_workspace("turbo") {
-            println!(
-                "⚡ In-memory RAM disk turbo enabled: {}",
-                rd.path().display()
-            );
-        }
+    if merged.ramdisk
+        && let Ok(rd) = crate::ramdisk::RamDisk::create_turbo_workspace("turbo")
+    {
+        println!(
+            "⚡ In-memory RAM disk turbo enabled: {}",
+            rd.path().display()
+        );
     }
 
     if merged.swarm || merged.swarm_compute {

@@ -111,10 +111,10 @@ impl DockerBackend {
     }
 
     pub fn validate_config(&self) -> Result<(), Box<dyn std::error::Error>> {
-        if let Some(dockerfile) = &self.config.dockerfile_path {
-            if !dockerfile.exists() {
-                return Err(format!("Dockerfile not found: {}", dockerfile.display()).into());
-            }
+        if let Some(dockerfile) = &self.config.dockerfile_path
+            && !dockerfile.exists()
+        {
+            return Err(format!("Dockerfile not found: {}", dockerfile.display()).into());
         }
         Ok(())
     }

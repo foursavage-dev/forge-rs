@@ -117,25 +117,27 @@ fn get_workspace_graph_json(root: &Path) -> String {
     if let Ok(entries) = fs::read_dir(&crates_dir) {
         for entry in entries.flatten() {
             let p = entry.path();
-            if p.is_dir() && p.join("Cargo.toml").exists() {
-                if let Some(name) = p.file_name().and_then(|s| s.to_str()) {
-                    let mut deps = Vec::new();
-                    if let Ok(content) = fs::read_to_string(p.join("Cargo.toml")) {
-                        for line in content.lines() {
-                            if line.starts_with("forge-") && line.contains("path =") {
-                                if let Some(dep_name) = line.split('=').next() {
-                                    deps.push(dep_name.trim().to_string());
-                                }
-                            }
+            if p.is_dir()
+                && p.join("Cargo.toml").exists()
+                && let Some(name) = p.file_name().and_then(|s| s.to_str())
+            {
+                let mut deps = Vec::new();
+                if let Ok(content) = fs::read_to_string(p.join("Cargo.toml")) {
+                    for line in content.lines() {
+                        if line.starts_with("forge-")
+                            && line.contains("path =")
+                            && let Some(dep_name) = line.split('=').next()
+                        {
+                            deps.push(dep_name.trim().to_string());
                         }
                     }
-                    packages.push(serde_json::json!({
-                        "name": name,
-                        "dependencies": deps,
-                        "type": "rust-crate",
-                        "status": "cached"
-                    }));
                 }
+                packages.push(serde_json::json!({
+                    "name": name,
+                    "dependencies": deps,
+                    "type": "rust-crate",
+                    "status": "cached"
+                }));
             }
         }
     }

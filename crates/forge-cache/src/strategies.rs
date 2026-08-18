@@ -106,11 +106,11 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> LruCache<K, V> {
         while (entries.len() >= self.capacity || self.current_size + size > self.max_size)
             && !access_order.is_empty()
         {
-            if let Some(oldest_key) = access_order.pop_back() {
-                if let Some(entry) = entries.remove(&oldest_key) {
-                    self.current_size -= entry.size;
-                    evicted.push((entry.key, entry.value, entry.size));
-                }
+            if let Some(oldest_key) = access_order.pop_back()
+                && let Some(entry) = entries.remove(&oldest_key)
+            {
+                self.current_size -= entry.size;
+                evicted.push((entry.key, entry.value, entry.size));
             }
         }
 
@@ -398,11 +398,10 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> PredictiveCache<K, V> {
             if self
                 .predict_next_access(&key)
                 .is_some_and(|t| t <= Instant::now() + Duration::from_secs(60))
+                && let Some(value) = fetch_fn(&key)
             {
-                if let Some(value) = fetch_fn(&key) {
-                    let size = 1024; // Simplified size calculation
-                    self.put(key, value, size);
-                }
+                let size = 1024; // Simplified size calculation
+                self.put(key, value, size);
             }
         }
     }
@@ -481,10 +480,10 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> SpinLockLruCache<K, V> {
         while (entries.len() >= self.capacity || *current_size + size > self.max_size)
             && !access_order.is_empty()
         {
-            if let Some(oldest_key) = access_order.pop_back() {
-                if let Some(entry) = entries.remove(&oldest_key) {
-                    *current_size -= entry.size;
-                }
+            if let Some(oldest_key) = access_order.pop_back()
+                && let Some(entry) = entries.remove(&oldest_key)
+            {
+                *current_size -= entry.size;
             }
         }
 

@@ -32,30 +32,28 @@ impl DockerToolchain {
         if let Ok(output) = std::process::Command::new("docker")
             .arg("--version")
             .output()
+            && output.status.success()
         {
-            if output.status.success() {
-                let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                return Ok(Self {
-                    docker_path: std::path::PathBuf::from("docker"),
-                    is_podman: false,
-                    version,
-                });
-            }
+            let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            return Ok(Self {
+                docker_path: std::path::PathBuf::from("docker"),
+                is_podman: false,
+                version,
+            });
         }
 
         // Try Podman as fallback
         if let Ok(output) = std::process::Command::new("podman")
             .arg("--version")
             .output()
+            && output.status.success()
         {
-            if output.status.success() {
-                let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                return Ok(Self {
-                    docker_path: std::path::PathBuf::from("podman"),
-                    is_podman: true,
-                    version,
-                });
-            }
+            let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            return Ok(Self {
+                docker_path: std::path::PathBuf::from("podman"),
+                is_podman: true,
+                version,
+            });
         }
 
         Err(DockerToolchainError::NoRuntimeFound)

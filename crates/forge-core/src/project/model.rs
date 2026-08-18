@@ -275,10 +275,10 @@ impl Project {
 /// different sources compare identically.
 fn plain_path(path: &Path) -> PathBuf {
     let text = path.to_string_lossy();
-    if cfg!(windows) {
-        if let Some(stripped) = text.strip_prefix(r"\\?\") {
-            return PathBuf::from(stripped);
-        }
+    if cfg!(windows)
+        && let Some(stripped) = text.strip_prefix(r"\\?\")
+    {
+        return PathBuf::from(stripped);
     }
     path.to_path_buf()
 }

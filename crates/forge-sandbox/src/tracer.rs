@@ -71,12 +71,11 @@ impl SyscallTracer {
                         if name != ".git" && name != "target" && name != ".forge" {
                             stack.push(path);
                         }
-                    } else if path.is_file() {
-                        if let Ok(meta) = fs::metadata(&path) {
-                            if let Ok(mod_time) = meta.modified() {
-                                map.insert(path, mod_time);
-                            }
-                        }
+                    } else if path.is_file()
+                        && let Ok(meta) = fs::metadata(&path)
+                        && let Ok(mod_time) = meta.modified()
+                    {
+                        map.insert(path, mod_time);
                     }
                 }
             }

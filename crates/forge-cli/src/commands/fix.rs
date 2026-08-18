@@ -49,36 +49,28 @@ pub fn run_fix(
         let stderr = String::from_utf8_lossy(&out.stderr);
 
         for line in stdout.lines() {
-            if let Ok(val) = serde_json::from_str::<serde_json::Value>(line) {
-                if let Some(reason) = val.get("reason").and_then(|r| r.as_str()) {
-                    if reason == "compiler-message" {
-                        if let Some(msg) = val.get("message") {
-                            let level = msg.get("level").and_then(|l| l.as_str()).unwrap_or("");
-                            let rendered =
-                                msg.get("rendered").and_then(|r| r.as_str()).unwrap_or("");
+            if let Ok(val) = serde_json::from_str::<serde_json::Value>(line)
+                && let Some(reason) = val.get("reason").and_then(|r| r.as_str())
+                && reason == "compiler-message"
+                && let Some(msg) = val.get("message")
+            {
+                let level = msg.get("level").and_then(|l| l.as_str()).unwrap_or("");
+                let rendered = msg.get("rendered").and_then(|r| r.as_str()).unwrap_or("");
 
-                            if level == "error" {
-                                error_count += 1;
-                                raw_errors.push(rendered.to_string());
+                if level == "error" {
+                    error_count += 1;
+                    raw_errors.push(rendered.to_string());
 
-                                if let Some(code_obj) = msg.get("code") {
-                                    if let Some(code) =
-                                        code_obj.get("code").and_then(|c| c.as_str())
-                                    {
-                                        let message_text = msg
-                                            .get("message")
-                                            .and_then(|m| m.as_str())
-                                            .unwrap_or("");
-                                        let suggestion =
-                                            analyze_rustc_error(code, message_text, rendered);
-                                        suggestions.push(suggestion);
-                                    }
-                                }
-                            } else if level == "warning" {
-                                warning_count += 1;
-                            }
-                        }
+                    if let Some(code_obj) = msg.get("code")
+                        && let Some(code) = code_obj.get("code").and_then(|c| c.as_str())
+                    {
+                        let message_text =
+                            msg.get("message").and_then(|m| m.as_str()).unwrap_or("");
+                        let suggestion = analyze_rustc_error(code, message_text, rendered);
+                        suggestions.push(suggestion);
                     }
+                } else if level == "warning" {
+                    warning_count += 1;
                 }
             }
         }
@@ -350,13 +342,12 @@ fn query_gemini_healer(api_key: &str, raw_errors: &[String]) -> Option<String> {
 
     if output.status.success() {
         let text = String::from_utf8_lossy(&output.stdout);
-        if let Ok(val) = serde_json::from_str::<serde_json::Value>(&text) {
-            if let Some(res) = val
+        if let Ok(val) = serde_json::from_str::<serde_json::Value>(&text)
+            && let Some(res) = val
                 .pointer("/candidates/0/content/parts/0/text")
                 .and_then(|t| t.as_str())
-            {
-                return Some(res.to_string());
-            }
+        {
+            return Some(res.to_string());
         }
     }
     None

@@ -183,22 +183,22 @@ impl WorkerServer {
         }
 
         if let Ok(req) = serde_json::from_str::<RemoteTaskRequest>(trimmed) {
-            if let Some(expected) = expected_token {
-                if req.auth_token.as_ref() != Some(expected) {
-                    let err_res = RemoteTaskResponse {
-                        task_id: req.task_id,
-                        exit_code: Some(1),
-                        stdout: String::new(),
-                        stderr: "unauthorized: invalid auth token".to_string(),
-                        duration_ms: 0,
-                        error: Some("unauthorized".to_string()),
-                    };
-                    let out = serde_json::to_string(&err_res)?;
-                    stream.write_all(out.as_bytes())?;
-                    stream.write_all(b"\n")?;
-                    stream.flush()?;
-                    return Ok(());
-                }
+            if let Some(expected) = expected_token
+                && req.auth_token.as_ref() != Some(expected)
+            {
+                let err_res = RemoteTaskResponse {
+                    task_id: req.task_id,
+                    exit_code: Some(1),
+                    stdout: String::new(),
+                    stderr: "unauthorized: invalid auth token".to_string(),
+                    duration_ms: 0,
+                    error: Some("unauthorized".to_string()),
+                };
+                let out = serde_json::to_string(&err_res)?;
+                stream.write_all(out.as_bytes())?;
+                stream.write_all(b"\n")?;
+                stream.flush()?;
+                return Ok(());
             }
 
             active_jobs.fetch_add(1, Ordering::SeqCst);
@@ -282,20 +282,20 @@ impl WorkerServer {
         }
 
         if let Ok(vfs_req) = serde_json::from_str::<VfsFileRequest>(trimmed) {
-            if let Some(expected) = expected_token {
-                if vfs_req.auth_token.as_ref() != Some(expected) {
-                    let err_resp = VfsFileResponse {
-                        success: false,
-                        content_base64: None,
-                        error: Some("unauthorized".to_string()),
-                        metadata: None,
-                    };
-                    let out = serde_json::to_string(&err_resp)?;
-                    stream.write_all(out.as_bytes())?;
-                    stream.write_all(b"\n")?;
-                    stream.flush()?;
-                    return Ok(());
-                }
+            if let Some(expected) = expected_token
+                && vfs_req.auth_token.as_ref() != Some(expected)
+            {
+                let err_resp = VfsFileResponse {
+                    success: false,
+                    content_base64: None,
+                    error: Some("unauthorized".to_string()),
+                    metadata: None,
+                };
+                let out = serde_json::to_string(&err_resp)?;
+                stream.write_all(out.as_bytes())?;
+                stream.write_all(b"\n")?;
+                stream.flush()?;
+                return Ok(());
             }
 
             let file_path = Path::new(&vfs_req.file_path);
@@ -331,24 +331,24 @@ impl WorkerServer {
         }
 
         if let Ok(ping_req) = serde_json::from_str::<WorkerPingRequest>(trimmed) {
-            if let Some(expected) = expected_token {
-                if ping_req.auth_token.as_ref() != Some(expected) {
-                    let err_resp = WorkerPingResponse {
-                        status: "unauthorized".to_string(),
-                        health: WorkerHealthInfo {
-                            worker_name: worker_name.to_string(),
-                            active_jobs: active_jobs.load(Ordering::SeqCst),
-                            max_concurrency,
-                            uptime_secs: start_time.elapsed().as_secs(),
-                        },
-                        error: Some("invalid authentication token".to_string()),
-                    };
-                    let out = serde_json::to_string(&err_resp)?;
-                    stream.write_all(out.as_bytes())?;
-                    stream.write_all(b"\n")?;
-                    stream.flush()?;
-                    return Ok(());
-                }
+            if let Some(expected) = expected_token
+                && ping_req.auth_token.as_ref() != Some(expected)
+            {
+                let err_resp = WorkerPingResponse {
+                    status: "unauthorized".to_string(),
+                    health: WorkerHealthInfo {
+                        worker_name: worker_name.to_string(),
+                        active_jobs: active_jobs.load(Ordering::SeqCst),
+                        max_concurrency,
+                        uptime_secs: start_time.elapsed().as_secs(),
+                    },
+                    error: Some("invalid authentication token".to_string()),
+                };
+                let out = serde_json::to_string(&err_resp)?;
+                stream.write_all(out.as_bytes())?;
+                stream.write_all(b"\n")?;
+                stream.flush()?;
+                return Ok(());
             }
 
             let resp = WorkerPingResponse {

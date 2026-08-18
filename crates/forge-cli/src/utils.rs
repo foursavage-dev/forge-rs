@@ -29,10 +29,10 @@ pub fn resolve_start_dir(path: Option<&Path>) -> Result<PathBuf, String> {
 /// Returns a plain path representation, stripping Windows UNC prefix if present.
 pub fn plain_path(path: &Path) -> PathBuf {
     let text = path.to_string_lossy();
-    if cfg!(windows) {
-        if let Some(stripped) = text.strip_prefix(r"\\?\") {
-            return PathBuf::from(stripped);
-        }
+    if cfg!(windows)
+        && let Some(stripped) = text.strip_prefix(r"\\?\")
+    {
+        return PathBuf::from(stripped);
     }
     path.to_path_buf()
 }

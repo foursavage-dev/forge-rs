@@ -254,13 +254,12 @@ impl CasBackend for LocalCasBackend {
                     let sub_path = sub_entry.path();
                     if sub_path.is_file()
                         && sub_path.extension().map(|e| e != "meta").unwrap_or(true)
+                        && let Some(hash_str) = sub_path.file_stem().and_then(|s| s.to_str())
                     {
-                        if let Some(hash_str) = sub_path.file_stem().and_then(|s| s.to_str()) {
-                            let dir_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
-                            let full_hash = format!("{}{}", dir_name, hash_str);
-                            if validate_hash(&full_hash).is_ok() {
-                                hashes.push(ArtifactHash::new(full_hash));
-                            }
+                        let dir_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+                        let full_hash = format!("{}{}", dir_name, hash_str);
+                        if validate_hash(&full_hash).is_ok() {
+                            hashes.push(ArtifactHash::new(full_hash));
                         }
                     }
                 }

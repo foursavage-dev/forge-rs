@@ -112,10 +112,10 @@ impl TaskExecutor for ClusterExecutor {
             }
         }
 
-        if let Some(local) = &self.local_executor {
-            if self.failover_to_local {
-                return local.execute(task);
-            }
+        if let Some(local) = &self.local_executor
+            && self.failover_to_local
+        {
+            return local.execute(task);
         }
 
         Err(ExecutorError::Spawn {

@@ -58,22 +58,15 @@ fn scan_and_hash_headers(
     let text = String::from_utf8_lossy(content);
     for line in text.lines() {
         let trimmed = line.trim();
-        if trimmed.starts_with("#include") {
-            if let Some(header_name) = extract_header_name(trimmed) {
-                if let Some(path) = resolve_header(&header_name, source_dir, includes) {
-                    if path.exists() && visited.insert(path.clone()) {
-                        FingerprintUtils::hash_file_into(&path, hasher)?;
-                        if let Ok(header_content) = fs::read(&path) {
-                            scan_and_hash_headers(
-                                &header_content,
-                                path.parent(),
-                                includes,
-                                hasher,
-                                visited,
-                            )?;
-                        }
-                    }
-                }
+        if trimmed.starts_with("#include")
+            && let Some(header_name) = extract_header_name(trimmed)
+            && let Some(path) = resolve_header(&header_name, source_dir, includes)
+            && path.exists()
+            && visited.insert(path.clone())
+        {
+            FingerprintUtils::hash_file_into(&path, hasher)?;
+            if let Ok(header_content) = fs::read(&path) {
+                scan_and_hash_headers(&header_content, path.parent(), includes, hasher, visited)?;
             }
         }
     }

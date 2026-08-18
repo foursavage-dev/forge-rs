@@ -198,10 +198,10 @@ impl PluginManager {
             })?;
             let path = entry.path();
 
-            if path.is_dir() {
-                if let Ok(plugin) = self.load_plugin_from_dir(&path) {
-                    self.plugins.insert(plugin.name.clone(), plugin);
-                }
+            if path.is_dir()
+                && let Ok(plugin) = self.load_plugin_from_dir(&path)
+            {
+                self.plugins.insert(plugin.name.clone(), plugin);
             }
         }
 

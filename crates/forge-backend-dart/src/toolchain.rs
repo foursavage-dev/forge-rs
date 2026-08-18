@@ -59,11 +59,11 @@ impl DartToolchain {
 
     fn find_executable(name: &str) -> Option<String> {
         // Check if executable exists in PATH
-        if let Ok(output) = std::process::Command::new("where").arg(name).output() {
-            if output.status.success() {
-                let paths = String::from_utf8_lossy(&output.stdout);
-                return paths.lines().next().map(|s| s.to_string());
-            }
+        if let Ok(output) = std::process::Command::new("where").arg(name).output()
+            && output.status.success()
+        {
+            let paths = String::from_utf8_lossy(&output.stdout);
+            return paths.lines().next().map(|s| s.to_string());
         }
 
         // Try direct execution
@@ -143,10 +143,10 @@ mod tests {
     fn test_dart_toolchain_detection() {
         // This test will fail if Dart is not installed
         let result = DartToolchain::detect();
-        if let Ok(toolchain) = result {
-            if toolchain.is_dart_available() {
-                assert!(!toolchain.dart_version.is_empty());
-            }
+        if let Ok(toolchain) = result
+            && toolchain.is_dart_available()
+        {
+            assert!(!toolchain.dart_version.is_empty());
         }
     }
 

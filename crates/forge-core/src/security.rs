@@ -182,10 +182,10 @@ impl SecurityValidator {
 
         // Check for suspicious patterns
         for pattern in cmd_substitution_patterns.iter() {
-            if let Ok(re) = regex::Regex::new(pattern) {
-                if re.is_match(arg) {
-                    return true;
-                }
+            if let Ok(re) = regex::Regex::new(pattern)
+                && re.is_match(arg)
+            {
+                return true;
             }
         }
 

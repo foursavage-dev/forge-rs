@@ -75,14 +75,15 @@ impl BufferPool {
         stats.deallocations += 1;
 
         // Only pool buffers that match our size tiers
-        if let Some(&tier_size) = SIZE_TIERS.get(tier_index) {
-            if capacity >= tier_size * 2 / 3 && capacity <= tier_size * 3 / 2 {
-                if let Some(pool) = self.pools.get(tier_index) {
-                    let mut pool = pool.lock();
-                    // Limit pool size to prevent unbounded growth
-                    if pool.len() < 10 {
-                        pool.push_back(buffer);
-                    }
+        if let Some(&tier_size) = SIZE_TIERS.get(tier_index)
+            && capacity >= tier_size * 2 / 3
+            && capacity <= tier_size * 3 / 2
+        {
+            if let Some(pool) = self.pools.get(tier_index) {
+                let mut pool = pool.lock();
+                // Limit pool size to prevent unbounded growth
+                if pool.len() < 10 {
+                    pool.push_back(buffer);
                 }
             }
         }

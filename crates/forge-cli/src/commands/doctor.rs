@@ -131,21 +131,19 @@ pub fn run_doctor_with_ai(ai_enabled: bool) -> ExitCode {
                 installed_count += 1;
             }
             _ => {
-                if probe.binary == "python3" {
-                    if let Ok(py_out) = std::process::Command::new("python")
+                if probe.binary == "python3"
+                    && let Ok(py_out) = std::process::Command::new("python")
                         .arg("--version")
                         .output()
-                    {
-                        if py_out.status.success() {
-                            let ver = String::from_utf8_lossy(&py_out.stdout).trim().to_string();
-                            println!(
-                                "  [ok] {:<26} [{:<6}] -> {}",
-                                probe.name, probe.backend, ver
-                            );
-                            installed_count += 1;
-                            continue;
-                        }
-                    }
+                    && py_out.status.success()
+                {
+                    let ver = String::from_utf8_lossy(&py_out.stdout).trim().to_string();
+                    println!(
+                        "  [ok] {:<26} [{:<6}] -> {}",
+                        probe.name, probe.backend, ver
+                    );
+                    installed_count += 1;
+                    continue;
                 }
                 println!(
                     "  [--] {:<26} [{:<6}] (not installed / not in PATH)",
@@ -192,23 +190,22 @@ pub fn run_doctor_with_ai(ai_enabled: bool) -> ExitCode {
     }
     println!();
 
-    if ai_enabled || !missing_tools.is_empty() {
-        if let Ok(api_key) = std::env::var("GEMINI_API_KEY") {
-            if !api_key.trim().is_empty() {
-                println!("🤖 AI Diagnostic Advice (Powered by Gemini):");
-                let _prompt = format!(
-                    "System: {} {}\nDetected Toolchains: {}/{}\nMissing: {:?}\nGive 2 concise tips to optimize this developer workstation for Forge builds.",
-                    os_name,
-                    arch_name,
-                    installed_count,
-                    TOOLCHAINS.len(),
-                    missing_tools
-                );
-                println!(
-                    "  Tip: Install missing backends using your OS package manager to unlock polyglot builds."
-                );
-            }
-        }
+    if (ai_enabled || !missing_tools.is_empty())
+        && let Ok(api_key) = std::env::var("GEMINI_API_KEY")
+        && !api_key.trim().is_empty()
+    {
+        println!("🤖 AI Diagnostic Advice (Powered by Gemini):");
+        let _prompt = format!(
+            "System: {} {}\nDetected Toolchains: {}/{}\nMissing: {:?}\nGive 2 concise tips to optimize this developer workstation for Forge builds.",
+            os_name,
+            arch_name,
+            installed_count,
+            TOOLCHAINS.len(),
+            missing_tools
+        );
+        println!(
+            "  Tip: Install missing backends using your OS package manager to unlock polyglot builds."
+        );
     }
 
     if cache_ok {
