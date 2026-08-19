@@ -1,6 +1,11 @@
 #![forbid(unsafe_code)]
 
+pub mod jobserver_pool;
+pub mod racing;
 pub mod work_stealing;
+
+pub use jobserver_pool::JobserverPool;
+pub use racing::DynamicRacingExecutor;
 
 use std::cmp::Reverse;
 use std::collections::HashMap;

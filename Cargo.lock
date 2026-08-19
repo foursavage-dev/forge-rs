@@ -1337,6 +1337,8 @@ dependencies = [
 name = "forge-executor"
 version = "0.2.0"
 dependencies = [
+ "fastrand",
+ "tempfile",
  "thiserror",
  "tokio",
  "wait-timeout",
@@ -1471,6 +1473,7 @@ dependencies = [
  "dashmap",
  "forge-executor",
  "forge-graph",
+ "jobserver",
  "serde",
  "serde_json",
  "sysinfo",
