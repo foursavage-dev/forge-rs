@@ -23,7 +23,7 @@ pub struct DockerBackend {
 }
 
 impl DockerBackend {
-    pub fn new(config: DockerProjectConfig) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(config: DockerProjectConfig) -> Result<Self, anyhow::Error> {
         let toolchain = DockerToolchain::detect()?;
         let fingerprinter = DockerFingerprinter::new(config.clone());
 
@@ -73,7 +73,7 @@ impl DockerBackend {
 
     pub fn build_task_graph(
         &self,
-    ) -> Result<BuildGraph<forge_executor::Task>, Box<dyn std::error::Error>> {
+    ) -> Result<BuildGraph<forge_executor::Task>, anyhow::Error> {
         let mut graph = BuildGraph::new();
         let fingerprint = self.fingerprinter.compute()?;
         let stages = self.parse_dockerfile()?;
@@ -110,7 +110,7 @@ impl DockerBackend {
         Ok(graph)
     }
 
-    pub fn validate_config(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn validate_config(&self) -> Result<(), anyhow::Error> {
         if let Some(dockerfile) = &self.config.dockerfile_path
             && !dockerfile.exists()
         {
@@ -127,7 +127,7 @@ impl BuildBackend for DockerBackend {
 }
 
 impl DockerBackend {
-    fn parse_dockerfile(&self) -> Result<DockerStages, Box<dyn std::error::Error>> {
+    fn parse_dockerfile(&self) -> Result<DockerStages, anyhow::Error> {
         let dockerfile = self
             .config
             .dockerfile_path

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-19
+
+### Changed
+- Bumped workspace version to 0.2.0.
+- Massive refactoring: Replaced all `Box<dyn std::error::Error>` with robust `anyhow::Error` across 12 crates (analytics, backend-docker, docker-builder, flaky-detection, notifications, secrets, templates, worker, etc.).
+- Improved cross-crate dependency version management in Cargo.toml.
+- Upgraded the Dashboard web UI to include complete styling and real-time visualization layouts.
+- Made all modules significantly more idiomatic and complete.
+
+
 ### Added
 - Initial release of Forge build orchestration system
 - Support for 10+ language backends (Rust, C/C++, Go, TypeScript, Python, Java, .NET, Swift, Dart, Zig, Docker)

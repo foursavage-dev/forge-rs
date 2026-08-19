@@ -1,6 +1,6 @@
 [package]
 name = "forge-templates"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 authors = ["Foursavage Dev <foursavage@proton.me>"]
 license = "MIT"
@@ -10,6 +10,7 @@ keywords = ["templates", "pipelines", "workflows", "reusable"]
 categories = ["development-tools"]
 
 [dependencies]
+anyhow = { workspace = true }
 forge-core = { path = "../forge-core" }
 
 thiserror = "2.0"

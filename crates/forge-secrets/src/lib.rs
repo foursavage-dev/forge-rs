@@ -25,14 +25,14 @@ impl SecretsService {
         Self { manager }
     }
 
-    pub async fn get_secret(&self, key: &str) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn get_secret(&self, key: &str) -> Result<String, anyhow::Error> {
         self.manager.get_secret(key).await
     }
 
     pub async fn inject_secrets(
         &self,
         command: &str,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String, anyhow::Error> {
         self.manager.inject_secrets(command).await
     }
 }

@@ -7,6 +7,7 @@ license.workspace = true
 description = "Forge core library: project discovery and Cargo metadata integration"
 
 [dependencies]
+anyhow = { workspace = true }
 cargo_metadata = "0.23"
 forge-graph = { workspace = true }
 thiserror = { workspace = true }

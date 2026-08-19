@@ -14,7 +14,7 @@ impl DiscordNotifier {
 
 #[async_trait::async_trait]
 impl Notifier for DiscordNotifier {
-    async fn send(&self, notification: Notification) -> Result<(), Box<dyn std::error::Error>> {
+    async fn send(&self, notification: Notification) -> Result<(), anyhow::Error> {
         if let Some(webhook_url) = &self.config.webhook_url {
             let client = reqwest::Client::new();
             let payload = serde_json::json!({

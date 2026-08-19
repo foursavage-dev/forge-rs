@@ -18,7 +18,7 @@ impl TemplateRenderer {
         &self,
         template: &PipelineTemplate,
         context: TemplateContext,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String, anyhow::Error> {
         let mut map = serde_json::Map::new();
         map.insert(
             "environment".to_string(),

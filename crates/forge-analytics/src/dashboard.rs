@@ -26,7 +26,7 @@ impl AnalyticsDashboard {
         Self { config }
     }
 
-    pub async fn start(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn start(&self) -> Result<(), anyhow::Error> {
         // Would start web server here
         Ok(())
     }

@@ -15,7 +15,7 @@ impl EmailNotifier {
 
 #[async_trait::async_trait]
 impl Notifier for EmailNotifier {
-    async fn send(&self, _notification: Notification) -> Result<(), Box<dyn std::error::Error>> {
+    async fn send(&self, _notification: Notification) -> Result<(), anyhow::Error> {
         // Placeholder for email sending
         Ok(())
     }

@@ -28,7 +28,7 @@ impl RetryExecutor {
         }
     }
 
-    pub async fn retry(&self, _test_name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn retry(&self, _test_name: &str) -> Result<(), anyhow::Error> {
         // Retry logic would go here
         Ok(())
     }

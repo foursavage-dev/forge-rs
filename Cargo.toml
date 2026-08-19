@@ -38,7 +38,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.88"
 license = "MIT"
@@ -46,38 +46,39 @@ repository = "https://github.com/foursavage-dev/forge-rs"
 description = "Forge is a fast, flexible, cache-first build orchestration system for Rust and beyond."
 
 [workspace.dependencies]
-forge-core = { path = "crates/forge-core", version = "0.1.0" }
-forge-graph = { path = "crates/forge-graph", version = "0.1.0" }
-forge-executor = { path = "crates/forge-executor", version = "0.1.0" }
-forge-scheduler = { path = "crates/forge-scheduler", version = "0.1.0" }
-forge-cache = { path = "crates/forge-cache", version = "0.1.0" }
-forge-cas = { path = "crates/forge-cas", version = "0.1.0" }
-forge-ci-generator = { path = "crates/forge-ci-generator", version = "0.1.0" }
-forge-backend-rust = { path = "crates/forge-backend-rust", version = "0.1.0" }
-forge-backend-cc = { path = "crates/forge-backend-cc", version = "0.1.0" }
-forge-backend-go = { path = "crates/forge-backend-go", version = "0.1.0" }
-forge-backend-ts = { path = "crates/forge-backend-ts", version = "0.1.0" }
-forge-backend-py = { path = "crates/forge-backend-py", version = "0.1.0" }
-forge-backend-java = { path = "crates/forge-backend-java", version = "0.1.0" }
-forge-backend-dotnet = { path = "crates/forge-backend-dotnet", version = "0.1.0" }
-forge-backend-swift = { path = "crates/forge-backend-swift", version = "0.1.0" }
-forge-backend-dart = { path = "crates/forge-backend-dart", version = "0.1.0" }
-forge-backend-zig = { path = "crates/forge-backend-zig", version = "0.1.0" }
-forge-backend-docker = { path = "crates/forge-backend-docker", version = "0.1.0" }
-forge-worker = { path = "crates/forge-worker", version = "0.1.0" }
-forge-plugin = { path = "crates/forge-plugin", version = "0.1.0" }
-forge-remote-cache = { path = "crates/forge-remote-cache", version = "0.1.0" }
-forge-sandbox = { path = "crates/forge-sandbox", version = "0.1.0" }
-forge-signing = { path = "crates/forge-signing", version = "0.1.0" }
-forge-security = { path = "crates/forge-security", version = "0.1.0" }
-forge-analytics = { path = "crates/forge-analytics", version = "0.1.0" }
-forge-multiplatform = { path = "crates/forge-multiplatform", version = "0.1.0" }
-forge-notifications = { path = "crates/forge-notifications", version = "0.1.0" }
-forge-flaky-detection = { path = "crates/forge-flaky-detection", version = "0.1.0" }
-forge-docker-builder = { path = "crates/forge-docker-builder", version = "0.1.0" }
-forge-secrets = { path = "crates/forge-secrets", version = "0.1.0" }
-forge-incremental = { path = "crates/forge-incremental", version = "0.1.0" }
-forge-templates = { path = "crates/forge-templates", version = "0.1.0" }
+anyhow = "1.0"
+forge-core = { path = "crates/forge-core", version = "0.2.0" }
+forge-graph = { path = "crates/forge-graph", version = "0.2.0" }
+forge-executor = { path = "crates/forge-executor", version = "0.2.0" }
+forge-scheduler = { path = "crates/forge-scheduler", version = "0.2.0" }
+forge-cache = { path = "crates/forge-cache", version = "0.2.0" }
+forge-cas = { path = "crates/forge-cas", version = "0.2.0" }
+forge-ci-generator = { path = "crates/forge-ci-generator", version = "0.2.0" }
+forge-backend-rust = { path = "crates/forge-backend-rust", version = "0.2.0" }
+forge-backend-cc = { path = "crates/forge-backend-cc", version = "0.2.0" }
+forge-backend-go = { path = "crates/forge-backend-go", version = "0.2.0" }
+forge-backend-ts = { path = "crates/forge-backend-ts", version = "0.2.0" }
+forge-backend-py = { path = "crates/forge-backend-py", version = "0.2.0" }
+forge-backend-java = { path = "crates/forge-backend-java", version = "0.2.0" }
+forge-backend-dotnet = { path = "crates/forge-backend-dotnet", version = "0.2.0" }
+forge-backend-swift = { path = "crates/forge-backend-swift", version = "0.2.0" }
+forge-backend-dart = { path = "crates/forge-backend-dart", version = "0.2.0" }
+forge-backend-zig = { path = "crates/forge-backend-zig", version = "0.2.0" }
+forge-backend-docker = { path = "crates/forge-backend-docker", version = "0.2.0" }
+forge-worker = { path = "crates/forge-worker", version = "0.2.0" }
+forge-plugin = { path = "crates/forge-plugin", version = "0.2.0" }
+forge-remote-cache = { path = "crates/forge-remote-cache", version = "0.2.0" }
+forge-sandbox = { path = "crates/forge-sandbox", version = "0.2.0" }
+forge-signing = { path = "crates/forge-signing", version = "0.2.0" }
+forge-security = { path = "crates/forge-security", version = "0.2.0" }
+forge-analytics = { path = "crates/forge-analytics", version = "0.2.0" }
+forge-multiplatform = { path = "crates/forge-multiplatform", version = "0.2.0" }
+forge-notifications = { path = "crates/forge-notifications", version = "0.2.0" }
+forge-flaky-detection = { path = "crates/forge-flaky-detection", version = "0.2.0" }
+forge-docker-builder = { path = "crates/forge-docker-builder", version = "0.2.0" }
+forge-secrets = { path = "crates/forge-secrets", version = "0.2.0" }
+forge-incremental = { path = "crates/forge-incremental", version = "0.2.0" }
+forge-templates = { path = "crates/forge-templates", version = "0.2.0" }
 
 cargo_metadata = "0.23"
 thiserror = "2"

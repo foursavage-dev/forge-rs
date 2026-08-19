@@ -53,7 +53,7 @@ impl TestRunner {
 
     pub fn run_test<F>(&self, _suite_name: String, test_name: String, test_fn: F) -> TestResult
     where
-        F: FnOnce() -> Result<(), Box<dyn std::error::Error>>,
+        F: FnOnce() -> Result<(), anyhow::Error>,
     {
         let start = std::time::Instant::now();
         let result = test_fn();
@@ -196,7 +196,7 @@ impl IntegrationTestEnvironment {
         self.environment_vars.insert(key, value);
     }
 
-    pub fn setup(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn setup(&self) -> Result<(), anyhow::Error> {
         // In a safe implementation without unsafe code, we cannot set environment variables
         // Instead, we validate that the environment variables are properly stored
         // and can be used by the test framework in other ways
@@ -303,7 +303,7 @@ impl Semaphore {
 pub type TestCase = (
     String,
     String,
-    Box<dyn FnOnce() -> Result<(), Box<dyn std::error::Error>> + Send>,
+    Box<dyn FnOnce() -> Result<(), anyhow::Error> + Send>,
 );
 
 /// Parallel test runner for concurrent test execution
@@ -466,17 +466,17 @@ mod tests {
             (
                 "suite1".to_string(),
                 "test1".to_string(),
-                Box::new(|| Ok::<(), Box<dyn std::error::Error>>(())),
+                Box::new(|| Ok::<(), anyhow::Error>(())),
             ),
             (
                 "suite1".to_string(),
                 "test2".to_string(),
-                Box::new(|| Ok::<(), Box<dyn std::error::Error>>(())),
+                Box::new(|| Ok::<(), anyhow::Error>(())),
             ),
             (
                 "suite1".to_string(),
                 "test3".to_string(),
-                Box::new(|| Ok::<(), Box<dyn std::error::Error>>(())),
+                Box::new(|| Ok::<(), anyhow::Error>(())),
             ),
         ];
 

@@ -13,7 +13,7 @@ impl DockerFingerprinter {
         Self { config }
     }
 
-    pub fn compute(&self) -> Result<String, Box<dyn std::error::Error>> {
+    pub fn compute(&self) -> Result<String, anyhow::Error> {
         let mut hasher = blake3::Hasher::new();
 
         if let Some(dockerfile) = &self.config.dockerfile_path
