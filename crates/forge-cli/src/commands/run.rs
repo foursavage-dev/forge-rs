@@ -107,6 +107,7 @@ pub fn run_run(args: RunArgs) -> ExitCode {
         kernel_bypass: false,
         wasm_sandbox: false,
         super_opt: false,
+        explain: false,
     };
 
     let build_status = crate::run_build_mode(common_args, BuildMode::Build);

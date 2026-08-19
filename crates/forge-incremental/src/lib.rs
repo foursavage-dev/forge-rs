@@ -5,12 +5,16 @@
 pub mod analyzer;
 pub mod change_detector;
 pub mod ecosystem;
+pub mod explain;
+pub mod inference;
 pub mod patterns;
 pub mod suggestions;
 
 pub use analyzer::{BuildAnalysis, IncrementalAnalyzer};
 pub use change_detector::{ChangeImpact, IncrementalChangeDetector};
 pub use ecosystem::{EcosystemInfo, EcosystemType, detect_ecosystems, is_build_relevant_file};
+pub use explain::{DirtyExplainer, DirtyReason};
+pub use inference::DependencyInferenceEngine;
 pub use patterns::{BuildPattern, PatternSeverity, PatternType};
 pub use suggestions::{OptimizationSuggestion, SuggestionPriority};
 

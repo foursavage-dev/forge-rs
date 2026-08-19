@@ -1,9 +1,11 @@
 #![forbid(unsafe_code)]
 
+pub mod bin_packing;
 pub mod jobserver_pool;
 pub mod racing;
 pub mod work_stealing;
 
+pub use bin_packing::{AgentBucket, DteBinPacker, TaskTimingEstimate};
 pub use jobserver_pool::JobserverPool;
 pub use racing::DynamicRacingExecutor;
 

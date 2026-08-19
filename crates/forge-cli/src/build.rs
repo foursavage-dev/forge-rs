@@ -172,6 +172,7 @@ pub(crate) fn run_build_mode_with(
         kernel_bypass: args.kernel_bypass || config.kernel_bypass,
         wasm_sandbox: args.wasm_sandbox || config.wasm_sandbox,
         super_opt: args.super_opt || config.super_opt,
+        explain: args.explain,
     };
 
     if merged.ramdisk
