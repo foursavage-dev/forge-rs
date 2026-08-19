@@ -31,7 +31,7 @@ impl TemplatesService {
         &self,
         template_name: &str,
         context: TemplateContext,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String, anyhow::Error> {
         let template = self.registry.get_template(template_name)?;
         self.renderer.render(&template, context).await
     }

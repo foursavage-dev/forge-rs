@@ -7,6 +7,7 @@ license.workspace = true
 description = "Docker/OCI container engine backend for forge"
 
 [dependencies]
+anyhow = { workspace = true }
 forge-core = { workspace = true }
 forge-executor = { workspace = true }
 forge-graph = { workspace = true }

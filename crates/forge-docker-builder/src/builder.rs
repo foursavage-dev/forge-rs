@@ -35,7 +35,7 @@ impl DockerBuilder {
         &self,
         _dockerfile_path: &str,
         _options: BuildOptions,
-    ) -> Result<DockerImage, Box<dyn std::error::Error>> {
+    ) -> Result<DockerImage, anyhow::Error> {
         // Docker build logic would go here
         Ok(DockerImage {
             id: "placeholder".to_string(),

@@ -31,7 +31,7 @@ impl AnalyticsService {
     pub async fn collect_metrics(
         &self,
         project_path: &Path,
-    ) -> Result<CacheMetrics, Box<dyn std::error::Error>> {
+    ) -> Result<CacheMetrics, anyhow::Error> {
         self.aggregator.collect(project_path).await
     }
 }

@@ -11,6 +11,7 @@ name = "forge"
 path = "src/main.rs"
 
 [dependencies]
+anyhow = { workspace = true }
 forge-core = { workspace = true }
 forge-graph = { workspace = true }
 forge-executor = { workspace = true }

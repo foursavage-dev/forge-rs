@@ -25,7 +25,7 @@ pub fn run_fix(
     project_path: Option<PathBuf>,
     apply: bool,
     use_ai: bool,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), anyhow::Error> {
     let root =
         project_path.unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
 
@@ -251,7 +251,7 @@ fn is_safe_command(cmd: &str) -> bool {
 fn apply_suggestions(
     suggestions: &[FixSuggestion],
     root: &Path,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), anyhow::Error> {
     let mut applied_count = 0;
     for sugg in suggestions {
         if let Some(cmd_str) = &sugg.suggested_command {

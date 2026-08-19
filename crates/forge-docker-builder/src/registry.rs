@@ -20,7 +20,7 @@ impl Registry {
     pub async fn push(
         &self,
         _image: &crate::image::DockerImage,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), anyhow::Error> {
         // Push logic would go here
         Ok(())
     }

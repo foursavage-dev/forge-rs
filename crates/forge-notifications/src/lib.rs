@@ -31,7 +31,7 @@ impl NotificationService {
         self.notifiers.push(notifier);
     }
 
-    pub async fn send(&self, notification: Notification) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn send(&self, notification: Notification) -> Result<(), anyhow::Error> {
         for notifier in &self.notifiers {
             notifier.send(notification.clone()).await?;
         }

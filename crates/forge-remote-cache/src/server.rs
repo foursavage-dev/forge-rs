@@ -160,7 +160,7 @@ impl RemoteCacheServer {
         fingerprints: Arc<RwLock<HashMap<String, String>>>,
         artifacts: Arc<RwLock<HashMap<String, Vec<u8>>>>,
         artifact_index: Arc<RwLock<HashMap<String, String>>>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), anyhow::Error> {
         let _ = stream.set_read_timeout(Some(Duration::from_secs(30)));
         let _ = stream.set_write_timeout(Some(Duration::from_secs(30)));
 

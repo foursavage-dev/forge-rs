@@ -144,7 +144,7 @@ impl WorkerServer {
     pub fn handle_client(
         stream: &mut TcpStream,
         expected_token: &Option<String>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), anyhow::Error> {
         let active_jobs = AtomicUsize::new(0);
         let vfs = Arc::new(VirtualFileSystem::new(1024 * 1024 * 100));
         Self::handle_connection(
@@ -166,7 +166,7 @@ impl WorkerServer {
         active_jobs: &AtomicUsize,
         start_time: Instant,
         vfs: Arc<VirtualFileSystem>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), anyhow::Error> {
         let _ = stream.set_read_timeout(Some(Duration::from_secs(300)));
         let _ = stream.set_write_timeout(Some(Duration::from_secs(300)));
 
@@ -408,7 +408,7 @@ impl WorkerServer {
 }
 
 /// Decodes and extracts a packed source snapshot into a fresh temp dir.
-fn unpack_source(ctx: &SourceContext) -> Result<PathBuf, Box<dyn std::error::Error>> {
+fn unpack_source(ctx: &SourceContext) -> Result<PathBuf, anyhow::Error> {
     if ctx.format != "tar.zst" {
         return Err(format!("unsupported source format: {}", ctx.format).into());
     }
@@ -432,7 +432,7 @@ fn unpack_source(ctx: &SourceContext) -> Result<PathBuf, Box<dyn std::error::Err
 fn unpack_source_to_vfs(
     ctx: &SourceContext,
     vfs: &VirtualFileSystem,
-) -> Result<PathBuf, Box<dyn std::error::Error>> {
+) -> Result<PathBuf, anyhow::Error> {
     if ctx.format != "tar.zst" {
         return Err(format!("unsupported source format: {}", ctx.format).into());
     }

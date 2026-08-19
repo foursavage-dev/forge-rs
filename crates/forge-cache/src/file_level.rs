@@ -62,7 +62,7 @@ impl FileLevelCache {
         &self,
         file_path: &Path,
         artifact: Artifact,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), anyhow::Error> {
         let hash = artifact.metadata.hash.clone();
         let file_key = self.file_key(file_path);
 
@@ -168,7 +168,7 @@ impl FileDependencyGraph {
     }
 
     /// Parse dependency file (e.g., .d files from GCC)
-    pub fn parse_dep_file(&self, dep_file: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn parse_dep_file(&self, dep_file: &Path) -> Result<(), anyhow::Error> {
         let content = std::fs::read_to_string(dep_file)?;
 
         // Parse .d file format: target: dependencies

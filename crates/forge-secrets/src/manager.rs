@@ -21,6 +21,6 @@ impl std::fmt::Debug for Secret {
 
 #[async_trait::async_trait]
 pub trait SecretManager: Send + Sync {
-    async fn get_secret(&self, key: &str) -> Result<String, Box<dyn std::error::Error>>;
-    async fn inject_secrets(&self, command: &str) -> Result<String, Box<dyn std::error::Error>>;
+    async fn get_secret(&self, key: &str) -> Result<String, anyhow::Error>;
+    async fn inject_secrets(&self, command: &str) -> Result<String, anyhow::Error>;
 }

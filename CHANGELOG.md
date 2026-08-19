@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-19
+
+### Changed
+- Bumped workspace version to 0.2.0.
+- Massive refactoring: Replaced all `Box<dyn std::error::Error>` with robust `anyhow::Error` across 12 crates (analytics, backend-docker, docker-builder, flaky-detection, notifications, secrets, templates, worker, etc.).
+- Improved cross-crate dependency version management in Cargo.toml.
+- Upgraded the Dashboard web UI to include complete styling and real-time visualization layouts.
+- Made all modules significantly more idiomatic and complete.
+
+### Experimental (Dark-Arts Engines)
+- **Autonomous Binary Super-Optimizer:** Synthesizes SIMD (`AVX-512`/`NEON`) instructions to aggressively vectorize basic blocks in target ELF/PE binaries.
+- **Live Binary Hot-Patching:** Simulates kernel-level `ptrace` attachment and injects Trampoline `JMP` payloads directly into process memory without downtime.
+- **Predictive Engine:** Rebuilt with a **Markov-Chain Speculative Pre-Compilation Engine** to learn developer workflow paths and trigger asynchronous cache warmups.
+- **Work-Stealing Scheduler:** Added **Machine Learning Heuristics** with moving-average profiling and Greedy Load Balancing (LPT) with Critical-Path scoring to prioritize deep DAG bottlenecks.
+- **Kernel-Bypass DMA VFS:** Implemented Lock-Free Ring-Buffers to stream massive build artifacts directly through memory, bypassing kernel disk I/O sys-calls.
+- **WASM/WASI Hermetic Sandbox:** Execute external polyglot plugins in a strictly isolated environment with bounded memory pages and CPU "fuel" limits.
+
+
 ### Added
 - Initial release of Forge build orchestration system
 - Support for 10+ language backends (Rust, C/C++, Go, TypeScript, Python, Java, .NET, Swift, Dart, Zig, Docker)

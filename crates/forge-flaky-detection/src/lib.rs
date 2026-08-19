@@ -30,7 +30,7 @@ impl FlakyDetectionService {
     pub async fn detect_and_retry(
         &self,
         test_name: &str,
-    ) -> Result<bool, Box<dyn std::error::Error>> {
+    ) -> Result<bool, anyhow::Error> {
         let is_flaky = self.detector.is_flaky(test_name).await?;
         if is_flaky {
             self.retry_executor.retry(test_name).await?;

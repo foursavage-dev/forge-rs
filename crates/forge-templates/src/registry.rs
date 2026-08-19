@@ -31,7 +31,7 @@ impl TemplateRegistry {
         );
     }
 
-    pub fn get_template(&self, name: &str) -> Result<PipelineTemplate, Box<dyn std::error::Error>> {
+    pub fn get_template(&self, name: &str) -> Result<PipelineTemplate, anyhow::Error> {
         self.templates
             .get(name)
             .cloned()
