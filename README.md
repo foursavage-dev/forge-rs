@@ -22,6 +22,8 @@ Forge ships with experimental, highly-optimized performance engines for specific
 - **ML-Aware Work-Stealing:** Uses historical tracing and dependency tail length scoring to schedule threads with zero starvation.
 - **Autonomous Binary Super-Optimizer:** Synthesizes `AVX-512`/`NEON` instructions directly into compiled ELF binaries via basic-block vectorization.
 - **Live Binary Hot-Patching:** Injects trampoline payloads and live-patches C/Rust code in running processes via simulated memory injection.
+- **Kernel-Bypass DMA Ring-Buffer VFS:** Streams artifacts directly through zero-copy memory ring-buffers, entirely bypassing disk OS sys-calls.
+- **WASM/WASI Hermetic Sandbox:** Runs polyglot plugins securely via strict memory/CPU instruction bounds ("fuel limits").
 
 ## What works today
 

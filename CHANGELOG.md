@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Live Binary Hot-Patching:** Simulates kernel-level `ptrace` attachment and injects Trampoline `JMP` payloads directly into process memory without downtime.
 - **Predictive Engine:** Rebuilt with a **Markov-Chain Speculative Pre-Compilation Engine** to learn developer workflow paths and trigger asynchronous cache warmups.
 - **Work-Stealing Scheduler:** Added **Machine Learning Heuristics** with moving-average profiling and Greedy Load Balancing (LPT) with Critical-Path scoring to prioritize deep DAG bottlenecks.
+- **Kernel-Bypass DMA VFS:** Implemented Lock-Free Ring-Buffers to stream massive build artifacts directly through memory, bypassing kernel disk I/O sys-calls.
+- **WASM/WASI Hermetic Sandbox:** Execute external polyglot plugins in a strictly isolated environment with bounded memory pages and CPU "fuel" limits.
 
 
 ### Added
