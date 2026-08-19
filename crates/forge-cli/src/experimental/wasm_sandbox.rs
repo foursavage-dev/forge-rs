@@ -108,7 +108,7 @@ impl WasmPluginRunner {
                 "Failed WASM validation check",
             ));
         }
-        
+
         // --- WASM/WASI HERMETIC SANDBOX LOGIC ---
         // 1. Isolate the WASM Module using a restricted memory boundary
         // 2. Map whitelisted directories into VFS for file operations
@@ -117,7 +117,7 @@ impl WasmPluginRunner {
 
         let mut outputs = Vec::new();
         let mut actual_fuel_consumed = 0;
-        
+
         for write_path in &policy.write_paths {
             if let Some(parent) = write_path.parent() {
                 fs::create_dir_all(parent)?;

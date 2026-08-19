@@ -248,10 +248,7 @@ fn is_safe_command(cmd: &str) -> bool {
     true
 }
 
-fn apply_suggestions(
-    suggestions: &[FixSuggestion],
-    root: &Path,
-) -> Result<(), anyhow::Error> {
+fn apply_suggestions(suggestions: &[FixSuggestion], root: &Path) -> Result<(), anyhow::Error> {
     let mut applied_count = 0;
     for sugg in suggestions {
         if let Some(cmd_str) = &sugg.suggested_command {

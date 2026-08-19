@@ -1,27 +1,13 @@
 #![forbid(unsafe_code)]
 
-//! Work-stealing scheduler implementation with ML-based Heuristics
-//!
-//! This module provides an advanced ML-aware work-stealing scheduler for improved load balancing
-//! and reduced idle time during parallel task execution.
-//!
-//! Performance optimizations:
-//! - Work-stealing aware task distribution
-//! - Machine Learning Heuristics: Uses historical execution duration to weight task priority dynamically
-//! - Critical Path prioritization (longest dependency tail)
-//! - Simple implementation that extends existing scheduler
-
 use forge_executor::{Task, TaskExecutor, TaskOutcome, TaskStatus};
 use forge_graph::{BuildGraph, NodeId};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
-use std::collections::HashMap;
 
-/// ML-based Heuristics Profiler
 #[derive(Default, Clone)]
 pub struct ExecutionHeuristics {
-    /// Tracks moving average of duration for specific task signatures
     pub historical_durations: dashmap::DashMap<String, Duration>,
 }
 
@@ -30,23 +16,21 @@ impl ExecutionHeuristics {
         if let Some(avg_duration) = self.historical_durations.get(&task.label) {
             avg_duration.as_millis() as u64
         } else {
-            // Base weight if no historical data is present
             100
         }
     }
 
     pub fn record_execution(&self, task: &Task, duration: Duration) {
         if let Some(mut existing) = self.historical_durations.get_mut(&task.label) {
-            // Exponential moving average (alpha = 0.2)
             let new_avg = (*existing * 8 + duration * 2) / 10;
             *existing = new_avg;
         } else {
-            self.historical_durations.insert(task.label.clone(), duration);
+            self.historical_durations
+                .insert(task.label.clone(), duration);
         }
     }
 }
 
-/// Work-stealing aware scheduler
 pub struct WorkStealingScheduler {
     worker_count: usize,
     graph: Arc<BuildGraph<Task>>,
@@ -80,34 +64,28 @@ impl WorkStealingScheduler {
         self
     }
 
-    /// Distribute tasks using work-stealing aware algorithm with ML weights
     fn distribute_tasks_work_stealing(&self, ready_nodes: Vec<NodeId>) -> Vec<Vec<NodeId>> {
         let mut worker_assignments: Vec<Vec<NodeId>> = vec![Vec::new(); self.worker_count];
         let mut worker_loads: Vec<u64> = vec![0; self.worker_count];
 
-        // Distribute tasks with work-stealing and heuristic awareness
         let mut tasks_with_priority: Vec<_> = ready_nodes
             .into_iter()
             .map(|id| {
                 let tail_length = self.compute_tail_length(id);
                 let task = &self.graph.node(id).unwrap().payload;
                 let weight = self.heuristics.get_estimated_weight(task);
-                // Priority score: tail length massively offsets the base weight
                 let priority_score = (tail_length as u64 * 1000) + weight;
                 (id, priority_score, weight)
             })
             .collect();
 
-        // Sort by priority score (highest first)
         tasks_with_priority.sort_by_key(|(_, score, _)| std::cmp::Reverse(*score));
 
-        // Distribute tasks using Greedy load balancing (LPT - Longest Processing Time first)
         for (task_id, _, weight) in tasks_with_priority.into_iter() {
-            // Find worker with minimum load
             let min_worker = worker_loads
                 .iter()
                 .enumerate()
-                .min_by_key(|(_, &load)| load)
+                .min_by_key(|(_, load)| *load)
                 .map(|(index, _)| index)
                 .unwrap_or(0);
 
@@ -118,7 +96,6 @@ impl WorkStealingScheduler {
         worker_assignments
     }
 
-    /// Compute tail length for critical path prioritization
     fn compute_tail_length(&self, node_id: NodeId) -> usize {
         let mut max_depth = 0;
         let mut stack = vec![(node_id, 0)];
@@ -134,7 +111,7 @@ impl WorkStealingScheduler {
 
             if let Ok(dependents) = self.graph.dependents(id) {
                 for dep in dependents {
-                    stack.push((dep, depth + 1));
+                    stack.push((*dep, depth + 1));
                 }
             }
         }
@@ -142,14 +119,12 @@ impl WorkStealingScheduler {
         max_depth
     }
 
-    /// Run the work-stealing scheduler
     pub fn run(&self) -> Result<BuildSummary, SchedulerError> {
         let start = Instant::now();
 
         let ready_nodes = self.graph.ready_nodes();
         let worker_assignments = self.distribute_tasks_work_stealing(ready_nodes);
 
-        // Execute tasks using the work-stealing distribution
         for worker_tasks in worker_assignments {
             for task_id in worker_tasks {
                 if let Some(node) = self.graph.node(task_id) {
@@ -162,8 +137,7 @@ impl WorkStealingScheduler {
                         Err(e) => TaskOutcome::failed(&task, e.to_string()),
                     };
                     let task_duration = task_start.elapsed();
-                    
-                    // Record heuristics for next builds
+
                     self.heuristics.record_execution(&task, task_duration);
 
                     self.completed_tasks.insert(task_id, outcome);

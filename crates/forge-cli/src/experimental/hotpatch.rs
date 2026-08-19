@@ -150,10 +150,10 @@ impl HotPatchEngine {
         // 4. Inject trampoline JMP instructions overwriting old functions
         // 5. Write new payload into code cave / allocated memory
         // 6. Resume execution without killing the process
-        
+
         let relocated_symbols = delta.relocations.len();
         let bytes_injected = delta.trampoline_payload.len();
-        
+
         // Simulating the kernel-level bypass and thread pausing
         let simulated_latency = 45 + (relocated_symbols as u64 * 12); // ~57 microseconds
 

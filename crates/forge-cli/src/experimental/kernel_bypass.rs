@@ -89,14 +89,14 @@ impl KernelBypassVfs {
 
     pub fn dma_write(&self, key: &str, data: &[u8]) -> io::Result<DmaBufferBlock> {
         let mut pool = self.virtual_memory_pool.write().unwrap();
-        
+
         // --- KERNEL-BYPASS DMA SHM LOGIC ---
         // Instead of writing to disk via VFS/sys-calls, we map memory directly
         // into the ring-buffer and bypass context switches entirely.
-        
+
         pool.insert(key.to_string(), data.to_vec());
         let push_success = self.ring_buffer.push(data);
-        
+
         let synthetic_throughput = if push_success { 128.4 } else { 12.5 };
 
         Ok(DmaBufferBlock {

@@ -407,10 +407,9 @@ impl WorkerServer {
     }
 }
 
-/// Decodes and extracts a packed source snapshot into a fresh temp dir.
-fn unpack_source(ctx: &SourceContext) -> Result<PathBuf, anyhow::Error> {
+fn unpack_source(ctx: &SourceContext) -> anyhow::Result<PathBuf> {
     if ctx.format != "tar.zst" {
-        return Err(format!("unsupported source format: {}", ctx.format).into());
+        return Err(anyhow::anyhow!("unsupported source format: {}", ctx.format));
     }
     let mut decoder = base64::read::DecoderReader::new(
         ctx.data_base64.as_bytes(),
@@ -421,20 +420,15 @@ fn unpack_source(ctx: &SourceContext) -> Result<PathBuf, anyhow::Error> {
 
     let root = tempfile::Builder::new()
         .prefix("forge-source-")
-        .tempdir()
-        .map_err(|e| e.to_string())?
+        .tempdir()?
         .keep();
-    unpack_artifacts(&blob, &root).map_err(|e| e.to_string())?;
+    unpack_artifacts(&blob, &root).map_err(|e| anyhow::anyhow!(e.to_string()))?;
     Ok(root)
 }
 
-/// Decodes and extracts a packed source snapshot into VFS for on-demand streaming
-fn unpack_source_to_vfs(
-    ctx: &SourceContext,
-    vfs: &VirtualFileSystem,
-) -> Result<PathBuf, anyhow::Error> {
+fn unpack_source_to_vfs(ctx: &SourceContext, vfs: &VirtualFileSystem) -> anyhow::Result<PathBuf> {
     if ctx.format != "tar.zst" {
-        return Err(format!("unsupported source format: {}", ctx.format).into());
+        return Err(anyhow::anyhow!("unsupported source format: {}", ctx.format));
     }
 
     let mut decoder = base64::read::DecoderReader::new(
@@ -444,19 +438,16 @@ fn unpack_source_to_vfs(
     let mut blob = Vec::new();
     decoder.read_to_end(&mut blob)?;
 
-    // First extract to temp directory
     let temp_root = tempfile::Builder::new()
         .prefix("forge-source-vfs-")
-        .tempdir()
-        .map_err(|e| e.to_string())?
+        .tempdir()?
         .keep();
-    unpack_artifacts(&blob, &temp_root).map_err(|e| e.to_string())?;
+    unpack_artifacts(&blob, &temp_root).map_err(|e| anyhow::anyhow!(e.to_string()))?;
 
-    // Mount to VFS
     let vfs_mount = ctx.vfs_mount.as_deref().unwrap_or("/vfs");
     let vfs_path = Path::new(vfs_mount);
     vfs.mount_local(&temp_root, vfs_path)
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| anyhow::anyhow!(e.to_string()))?;
 
     Ok(temp_root)
 }

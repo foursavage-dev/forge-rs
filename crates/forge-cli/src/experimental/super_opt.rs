@@ -65,7 +65,6 @@ impl SuperOptimizer {
         }
     }
 
-
     pub fn optimize_binary_simd(
         binary_path: &Path,
         output_path: &Path,
@@ -86,14 +85,14 @@ impl SuperOptimizer {
 
         let original_size = original_bytes.len() as u64;
         let mut cfg = Self::build_cfg_from_binary(&original_bytes);
-        
+
         // --- AUTONOMOUS BINARY SUPER-OPTIMIZATION LOGIC ---
         // 1. Analyze CFG for hot loops
         // 2. Identify scalar instructions that can be vectorized
         // 3. Inject AVX-512 / NEON machine code directly
-        
+
         let mut optimized = Vec::with_capacity(original_bytes.len() + 1024);
-        
+
         // Copy ELF/PE header (simulated by copying first chunk)
         let header_size = std::cmp::min(1024, original_bytes.len());
         optimized.extend_from_slice(&original_bytes[..header_size]);
@@ -102,7 +101,7 @@ impl SuperOptimizer {
         for block in &mut cfg.blocks {
             if block.is_vectorizable {
                 // Synthesize SIMD instructions block
-                let simd_payload = match target_level {
+                let simd_payload: &[u8] = match target_level {
                     SimdVectorizationLevel::Scalar => b"_SCALAR_SLOW_",
                     SimdVectorizationLevel::Sse128 => b"_SSE128_VEC4_",
                     SimdVectorizationLevel::Avx256 => b"_AVX256_VEC8_",
@@ -153,7 +152,6 @@ impl SuperOptimizer {
             analyzed_basic_blocks: cfg.blocks.len(),
         })
     }
-
 }
 
 #[cfg(test)]

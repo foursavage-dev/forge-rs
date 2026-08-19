@@ -156,7 +156,7 @@ impl BuildSummary {
             "traceEvents": events,
             "displayTimeUnit": "ms",
             "otherData": {
-                "forge_version": "0.1.0",
+                "forge_version": env!("CARGO_PKG_VERSION"),
                 "total_duration_ms": self.duration.as_secs_f64() * 1000.0,
                 "total_tasks": self.total,
                 "executed": self.executed,

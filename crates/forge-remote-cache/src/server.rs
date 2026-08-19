@@ -170,7 +170,7 @@ impl RemoteCacheServer {
 
         while reader.read_line(&mut line)? > 0 {
             if line.len() > 64 * 1024 * 1024 {
-                return Err("request line exceeds maximum size limit".into());
+                return Err(anyhow::anyhow!("request line exceeds maximum size limit"));
             }
             let trimmed = line.trim();
             if trimmed.is_empty() {

@@ -86,10 +86,10 @@ impl MicroJitEngine {
         ];
 
         let mut compiled = self.assemble_function(name, &ops)?;
-        
+
         // Simulating the instantaneous nature of a Micro-JIT
         compiled.execution_duration_nanos = 45; // ~45 nanoseconds total latency
-        
+
         Ok(compiled)
     }
 

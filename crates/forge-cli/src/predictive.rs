@@ -48,12 +48,14 @@ impl PredictiveEngine {
             stats.last_touch.insert(path_buf, Instant::now());
 
             if let Some(current_pkg) = package_name {
-                if let Some(prev_pkg) = &stats.last_modified_pkg {
-                    if prev_pkg != &current_pkg {
-                        // Record transition from prev_pkg -> current_pkg
-                        let transitions = stats.markov_transitions.entry(prev_pkg.clone()).or_insert_with(HashMap::new);
-                        *transitions.entry(current_pkg.clone()).or_insert(0) += 1;
-                    }
+                if let Some(prev_pkg) = stats.last_modified_pkg.clone()
+                    && prev_pkg != current_pkg
+                {
+                    let transitions = stats
+                        .markov_transitions
+                        .entry(prev_pkg)
+                        .or_insert_with(HashMap::new);
+                    *transitions.entry(current_pkg.clone()).or_insert(0) += 1;
                 }
                 stats.last_modified_pkg = Some(current_pkg);
             }
@@ -99,7 +101,8 @@ impl PredictiveEngine {
 
                     for (next_pkg, &count) in transitions {
                         let probability = count as f64 / total_transitions as f64;
-                        if probability >= self.confidence_threshold && !affected.contains(next_pkg) {
+                        if probability >= self.confidence_threshold && !affected.contains(next_pkg)
+                        {
                             candidates.push(next_pkg.clone());
                         }
                     }
@@ -108,7 +111,8 @@ impl PredictiveEngine {
         }
 
         // Deduplicate and filter candidates that actually exist in the workspace
-        let mut unique_candidates: Vec<String> = candidates.into_iter()
+        let mut unique_candidates: Vec<String> = candidates
+            .into_iter()
             .filter(|p| all_packages.contains(p))
             .collect::<HashSet<_>>()
             .into_iter()
@@ -147,19 +151,39 @@ mod tests {
         assert!(engine.is_enabled());
 
         // Simulate developer workflow: core -> utils -> cli
-        engine.record_touch(&PathBuf::from("crates/core/src/lib.rs"), Some("core".to_string()));
-        engine.record_touch(&PathBuf::from("crates/utils/src/lib.rs"), Some("utils".to_string()));
-        engine.record_touch(&PathBuf::from("crates/cli/src/main.rs"), Some("cli".to_string()));
-        
+        engine.record_touch(
+            &PathBuf::from("crates/core/src/lib.rs"),
+            Some("core".to_string()),
+        );
+        engine.record_touch(
+            &PathBuf::from("crates/utils/src/lib.rs"),
+            Some("utils".to_string()),
+        );
+        engine.record_touch(
+            &PathBuf::from("crates/cli/src/main.rs"),
+            Some("cli".to_string()),
+        );
+
         // Simulate a second time to build probability weight
-        engine.record_touch(&PathBuf::from("crates/core/src/lib.rs"), Some("core".to_string()));
-        engine.record_touch(&PathBuf::from("crates/utils/src/lib.rs"), Some("utils".to_string()));
+        engine.record_touch(
+            &PathBuf::from("crates/core/src/lib.rs"),
+            Some("core".to_string()),
+        );
+        engine.record_touch(
+            &PathBuf::from("crates/utils/src/lib.rs"),
+            Some("utils".to_string()),
+        );
 
         let mut changed = HashSet::new();
         changed.insert("core".to_string());
 
-        let all_pkgs = vec!["core".to_string(), "utils".to_string(), "cli".to_string(), "backend".to_string()];
-        
+        let all_pkgs = vec![
+            "core".to_string(),
+            "utils".to_string(),
+            "cli".to_string(),
+            "backend".to_string(),
+        ];
+
         // Because core -> utils happened twice, probability is 1.0 > threshold (0.35)
         let candidates = engine.speculative_warmup_candidates(&all_pkgs, &changed);
         assert_eq!(candidates, vec!["utils".to_string()]);

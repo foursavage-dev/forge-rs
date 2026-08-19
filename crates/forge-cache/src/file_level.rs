@@ -58,11 +58,7 @@ impl FileLevelCache {
     }
 
     /// Cache a file artifact (lock-free write with DashMap)
-    pub fn cache_file(
-        &self,
-        file_path: &Path,
-        artifact: Artifact,
-    ) -> Result<(), anyhow::Error> {
+    pub fn cache_file(&self, file_path: &Path, artifact: Artifact) -> Result<(), anyhow::Error> {
         let hash = artifact.metadata.hash.clone();
         let file_key = self.file_key(file_path);
 

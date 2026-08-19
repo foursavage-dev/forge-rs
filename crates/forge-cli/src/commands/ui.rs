@@ -7,11 +7,7 @@ use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::thread;
 
-pub fn run_ui(
-    port: u16,
-    open: bool,
-    project_path: Option<PathBuf>,
-) -> Result<(), anyhow::Error> {
+pub fn run_ui(port: u16, open: bool, project_path: Option<PathBuf>) -> Result<(), anyhow::Error> {
     let root =
         project_path.unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
     let bind_addr = format!("127.0.0.1:{}", port);
@@ -58,10 +54,7 @@ fn open_browser(url: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-fn handle_http_client(
-    mut stream: TcpStream,
-    root: &Path,
-) -> Result<(), anyhow::Error> {
+fn handle_http_client(mut stream: TcpStream, root: &Path) -> Result<(), anyhow::Error> {
     let mut reader = BufReader::new(stream.try_clone()?);
     let mut request_line = String::new();
     if reader.read_line(&mut request_line)? == 0 {

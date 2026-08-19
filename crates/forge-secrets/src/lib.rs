@@ -29,10 +29,7 @@ impl SecretsService {
         self.manager.get_secret(key).await
     }
 
-    pub async fn inject_secrets(
-        &self,
-        command: &str,
-    ) -> Result<String, anyhow::Error> {
+    pub async fn inject_secrets(&self, command: &str) -> Result<String, anyhow::Error> {
         self.manager.inject_secrets(command).await
     }
 }

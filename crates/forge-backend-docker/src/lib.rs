@@ -71,9 +71,7 @@ impl DockerBackend {
         None
     }
 
-    pub fn build_task_graph(
-        &self,
-    ) -> Result<BuildGraph<forge_executor::Task>, anyhow::Error> {
+    pub fn build_task_graph(&self) -> Result<BuildGraph<forge_executor::Task>, anyhow::Error> {
         let mut graph = BuildGraph::new();
         let fingerprint = self.fingerprinter.compute()?;
         let stages = self.parse_dockerfile()?;
@@ -114,7 +112,10 @@ impl DockerBackend {
         if let Some(dockerfile) = &self.config.dockerfile_path
             && !dockerfile.exists()
         {
-            return Err(format!("Dockerfile not found: {}", dockerfile.display()).into());
+            return Err(anyhow::anyhow!(
+                "Dockerfile not found: {}",
+                dockerfile.display()
+            ));
         }
         Ok(())
     }
@@ -132,7 +133,7 @@ impl DockerBackend {
             .config
             .dockerfile_path
             .as_ref()
-            .ok_or("No Dockerfile specified")?;
+            .ok_or_else(|| anyhow::anyhow!("No Dockerfile specified"))?;
 
         let content = std::fs::read_to_string(dockerfile)?;
         let mut stages = Vec::new();

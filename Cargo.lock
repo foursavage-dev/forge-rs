@@ -1014,8 +1014,9 @@ checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
 
 [[package]]
 name = "forge-analytics"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
+ "anyhow",
  "chrono",
  "forge-cache",
  "forge-core",
@@ -1027,7 +1028,7 @@ dependencies = [
 
 [[package]]
 name = "forge-backend-cc"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "forge-cache",
@@ -1043,7 +1044,7 @@ dependencies = [
 
 [[package]]
 name = "forge-backend-dart"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "forge-cache",
@@ -1060,8 +1061,9 @@ dependencies = [
 
 [[package]]
 name = "forge-backend-docker"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
+ "anyhow",
  "async-trait",
  "blake3",
  "forge-cache",
@@ -1076,7 +1078,7 @@ dependencies = [
 
 [[package]]
 name = "forge-backend-dotnet"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "forge-cache",
@@ -1093,7 +1095,7 @@ dependencies = [
 
 [[package]]
 name = "forge-backend-go"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "forge-cache",
@@ -1109,7 +1111,7 @@ dependencies = [
 
 [[package]]
 name = "forge-backend-java"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "forge-cache",
@@ -1126,7 +1128,7 @@ dependencies = [
 
 [[package]]
 name = "forge-backend-py"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "forge-cache",
@@ -1143,7 +1145,7 @@ dependencies = [
 
 [[package]]
 name = "forge-backend-rust"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "cargo_metadata",
@@ -1158,7 +1160,7 @@ dependencies = [
 
 [[package]]
 name = "forge-backend-swift"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "forge-cache",
@@ -1175,7 +1177,7 @@ dependencies = [
 
 [[package]]
 name = "forge-backend-ts"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "forge-cache",
@@ -1191,7 +1193,7 @@ dependencies = [
 
 [[package]]
 name = "forge-backend-zig"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "forge-cache",
@@ -1208,8 +1210,9 @@ dependencies = [
 
 [[package]]
 name = "forge-cache"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
+ "anyhow",
  "criterion",
  "crossbeam-channel",
  "dashmap",
@@ -1226,7 +1229,7 @@ dependencies = [
 
 [[package]]
 name = "forge-cas"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "blake3",
@@ -1244,7 +1247,7 @@ dependencies = [
 
 [[package]]
 name = "forge-ci-generator"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "forge-core",
  "forge-graph",
@@ -1256,10 +1259,11 @@ dependencies = [
 
 [[package]]
 name = "forge-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anstream",
  "anstyle",
+ "anyhow",
  "blake3",
  "cargo_metadata",
  "clap",
@@ -1299,8 +1303,9 @@ dependencies = [
 
 [[package]]
 name = "forge-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
+ "anyhow",
  "blake3",
  "cargo_metadata",
  "forge-graph",
@@ -1316,8 +1321,9 @@ dependencies = [
 
 [[package]]
 name = "forge-docker-builder"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
+ "anyhow",
  "bollard",
  "forge-core",
  "serde",
@@ -1328,7 +1334,7 @@ dependencies = [
 
 [[package]]
 name = "forge-executor"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "thiserror",
  "tokio",
@@ -1336,8 +1342,9 @@ dependencies = [
 
 [[package]]
 name = "forge-flaky-detection"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
+ "anyhow",
  "chrono",
  "forge-core",
  "serde",
@@ -1348,14 +1355,14 @@ dependencies = [
 
 [[package]]
 name = "forge-graph"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "thiserror",
 ]
 
 [[package]]
 name = "forge-incremental"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "forge-core",
@@ -1368,7 +1375,7 @@ dependencies = [
 
 [[package]]
 name = "forge-installer"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1382,7 +1389,7 @@ dependencies = [
 
 [[package]]
 name = "forge-multiplatform"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "forge-ci-generator",
  "forge-core",
@@ -1394,8 +1401,9 @@ dependencies = [
 
 [[package]]
 name = "forge-notifications"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
+ "anyhow",
  "async-trait",
  "chrono",
  "forge-core",
@@ -1408,7 +1416,7 @@ dependencies = [
 
 [[package]]
 name = "forge-plugin"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "forge-cache",
@@ -1424,8 +1432,9 @@ dependencies = [
 
 [[package]]
 name = "forge-remote-cache"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
+ "anyhow",
  "base64 0.23.1",
  "blake3",
  "forge-cache",
@@ -1440,7 +1449,7 @@ dependencies = [
 
 [[package]]
 name = "forge-sandbox"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "forge-core",
  "forge-executor",
@@ -1452,7 +1461,7 @@ dependencies = [
 
 [[package]]
 name = "forge-scheduler"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "criterion",
  "dashmap",
@@ -1467,8 +1476,9 @@ dependencies = [
 
 [[package]]
 name = "forge-secrets"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
+ "anyhow",
  "async-trait",
  "forge-core",
  "serde",
@@ -1479,7 +1489,7 @@ dependencies = [
 
 [[package]]
 name = "forge-security"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1496,7 +1506,7 @@ dependencies = [
 
 [[package]]
 name = "forge-signing"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
@@ -1521,8 +1531,9 @@ dependencies = [
 
 [[package]]
 name = "forge-templates"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
+ "anyhow",
  "forge-core",
  "handlebars",
  "serde",
@@ -1533,8 +1544,9 @@ dependencies = [
 
 [[package]]
 name = "forge-worker"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
+ "anyhow",
  "base64 0.23.1",
  "blake3",
  "forge-cache",
