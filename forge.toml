@@ -1,3 +1,5 @@
-backend = "auto"
+backend = "rust"
 jobs = 0
 no_cache = false
+semantic = true
+critical_path = true

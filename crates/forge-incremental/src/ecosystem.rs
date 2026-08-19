@@ -117,6 +117,10 @@ pub fn detect_ecosystems(root: &Path) -> Vec<EcosystemInfo> {
                     && name_str != "__pycache__"
                     && name_str != "dist"
                     && name_str != "build"
+                    && name_str != "fixtures"
+                    && name_str != "editors"
+                    && name_str != ".forge"
+                    && name_str != ".github"
                 {
                     subdirs.push(path);
                 }

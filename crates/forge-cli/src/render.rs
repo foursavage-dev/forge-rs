@@ -84,50 +84,32 @@ fn package_name(project: &Project, payload: &PackageId) -> String {
 }
 
 fn print_levels(project: &Project, graph: &BuildGraph<PackageId>) {
-    const INDENT: usize = 4;
     let levels = graph.levels();
-    let cell_width = levels
-        .iter()
-        .flatten()
-        .map(|id| {
-            graph
-                .node(*id)
-                .map(|node| package_name(project, &node.payload).chars().count())
-                .unwrap_or(0)
-        })
-        .max()
-        .unwrap_or(0)
-        + 2;
-
     for (level_index, level) in levels.iter().enumerate() {
-        let row: String = level
-            .iter()
-            .map(|id| {
-                let name = graph
-                    .node(*id)
-                    .map(|node| package_name(project, &node.payload))
-                    .unwrap_or_else(|| format!("{id:?}"));
-                format!("{:>width$}", name, width = INDENT + cell_width)
-            })
-            .collect();
-        println!("{row}");
-
+        let count = level.len();
+        let stage_label = format!(
+            "Stage {} ({} package{})",
+            level_index + 1,
+            count,
+            if count == 1 { "" } else { "s" }
+        );
+        println!("  {}", Styled::new(DIM, &stage_label));
+        for (i, id) in level.iter().enumerate() {
+            let is_last = i + 1 == level.len();
+            let branch = if is_last {
+                "  └── "
+            } else {
+                "  ├── "
+            };
+            let name = graph
+                .node(*id)
+                .map(|node| package_name(project, &node.payload))
+                .unwrap_or_else(|| format!("{id:?}"));
+            println!("{branch}{name}");
+        }
         if level_index + 1 < levels.len() {
-            let arrows: String = level
-                .iter()
-                .map(|id| {
-                    let name_len = graph
-                        .node(*id)
-                        .map(|node| package_name(project, &node.payload).chars().count())
-                        .unwrap_or(0);
-                    format!(
-                        "{:>width$}",
-                        "↓",
-                        width = INDENT + cell_width - (name_len - 1) / 2
-                    )
-                })
-                .collect();
-            println!("{arrows}");
+            println!("  │");
+            println!("  ▼");
         }
     }
 }
