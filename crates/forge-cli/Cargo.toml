@@ -34,6 +34,7 @@ forge-worker = { workspace = true }
 forge-remote-cache = { workspace = true }
 forge-plugin = { workspace = true }
 forge-sandbox = { workspace = true }
+forge-incremental = { workspace = true }
 cargo_metadata = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

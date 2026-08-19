@@ -56,7 +56,7 @@ impl TurboLinker {
         LinkerProfile {
             linker_type,
             multithreading_enabled: true,
-            split_dwarf_enabled: true,
+            split_dwarf_enabled: !cfg!(target_os = "windows"),
             thin_lto_enabled: true,
             compress_debug_sections: matches!(
                 linker_type,
@@ -176,7 +176,9 @@ mod tests {
     fn test_turbolinker_flags_generation() {
         let flags = TurboLinker::generate_rustc_flags();
         assert!(!flags.is_empty());
-        assert!(flags.contains(&"split-debuginfo=unpacked".to_string()));
+        if !cfg!(target_os = "windows") {
+            assert!(flags.contains(&"split-debuginfo=unpacked".to_string()));
+        }
     }
 
     #[test]

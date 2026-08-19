@@ -9,6 +9,7 @@ mod config;
 mod critical_path;
 pub mod experimental;
 mod monitoring;
+mod polyglot;
 mod predictive;
 mod ramdisk;
 mod render;

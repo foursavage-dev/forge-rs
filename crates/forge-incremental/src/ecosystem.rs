@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -10,6 +12,9 @@ pub enum EcosystemType {
     Java,
     DotNet,
     Cpp,
+    Swift,
+    Dart,
+    Zig,
     Docker,
     Generic,
 }
@@ -96,6 +101,9 @@ pub fn detect_ecosystems(root: &Path) -> Vec<EcosystemInfo> {
         let mut has_gradle = None;
         let mut has_cmake = None;
         let mut has_docker = None;
+        let mut has_swift = None;
+        let mut has_dart = None;
+        let mut has_zig = None;
 
         for entry in entries.flatten() {
             let path = entry.path();
@@ -130,6 +138,9 @@ pub fn detect_ecosystems(root: &Path) -> Vec<EcosystemInfo> {
                     "build.gradle" | "build.gradle.kts" => has_gradle = Some(path.clone()),
                     "CMakeLists.txt" => has_cmake = Some(path.clone()),
                     "Dockerfile" => has_docker = Some(path.clone()),
+                    "Package.swift" => has_swift = Some(path.clone()),
+                    "pubspec.yaml" => has_dart = Some(path.clone()),
+                    "build.zig" => has_zig = Some(path.clone()),
                     _ => {}
                 }
             }
@@ -184,6 +195,30 @@ pub fn detect_ecosystems(root: &Path) -> Vec<EcosystemInfo> {
                 package_name: None,
             });
         }
+        if let Some(manifest) = has_swift {
+            results.push(EcosystemInfo {
+                ecosystem: EcosystemType::Swift,
+                manifest_path: manifest,
+                lockfile_path: None,
+                package_name: None,
+            });
+        }
+        if let Some(manifest) = has_dart {
+            results.push(EcosystemInfo {
+                ecosystem: EcosystemType::Dart,
+                manifest_path: manifest,
+                lockfile_path: None,
+                package_name: None,
+            });
+        }
+        if let Some(manifest) = has_zig {
+            results.push(EcosystemInfo {
+                ecosystem: EcosystemType::Zig,
+                manifest_path: manifest,
+                lockfile_path: None,
+                package_name: None,
+            });
+        }
         if let Some(manifest) = has_docker {
             results.push(EcosystemInfo {
                 ecosystem: EcosystemType::Docker,
@@ -199,4 +234,31 @@ pub fn detect_ecosystems(root: &Path) -> Vec<EcosystemInfo> {
     }
 
     results
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_is_build_relevant_file() {
+        assert!(is_build_relevant_file(Path::new("src/main.rs")));
+        assert!(is_build_relevant_file(Path::new("src/index.ts")));
+        assert!(is_build_relevant_file(Path::new("Cargo.toml")));
+        assert!(!is_build_relevant_file(Path::new("README.md")));
+        assert!(!is_build_relevant_file(Path::new(".gitignore")));
+        assert!(!is_build_relevant_file(Path::new("target/debug/app")));
+    }
+
+    #[test]
+    fn test_detect_ecosystems() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        std::fs::write(root.join("Cargo.toml"), "").unwrap();
+        std::fs::write(root.join("package.json"), "").unwrap();
+
+        let ecosystems = detect_ecosystems(root);
+        assert_eq!(ecosystems.len(), 2);
+    }
 }

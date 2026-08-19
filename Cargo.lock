@@ -1285,6 +1285,7 @@ dependencies = [
  "forge-core",
  "forge-executor",
  "forge-graph",
+ "forge-incremental",
  "forge-plugin",
  "forge-remote-cache",
  "forge-sandbox",
@@ -1338,6 +1339,7 @@ version = "0.2.0"
 dependencies = [
  "thiserror",
  "tokio",
+ "wait-timeout",
 ]
 
 [[package]]
@@ -1369,6 +1371,7 @@ dependencies = [
  "forge-graph",
  "serde",
  "serde_json",
+ "tempfile",
  "thiserror",
  "tokio",
 ]
@@ -1464,6 +1467,7 @@ name = "forge-scheduler"
 version = "0.2.0"
 dependencies = [
  "criterion",
+ "crossbeam-channel",
  "dashmap",
  "forge-executor",
  "forge-graph",

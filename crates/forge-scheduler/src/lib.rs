@@ -343,6 +343,36 @@ impl Scheduler {
         let mut ram_limited = false;
 
         let result = thread::scope(|scope| -> Result<(), SchedulerError> {
+            let (task_tx, task_rx) =
+                crossbeam_channel::unbounded::<(NodeId, Task, usize, Duration)>();
+            for _ in 0..self.workers {
+                let task_rx = task_rx.clone();
+                let tx = tx.clone();
+                scope.spawn(move || {
+                    while let Ok((id, task, worker_id, task_start_offset)) = task_rx.recv() {
+                        let outcome =
+                            match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                                executor.execute(&task)
+                            })) {
+                                Ok(Ok(outcome)) => outcome,
+                                Ok(Err(error)) => TaskOutcome::failed(&task, error.to_string()),
+                                Err(panic) => {
+                                    let message = panic
+                                        .downcast_ref::<&str>()
+                                        .map(|s| s.to_string())
+                                        .or_else(|| panic.downcast_ref::<String>().cloned())
+                                        .unwrap_or_else(|| "unknown panic".to_string());
+                                    TaskOutcome::failed(
+                                        &task,
+                                        format!("executor panicked: {message}"),
+                                    )
+                                }
+                            };
+                        let _ = tx.send((id, outcome, worker_id, task_start_offset));
+                    }
+                });
+            }
+
             let mut ready: Vec<NodeId> = Vec::new();
             let mut ready_index: usize = 0;
             loop {
@@ -377,28 +407,7 @@ impl Scheduler {
                     in_flight += 1;
                     let worker_id = free_workers.pop().unwrap_or(0);
                     let task_start_offset = start.elapsed();
-                    let tx = tx.clone();
-                    scope.spawn(move || {
-                        let outcome =
-                            match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                                executor.execute(&task)
-                            })) {
-                                Ok(Ok(outcome)) => outcome,
-                                Ok(Err(error)) => TaskOutcome::failed(&task, error.to_string()),
-                                Err(panic) => {
-                                    let message = panic
-                                        .downcast_ref::<&str>()
-                                        .map(|s| s.to_string())
-                                        .or_else(|| panic.downcast_ref::<String>().cloned())
-                                        .unwrap_or_else(|| "unknown panic".to_string());
-                                    TaskOutcome::failed(
-                                        &task,
-                                        format!("executor panicked: {message}"),
-                                    )
-                                }
-                            };
-                        let _ = tx.send((id, outcome, worker_id, task_start_offset));
-                    });
+                    let _ = task_tx.send((id, task, worker_id, task_start_offset));
                 }
 
                 if graph.nodes().iter().all(|node| node.state.is_terminal()) {
