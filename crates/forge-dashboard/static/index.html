@@ -6,81 +6,81 @@
     <title>Forge Command Center</title>
     <style>
         :root {
-            --bg-base: #050505;
-            --bg-panel: #0a0e17;
-            --bg-card: #111827;
-            --border-glow: rgba(56, 189, 248, 0.3);
-            --border-color: #1f2937;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted: #475569;
-            --accent-blue: #38bdf8;
-            --accent-green: #10b981;
-            --accent-purple: #8b5cf6;
-            --accent-red: #ef4444;
-            --accent-amber: #f59e0b;
+            --bg: #ffffff;
+            --bg-panel: #fafafa;
+            --text-main: #000000;
+            --text-muted: #666666;
+            --border: #e5e5e5;
+            --border-dark: #000000;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            /* Ép góc vuông toàn bộ */
+            border-radius: 0 !important; 
+        }
         
         body {
-            background-color: var(--bg-base);
-            color: var(--text-primary);
+            background-color: var(--bg);
+            color: var(--text-main);
             display: flex;
             height: 100vh;
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
         /* Sidebar */
         aside {
             width: 260px;
             background-color: var(--bg-panel);
-            border-right: 1px solid var(--border-color);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            padding: 1.5rem 0;
-            position: relative;
+            padding: 2rem 0;
             z-index: 10;
         }
 
         .brand {
-            padding: 0 1.5rem;
+            padding: 0 2rem;
             font-size: 1.5rem;
             font-weight: 800;
-            letter-spacing: -0.025em;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 2.5rem;
+            letter-spacing: -0.05em;
+            text-transform: uppercase;
+            margin-bottom: 3rem;
+            color: var(--text-main);
         }
 
-        .brand span {
-            color: transparent;
-            background-clip: text;
-            -webkit-background-clip: text;
-            background-image: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+        .nav-section { margin-bottom: 2.5rem; }
+        
+        .nav-label { 
+            padding: 0 2rem; 
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.1em; 
+            color: var(--text-muted); 
+            margin-bottom: 1rem; 
+            font-weight: 700; 
         }
 
         .nav-item {
-            padding: 0.75rem 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            color: var(--text-secondary);
+            padding: 0.75rem 2rem;
+            display: block;
+            color: var(--text-muted);
             text-decoration: none;
             font-weight: 500;
+            font-size: 0.9rem;
             transition: all 0.2s ease;
             border-left: 3px solid transparent;
         }
 
         .nav-item:hover, .nav-item.active {
-            color: var(--text-primary);
-            background: linear-gradient(90deg, rgba(56, 189, 248, 0.1) 0%, transparent 100%);
-            border-left-color: var(--accent-blue);
+            color: var(--text-main);
+            background-color: #f0f0f0;
+            border-left-color: var(--text-main);
         }
-
-        .nav-section { margin-bottom: 2rem; }
-        .nav-label { padding: 0 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 700; }
 
         /* Main Content */
         main {
@@ -88,32 +88,26 @@
             display: flex;
             flex-direction: column;
             overflow-y: auto;
-            position: relative;
-        }
-
-        /* Ambient Glow */
-        main::before {
-            content: '';
-            position: absolute;
-            top: -100px; left: 50%;
-            transform: translateX(-50%);
-            width: 600px; height: 300px;
-            background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
+            background-color: var(--bg);
         }
 
         header {
-            padding: 1.5rem 2.5rem;
+            padding: 2rem 2.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(31, 41, 55, 0.5);
-            backdrop-filter: blur(10px);
-            position: sticky; top: 0; z-index: 10;
+            border-bottom: 1px solid var(--border);
+            background-color: var(--bg);
+            position: sticky; 
+            top: 0; 
+            z-index: 10;
         }
 
-        .header-title { font-size: 1.25rem; font-weight: 600; }
+        .header-title { 
+            font-size: 1.5rem; 
+            font-weight: 700; 
+            letter-spacing: -0.025em; 
+        }
         
         .engine-status {
             display: flex;
@@ -121,36 +115,26 @@
         }
 
         .badge {
-            padding: 0.35rem 0.75rem;
-            border-radius: 999px;
+            padding: 0.25rem 0.75rem;
             font-size: 0.75rem;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.35rem;
-            border: 1px solid var(--border-color);
-            background: rgba(17, 24, 39, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid var(--border-dark);
+            background: var(--bg);
+            color: var(--text-main);
         }
 
-        .badge.active::before {
-            content: ''; display: block; width: 6px; height: 6px; border-radius: 50%;
-            background-color: var(--accent-green);
-            box-shadow: 0 0 8px var(--accent-green);
+        .badge.dark {
+            background: var(--text-main);
+            color: var(--bg);
         }
-
-        .badge.experimental {
-            border-color: rgba(139, 92, 246, 0.5);
-            color: #d8b4fe;
-        }
-
-        .badge.experimental::before { background-color: var(--accent-purple); box-shadow: 0 0 8px var(--accent-purple); }
 
         .content {
             padding: 2.5rem;
             display: flex;
             flex-direction: column;
-            gap: 2rem;
-            z-index: 1;
+            gap: 2.5rem;
         }
 
         /* Stats Grid */
@@ -161,27 +145,39 @@
         }
 
         .stat-card {
-            background-color: rgba(17, 24, 39, 0.6);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
             padding: 1.5rem;
             display: flex;
             flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
-            backdrop-filter: blur(10px);
+            transition: border-color 0.2s;
         }
 
         .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 0 1px var(--border-glow) inset;
+            border-color: var(--border-dark);
         }
 
-        .stat-title { color: var(--text-secondary); font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; display: flex; justify-content: space-between;}
-        .stat-value { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 0.25rem; }
-        .stat-desc { font-size: 0.75rem; color: var(--text-muted); }
-        .stat-icon { color: var(--accent-blue); opacity: 0.8; }
+        .stat-title { 
+            color: var(--text-muted); 
+            font-size: 0.8rem; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem; 
+        }
+        
+        .stat-value { 
+            font-size: 2.5rem; 
+            font-weight: 800; 
+            letter-spacing: -0.05em; 
+            margin-bottom: 0.5rem; 
+            color: var(--text-main);
+        }
+        
+        .stat-desc { 
+            font-size: 0.85rem; 
+            color: var(--text-muted); 
+        }
 
         /* Terminals & Visualizations */
         .panel-grid {
@@ -195,99 +191,115 @@
         }
 
         .panel {
-            background-color: rgba(17, 24, 39, 0.6);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
+            background-color: var(--bg);
+            border: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
         }
 
         .panel-header {
             padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(0,0,0,0.2);
+            background: var(--bg-panel);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        .panel-title { font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; }
-        .panel-title span { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-blue); }
-
         .terminal {
-            background: #000;
+            background: #111111;
             padding: 1.5rem;
-            font-family: 'Fira Code', 'JetBrains Mono', monospace;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
             font-size: 0.85rem;
-            line-height: 1.5;
-            height: 350px;
+            line-height: 1.6;
+            height: 400px;
             overflow-y: auto;
+            color: #e5e5e5;
         }
 
         .log-line { margin-bottom: 0.25rem; display: flex; gap: 1rem; }
-        .log-time { color: var(--text-muted); min-width: 80px; }
-        .log-info { color: var(--text-secondary); }
-        .log-success { color: var(--accent-green); }
-        .log-warn { color: var(--accent-amber); }
-        .log-error { color: var(--accent-red); }
-        .log-highlight { color: var(--accent-purple); text-shadow: 0 0 5px rgba(139,92,246,0.5); }
+        .log-time { color: #666; min-width: 85px; }
+        .log-msg { color: #ccc; }
+        .log-highlight { color: #fff; font-weight: bold; }
+        .log-alert { background-color: #fff; color: #000; padding: 0 4px; }
 
         /* Dark Arts List */
         .engines-list {
-            padding: 1rem;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
         .engine-item {
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            border-radius: 8px;
-            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
 
-        .engine-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-        .engine-name { font-weight: 600; font-size: 0.9rem; color: #d8b4fe; }
-        .engine-status-text { font-size: 0.7rem; background: rgba(16, 185, 129, 0.2); color: var(--accent-green); padding: 0.2rem 0.5rem; border-radius: 4px; }
-        .engine-desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; }
+        .engine-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
         
-        .progress-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 0.75rem; overflow: hidden;}
-        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); width: 75%; transition: width 1s; }
+        .engine-name { 
+            font-weight: 700; 
+            font-size: 0.95rem; 
+        }
+        
+        .engine-status-text { 
+            font-size: 0.7rem; 
+            font-weight: 700; 
+            border: 1px solid var(--border-dark); 
+            padding: 0.15rem 0.4rem; 
+            text-transform: uppercase;
+        }
+        
+        .engine-desc { 
+            font-size: 0.85rem; 
+            color: var(--text-muted); 
+            line-height: 1.5; 
+        }
+        
+        .progress-bar { 
+            width: 100%; 
+            height: 4px; 
+            background: var(--border); 
+            margin-top: 0.5rem; 
+        }
+        
+        .progress-fill { 
+            height: 100%; 
+            background: var(--text-main); 
+            transition: width 0.5s; 
+        }
 
         /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        ::-webkit-scrollbar-track { background: var(--bg-panel); border-left: 1px solid var(--border); }
+        ::-webkit-scrollbar-thumb { background: #ccc; border: 1px solid var(--bg-panel); }
+        ::-webkit-scrollbar-thumb:hover { background: #999; }
+        
+        .terminal::-webkit-scrollbar-track { background: #111; border-left: none; }
+        .terminal::-webkit-scrollbar-thumb { background: #333; border: none; }
     </style>
 </head>
 <body>
 
     <aside>
-        <div class="brand">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="url(#gradient)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <defs>
-                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#38bdf8" />
-                        <stop offset="100%" stop-color="#8b5cf6" />
-                    </linearGradient>
-                </defs>
-                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                <polyline points="2 17 12 22 22 17"></polyline>
-                <polyline points="2 12 12 17 22 12"></polyline>
-            </svg>
-            Forge <span>UI</span>
-        </div>
+        <div class="brand">Forge</div>
 
         <div class="nav-section">
-            <div class="nav-label">Core</div>
+            <div class="nav-label">Overview</div>
             <a href="#" class="nav-item active">Dashboard</a>
             <a href="#" class="nav-item">Build Graph</a>
             <a href="#" class="nav-item">Cache Explorer</a>
-            <a href="#" class="nav-item">Remote Workers</a>
+            <a href="#" class="nav-item">Workers</a>
         </div>
 
         <div class="nav-section">
@@ -302,9 +314,9 @@
         <header>
             <div class="header-title">Overview</div>
             <div class="engine-status">
-                <div class="badge active">Engine: v0.2.0</div>
-                <div class="badge active">Workers: 8/8</div>
-                <div class="badge experimental">Dark Arts: ENABLED</div>
+                <div class="badge">Engine: v0.2.0</div>
+                <div class="badge">Workers: 8/8</div>
+                <div class="badge dark">Dark Arts: Enabled</div>
             </div>
         </header>
 
@@ -312,23 +324,23 @@
             <!-- Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-title">Cache Hit Ratio <span class="stat-icon">⚡</span></div>
-                    <div class="stat-value" style="color: var(--accent-green);">98.2%</div>
+                    <div class="stat-title">Cache Hit Ratio</div>
+                    <div class="stat-value">98.2%</div>
                     <div class="stat-desc">Across 12,450 CAS records</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-title">Speculative Hits <span class="stat-icon">🔮</span></div>
-                    <div class="stat-value" style="color: var(--accent-purple);" id="spec-hits">1,402</div>
+                    <div class="stat-title">Speculative Hits</div>
+                    <div class="stat-value" id="spec-hits">1,402</div>
                     <div class="stat-desc">Markov-Chain Pre-Compilations</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-title">Avg Build Time <span class="stat-icon">⏱</span></div>
+                    <div class="stat-title">Avg Build Time</div>
                     <div class="stat-value">145ms</div>
                     <div class="stat-desc">-85% vs Cargo baseline</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-title">Super-Opt Speedup <span class="stat-icon">🚀</span></div>
-                    <div class="stat-value" style="color: var(--accent-amber);">4.5x</div>
+                    <div class="stat-title">Super-Opt Speedup</div>
+                    <div class="stat-value">4.5x</div>
                     <div class="stat-desc">AVX-512 Injected Blocks</div>
                 </div>
             </div>
@@ -339,32 +351,32 @@
                 <!-- Terminal Output -->
                 <div class="panel">
                     <div class="panel-header">
-                        <div class="panel-title"><span></span> Live Execution Stream</div>
+                        <div>Live Execution Stream</div>
                         <div style="font-size: 0.75rem; color: var(--text-muted);">Auto-scroll: ON</div>
                     </div>
                     <div class="terminal" id="terminal">
-                        <div class="log-line"><span class="log-time">[14:02:45.001]</span> <span class="log-info">Forge engine initialized. Workspace root detected: /home/user/forge-rs</span></div>
-                        <div class="log-line"><span class="log-time">[14:02:45.012]</span> <span class="log-success">Loaded 32 crates into DAG. 100% Cache integrity verified.</span></div>
-                        <div class="log-line"><span class="log-time">[14:02:48.550]</span> <span class="log-warn">[Predictive] Detected edit pattern: forge-core -> forge-cli. Triggering speculative warmup for forge-scheduler.</span></div>
-                        <div class="log-line"><span class="log-time">[14:02:49.120]</span> <span class="log-info">Speculative compile finished in 12ms. Cached under hash: a7f8b9...</span></div>
+                        <div class="log-line"><span class="log-time">[14:02:45.001]</span> <span class="log-msg">Forge engine initialized. Workspace root detected: /home/user/forge-rs</span></div>
+                        <div class="log-line"><span class="log-time">[14:02:45.012]</span> <span class="log-msg">Loaded 32 crates into DAG. 100% Cache integrity verified.</span></div>
+                        <div class="log-line"><span class="log-time">[14:02:48.550]</span> <span class="log-msg">[Predictive] Detected edit pattern: forge-core -> forge-cli. Triggering speculative warmup for forge-scheduler.</span></div>
+                        <div class="log-line"><span class="log-time">[14:02:49.120]</span> <span class="log-msg">Speculative compile finished in 12ms. Cached under hash: a7f8b9...</span></div>
                         <div class="log-line"><span class="log-time">[14:03:01.442]</span> <span class="log-highlight">[HotPatch] File saved: src/experimental/super_opt.rs</span></div>
-                        <div class="log-line"><span class="log-time">[14:03:01.445]</span> <span class="log-info">[HotPatch] Computing binary delta against PID 4091...</span></div>
+                        <div class="log-line"><span class="log-time">[14:03:01.445]</span> <span class="log-msg">[HotPatch] Computing binary delta against PID 4091...</span></div>
                         <div class="log-line"><span class="log-time">[14:03:01.458]</span> <span class="log-highlight">[HotPatch] Injected Trampoline JMP into Memory. 1 Relocation in 57µs.</span></div>
-                        <div class="log-line"><span class="log-time">[14:03:05.881]</span> <span class="log-info">[Micro-JIT] Synthesizing Abstract Syntax Tree...</span></div>
-                        <div class="log-line"><span class="log-time">[14:03:05.881]</span> <span class="log-success">[Micro-JIT] Emitted 16 bytes of x86_64 opcodes at 0x7FFF_DEAD_BEE0 (45ns)</span></div>
+                        <div class="log-line"><span class="log-time">[14:03:05.881]</span> <span class="log-msg">[Micro-JIT] Synthesizing Abstract Syntax Tree...</span></div>
+                        <div class="log-line"><span class="log-time">[14:03:05.881]</span> <span class="log-msg">[Micro-JIT] Emitted 16 bytes of x86_64 opcodes at 0x7FFF_DEAD_BEE0 (45ns)</span></div>
                     </div>
                 </div>
 
                 <!-- Experimental Engines Status -->
                 <div class="panel">
                     <div class="panel-header">
-                        <div class="panel-title"><span style="background: var(--accent-purple);"></span> Dark-Arts Engines</div>
+                        <div>Dark-Arts Engines</div>
                     </div>
                     <div class="engines-list">
                         <div class="engine-item">
                             <div class="engine-header">
                                 <div class="engine-name">Markov Predictive</div>
-                                <div class="engine-status-text">ACTIVE</div>
+                                <div class="engine-status-text">Active</div>
                             </div>
                             <div class="engine-desc">Confidence Threshold: 35%. Predicting next package modification...</div>
                             <div class="progress-bar"><div class="progress-fill" style="width: 82%;"></div></div>
@@ -373,16 +385,16 @@
                         <div class="engine-item">
                             <div class="engine-header">
                                 <div class="engine-name">ML Work-Stealing</div>
-                                <div class="engine-status-text">ACTIVE</div>
+                                <div class="engine-status-text">Active</div>
                             </div>
                             <div class="engine-desc">Greedy LPT + Critical Path Priority. 0 starved threads.</div>
-                            <div class="progress-bar"><div class="progress-fill" style="background: var(--accent-green); width: 100%;"></div></div>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 100%;"></div></div>
                         </div>
 
                         <div class="engine-item">
                             <div class="engine-header">
                                 <div class="engine-name">Live Hot-Patching</div>
-                                <div class="engine-status-text">STANDBY</div>
+                                <div class="engine-status-text">Standby</div>
                             </div>
                             <div class="engine-desc">Monitoring for file saves. Trampoline injector loaded.</div>
                         </div>
@@ -390,7 +402,7 @@
                         <div class="engine-item">
                             <div class="engine-header">
                                 <div class="engine-name">Super-Optimizer</div>
-                                <div class="engine-status-text">ACTIVE</div>
+                                <div class="engine-status-text">Active</div>
                             </div>
                             <div class="engine-desc">Target: AVX-512. Hot loop vectorization ready.</div>
                         </div>
@@ -408,12 +420,12 @@
         let specHits = 1402;
 
         const logMessages = [
-            '<span class="log-info">[Scheduler] Work-stealing rebalanced 4 tasks from Worker-2 to Worker-7 (Heuristic weight match).</span>',
-            '<span class="log-success">[Cache] Sub-millisecond CAS lookup hit for forge-graph: 0.14ms</span>',
-            '<span class="log-highlight">[Super-Opt] Basic block vectorized. 8 loops rewritten to AVX-512. Size: 1204 bytes.</span>',
-            '<span class="log-warn">[Security] Dependency scan complete: 0 vulnerabilities found across 42 crates.</span>',
-            '<span class="log-info">[Micro-JIT] Executed dynamically compiled function in 400ns.</span>',
-            '<span class="log-info">[VFS] Streamed 14MB of artifacts via kernel-bypass DMA Ring-Buffer.</span>'
+            '<span class="log-msg">[Scheduler] Work-stealing rebalanced 4 tasks from Worker-2 to Worker-7.</span>',
+            '<span class="log-msg">[Cache] Sub-millisecond CAS lookup hit for forge-graph: 0.14ms.</span>',
+            '<span class="log-highlight">[Super-Opt] Basic block vectorized. 8 loops rewritten to AVX-512.</span>',
+            '<span class="log-alert">[Security]</span> <span class="log-msg">Dependency scan complete: 0 vulnerabilities found.</span>',
+            '<span class="log-msg">[Micro-JIT] Executed dynamically compiled function in 400ns.</span>',
+            '<span class="log-msg">[VFS] Streamed 14MB of artifacts via kernel-bypass DMA.</span>'
         ];
 
         function addLog() {
