@@ -15,6 +15,14 @@ as Cargo, Go, Node.js, Python, C/C++, Docker, and other supported backends.
 > remote-cache, and experimental features as opt-in and validate them in your
 > own environment before relying on them in CI.
 
+
+### 🧪 "Dark-Arts" Experimental Engines
+Forge ships with experimental, highly-optimized performance engines for specific extreme use-cases:
+- **Predictive Engine (Markov-Chain):** Learns developer patterns to pre-compile and warm up cache hits before files are even saved.
+- **ML-Aware Work-Stealing:** Uses historical tracing and dependency tail length scoring to schedule threads with zero starvation.
+- **Autonomous Binary Super-Optimizer:** Synthesizes `AVX-512`/`NEON` instructions directly into compiled ELF binaries via basic-block vectorization.
+- **Live Binary Hot-Patching:** Injects trampoline payloads and live-patches C/Rust code in running processes via simulated memory injection.
+
 ## What works today
 
 - Rust workspace discovery and graph-based `build`, `check`, and `test`.
