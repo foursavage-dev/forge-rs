@@ -1,6 +1,6 @@
 # Rust Backend
 
-> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 The Rust backend provides build orchestration for Rust projects using Cargo.
 
@@ -78,21 +78,21 @@ The Rust backend fingerprints:
 
 ```bash
 cd my-rust-project
-Fish build
+fish build
 ```
 
 ### Workspace with Features
 
 ```bash
 cd my-workspace
-Fish build -p my-package --features "serde,uuid"
+fish build -p my-package --features "serde,uuid"
 ```
 
 ### Workspace with Tests
 
 ```bash
 cd my-workspace
-Fish test
+fish test
 ```
 
 ## Limitations

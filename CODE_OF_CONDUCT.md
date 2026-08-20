@@ -1,6 +1,6 @@
 # Contributor Covenant 3.0 Code of Conduct
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 ## Our Pledge
 
@@ -28,7 +28,7 @@ We agree to restrict the following behaviors in our community. Instances, threat
 
 1. **Harassment.** Violating explicitly expressed boundaries or engaging in unnecessary personal attention after any clear request to stop.
 2. **Character attacks.** Making insulting, demeaning, or pejorative comments directed at a community member or group of people.
-3. **Stereotyping or discrimination.** Characterizing anyoneâ€™s personality or behavior on the basis of immutable identities or traits.
+3. **Stereotyping or discrimination.** Characterizing anyone's personality or behavior on the basis of immutable identities or traits.
 4. **Sexualization.** Behaving in a way that would generally be considered inappropriately intimate in the context or purpose of the community.
 5. **Violating confidentiality.** Sharing or acting on someone's personal or private information without their permission.
 6. **Endangerment.** Causing, encouraging, or threatening violence or other harm toward any person or group.
@@ -119,4 +119,4 @@ Translations are provided at [https://www.contributor-covenant.org/translations]
 
 Additional enforcement and community guideline resources can be found at [https://www.contributor-covenant.org/resources](https://www.contributor-covenant.org/resources).
 
-The enforcement ladder was inspired by the work of [Mozillaâ€™s code of conduct team](https://github.com/mozilla/inclusion).
+The enforcement ladder was inspired by the work of [Mozilla's code of conduct team](https://github.com/mozilla/inclusion).

@@ -1,6 +1,6 @@
 # Development Guide
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 This guide provides detailed information for developers working on Fish.
 
@@ -184,22 +184,22 @@ rust-gdb target/debug/fish-cli test_name
 cargo build --release
 
 # Run with perf (Linux)
-perf record -g target/release/Fish build
+perf record -g target/release/fish build
 perf report
 
 # Use flamegraph (Linux)
 cargo install flamegraph
-cargo flamegraph --bin Fish build
+cargo flamegraph --bin fish build
 ```
 
 ### Memory Profiling
 
 ```bash
 # Use heaptrack (Linux)
-heaptrack target/release/Fish build
+heaptrack target/release/fish build
 
 # Use valgrind (Linux)
-valgrind --leak-check=full target/release/Fish build
+valgrind --leak-check=full target/release/fish build
 ```
 
 ## Working with Backends
@@ -240,7 +240,7 @@ impl fish_core::backend::Backend for Backend {
 1. Create plugin directory: `.Fish/plugins/<plugin-name>/`
 2. Create `plugin.json` configuration
 3. Implement plugin script
-4. Test with `Fish plugin execute <name> <command>`
+4. Test with `fish plugin execute <name> <command>`
 
 ### Plugin Configuration
 
@@ -317,7 +317,7 @@ cargo run --bin Fish -- secrets get my-secret
 cargo bench --workspace
 
 # Profile specific operation
-cargo flamegraph --bin Fish build
+cargo flamegraph --bin fish build
 
 # Analyze cache performance
 cargo run --bin Fish -- cache stats

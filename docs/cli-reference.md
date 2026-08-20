@@ -1,6 +1,6 @@
 # Fish CLI Reference
 
-> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 Complete reference for all Fish command-line interface commands and options.
 
@@ -21,29 +21,29 @@ Complete reference for all Fish command-line interface commands and options.
 
 ## Primary Commands
 
-### `Fish init`
+### `fish init`
 Initializes Fish configuration and scans the workspace to generate multi-language task definitions (`fish.yaml`).
 
 ```bash
-Fish init [--force]
+fish init [--force]
 ```
 
 ---
 
-### `Fish ui`
+### `fish ui`
 Starts the real-time interactive Web Dashboard & SVG DAG visualizer with 5-language telemetry (English, Vietnamese, Simplified Chinese, Traditional Chinese, Japanese).
 
 ```bash
-Fish ui [--port <PORT>] [--open]
+fish ui [--port <PORT>] [--open]
 ```
 
 ---
 
-### `Fish build`
+### `fish build`
 Executes build tasks for packages in the workspace.
 
 ```bash
-Fish build [OPTIONS]
+fish build [OPTIONS]
 ```
 
 **Common Flags:**
@@ -55,29 +55,29 @@ Fish build [OPTIONS]
 
 ---
 
-### `Fish check`
+### `fish check`
 Performs type checking and static analysis without linking full artifacts.
 
 ```bash
-Fish check [OPTIONS]
+fish check [OPTIONS]
 ```
 
 ---
 
-### `Fish test`
+### `fish test`
 Executes test suites across workspace packages.
 
 ```bash
-Fish test [OPTIONS]
+fish test [OPTIONS]
 ```
 
 ---
 
-### `Fish run`
+### `fish run`
 Builds and runs a selected binary target.
 
 ```bash
-Fish run -p <PACKAGE> --bin <BINARY> [-- <ARGS>...]
+fish run -p <PACKAGE> --bin <BINARY> [-- <ARGS>...]
 ```
 
 ---
@@ -126,20 +126,20 @@ Fish daemon stop [--port 9527]
 
 ---
 
-### `Fish graph`
+### `fish graph`
 Prints or exports the project dependency graph.
 
 ```bash
-Fish graph [--format <tree|dot|json>]
+fish graph [--format <tree|dot|json>]
 ```
 
 ---
 
-### `Fish affected`
+### `fish affected`
 Identifies and executes tasks only on packages modified since a Git revision.
 
 ```bash
-Fish affected --since <GIT_REF> [--mode <build|check|test>]
+fish affected --since <GIT_REF> [--mode <build|check|test>]
 ```
 
 ---
@@ -161,18 +161,18 @@ Fish cache cas list
 
 ---
 
-### `Fish doctor`
+### `fish doctor`
 Checks system toolchains, compilers, linkers, and dependencies for readiness.
 
 ```bash
-Fish doctor [--fix] [--ai]
+fish doctor [--fix] [--ai]
 ```
 
 ---
 
-### `Fish ci init` / `Fish ci export`
+### `fish ci init` / `fish ci export`
 Generates CI workflow configurations for various platforms.
 
 ```bash
-Fish ci init --platform <github|gitlab|circleci|bitbucket|all>
+fish ci init --platform <github|gitlab|circleci|bitbucket|all>
 ```

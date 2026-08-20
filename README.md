@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.88%2B-orange.svg)](https://www.rust-lang.org)
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 Fish is a Rust build-orchestration experiment for projects that use more than
 one toolchain. It discovers supported projects, constructs a dependency graph,
@@ -35,9 +35,9 @@ version.
 
 Fish uses two main branches:
 
-- **`main`** â€” The stable branch and the primary source of code for the
+- **`main`** "” The stable branch and the primary source of code for the
   project. Code in `main` should be tested and considered stable.
-- **`dev`** â€” The development and experimental branch. New features, changes,
+- **`dev`** "” The development and experimental branch. New features, changes,
   fixes, and other experimental code are developed and tested here first.
 
 Changes should **not be merged directly into `main`** during normal
@@ -85,25 +85,25 @@ The project requires Rust 1.88 or later (MSRV 1.88).
 Build a supported project from its root:
 
 ```bash
-Fish build
-Fish test
-Fish graph --format dot
+fish build
+fish test
+fish graph --format dot
 ```
 
 Useful variants:
 
 ```bash
 # Select parallelism and write a trace profile.
-Fish build --jobs 8 --profile build-trace.json
+fish build --jobs 8 --profile build-trace.json
 
 # Inspect the detected projects and their dependencies.
-Fish graph --format tree
+fish graph --format tree
 
 # Rebuild when source files change.
 Fish watch --mode test
 
 # Launch the interactive Web Dashboard & DAG visualizer.
-Fish ui --port 3000 --open
+fish ui --port 3000 --open
 
 # See the local cache's size and record count.
 Fish cache stats
@@ -120,21 +120,21 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for local development and
 
 | Command | Purpose |
 | --- | --- |
-| `Fish init` | Initialize Fish configuration and generate task definitions for detected project languages. |
-| `Fish build`, `check`, `test` | Execute work discovered from the project graph (supports `--explain`, `--pgo-generate`, `--pgo-use`). |
-| `Fish ui` | Start the interactive Web Dashboard & DAG visualizer with 5-language telemetry. |
+| `fish init` | Initialize Fish configuration and generate task definitions for detected project languages. |
+| `fish build`, `check`, `test` | Execute work discovered from the project graph (supports `--explain`, `--pgo-generate`, `--pgo-use`). |
+| `fish ui` | Start the interactive Web Dashboard & DAG visualizer with 5-language telemetry. |
 | `Fish query <EXPR>` | Query graph algebra: `deps(...)`, `rdeps(...)`, `allpaths(...)`, `somepath(...)`, `filter(...)`. |
 | `Fish daemon` | Manage background build daemon (`start`, `status`, `stop`) for sub-millisecond warm builds. |
-| `Fish run` | Build and run a selected Rust package or binary. |
-| `Fish graph` | Print the graph as stage trees, JSON, or DOT. |
+| `fish run` | Build and run a selected Rust package or binary. |
+| `fish graph` | Print the graph as stage trees, JSON, or DOT. |
 | `Fish watch` | Re-run build, check, or test after relevant file changes. |
-| `Fish affected --since REV` | Limit work to projects changed since a revision. |
+| `fish affected --since REV` | Limit work to projects changed since a revision. |
 | `Fish cache` | Inspect, prune, and manage the local cache and CAS. |
-| `Fish ci init` / `export` | Generate CI configurations for GitHub, GitLab, CircleCI, Bitbucket. |
-| `Fish doctor` | Check local toolchain readiness and diagnose system environment. |
+| `fish ci init` / `export` | Generate CI configurations for GitHub, GitLab, CircleCI, Bitbucket. |
+| `fish doctor` | Check local toolchain readiness and diagnose system environment. |
 | `Fish worker` / `cache-server` | Start optional remote-execution services. |
 
-Some commands require a corresponding toolchain on `PATH`. `Fish doctor` is a
+Some commands require a corresponding toolchain on `PATH`. `fish doctor` is a
 good first check when setting up a machine.
 
 ## High-Performance Capabilities

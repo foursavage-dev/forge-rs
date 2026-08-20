@@ -1,6 +1,6 @@
 # Fish Configuration Guide
 
-> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 This guide describes how to configure Fish workspaces using `fish.toml`.
 
@@ -45,7 +45,7 @@ inputs = ["tests/**/*", "src/**/*"]
 
 ## Top-Level Sections
 
-### `[build]` Ã¢â‚¬â€ Execution Settings
+### `[build]` —" Execution Settings
 
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -60,7 +60,7 @@ inputs = ["tests/**/*", "src/**/*"]
 
 ---
 
-### `[cache]` Ã¢â‚¬â€ Local Storage Settings
+### `[cache]` —" Local Storage Settings
 
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -69,7 +69,7 @@ inputs = ["tests/**/*", "src/**/*"]
 
 ---
 
-### `[remote]` Ã¢â‚¬â€ Distributed Cache & Execution
+### `[remote]` —" Distributed Cache & Execution
 
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -80,7 +80,7 @@ inputs = ["tests/**/*", "src/**/*"]
 
 ---
 
-### `[daemon]` Ã¢â‚¬â€ Background IPC Service
+### `[daemon]` —" Background IPC Service
 
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -88,7 +88,7 @@ inputs = ["tests/**/*", "src/**/*"]
 
 ---
 
-### `[pipelines.<task>]` Ã¢â‚¬â€ Task Pipeline Topology
+### `[pipelines.<task>]` —" Task Pipeline Topology
 
 Configure dependencies and caching boundaries between tasks across packages:
 

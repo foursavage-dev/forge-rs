@@ -1,8 +1,8 @@
 # Fish Architecture
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
-This document describes the high-level architecture of the Fish build orchestration system.
+This document describes the high-level architecture of the fish build orchestration system.
 
 ## Overview
 
@@ -297,7 +297,7 @@ Supports multiple CI/CD platforms:
 ### 6. Incremental Analysis (`fish-incremental`)
 
 - AST-based dependency inference (`DependencyInferenceEngine`) for Rust, TypeScript/JavaScript, Python, and Go
-- Dirty rebuild diagnostics (`DirtyExplainer`, `Fish build --explain`) identifying exact source file modifications or hash mismatches
+- Dirty rebuild diagnostics (`DirtyExplainer`, `fish build --explain`) identifying exact source file modifications or hash mismatches
 - Build pattern detection and hotspot identification
 - Refactoring suggestions and rebuild frequency analysis
 

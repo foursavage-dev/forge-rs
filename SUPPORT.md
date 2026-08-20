@@ -1,6 +1,6 @@
 # Support
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 This document provides support resources for Fish users.
 
@@ -80,14 +80,14 @@ Fish cache prune
 
 **Solutions**:
 1. Check cache hit rate: `Fish cache stats`
-2. Enable parallel builds: `Fish build -j $(nproc)`
+2. Enable parallel builds: `fish build -j $(nproc)`
 3. Use distributed workers if available
-4. Profile with: `Fish build --profile`
+4. Profile with: `fish build --profile`
 
 #### High memory usage
 
 **Solutions**:
-1. Reduce parallel jobs: `Fish build -j 4`
+1. Reduce parallel jobs: `fish build -j 4`
 2. Clear cache: `Fish cache prune`
 3. Check for memory leaks
 
@@ -99,10 +99,10 @@ Fish cache prune
 
 ```bash
 # Supported platforms
-Fish ci init --platform github    # GitHub Actions
-Fish ci init --platform gitlab    # GitLab CI
-Fish ci init --platform circleci  # CircleCI
-Fish ci init --platform bitbucket # Bitbucket Pipelines
+fish ci init --platform github    # GitHub Actions
+fish ci init --platform gitlab    # GitLab CI
+fish ci init --platform circleci  # CircleCI
+fish ci init --platform bitbucket # Bitbucket Pipelines
 ```
 
 #### Generated CI doesn't work
@@ -161,8 +161,8 @@ pip install --upgrade pip
 ### General Troubleshooting
 
 1. **Check version**: `Fish --version`
-2. **Check environment**: `Fish doctor`
-3. **Enable debug logging**: `RUST_LOG=debug Fish build`
+2. **Check environment**: `fish doctor`
+3. **Enable debug logging**: `RUST_LOG=debug fish build`
 4. **Clear cache**: `Fish cache prune`
 5. **Update Fish**: Install latest version
 6. **Check for known issues**: GitHub issues
@@ -176,7 +176,7 @@ When reporting issues, include:
 Fish --version
 
 # Environment
-Fish doctor
+fish doctor
 
 # System info
 uname -a
@@ -185,7 +185,7 @@ uname -a
 rustc --version
 
 # Detailed logs
-RUST_LOG=debug Fish build 2>&1 | tee debug.log
+RUST_LOG=debug fish build 2>&1 | tee debug.log
 ```
 
 ## Feature Requests

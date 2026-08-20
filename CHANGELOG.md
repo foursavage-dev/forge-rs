@@ -1,6 +1,6 @@
 # Changelog
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 All notable changes to this project will be documented in this file.
 
@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Algebraic graph query engine (`Fish query` with `deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`).
 - Automated AST dependency inference (`DependencyInferenceEngine`) for Rust, TypeScript/JavaScript, Python, and Go.
 - Distributed Task Execution (DTE) bin-packing (`DteBinPacker`) for multi-agent CI balancing.
-- Dirty rebuild diagnostics (`DirtyExplainer`, `Fish build --explain`).
+- Dirty rebuild diagnostics (`DirtyExplainer`, `fish build --explain`).
 - GNU Jobserver pool integration (`JobserverPool`) for compiler thread token coordination.
 - Dynamic remote racing (`DynamicRacingExecutor`) racing local and remote worker execution.
 - Background build daemon (`FishDaemon`, `Fish daemon start/status/stop`).
@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Task pipeline topology engine (`PipelineResolver`) with cross-package `^build` dependencies.
 - Stage Tree DAG visualizer for terminal rendering.
 - Nx-style Distributed Task Execution (DTE) bin-packing (`DteBinPacker`) for multi-agent CI balance
-- Ninja-style dirty rebuild diagnostics (`DirtyExplainer`, `Fish build --explain`)
+- Ninja-style dirty rebuild diagnostics (`DirtyExplainer`, `fish build --explain`)
 - GNU Jobserver pool integration (`JobserverPool`) for global compiler thread token coordination
 - Dynamic remote racing (`DynamicRacingExecutor`) racing local and remote worker execution
 - Background loopback TCP build daemon (`FishDaemon`, `Fish daemon start/status/stop`)

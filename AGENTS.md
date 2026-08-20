@@ -1,6 +1,6 @@
 # AI Agent Guide for Fish
 
-This document provides guidance for AI coding agents working with the Fish build orchestration system.
+This document provides guidance for AI coding agents working with the fish build orchestration system.
 
 ## 🎯 Purpose
 

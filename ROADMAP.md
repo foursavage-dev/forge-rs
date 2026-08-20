@@ -1,6 +1,6 @@
 # Fish Roadmap
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 This document outlines the planned development roadmap for Fish.
 
@@ -21,7 +21,7 @@ Fish aims to be the most efficient, secure, and developer-friendly build orchest
 - [x] Create comprehensive documentation and translation framework
 
 ### Phase 2: Performance, Visualization & Developer Experience
-- [x] Web-based interactive telemetry dashboard & DAG visualizer (`Fish ui`) with 5-language UI
+- [x] Web-based interactive telemetry dashboard & DAG visualizer (`fish ui`) with 5-language UI
 - [x] Standard compilation database generator (`CompilationDatabase`, `compile_commands.json`)
 - [x] Hermetic toolchain registry and system auto-detection (`ToolchainRegistry`)
 - [x] Real-time filesystem watcher daemon with dirty target tracking (`FsWatcherDaemon`)
