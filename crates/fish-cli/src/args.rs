@@ -59,6 +59,13 @@ pub enum Command {
     Query(QueryArgs),
     Daemon(DaemonArgs),
     Ai(AiArgs),
+    Lsp(LspArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct LspArgs {
+    #[arg(long)]
+    pub stdio: bool,
 }
 
 #[derive(Debug, Args)]

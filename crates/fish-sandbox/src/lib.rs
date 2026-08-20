@@ -1,5 +1,7 @@
 #![forbid(unsafe_code)]
 
+pub mod microvm;
+
 pub mod env;
 pub mod executor;
 pub mod isolation;

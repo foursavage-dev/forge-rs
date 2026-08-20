@@ -3,6 +3,7 @@
 #![warn(clippy::all)]
 
 pub mod analyzer;
+pub mod ast_cache;
 pub mod change_detector;
 pub mod ecosystem;
 pub mod explain;

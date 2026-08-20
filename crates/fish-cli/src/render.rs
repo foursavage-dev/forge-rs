@@ -145,6 +145,9 @@ pub fn print_build_summary(summary: &fish_scheduler::BuildSummary, mode: BuildMo
             BuildMode::Build => "Build completed successfully.",
             BuildMode::Check => "Check completed successfully.",
             BuildMode::Test => "All tests passed.",
+            BuildMode::Clippy => "Clippy checks passed.",
+            BuildMode::Doc => "Documentation generated.",
+            BuildMode::Bench => "Benchmarks finished.",
         };
         println!("{}", Styled::new(GREEN, message));
     } else {
@@ -152,6 +155,9 @@ pub fn print_build_summary(summary: &fish_scheduler::BuildSummary, mode: BuildMo
             BuildMode::Build => "Build failed.",
             BuildMode::Check => "Check failed.",
             BuildMode::Test => "Some tests failed.",
+            BuildMode::Clippy => "Clippy checks failed.",
+            BuildMode::Doc => "Documentation build failed.",
+            BuildMode::Bench => "Benchmarks failed.",
         };
         println!("{}", Styled::new(RED, message));
     }

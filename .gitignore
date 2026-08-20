@@ -8,6 +8,7 @@ build
 
 .vscode/node_modules/
 .vscode/out/
+vscode-extension/out/
 node_modules/
 docs/.vitepress/dist/
 docs/.vitepress/cache/
