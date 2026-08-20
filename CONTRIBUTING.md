@@ -153,6 +153,10 @@ Contributions should pass the relevant formatting, linting, and test checks befo
 - Avoid unnecessary dependencies.
 - Keep changes focused and avoid unrelated modifications.
 
+### Translating Documentation
+
+We actively welcome community translations of our documentation for any language. AI and machine translation tools are permitted, provided they are explicitly disclosed in the pull request description. Priority is given to translations reviewed or authored by native speakers. See [TRANSLATION.md](TRANSLATION.md) for full guidelines and the disclosure checklist.
+
 ### Workspace Structure
 
 ```text
