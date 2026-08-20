@@ -119,7 +119,11 @@ fn get_workspace_graph_json(root: &Path) -> String {
                 let internal_deps: Vec<String> = pkg
                     .dependencies
                     .iter()
-                    .filter(|d| meta.packages.iter().any(|p| p.name == d.name && ws_members.contains(&p.id)))
+                    .filter(|d| {
+                        meta.packages
+                            .iter()
+                            .any(|p| p.name == d.name && ws_members.contains(&p.id))
+                    })
                     .map(|d| d.name.clone())
                     .collect();
 

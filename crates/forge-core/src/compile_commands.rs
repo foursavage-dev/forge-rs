@@ -95,9 +95,9 @@ impl CompilationDatabase {
 
     pub fn find_for_file<P: AsRef<Path>>(&self, file_path: P) -> Option<&CompileCommand> {
         let target = file_path.as_ref().to_string_lossy();
-        self.commands.iter().find(|cmd| {
-            cmd.file == target.as_ref() || cmd.file.ends_with(target.as_ref())
-        })
+        self.commands
+            .iter()
+            .find(|cmd| cmd.file == target.as_ref() || cmd.file.ends_with(target.as_ref()))
     }
 }
 
