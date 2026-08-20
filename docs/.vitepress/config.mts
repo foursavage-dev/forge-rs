@@ -31,7 +31,8 @@ export default defineConfig({
             ]
           },
           { text: 'Config', link: '/configuration' },
-          { text: 'FAQ', link: '/faq-troubleshooting' }
+          { text: 'FAQ', link: '/faq-troubleshooting' },
+          { text: 'Translations', link: '/TRANSLATION' }
         ],
         sidebar: [
           {
@@ -40,6 +41,7 @@ export default defineConfig({
               { text: 'Introduction & Setup', link: '/getting-started' },
               { text: 'Configuration Reference', link: '/configuration' },
               { text: 'CLI Reference', link: '/cli-reference' },
+              { text: 'Translation Guidelines', link: '/TRANSLATION' },
               { text: 'FAQ & Troubleshooting', link: '/faq-troubleshooting' }
             ]
           },
@@ -90,7 +92,8 @@ export default defineConfig({
             ]
           },
           { text: 'Cấu hình', link: '/vi/configuration' },
-          { text: 'Hỏi đáp', link: '/vi/faq-troubleshooting' }
+          { text: 'Hỏi đáp', link: '/vi/faq-troubleshooting' },
+          { text: 'Dịch thuật', link: '/vi/TRANSLATION' }
         ],
         sidebar: [
           {
@@ -99,6 +102,7 @@ export default defineConfig({
               { text: 'Cài đặt & Khởi chạy', link: '/vi/getting-started' },
               { text: 'Tài liệu cấu hình', link: '/vi/configuration' },
               { text: 'Danh sách lệnh CLI', link: '/vi/cli-reference' },
+              { text: 'Hướng dẫn dịch thuật', link: '/vi/TRANSLATION' },
               { text: 'Hỏi đáp & Xử lý lỗi', link: '/vi/faq-troubleshooting' }
             ]
           },
@@ -149,7 +153,8 @@ export default defineConfig({
             ]
           },
           { text: '配置', link: '/zh-hans/configuration' },
-          { text: '常见问题', link: '/zh-hans/faq-troubleshooting' }
+          { text: '常见问题', link: '/zh-hans/faq-troubleshooting' },
+          { text: '翻译指南', link: '/zh-hans/TRANSLATION' }
         ],
         sidebar: [
           {
@@ -158,6 +163,7 @@ export default defineConfig({
               { text: '快速开始与安装', link: '/zh-hans/getting-started' },
               { text: '配置参考', link: '/zh-hans/configuration' },
               { text: 'CLI 命令大全', link: '/zh-hans/cli-reference' },
+              { text: '翻译与贡献指南', link: '/zh-hans/TRANSLATION' },
               { text: '常见问题与排错', link: '/zh-hans/faq-troubleshooting' }
             ]
           },
@@ -208,7 +214,8 @@ export default defineConfig({
             ]
           },
           { text: '配置', link: '/zh-hant/configuration' },
-          { text: '常見問題', link: '/zh-hant/faq-troubleshooting' }
+          { text: '常見問題', link: '/zh-hant/faq-troubleshooting' },
+          { text: '翻譯指南', link: '/zh-hant/TRANSLATION' }
         ],
         sidebar: [
           {
@@ -217,6 +224,7 @@ export default defineConfig({
               { text: '快速開始與安裝', link: '/zh-hant/getting-started' },
               { text: '配置參考', link: '/zh-hant/configuration' },
               { text: 'CLI 命令大全', link: '/zh-hant/cli-reference' },
+              { text: '翻譯與貢獻指南', link: '/zh-hant/TRANSLATION' },
               { text: '常見問題與排錯', link: '/zh-hant/faq-troubleshooting' }
             ]
           },
@@ -267,7 +275,8 @@ export default defineConfig({
             ]
           },
           { text: '設定', link: '/ja/configuration' },
-          { text: 'FAQ', link: '/ja/faq-troubleshooting' }
+          { text: 'FAQ', link: '/ja/faq-troubleshooting' },
+          { text: '翻訳ガイド', link: '/ja/TRANSLATION' }
         ],
         sidebar: [
           {
@@ -276,6 +285,7 @@ export default defineConfig({
               { text: '導入とセットアップ', link: '/ja/getting-started' },
               { text: '設定リファレンス', link: '/ja/configuration' },
               { text: 'CLI コマンドリファレンス', link: '/ja/cli-reference' },
+              { text: '翻訳と貢献ガイド', link: '/ja/TRANSLATION' },
               { text: 'FAQ とトラブルシューティング', link: '/ja/faq-troubleshooting' }
             ]
           },
