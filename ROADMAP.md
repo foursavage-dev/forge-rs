@@ -45,7 +45,7 @@ Fish aims to be the most efficient, secure, and developer-friendly build orchest
 ### Distributed Infrastructure & Cloud
 - [ ] Kubernetes operator for elastic worker auto-scaling
 - [ ] gRPC Remote Execution API (REAPI) server compatibility
-- [ ] Automated PEX virtual environment packaging for hermetic Python execution
+- [x] Automated PEX virtual environment packaging for hermetic Python execution
 
 ## Medium-term Goals (v0.4.x - v0.5.x)
 

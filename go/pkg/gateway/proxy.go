@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"fmt"
+	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"sync"
@@ -34,9 +35,40 @@ func (g *WorkerGateway) AddRoute(workerID string, targetURL string) error {
 	return nil
 }
 
+func (g *WorkerGateway) RemoveRoute(workerID string) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	delete(g.routes, workerID)
+	delete(g.targets, workerID)
+}
+
 func (g *WorkerGateway) Route(workerID string) (*httputil.ReverseProxy, bool) {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 	proxy, ok := g.routes[workerID]
 	return proxy, ok
+}
+
+func (g *WorkerGateway) ListWorkers() []string {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	workers := make([]string, 0, len(g.routes))
+	for id := range g.routes {
+		workers = append(workers, id)
+	}
+	return workers
+}
+
+func (g *WorkerGateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	workerID := r.Header.Get("X-Fish-Worker-ID")
+	if workerID == "" {
+		workerID = r.URL.Query().Get("worker_id")
+	}
+
+	proxy, ok := g.Route(workerID)
+	if !ok {
+		http.Error(w, "worker route not found", http.StatusBadGateway)
+		return
+	}
+	proxy.ServeHTTP(w, r)
 }

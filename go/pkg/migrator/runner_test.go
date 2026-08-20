@@ -25,8 +25,35 @@ func TestMigrationRunner(t *testing.T) {
 		t.Fatalf("expected version 3, got %d (err: %v)", v3, err)
 	}
 
+	v4, err := runner.ApplyNext()
+	if err != nil || v4 != 4 {
+		t.Fatalf("expected version 4, got %d (err: %v)", v4, err)
+	}
+
 	_, err = runner.ApplyNext()
 	if err == nil {
 		t.Fatalf("expected error when no more migrations exist")
+	}
+
+	rolledBack, err := runner.Rollback(2)
+	if err != nil || rolledBack != 2 {
+		t.Fatalf("expected rollback to version 2, got %d (err: %v)", rolledBack, err)
+	}
+
+	if runner.CurrentVersion() != 2 {
+		t.Fatalf("expected current version 2, got %d", runner.CurrentVersion())
+	}
+}
+
+func TestMigrationRunnerApplyAll(t *testing.T) {
+	mig := NewSchemaMigrator()
+	runner := NewMigrationRunner(mig)
+
+	count, err := runner.ApplyAll()
+	if err != nil || count != 4 {
+		t.Fatalf("expected 4 applied migrations, got %d", count)
+	}
+	if runner.CurrentVersion() != 4 {
+		t.Fatalf("expected current version 4, got %d", runner.CurrentVersion())
 	}
 }

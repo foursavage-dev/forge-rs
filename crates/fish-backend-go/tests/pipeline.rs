@@ -30,15 +30,8 @@ fn go_pipeline_builds_task_graph_and_runs_scheduler() {
     )
     .unwrap();
 
-    let config = GoProjectConfig {
-        name: "test_go_app".to_string(),
-        package_path: "./...".to_string(),
-        tags: vec![],
-        ldflags: None,
-        gcflags: None,
-        run_tests: true,
-        output_binary: None,
-    };
+    let mut config = GoProjectConfig::discover_or_default(&project_dir).unwrap();
+    config.name = "test_go_app".to_string();
 
     let build_dir = temp.path().join("build");
     fs::create_dir_all(&build_dir).unwrap();

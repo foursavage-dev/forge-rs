@@ -39,5 +39,32 @@ class TestFishAIServer(unittest.TestCase):
         self.assertIn("ordered_tasks", resp["result"])
         self.assertEqual(resp["result"]["ordered_tasks"], ["b", "a"])
 
+    def test_record_run_and_summary_rpc(self):
+        req_record = {
+            "jsonrpc": "2.0",
+            "id": 4,
+            "method": "record_run",
+            "params": {
+                "run_id": "build-42",
+                "total_duration_ms": 2500,
+                "tasks_count": 8,
+                "cache_hits": 6,
+                "cache_misses": 2,
+                "failed_count": 0
+            }
+        }
+        resp = self.server.handle_request(req_record)
+        self.assertEqual(resp["result"]["status"], "recorded")
+
+        req_sum = {
+            "jsonrpc": "2.0",
+            "id": 5,
+            "method": "analytics_summary",
+            "params": {}
+        }
+        resp_sum = self.server.handle_request(req_sum)
+        self.assertEqual(resp_sum["result"]["total_runs"], 1)
+        self.assertEqual(resp_sum["result"]["cache_efficiency_pct"], 75.0)
+
 if __name__ == "__main__":
     unittest.main()

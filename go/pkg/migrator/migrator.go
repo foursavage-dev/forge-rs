@@ -6,10 +6,10 @@ import (
 )
 
 type Migration struct {
-	Version     int
-	Description string
-	UpSQL       string
-	DownSQL     string
+	Version     int    `json:"version"`
+	Description string `json:"description"`
+	UpSQL       string `json:"up_sql"`
+	DownSQL     string `json:"down_sql"`
 }
 
 type SchemaMigrator struct {
@@ -37,8 +37,24 @@ func NewSchemaMigrator() *SchemaMigrator {
 				UpSQL:       "CREATE TABLE IF NOT EXISTS cas_artifacts (digest TEXT PRIMARY KEY, size_bytes INTEGER, compressed_bytes INTEGER, hit_count INTEGER);",
 				DownSQL:     "DROP TABLE IF EXISTS cas_artifacts;",
 			},
+			{
+				Version:     4,
+				Description: "create_worker_telemetry_table",
+				UpSQL:       "CREATE TABLE IF NOT EXISTS worker_telemetry (worker_id TEXT, timestamp TIMESTAMP, cpu_pct REAL, memory_bytes INTEGER, active_jobs INTEGER, PRIMARY KEY(worker_id, timestamp));",
+				DownSQL:     "DROP TABLE IF EXISTS worker_telemetry;",
+			},
 		},
 	}
+}
+
+func (m *SchemaMigrator) AddMigration(mig Migration) {
+	for i, existing := range m.migrations {
+		if existing.Version == mig.Version {
+			m.migrations[i] = mig
+			return
+		}
+	}
+	m.migrations = append(m.migrations, mig)
 }
 
 func (m *SchemaMigrator) GetAllMigrations() []Migration {
@@ -50,11 +66,31 @@ func (m *SchemaMigrator) GetAllMigrations() []Migration {
 	return sorted
 }
 
+func (m *SchemaMigrator) GetLatestVersion() int {
+	all := m.GetAllMigrations()
+	if len(all) == 0 {
+		return 0
+	}
+	return all[len(all)-1].Version
+}
+
 func (m *SchemaMigrator) GenerateUpScript(targetVersion int) string {
 	var script string
 	for _, mig := range m.GetAllMigrations() {
 		if mig.Version <= targetVersion {
 			script += fmt.Sprintf("Migration %d: %s\n%s\n", mig.Version, mig.Description, mig.UpSQL)
+		}
+	}
+	return script
+}
+
+func (m *SchemaMigrator) GenerateDownScript(fromVersion int, toVersion int) string {
+	var script string
+	all := m.GetAllMigrations()
+	for i := len(all) - 1; i >= 0; i-- {
+		mig := all[i]
+		if mig.Version <= fromVersion && mig.Version > toVersion {
+			script += fmt.Sprintf("Rollback %d: %s\n%s\n", mig.Version, mig.Description, mig.DownSQL)
 		}
 	}
 	return script

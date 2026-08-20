@@ -12,11 +12,22 @@ class TestFailureAnalyzer(unittest.TestCase):
         self.assertIn("src/main.rs", report.affected_files)
         self.assertGreaterEqual(report.confidence, 0.9)
 
+    def test_go_concurrency_error(self):
+        stderr = "WARNING: DATA RACE\nWrite at 0x00c0000a6010 by goroutine 7:\n  main.go:42"
+        report = self.analyzer.analyze("go", stderr, "", 1)
+        self.assertEqual(report.error_category, "CONCURRENCY_ERROR")
+        self.assertTrue(len(report.suggested_fixes) > 0)
+
     def test_memory_limit_detection(self):
         stderr = "fatal error: runtime: out of memory"
         report = self.analyzer.analyze("go", stderr, "", 137)
         self.assertEqual(report.error_category, "MEMORY_LIMIT")
         self.assertTrue(len(report.suggested_fixes) > 0)
+
+    def test_dependency_error(self):
+        stderr = "ModuleNotFoundError: No module named 'fastapi'"
+        report = self.analyzer.analyze("python", stderr, "", 1)
+        self.assertEqual(report.error_category, "DEPENDENCY_ERROR")
 
 if __name__ == '__main__':
     unittest.main()

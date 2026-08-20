@@ -31,13 +31,26 @@ func NewNodeRegistry(heartbeatTimeout time.Duration) *NodeRegistry {
 }
 
 func (r *NodeRegistry) Register(node *WorkerNode) error {
-	if node.ID == "" || node.Address == "" {
+	if node == nil || node.ID == "" || node.Address == "" {
 		return errors.New("worker id and address must not be empty")
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	node.LastHeartbeat = time.Now()
+	if node.Tags == nil {
+		node.Tags = make(map[string]string)
+	}
 	r.workers[node.ID] = node
+	return nil
+}
+
+func (r *NodeRegistry) Deregister(workerID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, exists := r.workers[workerID]; !exists {
+		return errors.New("worker not registered")
+	}
+	delete(r.workers, workerID)
 	return nil
 }
 
@@ -66,7 +79,25 @@ func (r *NodeRegistry) ListHealthyWorkers() []*WorkerNode {
 	return healthy
 }
 
+func (r *NodeRegistry) PruneExpired() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	cutoff := time.Now().Add(-r.timeout)
+	pruned := 0
+	for id, w := range r.workers {
+		if !w.LastHeartbeat.After(cutoff) {
+			delete(r.workers, id)
+			pruned++
+		}
+	}
+	return pruned
+}
+
 func (r *NodeRegistry) SelectOptimalWorker(toolchain string) (*WorkerNode, error) {
+	return r.SelectWorkerWithTags(toolchain, nil)
+}
+
+func (r *NodeRegistry) SelectWorkerWithTags(toolchain string, requiredTags map[string]string) (*WorkerNode, error) {
 	healthy := r.ListHealthyWorkers()
 	if len(healthy) == 0 {
 		return nil, errors.New("no healthy workers available")
@@ -76,7 +107,7 @@ func (r *NodeRegistry) SelectOptimalWorker(toolchain string) (*WorkerNode, error
 	for _, w := range healthy {
 		supports := false
 		for _, tc := range w.SupportedToolchains {
-			if tc == toolchain || tc == "*" {
+			if tc == toolchain || tc == "*" || toolchain == "" {
 				supports = true
 				break
 			}
@@ -84,13 +115,25 @@ func (r *NodeRegistry) SelectOptimalWorker(toolchain string) (*WorkerNode, error
 		if !supports {
 			continue
 		}
+
+		matchedTags := true
+		for k, v := range requiredTags {
+			if w.Tags[k] != v {
+				matchedTags = false
+				break
+			}
+		}
+		if !matchedTags {
+			continue
+		}
+
 		if best == nil || w.ActiveJobs < best.ActiveJobs {
 			best = w
 		}
 	}
 
 	if best == nil {
-		return nil, errors.New("no suitable worker supporting toolchain: " + toolchain)
+		return nil, errors.New("no suitable worker found")
 	}
 	return best, nil
 }

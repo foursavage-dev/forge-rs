@@ -63,6 +63,22 @@ class FishAIServer:
                     "recommended_tasks": affected,
                     "flaky_candidates": flaky
                 }
+            elif method == "record_run":
+                run = BuildRunMetrics(
+                    run_id=params.get("run_id", "run_1"),
+                    total_duration_ms=params.get("total_duration_ms", 0),
+                    tasks_count=params.get("tasks_count", 0),
+                    cache_hits=params.get("cache_hits", 0),
+                    cache_misses=params.get("cache_misses", 0),
+                    failed_count=params.get("failed_count", 0),
+                    bottleneck_tasks=params.get("bottleneck_tasks", []),
+                    task_durations_ms=params.get("task_durations_ms", {}),
+                    memory_peak_mb=params.get("memory_peak_mb", 0)
+                )
+                self.analytics.record_run(run)
+                result = {"status": "recorded", "run_id": run.run_id}
+            elif method == "analytics_summary":
+                result = self.analytics.summary()
             elif method == "ping":
                 result = {"status": "pong", "engine": "fish-ai"}
             else:

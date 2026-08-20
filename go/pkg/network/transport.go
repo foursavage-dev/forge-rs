@@ -3,7 +3,11 @@ package network
 import (
 	"context"
 	"crypto/tls"
+	"encoding/binary"
+	"errors"
 	"fmt"
+	"hash/crc32"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -67,4 +71,47 @@ func (b *TLSConfigBuilder) Build() *tls.Config {
 		MinVersion:         tls.VersionTLS13,
 		InsecureSkipVerify: b.insecureSkipVerify,
 	}
+}
+
+func WriteFramedPacket(w io.Writer, payload []byte) error {
+	length := uint32(len(payload))
+	checksum := crc32.ChecksumIEEE(payload)
+
+	header := make([]byte, 8)
+	binary.BigEndian.PutUint32(header[0:4], length)
+	binary.BigEndian.PutUint32(header[4:8], checksum)
+
+	if _, err := w.Write(header); err != nil {
+		return err
+	}
+	if _, err := w.Write(payload); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ReadFramedPacket(r io.Reader) ([]byte, error) {
+	header := make([]byte, 8)
+	if _, err := io.ReadFull(r, header); err != nil {
+		return nil, err
+	}
+
+	length := binary.BigEndian.Uint32(header[0:4])
+	checksum := binary.BigEndian.Uint32(header[4:8])
+
+	if length > 64*1024*1024 {
+		return nil, errors.New("frame length exceeds 64MB limit")
+	}
+
+	payload := make([]byte, length)
+	if _, err := io.ReadFull(r, payload); err != nil {
+		return nil, err
+	}
+
+	actualChecksum := crc32.ChecksumIEEE(payload)
+	if actualChecksum != checksum {
+		return nil, fmt.Errorf("checksum mismatch: expected %x, got %x", checksum, actualChecksum)
+	}
+
+	return payload, nil
 }

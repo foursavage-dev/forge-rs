@@ -13,15 +13,29 @@ class FailureReport:
 
 class FailureAnalyzer:
     PATTERNS: Dict[str, List[str]] = {
+        "CONCURRENCY_ERROR": [
+            r"WARNING: DATA RACE",
+            r"all goroutines are asleep - deadlock",
+            r"fatal error: concurrent map",
+            r"panic: sync: negative WaitGroup counter",
+            r"panic: send on closed channel",
+            r"panic: close of closed channel"
+        ],
         "COMPILATION_ERROR": [
             r"error\[E\d+\]:",
+            r"cannot borrow .* as mutable",
+            r"value borrowed here after move",
+            r"borrowed value does not live long enough",
             r"syntax error",
             r"cannot find symbol",
             r"undefined reference to",
             r"SyntaxError:",
             r"TypeError:",
+            r"IndentationError:",
+            r"NameError:",
             r"fatal error: .* file not found",
             r"CS\d{4}:",
+            r"TS\d{4}:",
             r"error: unknown type name",
             r"cannot use .* as .* in assignment"
         ],
@@ -29,6 +43,7 @@ class FailureAnalyzer:
             r"could not resolve dependency",
             r"package .* not found",
             r"ModuleNotFoundError:",
+            r"ImportError:",
             r"cannot find module",
             r"failed to fetch",
             r"unresolved import",
@@ -41,7 +56,8 @@ class FailureAnalyzer:
             r"JavaScript heap out of memory",
             r"Killed.*OOM",
             r"MemoryError",
-            r"std::bad_alloc"
+            r"std::bad_alloc",
+            r"STATUS_STACK_BUFFER_OVERRUN"
         ],
         "TIMEOUT": [
             r"timed out after",
@@ -75,6 +91,10 @@ class FailureAnalyzer:
             "DEPENDENCY_ERROR": [
                 "Check `Cargo.toml` and run `cargo update -p <crate>`.",
                 "Verify workspace dependencies resolver = 2."
+            ],
+            "CONCURRENCY_ERROR": [
+                "Verify sync primitives (Arc, Mutex, RwLock, channels).",
+                "Ensure types sent across threads implement Send and Sync."
             ]
         },
         "go": {
@@ -85,6 +105,10 @@ class FailureAnalyzer:
             "DEPENDENCY_ERROR": [
                 "Run `go mod tidy` or `go mod download`.",
                 "Verify module path in `go.mod` matches remote repository."
+            ],
+            "CONCURRENCY_ERROR": [
+                "Run `go test -race ./...` to pinpoint concurrent data races.",
+                "Check goroutine channel lifecycles and sync.WaitGroup counters."
             ]
         },
         "typescript": {
@@ -99,12 +123,12 @@ class FailureAnalyzer:
         },
         "python": {
             "COMPILATION_ERROR": [
-                "Run `mypy` or `pyright` for static type checking.",
-                "Check Python syntax compatibility for Python 3.10+."
+                "Run `ruff check .` and `mypy .` for static type and lint checking.",
+                "Verify syntax compatibility for Python 3.10+."
             ],
             "DEPENDENCY_ERROR": [
                 "Verify virtual environment is activated.",
-                "Run `pip install -r requirements.txt`."
+                "Run `uv pip install -r requirements.txt` or `pip install -e .`."
             ]
         },
         "cc": {
@@ -161,6 +185,7 @@ class FailureAnalyzer:
             return tc_dict[category]
             
         defaults = {
+            "CONCURRENCY_ERROR": ["Inspect thread/goroutine synchronization primitives and race conditions."],
             "COMPILATION_ERROR": ["Check source syntax for compiler errors.", "Run local compiler diagnostic."],
             "DEPENDENCY_ERROR": ["Verify package manifest and lockfile integrity.", "Ensure package registry connectivity."],
             "MEMORY_LIMIT": ["Increase memory limit in fish.toml.", "Reduce build parallelism with --jobs."],

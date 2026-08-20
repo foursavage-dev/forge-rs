@@ -11,7 +11,7 @@ fish-executor = { path = "../fish-executor" }
 fish-graph = { path = "../fish-graph" }
 serde = { workspace = true }
 serde_json = { workspace = true }
-sysinfo = "0.38"
+sysinfo = { version = "0.33", default-features = false, features = ["system"] }
 thiserror = { workspace = true }
 dashmap = { version = "6" }
 anyhow = { workspace = true }

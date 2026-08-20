@@ -42,6 +42,42 @@ func (r *MigrationRunner) ApplyNext() (int, error) {
 	return r.state.AppliedVersion, errors.New("no pending migrations")
 }
 
+func (r *MigrationRunner) ApplyAll() (int, error) {
+	count := 0
+	for {
+		_, err := r.ApplyNext()
+		if err != nil {
+			break
+		}
+		count++
+	}
+	return count, nil
+}
+
+func (r *MigrationRunner) Rollback(steps int) (int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if steps <= 0 {
+		return r.state.AppliedVersion, nil
+	}
+
+	for i := 0; i < steps; i++ {
+		if len(r.state.AppliedHistory) == 0 {
+			r.state.AppliedVersion = 0
+			break
+		}
+		r.state.AppliedHistory = r.state.AppliedHistory[:len(r.state.AppliedHistory)-1]
+		if len(r.state.AppliedHistory) > 0 {
+			r.state.AppliedVersion = r.state.AppliedHistory[len(r.state.AppliedHistory)-1]
+		} else {
+			r.state.AppliedVersion = 0
+		}
+	}
+
+	return r.state.AppliedVersion, nil
+}
+
 func (r *MigrationRunner) CurrentVersion() int {
 	r.mu.Lock()
 	defer r.mu.Unlock()

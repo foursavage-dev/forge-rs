@@ -1,3 +1,4 @@
+from collections import deque
 from typing import Dict, List, Set
 
 class SmartRecommender:
@@ -7,18 +8,27 @@ class SmartRecommender:
         file_to_package_map: Dict[str, str],
         package_dependencies: Dict[str, List[str]]
     ) -> List[str]:
-        affected_packages: Set[str] = set()
+        direct_affected: Set[str] = set()
         
         for file_path in changed_files:
             for pattern, pkg in file_to_package_map.items():
                 if pattern in file_path:
-                    affected_packages.add(pkg)
+                    direct_affected.add(pkg)
 
-        all_affected = set(affected_packages)
+        reverse_deps: Dict[str, List[str]] = {}
         for parent, deps in package_dependencies.items():
-            for aff in affected_packages:
-                if aff in deps:
-                    all_affected.add(parent)
+            for d in deps:
+                reverse_deps.setdefault(d, []).append(parent)
+
+        all_affected: Set[str] = set(direct_affected)
+        queue = deque(direct_affected)
+
+        while queue:
+            current = queue.popleft()
+            for dependent in reverse_deps.get(current, []):
+                if dependent not in all_affected:
+                    all_affected.add(dependent)
+                    queue.append(dependent)
 
         return sorted(list(all_affected))
 
