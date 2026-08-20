@@ -1,31 +1,9 @@
-# Docker 語言後端支援
+# Docker 容器後端
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **翻译与贡献：** 想用您的语言翻译或改进本文档？请参阅我们的 [翻译指南](../TRANSLATION.md)。
 
-Fish 為各種主流語言專案提供原生高效的建置編排支援。
+Docker 後端支持基于 `Dockerfile` 进行容器镜像的构建编排与缓存优化。
 
-## 自動偵測
-
-自動偵測: `Dockerfile`.
-
-## fish.toml 設定檔設定
-
-```toml
-[build]
-backend = "docker"
-jobs = 8
-
-[pipelines.build]
-inputs = ["src/**/*", "Dockerfile"]
-outputs = ["target/**/*"]
-```
-
-## 自動產生的建置任務
-
-- `fish build`: 自動產生的建置任務 (build)
-- `fish test`: 自動產生的建置任務 (test)
-- `fish check`: 自動產生的建置任務 (check)
-
-## 相依關係提取
-
-- `Dockerfile`
+## 自动检测与任务
+- **检测**: 存在 `Dockerfile`
+- **构建**: `docker build -t <image-tag> .`

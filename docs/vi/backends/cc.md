@@ -1,31 +1,13 @@
 # C / C++ Backend
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **Bản dịch & Đóng góp:** Bạn muốn dịch hoặc cải thiện tài liệu này bằng ngôn ngữ của mình? Xem [Hướng dẫn Dịch thuật](../TRANSLATION.md).
 
-Fish cung cấp khả năng điều phối build tự động cho các dự án đa ngôn ngữ.
+C/C++ Backend hỗ trợ CMake, Make, Clang, GCC và MSVC, đồng thời tự động sinh `compile_commands.json` cho Clangd.
 
-## Phát hiện dự án
+## Phát hiện Dự án
+Được phát hiện khi có `CMakeLists.txt` hoặc `Makefile`.
 
-Phát hiện dự án: `CMakeLists.txt`.
-
-## Cấu hình trong fish.toml
-
-```toml
-[build]
-backend = "c / c++"
-jobs = 8
-
-[pipelines.build]
-inputs = ["src/**/*", "CMakeLists.txt"]
-outputs = ["target/**/*"]
-```
-
-## Các tác vụ tự động sinh ra
-
-- `fish build`: Các tác vụ tự động sinh ra (build)
-- `fish test`: Các tác vụ tự động sinh ra (test)
-- `fish check`: Các tác vụ tự động sinh ra (check)
-
-## Trích xuất quan hệ phụ thuộc
-
-- `CMakeLists.txt`
+## Các Tác vụ
+- **Configure**: `cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
+- **Build**: `cmake --build build --config Release`
+- **Test**: `ctest --test-dir build`

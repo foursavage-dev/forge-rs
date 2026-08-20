@@ -1,31 +1,27 @@
 # Go バックエンド
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **翻訳と貢献:** このドキュメントをあなたの言語で翻訳または改善したいですか？ [翻訳ガイドライン](../TRANSLATION.md) をご覧ください。
 
-Fish は主要な各プログラミング言語プロジェクトに対して高速なビルドオーケストレーションを提供します。
+Go バックエンドは、Go 言語で書かれたサービスやツール向けのビルドオーケストレーションを提供します。
 
-## プロジェクトの自動検出
+## 自動検出 (Detection)
+プロジェクトディレクトリに `go.mod` が存在する場合に自動検出されます。
 
-プロジェクトの自動検出: `go.mod`.
-
-## fish.toml での設定
-
+## 設定 (`fish.toml`)
 ```toml
 [build]
 backend = "go"
 jobs = 8
 
 [pipelines.build]
-inputs = ["src/**/*", "go.mod"]
-outputs = ["target/**/*"]
+inputs = ["**/*.go", "go.mod", "go.sum"]
+outputs = ["bin/*"]
+
+[pipelines.test]
+inputs = ["**/*.go"]
 ```
 
-## 自動生成されるタスク
-
-- `fish build`: 自動生成されるタスク (build)
-- `fish test`: 自動生成されるタスク (test)
-- `fish check`: 自動生成されるタスク (check)
-
-## 依存関係の抽出
-
-- `go.mod`
+## 生成されるタスク
+- **ビルド**: `go build -o <output> ./...`
+- **テスト**: `go test -v ./...`
+- **コード検査**: `go vet ./...`

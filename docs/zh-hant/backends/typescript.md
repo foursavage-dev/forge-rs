@@ -1,31 +1,55 @@
-# TypeScript 語言後端支援
+# TypeScript / JavaScript 后端
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **翻译与贡献：** 想用您的语言翻译或改进本文档？请参阅我们的 [翻译指南](../TRANSLATION.md)。
 
-Fish 為各種主流語言專案提供原生高效的建置編排支援。
+TypeScript/JavaScript 后端为 Node.js、Web 以及全栈前端项目提供构建编排支持。
 
-## 自動偵測
+## 自动检测 (Detection)
 
-自動偵測: `package.json`.
+当项目目录中存在 `package.json` 时自动启用。
 
-## fish.toml 設定檔設定
+## 项目配置 (Configuration)
+
+在 `fish.toml` 中配置：
 
 ```toml
 [build]
-backend = "typescript"
+backend = "ts"
 jobs = 8
 
 [pipelines.build]
-inputs = ["src/**/*", "package.json"]
-outputs = ["target/**/*"]
+inputs = ["src/**/*.{ts,tsx,js,jsx}", "package.json", "tsconfig.json"]
+outputs = ["dist/**/*", "build/**/*"]
+
+[pipelines.test]
+depends_on = ["build"]
+inputs = ["tests/**/*.{ts,js}", "src/**/*.{ts,js}"]
 ```
 
-## 自動產生的建置任務
+## 支持的套件管理器 (Package Managers)
+- **npm**: 默认的 Node.js 套件管理器
+- **pnpm**: 高性能且节省磁盘空间的套件管理器
+- **yarn**: 支持 Workspace 的依赖管理工具
+- **bun**: 极速 JavaScript 运行时与套件管理器
 
-- `fish build`: 自動產生的建置任務 (build)
-- `fish test`: 自動產生的建置任務 (test)
-- `fish check`: 自動產生的建置任務 (check)
+## 自动生成的任务 (Tasks Generated)
 
-## 相依關係提取
+### 构建任务 (Build Task)
+```bash
+npm run build # 或 pnpm / yarn / bun run build
+```
 
-- `package.json`
+### 测试任务 (Test Task)
+```bash
+npm test # 或 pnpm / yarn / bun test
+```
+
+### 代码检查任务 (Lint Task)
+```bash
+npm run lint
+```
+
+## 依赖解析与指纹计算
+- 解析 `package.json` 中的 `dependencies` 与 `devDependencies`。
+- 监听 Lock 文件 (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lockb`)。
+- 源码指纹自动排除 `node_modules/` 与 `dist/`。

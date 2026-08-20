@@ -1,31 +1,13 @@
-# C / C++ 语言后端支持
+# C / C++ 后端
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **翻译与贡献：** 想用您的语言翻译或改进本文档？请参阅我们的 [翻译指南](../TRANSLATION.md)。
 
-Fish 为各种主流语言项目提供原生高效的构建编排支持。
+C/C++ 后端支持 CMake, Make, Clang, GCC 和 MSVC，并可自动生成用于 Clangd 的 `compile_commands.json`。
 
 ## 自动检测
+当存在 `CMakeLists.txt` 或 `Makefile` 时自动启用。
 
-自动检测: `CMakeLists.txt`.
-
-## fish.toml 配置文件设置
-
-```toml
-[build]
-backend = "c / c++"
-jobs = 8
-
-[pipelines.build]
-inputs = ["src/**/*", "CMakeLists.txt"]
-outputs = ["target/**/*"]
-```
-
-## 自动生成的构建任务
-
-- `fish build`: 自动生成的构建任务 (build)
-- `fish test`: 自动生成的构建任务 (test)
-- `fish check`: 自动生成的构建任务 (check)
-
-## 依赖关系提取
-
-- `CMakeLists.txt`
+## 任务流
+- **配置阶段**: `cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
+- **构建阶段**: `cmake --build build --config Release`
+- **测试阶段**: `ctest --test-dir build`

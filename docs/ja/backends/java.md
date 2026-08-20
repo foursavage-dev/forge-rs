@@ -1,31 +1,5 @@
-# Java バックエンド
+# Java / Kotlin バックエンド
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **翻訳と貢献:** このドキュメントをあなたの言語で翻訳または改善したいですか？ [翻訳ガイドライン](../TRANSLATION.md) をご覧ください。
 
-Fish は主要な各プログラミング言語プロジェクトに対して高速なビルドオーケストレーションを提供します。
-
-## プロジェクトの自動検出
-
-プロジェクトの自動検出: `pom.xml`.
-
-## fish.toml での設定
-
-```toml
-[build]
-backend = "java"
-jobs = 8
-
-[pipelines.build]
-inputs = ["src/**/*", "pom.xml"]
-outputs = ["target/**/*"]
-```
-
-## 自動生成されるタスク
-
-- `fish build`: 自動生成されるタスク (build)
-- `fish test`: 自動生成されるタスク (test)
-- `fish check`: 自動生成されるタスク (check)
-
-## 依存関係の抽出
-
-- `pom.xml`
+Maven (`pom.xml`) または Gradle (`build.gradle`) を使用する Java / Kotlin プロジェクトをサポートします。

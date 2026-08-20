@@ -1,31 +1,5 @@
-# Java 语言后端支持
+# Java / Kotlin 后端
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **翻译与贡献：** 想用您的语言翻译或改进本文档？请参阅我们的 [翻译指南](../TRANSLATION.md)。
 
-Fish 为各种主流语言项目提供原生高效的构建编排支持。
-
-## 自动检测
-
-自动检测: `pom.xml`.
-
-## fish.toml 配置文件设置
-
-```toml
-[build]
-backend = "java"
-jobs = 8
-
-[pipelines.build]
-inputs = ["src/**/*", "pom.xml"]
-outputs = ["target/**/*"]
-```
-
-## 自动生成的构建任务
-
-- `fish build`: 自动生成的构建任务 (build)
-- `fish test`: 自动生成的构建任务 (test)
-- `fish check`: 自动生成的构建任务 (check)
-
-## 依赖关系提取
-
-- `pom.xml`
+支持基于 Maven (`pom.xml`) 或 Gradle (`build.gradle`) 的 Java / Kotlin 项目构建编排。

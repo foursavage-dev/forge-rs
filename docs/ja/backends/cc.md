@@ -1,31 +1,13 @@
 # C / C++ バックエンド
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **翻訳と貢献:** このドキュメントをあなたの言語で翻訳または改善したいですか？ [翻訳ガイドライン](../TRANSLATION.md) をご覧ください。
 
-Fish は主要な各プログラミング言語プロジェクトに対して高速なビルドオーケストレーションを提供します。
+C/C++ バックエンドは CMake、Make、Clang、GCC、MSVC をサポートし、Clangd 用の `compile_commands.json` を自動生成します。
 
-## プロジェクトの自動検出
+## 自動検出
+`CMakeLists.txt` または `Makefile` が存在する場合に検出されます。
 
-プロジェクトの自動検出: `CMakeLists.txt`.
-
-## fish.toml での設定
-
-```toml
-[build]
-backend = "c / c++"
-jobs = 8
-
-[pipelines.build]
-inputs = ["src/**/*", "CMakeLists.txt"]
-outputs = ["target/**/*"]
-```
-
-## 自動生成されるタスク
-
-- `fish build`: 自動生成されるタスク (build)
-- `fish test`: 自動生成されるタスク (test)
-- `fish check`: 自動生成されるタスク (check)
-
-## 依存関係の抽出
-
-- `CMakeLists.txt`
+## タスク
+- **設定**: `cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`
+- **ビルド**: `cmake --build build --config Release`
+- **テスト**: `ctest --test-dir build`

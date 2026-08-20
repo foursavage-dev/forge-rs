@@ -1,32 +1,88 @@
-# コア API 概要
+# Fish API リファレンス
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **翻訳と貢献:** このドキュメントをあなたの言語で翻訳または改善したいですか？ [翻訳ガイドライン](../TRANSLATION.md) をご覧ください。
 
-Fish コアエンジンのアーキテクチャコンポーネントおよびデータ構造リファレンス。
+このドキュメントでは、Fish の主要コンポーネントに関するプログラミングインターフェイス (API) の詳細を解説します。
 
-## 1. ワークスペースモデル (`fish-core`)
-- `Package`: Workspace package abstraction.
-- `Workspace`: Monorepo multi-package coordinator.
-- `Manifest`: Project configuration model.
+## 目次
 
-## 2. 依存グラフ (DAG) (`fish-graph`)
-- `BuildGraph`: Directed Acyclic Graph (DAG).
-- `GraphQueryEngine`: Algebraic query engine (`deps`, `rdeps`, `somepath`).
+- [Core API](#core-api)
+- [CLI API](#cli-api)
+- [Backend API](#backend-api)
+- [Plugin API](#plugin-api)
+- [Security API](#security-api)
 
-## 3. 実行エンジンとサンドボックス (`fish-executor`)
-- `Executor`: Safe process runner with sandbox isolation.
+## Core API
 
-## 4. 並行タスクスケジューラ (`fish-scheduler`)
-- `Scheduler`: GNU Jobserver integration and parallel task dispatcher.
+### ワークスペース検出 (Workspace Discovery)
 
-## 5. CAS コンテンツアドレス指定キャッシュ (`fish-cache` & `fish-cas`)
-- `LocalCache`: Two-phase pruning fingerprint cache.
-- `CasStorage`: Content-addressable storage with ZSTD compression.
+#### Package
 
-## 6. Python AI インテリジェンス層 (`py/fish_ai`)
-- `FailureAnalyzer`: AI failure diagnostics.
-- `ScheduleOptimizer`: Critical-path scheduling optimizer.
+```rust
+pub struct Package {
+    pub name: String,
+    pub version: String,
+    pub path: PathBuf,
+    pub dependencies: Vec<Dependency>,
+    pub backend: BackendType,
+}
+```
 
-## 7. Go クラウドネットワーク調整サービス (`go/pkg`)
-- `NodeRegistry`: Distributed worker coordinator.
-- `LoadBalancer`: Least-loaded worker proxy.
+**メソッド**:
+- `new(name, version, path)`: パッケージを作成。
+- `add_dependency(dep)`: 依存関係を追加。
+- `is_dependency_of(package)`: 他パッケージへの依存関係を判定。
+
+#### Workspace
+
+```rust
+pub struct Workspace {
+    pub root: PathBuf,
+    pub packages: Vec<Package>,
+    pub backend: BackendType,
+}
+```
+
+**メソッド**:
+- `new(root)`: ワークスペースを作成。
+- `discover()`: ワークスペース内のパッケージを検出。
+- `get_package(name)`: パッケージ名で取得。
+- `get_build_order()`: トポロジカル順序でビルド順を取得。
+
+### ビルドグラフ (Build Graph)
+
+#### Graph & Node
+
+```rust
+pub struct Graph {
+    pub nodes: Vec<Node>,
+    pub edges: Vec<Edge>,
+}
+
+pub struct Node {
+    pub id: String,
+    pub package: Package,
+    pub state: NodeState,
+}
+```
+
+## CLI API
+
+```rust
+pub async fn build(
+    packages: Vec<String>,
+    jobs: usize,
+    no_cache: bool,
+    sandbox: bool,
+) -> Result<BuildResult>
+```
+
+## Backend API
+
+```rust
+pub trait Backend {
+    fn detect(&self, path: &Path) -> bool;
+    fn extract_dependencies(&self, path: &Path) -> Result<Vec<Dependency>>;
+    fn generate_tasks(&self, package: &Package) -> Result<Vec<Task>>;
+}
+```

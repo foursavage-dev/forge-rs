@@ -1,31 +1,26 @@
-# Python 語言後端支援
+# Python 後端
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **翻译与贡献：** 想用您的语言翻译或改进本文档？请参阅我们的 [翻译指南](../TRANSLATION.md)。
 
-Fish 為各種主流語言專案提供原生高效的建置編排支援。
+Python 後端为 Python 项目提供构建编排，支持 `pyproject.toml`, `setup.py`, `requirements.txt` 以及 `uv` / `pytest`。
 
-## 自動偵測
+## 自动检测
+当存在 `pyproject.toml`, `setup.py` 或 `requirements.txt` 时自动启用。
 
-自動偵測: `pyproject.toml`.
-
-## fish.toml 設定檔設定
-
+## 配置 (`fish.toml`)
 ```toml
 [build]
-backend = "python"
-jobs = 8
+backend = "py"
 
 [pipelines.build]
-inputs = ["src/**/*", "pyproject.toml"]
-outputs = ["target/**/*"]
+inputs = ["src/**/*.py", "pyproject.toml"]
+outputs = ["dist/*"]
+
+[pipelines.test]
+inputs = ["tests/**/*.py", "src/**/*.py"]
 ```
 
-## 自動產生的建置任務
-
-- `fish build`: 自動產生的建置任務 (build)
-- `fish test`: 自動產生的建置任務 (test)
-- `fish check`: 自動產生的建置任務 (check)
-
-## 相依關係提取
-
-- `pyproject.toml`
+## 生成任务
+- **构建**: `python -m build` (或 `uv build`)
+- **测试**: `pytest`
+- **类型检查**: `mypy .`

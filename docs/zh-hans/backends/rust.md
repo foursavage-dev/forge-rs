@@ -1,31 +1,90 @@
-# Rust 语言后端支持
+# Rust 语言后端
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **翻译与贡献：** 想用您的语言翻译或改进本文档？请参阅我们的 [翻译指南](../TRANSLATION.md)。
 
-Fish 为各种主流语言项目提供原生高效的构建编排支持。
+Rust 后端为使用 Cargo 的 Rust 项目提供专业的构建编排与缓存加速支持。
 
-## 自动检测
+## 自动检测 (Detection)
 
-自动检测: `Cargo.toml`.
+当项目目录中存在 `Cargo.toml` 文件时，Fish 会自动启用 Rust 后端。
 
-## fish.toml 配置文件设置
+## 项目配置 (Configuration)
+
+在项目或工作区根目录的 `fish.toml` 中配置 Rust 后端：
 
 ```toml
 [build]
 backend = "rust"
 jobs = 8
+no_cache = false
+semantic = true
+critical_path = true
 
 [pipelines.build]
-inputs = ["src/**/*", "Cargo.toml"]
-outputs = ["target/**/*"]
+inputs = ["src/**/*", "Cargo.toml", "Cargo.lock"]
+outputs = ["target/release/**/*"]
+
+[pipelines.test]
+depends_on = ["build"]
+inputs = ["tests/**/*", "src/**/*"]
 ```
 
-## 自动生成的构建任务
+## 自动生成的任务 (Tasks Generated)
 
-- `fish build`: 自动生成的构建任务 (build)
-- `fish test`: 自动生成的构建任务 (test)
-- `fish check`: 自动生成的构建任务 (check)
+### 构建任务 (Build Task)
+```bash
+cargo build --release --features <features>
+```
 
-## 依赖关系提取
+### 测试任务 (Test Task)
+```bash
+cargo test --release --features <features>
+```
 
-- `Cargo.toml`
+### 快速检查任务 (Check Task)
+```bash
+cargo check --release --features <features>
+```
+
+### 文档生成任务 (Doc Task)
+```bash
+cargo doc --release --features <features>
+```
+
+## 依赖解析 (Dependency Extraction)
+
+Rust 后端从以下位置解析依赖图关系：
+- `Cargo.toml` 的依赖段落
+- `Cargo.lock` 精确版本锁定文件
+- 工作区内部 Crate 间的相互依赖
+
+## 指纹计算 (Fingerprinting)
+
+Rust 后端基于以下内容计算缓存唯一哈希：
+- `Cargo.toml` 文件内容
+- `Cargo.lock` 文件内容
+- 所有源码文件（自动排除 `target/` 目录）
+- 编译标志与环境变量
+
+## 使用示例 (Examples)
+
+### 基础 Rust 项目构建
+```bash
+cd my-rust-project
+fish build
+```
+
+### 带有特定 Features 的工作区构建
+```bash
+cd my-workspace
+fish build -p my-package --features "serde,uuid"
+```
+
+### 运行工作区测试
+```bash
+cd my-workspace
+fish test
+```
+
+## 前置要求
+- 系统环境中需安装 Rust 工具链 (`rustc`, `cargo`)。

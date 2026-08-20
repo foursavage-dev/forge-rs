@@ -1,48 +1,107 @@
-# Fish システムアーキテクチャ
+# Fish アーキテクチャガイド
 
-> 🌐 **翻訳と貢献：** このドキュメントをご自身の言語に翻訳または改善しませんか？ [翻訳ガイドライン](TRANSLATION.md) をご覧ください。
+> 🌐 **翻訳と貢献:** このドキュメントをあなたの言語で翻訳または改善したいですか？ [翻訳ガイドライン](TRANSLATION.md) をご覧ください。
 
-Fish は、大規模モノレポ向けに設計された **Tri-Engine アーキテクチャ (Rust + Python + Go)** を採用しており、超高速なビルド実行、クラウドネイティブな分散処理、高度な AI 支援を提供します。
+このドキュメントでは、Fish のシステムアーキテクチャ、コアエンジンモジュール、および実行パイプラインに関する包括的な技術概要を説明します。
 
-## Tri-Engine アーキテクチャ概要
+---
 
-```
+## システム概要
+
+Fish は、多言語モノレポおよび分散開発環境向けに設計された、高性能でキャッシュ優先のビルドオーケストレーションシステムです。ネイティブコンパイラを置き換えるのではなく、依存関係 DAG、コンテンツアドレス可能キャッシュ (CAS)、密閉サンドボックス、並列ワークスティーリング実行をインテリジェントに統合管理するオーケストレーション層として機能します。
+
+```text
 ┌─────────────────────────────────────────────────────────────┐
-│                         CLI インターフェース                 │
-│                          (crates/fish-cli)                  │
+│                    fish-cli / Web UI                        │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│       fish-core (Discovery, Toolchains, compile_commands)   │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│           fish-graph (DAG & Algebraic Query Engine)         │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│   fish-scheduler (Governor, Jobserver, Racing, Watcher)     │
 └──────────────┬──────────────────────────────┬───────────────┘
                │                              │
-               ▼                              ▼
-┌──────────────────────────────┐ ┌────────────────────────────┐
-│      Rust 実行エンジン (75%) │ │    Go ネットワーキング (10%) │
-│  - fish-core, fish-graph     │ │  - fish-coordinator       │
-│  - fish-executor, scheduler  │ │  - fish-worker-gateway    │
-│  - fish-cache, fish-cas      │ │  - fish-network, migrator │
-└──────────────┬───────────────┘ └────────────┬───────────────┘
+┌──────────────▼──────────────┐┌──────────────▼──────────────┐
+│ fish-executor & Middleware  ││  fish-cache & fish-cas      │
+└──────────────┬──────────────┘└──────────────┬──────────────┘
                │                              │
-               ▼                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     Python AI サービス (15%)                │
-│   - fish_ai_analyzer   - fish_optimizer                     │
-│   - fish_analytics     - fish_recommender                   │
+┌──────────────▼──────────────────────────────▼──────────────┐
+│      11+ Language Backends & Distributed Worker Network     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 1. Rust 実行コア (75%)
-- **`fish-core`**: ワークスペース検出、マニフェスト解析、入力ファイル精密フィルタ。
-- **`fish-graph`**: 有向非巡回グラフ（DAG）、トポロジカルソート、代数クエリエンジン。
-- **`fish-executor`**: プロセス実行制御、サンドボックス分離、ミドルウェアパイプライン。
-- **`fish-scheduler`**: GNU Jobserver ベースのワークスティーリング並行スケジューラ。
-- **`fish-cache` & `fish-cas`**: Blake3 マルチレイヤ指紋キャッシュと ZSTD 圧縮ストレージ。
+---
 
-### 2. Python AI インテリジェンス層 (15%)
-- **`fish_ai_analyzer`**: エラーログ分類、根本原因特定、自動修正提案。
-- **`fish_optimizer`**: クリティカルパス（Critical Path）計算とメモリ制約付き最適化。
-- **`fish_analytics`**: ビルドテレメトリ収集とボトルネック検出。
-- **`fish_recommender`**: 変更影響予測と不安定テスト（Flaky Tests）の検出。
+## コアクレートと責務
 
-### 3. Go クラウドネイティブネットワーク層 (10%)
-- **`fish-coordinator`**: ワーカーノード管理、ハートビート監視、分散タスク配信。
-- **`fish-worker-gateway`**: 高性能リバースプロキシ、Least-Loaded 負荷分散。
-- **`fish-network`**: コネクションプール管理と mTLS 通信セキュリティ。
-- **`fish-db-migrator`**: テレメトリデータベースのスキーママイグレーション。
+### 1. ワークスペース検出 (`fish-core`)
+- **マニフェスト検出**: `Cargo.toml`, `package.json`, `go.mod`, `pyproject.toml`, `CMakeLists.txt`, `pom.xml`, `*.csproj`, `Package.swift`, `pubspec.yaml`, `build.zig`, `Dockerfile` をスキャンして解析。
+- **コンパイルデータベース生成**: Clangd や IDE 向けの標準 `compile_commands.json` を生成 (`CompilationDatabase`)。
+- **密閉ツールチェーン管理**: コンパイラのバイナリパスと環境変数を隔離して管理 (`ToolchainRegistry`, `ToolchainSpec`)。
+- **マイクロ入力フィルタリング**: Glob パターンに基づいて入力ファイルを正確に絞り込み、不要なキャッシュ無効化を防止 (`MicroInputFilter`)。
+
+### 2. ビルドグラフ (`fish-graph`)
+- **トポロジカルタスクグラフ**: ビルドタスクの有向非巡回グラフ (DAG) を構築し、循環依存を検出。
+- **代数グラフクエリ**: Bazel スタイルのグラフ式 (`deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`) を評価。
+- **動的ノード展開**: 実行中にサブタスクグラフを動的に生成 (`DynamicGraphExpander`)。
+
+### 3. 実行と高速実体化 (`fish-executor`)
+- **プロセスのオーケストレーション**: タイムアウトとストリームキャプチャを備えた非同期タスク実行。
+- **高速エクステントクローニング (Fast Extents Cloning)**: Copy-on-Write (CoW) とハードリンクを利用して I/O コピーなしでアーティファクトを実体化 (`KernelCowCloner`)。
+- **リンカーディスパッチャ**: `mold`, `lld`, `lld-link`, `msvc` のリンカー引数を自動検出・最適化 (`LinkerDispatcher`)。
+- **コンパイラレスポンスファイル**: コマンド引数が OS の上限を超える場合に `@fish_args.rsp` を自動生成。
+
+### 4. スケジューラとリソース制御 (`fish-scheduler`)
+- **並列ワークスティーリング**: 利用可能な全ハードウェアコアでロックフリーなタスクスケジューリングを実行。
+- **カーネルリソースガバナー**: メモリ使用状況をリアルタイムで監視し、OOM クラッシュを防ぐために並列数を動的に制御 (`KernelResourceGovernor`)。
+- **パイプライン化コンパイル**: メタデータが準備できた時点で下流のタスクを即座にアンブロック (`PipelinedCompilationCoordinator`)。
+- **GNU Jobserver プール**: ネストされたコンパイラ呼び出し間でスレッドトークン割り当てをグローバルに管理 (`JobserverPool`)。
+- **動的リモートレーシング**: ローカル実行と分散クラスタワーカーを競争させ、最速の結果を採用 (`DynamicRacingExecutor`)。
+- **分散タスク実行 (DTE)**: 最長処理時間 (LPT) ビンパッキングアルゴリズムによる CI 負荷分散 (`DteBinPacker`)。
+- **リアルタイムファイル監視**: バックグラウンドデーモンがファイル変更イベントを監視し、キャッシュグラフを事前にウォームアップ (`FsWatcherDaemon`)。
+
+### 5. コンテンツアドレス可能ストレージ (`fish-cache` & `fish-cas`)
+- **フィンガープリント**: ソースファイル、環境変数、コンパイラフラグに対して Blake3 ハッシュを計算。
+- **CAS ストレージ**: Zstandard 高速圧縮による重複排除された成果物ストレージ。
+- **階層型複合キャッシュ**: L1 ローカルインメモリ/ディスクキャッシュと L2 リモート S3/HTTP キャッシュの統合。
+
+### 6. ユーザーインターフェイス & テレメトリ (`fish-cli`)
+- **コマンドラインインターフェイス**: build, test, check, graph, doctor, query, affected, daemon コマンドを提供。
+- **インタラクティブ SVG DAG ビジュアライザ**: パン/ズーム、検索、ノードフォーカス、クリティカルパス強調表示を備えた Web ベースのリアルタイムキャンバス。
+- **5言語 UI ローカライゼーション**: 英語、ベトナム語、簡体字中国語、繁体字中国語、日本語をサポート。
+- **バックグラウンドデーモン IPC**: 即時のウォームグラフ解決を実現する `127.0.0.1:9527` ループバック TCP サービス。
+
+---
+
+## サポート言語バックエンド
+
+Fish には 11 種類の専用言語アダプターが含まれています：
+
+| バックエンド | 識別子 | 主要マニフェスト | デフォルトコンパイラ / ツール |
+| :--- | :--- | :--- | :--- |
+| **Rust** | `rust` | `Cargo.toml` | `cargo`, `rustc` |
+| **C / C++** | `cc` | `CMakeLists.txt`, `Makefile` | `cmake`, `clang`, `gcc`, `msvc` |
+| **Go** | `go` | `go.mod` | `go build`, `go test` |
+| **TypeScript / Node** | `ts` | `package.json` | `npm`, `pnpm`, `yarn`, `bun` |
+| **Python** | `py` | `pyproject.toml`, `requirements.txt` | `python -m build`, `pytest`, `uv` |
+| **Java / Kotlin** | `java` | `pom.xml`, `build.gradle` | `mvn`, `gradle` |
+| **.NET** | `dotnet` | `*.csproj`, `*.sln` | `dotnet build`, `dotnet test` |
+| **Swift** | `swift` | `Package.swift` | `swift build`, `swift test` |
+| **Dart / Flutter** | `dart` | `pubspec.yaml` | `dart compile`, `flutter build` |
+| **Zig** | `zig` | `build.zig` | `zig build` |
+| **Docker** | `docker` | `Dockerfile` | `docker build` |
+
+---
+
+## セキュリティと成果物検証
+
+- **暗号署名 (`fish-signing`)**: Ed25519 アルゴリズムによるデジタル署名の生成と検証。
+- **SBOM 生成**: SPDX および CycloneDX 形式のソフトウェア部品表エクスポート。
+- **脆弱性スキャナー (`fish-security`)**: CVSS スコアリングに基づく依存関係の脆弱性検出と重大度によるビルド制御。
+- **シークレット管理 (`fish-secrets`)**: HashiCorp Vault、AWS Secrets Manager、Kubernetes Secret との統合およびコンソールログの自動マスキング。

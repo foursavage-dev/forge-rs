@@ -1,31 +1,90 @@
 # Rust バックエンド
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **翻訳と貢献:** このドキュメントをあなたの言語で翻訳または改善したいですか？ [翻訳ガイドライン](../TRANSLATION.md) をご覧ください。
 
-Fish は主要な各プログラミング言語プロジェクトに対して高速なビルドオーケストレーションを提供します。
+Rust バックエンドは、Cargo を使用する Rust プロジェクト向けにビルドオーケストレーションとキャッシュ機能を提供します。
 
-## プロジェクトの自動検出
+## 自動検出 (Detection)
 
-プロジェクトの自動検出: `Cargo.toml`.
+プロジェクトディレクトリに `Cargo.toml` ファイルが存在する場合、Rust バックエンドが自動的に検出されます。
 
-## fish.toml での設定
+## 設定 (Configuration)
+
+プロジェクトまたはワークスペースのルートにある `fish.toml` で Rust バックエンドを設定します：
 
 ```toml
 [build]
 backend = "rust"
 jobs = 8
+no_cache = false
+semantic = true
+critical_path = true
 
 [pipelines.build]
-inputs = ["src/**/*", "Cargo.toml"]
-outputs = ["target/**/*"]
+inputs = ["src/**/*", "Cargo.toml", "Cargo.lock"]
+outputs = ["target/release/**/*"]
+
+[pipelines.test]
+depends_on = ["build"]
+inputs = ["tests/**/*", "src/**/*"]
 ```
 
-## 自動生成されるタスク
+## 生成されるタスク (Tasks Generated)
 
-- `fish build`: 自動生成されるタスク (build)
-- `fish test`: 自動生成されるタスク (test)
-- `fish check`: 自動生成されるタスク (check)
+### ビルドタスク (Build Task)
+```bash
+cargo build --release --features <features>
+```
 
-## 依存関係の抽出
+### テストタスク (Test Task)
+```bash
+cargo test --release --features <features>
+```
 
-- `Cargo.toml`
+### チェックタスク (Check Task)
+```bash
+cargo check --release --features <features>
+```
+
+### ドキュメント生成タスク (Doc Task)
+```bash
+cargo doc --release --features <features>
+```
+
+## 依存関係の抽出 (Dependency Extraction)
+
+Rust バックエンドは以下から依存関係を解析します：
+- `Cargo.toml` の依存関係セクション
+- `Cargo.lock` の正確なバージョン
+- ワークスペース内部クレート間の依存関係
+
+## フィンガープリント計算 (Fingerprinting)
+
+Rust バックエンドは以下に基づいてキャッシュハッシュを計算します：
+- `Cargo.toml` の内容
+- `Cargo.lock` の内容
+- ソースファイル全体（`target/` ディレクトリは自動除外）
+- ビルド設定とコンパイラフラグ
+
+## 使用例 (Examples)
+
+### 基本的な Rust プロジェクトのビルド
+```bash
+cd my-rust-project
+fish build
+```
+
+### 特定の Features を指定したワークスペースのビルド
+```bash
+cd my-workspace
+fish build -p my-package --features "serde,uuid"
+```
+
+### ワークスペース全体のテスト実行
+```bash
+cd my-workspace
+fish test
+```
+
+## 前提条件
+- システムに Rust ツールチェーン (`rustc`, `cargo`) がインストールされている必要があります。

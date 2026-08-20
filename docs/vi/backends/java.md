@@ -1,31 +1,5 @@
-# Java Backend
+# Java / Kotlin Backend
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **Bản dịch & Đóng góp:** Bạn muốn dịch hoặc cải thiện tài liệu này bằng ngôn ngữ của mình? Xem [Hướng dẫn Dịch thuật](../TRANSLATION.md).
 
-Fish cung cấp khả năng điều phối build tự động cho các dự án đa ngôn ngữ.
-
-## Phát hiện dự án
-
-Phát hiện dự án: `pom.xml`.
-
-## Cấu hình trong fish.toml
-
-```toml
-[build]
-backend = "java"
-jobs = 8
-
-[pipelines.build]
-inputs = ["src/**/*", "pom.xml"]
-outputs = ["target/**/*"]
-```
-
-## Các tác vụ tự động sinh ra
-
-- `fish build`: Các tác vụ tự động sinh ra (build)
-- `fish test`: Các tác vụ tự động sinh ra (test)
-- `fish check`: Các tác vụ tự động sinh ra (check)
-
-## Trích xuất quan hệ phụ thuộc
-
-- `pom.xml`
+Hỗ trợ các dự án Java / Kotlin sử dụng Maven (`pom.xml`) hoặc Gradle (`build.gradle`).

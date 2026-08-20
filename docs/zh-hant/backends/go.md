@@ -1,31 +1,27 @@
-# Go 語言後端支援
+# Go 語言後端
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **翻译与贡献：** 想用您的语言翻译或改进本文档？请参阅我们的 [翻译指南](../TRANSLATION.md)。
 
-Fish 為各種主流語言專案提供原生高效的建置編排支援。
+Go 后端为使用 Go 语言开发的服务与工具提供构建编排与缓存加速。
 
-## 自動偵測
+## 自动检测 (Detection)
+当项目目录中存在 `go.mod` 文件时自动启用。
 
-自動偵測: `go.mod`.
-
-## fish.toml 設定檔設定
-
+## 项目配置 (`fish.toml`)
 ```toml
 [build]
 backend = "go"
 jobs = 8
 
 [pipelines.build]
-inputs = ["src/**/*", "go.mod"]
-outputs = ["target/**/*"]
+inputs = ["**/*.go", "go.mod", "go.sum"]
+outputs = ["bin/*"]
+
+[pipelines.test]
+inputs = ["**/*.go"]
 ```
 
-## 自動產生的建置任務
-
-- `fish build`: 自動產生的建置任務 (build)
-- `fish test`: 自動產生的建置任務 (test)
-- `fish check`: 自動產生的建置任務 (check)
-
-## 相依關係提取
-
-- `go.mod`
+## 自动生成的任务
+- **构建任务**: `go build -o <output> ./...`
+- **测试任务**: `go test -v ./...`
+- **代码审查**: `go vet ./...`

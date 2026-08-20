@@ -1,31 +1,9 @@
 # Docker Backend
 
-> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
+> 🌐 **Bản dịch & Đóng góp:** Bạn muốn dịch hoặc cải thiện tài liệu này bằng ngôn ngữ của mình? Xem [Hướng dẫn Dịch thuật](../TRANSLATION.md).
 
-Fish cung cấp khả năng điều phối build tự động cho các dự án đa ngôn ngữ.
+Docker Backend cung cấp khả năng điều phối xây dựng và kiểm tra container image thông qua `Dockerfile`.
 
-## Phát hiện dự án
-
-Phát hiện dự án: `Dockerfile`.
-
-## Cấu hình trong fish.toml
-
-```toml
-[build]
-backend = "docker"
-jobs = 8
-
-[pipelines.build]
-inputs = ["src/**/*", "Dockerfile"]
-outputs = ["target/**/*"]
-```
-
-## Các tác vụ tự động sinh ra
-
-- `fish build`: Các tác vụ tự động sinh ra (build)
-- `fish test`: Các tác vụ tự động sinh ra (test)
-- `fish check`: Các tác vụ tự động sinh ra (check)
-
-## Trích xuất quan hệ phụ thuộc
-
-- `Dockerfile`
+## Phát hiện & Tác vụ
+- **Phát hiện**: Khi có tệp `Dockerfile`
+- **Build**: `docker build -t <image-tag> .`
