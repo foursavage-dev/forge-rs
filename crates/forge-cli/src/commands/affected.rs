@@ -121,10 +121,10 @@ pub fn run_affected(args: AffectedArgs) -> ExitCode {
             package_graph.len()
         );
         for id in &affected {
-            if let Some(package) = package_graph.node(*id) {
-                if let Some(pkg) = project.package(&package.payload) {
-                    println!("  - {}", pkg.name);
-                }
+            if let Some(package) = package_graph.node(*id)
+                && let Some(pkg) = project.package(&package.payload)
+            {
+                println!("  - {}", pkg.name);
             }
         }
         println!();

@@ -2,6 +2,8 @@
 
 Thank you for your interest in contributing to Forge! This document provides guidelines and instructions for contributing to the project.
 
+Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before participating in the Forge community.
+
 ## Table of Contents
 
 - [Getting Started](#getting-started)
@@ -12,10 +14,14 @@ Thank you for your interest in contributing to Forge! This document provides gui
 - [Reporting Bugs](#reporting-bugs)
 - [Suggesting Enhancements](#suggesting-enhancements)
 - [Code Review Process](#code-review-process)
+- [Getting Help](#getting-help)
+- [License](#license)
 
 ## Getting Started
 
 ### Prerequisites
+
+Before contributing to Forge, make sure you have:
 
 - Rust 1.85 or later
 - Git
@@ -23,84 +29,133 @@ Thank you for your interest in contributing to Forge! This document provides gui
 
 ### Setting Up Development Environment
 
-1. Fork the repository on GitHub
+1. Fork the repository on GitHub.
 2. Clone your fork locally:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/forge-rs.git
    cd forge-rs
    ```
+
 3. Add the upstream remote:
+
    ```bash
    git remote add upstream https://github.com/foursavage-dev/forge-rs.git
    ```
 
+4. Verify the configured remotes:
+
+   ```bash
+   git remote -v
+   ```
+
 ## Development Setup
+
+### Branches
+
+Forge uses separate branches for development and stable releases.
+
+- **`dev`** is the primary development branch and may contain features and changes that are still being tested.
+- **`main`** contains stable code intended for releases.
+
+For normal development work, create your feature or fix branch from `dev`.
+
+Do not submit normal development pull requests directly against `main` unless the change is specifically intended for the stable branch.
 
 ### Building the Project
 
+Build the entire workspace:
+
 ```bash
-# Build the entire workspace
 cargo build --workspace
+```
 
-# Build a specific crate
+Build a specific crate:
+
+```bash
 cargo build -p forge-cli
+```
 
-# Build with optimizations
+Build with optimizations:
+
+```bash
 cargo build --release
 ```
 
 ### Running Tests
 
+Run all tests:
+
 ```bash
-# Run all tests
 cargo test --workspace
+```
 
-# Run tests for a specific crate
+Run tests for a specific crate:
+
+```bash
 cargo test -p forge-cli
+```
 
-# Run tests with output
+Run tests with output:
+
+```bash
 cargo test --workspace -- --nocapture
+```
 
-# Run integration tests
-cargo test --workspace --test-threads=1
+Run tests using a single test thread:
+
+```bash
+cargo test --workspace -- --test-threads=1
 ```
 
 ### Code Quality Checks
 
+Run Clippy:
+
 ```bash
-# Run Clippy linter
 cargo clippy --workspace --all-targets --all-features -- -D warnings
+```
 
-# Format code
+Format code:
+
+```bash
 cargo fmt --all
+```
 
-# Check formatting
+Check formatting:
+
+```bash
 cargo fmt --all -- --check
 ```
+
+Contributions should pass the relevant formatting, linting, and test checks before being submitted.
 
 ## Code Style and Guidelines
 
 ### Rust Guidelines
 
-- Follow the [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
-- Use `#![forbid(unsafe_code)]` in security-sensitive crates
-- Prefer safe abstractions over unsafe code
-- Document public APIs with `///` doc comments
-- Use `Result` types for error handling
-- Avoid `unwrap()` and `expect()` in production code
+- Follow the [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/).
+- Use `#![forbid(unsafe_code)]` in security-sensitive crates where practical.
+- Prefer safe abstractions over unsafe code.
+- Document public APIs with `///` doc comments.
+- Use `Result` types for error handling.
+- Avoid `unwrap()` and `expect()` in production code unless their use is clearly justified.
+- Follow the existing coding conventions of the crate you are modifying.
 
 ### Project-Specific Guidelines
 
-- Use `thiserror` for error types
-- Use `anyhow` for application errors when appropriate
-- Follow the existing crate structure and module organization
-- Keep crates focused on their specific responsibility
-- Add tests for new functionality
-- Update documentation when adding features
+- Use `thiserror` for error types.
+- Use `anyhow` for application errors when appropriate.
+- Follow the existing crate structure and module organization.
+- Keep crates focused on their specific responsibilities.
+- Add tests for new functionality.
+- Update documentation when adding or changing features.
+- Avoid unnecessary dependencies.
+- Keep changes focused and avoid unrelated modifications.
 
 ### Workspace Structure
 
-```
+```text
 forge-rs/
 ├── crates/
 │   ├── forge-core/           # Core functionality
@@ -115,12 +170,16 @@ forge-rs/
 
 ### Writing Tests
 
-- Write unit tests alongside the code they test
-- Add integration tests in the `tests/` directory
-- Use descriptive test names
-- Test both success and failure cases
+- Write unit tests alongside the code they test when appropriate.
+- Add integration tests in the `tests/` directory when appropriate.
+- Use descriptive test names.
+- Test both success and failure cases.
+- Add regression tests when fixing bugs.
+- Avoid tests that depend on external services unless the dependency is necessary.
 
 ### Test Organization
+
+Example:
 
 ```rust
 #[cfg(test)]
@@ -143,9 +202,9 @@ mod tests {
 
 ### Commit Message Format
 
-Follow conventional commits format:
+Forge follows the Conventional Commits format:
 
-```
+```text
 <type>(<scope>): <description>
 
 [optional body]
@@ -153,10 +212,20 @@ Follow conventional commits format:
 [optional footer]
 ```
 
-Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`
+Common types include:
+
+- `feat`
+- `fix`
+- `docs`
+- `style`
+- `refactor`
+- `test`
+- `chore`
+- `perf`
 
 Example:
-```
+
+```text
 feat(cli): add new build command
 
 Add a new command to build specific packages with custom options.
@@ -164,105 +233,178 @@ Add a new command to build specific packages with custom options.
 Closes #123
 ```
 
+Keep commit messages clear and concise.
+
 ### Pull Request Process
 
-1. Create a new branch from `main`:
+For normal development changes:
+
+1. Make sure your local `dev` branch is up to date.
+2. Create a new branch from `dev`:
+
    ```bash
+   git checkout dev
+   git pull upstream dev
    git checkout -b feature/your-feature-name
    ```
-2. Make your changes and commit them
-3. Push to your fork:
+
+3. Make your changes.
+4. Run the relevant tests and code quality checks.
+5. Commit your changes using the Conventional Commits format.
+6. Push your branch to your fork:
+
    ```bash
    git push origin feature/your-feature-name
    ```
-4. Create a pull request on GitHub
-5. Fill out the PR template
-6. Wait for code review
-7. Address review feedback
-8. Once approved, maintainers will merge
+
+7. Open a pull request targeting the `dev` branch.
+8. Fill out the pull request template.
+9. Wait for code review.
+10. Address review feedback when necessary.
+11. Once approved and all required checks pass, a maintainer may merge the pull request.
 
 ### PR Requirements
 
-- All tests must pass
-- Code must be formatted with `cargo fmt`
-- Clippy must pass with no warnings
-- Documentation must be updated if needed
-- Commits must follow the commit message format
+Before a pull request can normally be merged:
+
+- All relevant tests must pass.
+- Code must be formatted with `cargo fmt`.
+- Clippy must pass without warnings where applicable.
+- Documentation must be updated when necessary.
+- Commits should follow the Conventional Commits format.
+- The pull request should have a clear description of the change.
+- The pull request should remain focused on its intended purpose.
+- Required CI checks must pass.
+
+Maintainers may request additional tests, documentation, or changes when appropriate.
 
 ## Reporting Bugs
 
 ### Before Reporting
 
-1. Check existing issues to avoid duplicates
-2. Search the documentation
-3. Try to reproduce the issue
+Before opening a bug report:
+
+1. Check existing issues to avoid duplicates.
+2. Search the documentation.
+3. Try to reproduce the issue.
+4. Make sure you are using a supported version of Forge.
+5. Include relevant environment and version information.
 
 ### Bug Report Template
 
-```markdown
+```text
 **Description**
+
 A clear description of what the bug is.
 
 **To Reproduce**
+
 Steps to reproduce the behavior:
+
 1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+2. Run '...'
+3. Configure '...'
+4. Observe the error
 
 **Expected Behavior**
+
 A clear description of what you expected to happen.
 
 **Environment**
-- OS: [e.g. Windows 10, macOS 12.0]
+
+- OS: [e.g. Windows 11, Ubuntu 24.04]
 - Rust version: [e.g. 1.85.0]
 - Forge version: [e.g. 0.1.0]
 
 **Additional Context**
-Add any other context about the problem here.
+
+Add any other relevant information, logs, screenshots, or configuration here.
 ```
+
+For security vulnerabilities, **do not open a public issue**. Follow the private reporting process described in `SECURITY.md`.
 
 ## Suggesting Enhancements
 
+Feature requests and enhancement proposals are welcome.
+
+Before submitting one:
+
+1. Check existing issues and discussions.
+2. Search the documentation.
+3. Explain the problem or use case clearly.
+4. Describe the proposed solution.
+5. Consider possible alternatives.
+
 ### Feature Request Template
 
-```markdown
+```text
 **Is your feature request related to a problem?**
+
 A clear description of what the problem is.
 
 **Describe the solution you'd like**
+
 A clear description of what you want to happen.
 
 **Describe alternatives you've considered**
+
 A clear description of any alternative solutions or features you've considered.
 
 **Additional context**
-Add any other context or screenshots about the feature request here.
+
+Add any other context, examples, or screenshots that may help explain the proposal.
 ```
 
 ## Code Review Process
 
 ### Review Guidelines
 
-- Be constructive and respectful
-- Focus on the code, not the person
-- Provide clear, actionable feedback
-- Ask questions if something is unclear
-- Consider the broader impact of changes
+Reviewers and contributors are expected to:
+
+- Be constructive and respectful.
+- Focus on the code and technical decisions, not the person.
+- Provide clear, actionable feedback.
+- Ask questions when something is unclear.
+- Consider the broader impact of changes.
+- Explain significant concerns with enough context for the author to address them.
+- Avoid unnecessary or purely stylistic changes unless they improve consistency or maintainability.
+
+### Contributor Responsibilities
+
+Contributors should:
+
+- Respond to review feedback in good faith.
+- Explain disagreements respectfully.
+- Update the pull request when changes are requested.
+- Keep the pull request focused.
+- Avoid force-pushing in ways that unnecessarily disrupt an active review without communicating with reviewers.
 
 ### Timeline
 
-- Initial review: 1-3 business days
-- Follow-up review: 1-2 business days after changes
-- Merge: 1-2 business days after approval
+Review times may vary depending on project activity, contributor availability, and the complexity of the change.
+
+The following are general targets rather than guarantees:
+
+- Initial review: approximately 1-3 business days.
+- Follow-up review: approximately 1-2 business days after requested changes.
+- Merge: generally after approval and successful required checks.
+
+Large or complex changes may require additional review time.
 
 ## Getting Help
 
-- Open an issue for bugs or feature requests
-- Join our Discord community (link coming soon)
-- Email: foursavage@proton.me
-- Check the [documentation](docs/)
+If you need help contributing to Forge:
+
+- Open an issue for bugs or feature requests.
+- Check the project documentation.
+- Join the Forge Discord community when available.
+- Email: [foursavage@proton.me](mailto:foursavage@proton.me)
+- Check the [documentation](docs/).
+
+For security-related issues, follow the private reporting instructions in `SECURITY.md`.
 
 ## License
 
 By contributing to Forge, you agree that your contributions will be licensed under the MIT License.
+
+Forge is distributed under the MIT License. See [`LICENSE`](LICENSE) for the full license text.

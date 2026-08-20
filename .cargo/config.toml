@@ -1,2 +1,5 @@
+[build]
+jobs = 2
+
 [resolver]
 incompatible-rust-versions = "fallback"

@@ -7,8 +7,12 @@ mod build;
 mod commands;
 mod config;
 mod critical_path;
+pub mod daemon;
 pub mod experimental;
 mod monitoring;
+pub mod pgo;
+pub mod pipeline;
+mod polyglot;
 mod predictive;
 mod ramdisk;
 mod render;
@@ -59,7 +63,7 @@ fn main() -> ExitCode {
         Command::CacheServer(args) => run_cache_server(args),
         Command::Worker(args) => commands::run_worker(args),
         Command::Affected(args) => commands::run_affected(args),
-        Command::Doctor(args) => commands::run_doctor_with_ai(args.ai),
+        Command::Doctor(args) => commands::run_doctor_with_ai(args.ai, args.fix),
         Command::Cache(args) => commands::run_cache(args),
         Command::Watch(args) => {
             let start_dir = match resolve_start_dir(args.common.path.as_deref()) {
@@ -100,6 +104,93 @@ fn main() -> ExitCode {
             Err(err) => {
                 eprintln!("error: ui server failed: {err}");
                 ExitCode::FAILURE
+            }
+        },
+        Command::Query(args) => {
+            let start_dir = match resolve_start_dir(args.path.as_deref()) {
+                Ok(dir) => dir,
+                Err(message) => {
+                    eprintln!("error: {message}");
+                    return ExitCode::FAILURE;
+                }
+            };
+            match forge_core::project::Project::discover(&start_dir) {
+                Ok(Some(project)) => match project.build_graph() {
+                    Ok(graph) => {
+                        let parsed = match forge_graph::parse_query(&args.expr) {
+                            Ok(q) => q,
+                            Err(err) => {
+                                eprintln!("error: invalid query expression: {err}");
+                                return ExitCode::FAILURE;
+                            }
+                        };
+                        let engine = forge_graph::GraphQueryEngine::new(&graph, |pkg_id| {
+                            project
+                                .package(pkg_id)
+                                .map(|p| p.name.to_string())
+                                .unwrap_or_else(|| pkg_id.to_string())
+                        });
+                        let matches = engine.eval(&parsed);
+                        for id in matches {
+                            if let Some(node) = graph.node(id) {
+                                let name = project
+                                    .package(&node.payload)
+                                    .map(|p| p.name.to_string())
+                                    .unwrap_or_else(|| format!("{id:?}"));
+                                println!("//{name}");
+                            }
+                        }
+                        ExitCode::SUCCESS
+                    }
+                    Err(err) => {
+                        eprintln!("error: failed to construct graph: {err}");
+                        ExitCode::FAILURE
+                    }
+                },
+                _ => {
+                    eprintln!(
+                        "error: no forge project discovered at {}",
+                        start_dir.display()
+                    );
+                    ExitCode::FAILURE
+                }
+            }
+        }
+        Command::Daemon(args) => match args.command {
+            args::DaemonCommand::Start { port } => {
+                println!("🦀 Starting Forge Build Daemon on 127.0.0.1:{port}...");
+                let daemon = daemon::ForgeDaemon::new(port);
+                match daemon.start_in_background() {
+                    Ok(_) => {
+                        println!("Forge Daemon started successfully.");
+                        ExitCode::SUCCESS
+                    }
+                    Err(e) => {
+                        eprintln!("error: failed to start daemon: {e}");
+                        ExitCode::FAILURE
+                    }
+                }
+            }
+            args::DaemonCommand::Status { port } => {
+                if daemon::ForgeDaemon::is_alive(port) {
+                    let resp = daemon::ForgeDaemon::send_command(port, "STATUS")
+                        .unwrap_or_else(|_| "CONNECTED".to_string());
+                    println!("Daemon active on port {port}: {resp}");
+                    ExitCode::SUCCESS
+                } else {
+                    println!("Daemon is not running on port {port}.");
+                    ExitCode::FAILURE
+                }
+            }
+            args::DaemonCommand::Stop { port } => {
+                if daemon::ForgeDaemon::is_alive(port) {
+                    let _ = daemon::ForgeDaemon::send_command(port, "SHUTDOWN");
+                    println!("Daemon on port {port} stopped.");
+                    ExitCode::SUCCESS
+                } else {
+                    println!("Daemon is not running on port {port}.");
+                    ExitCode::SUCCESS
+                }
             }
         },
     }

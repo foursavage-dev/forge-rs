@@ -110,14 +110,13 @@ impl CompositeCache {
             return true;
         }
 
-        if let Some(remote) = &self.remote {
-            if let Ok(Some(remote_fp)) = remote.get_fingerprint(key) {
-                if remote_fp == expected_fingerprint {
-                    let _ = self.local.put(key, expected_fingerprint);
-                    self.local.stats().record_hit();
-                    return true;
-                }
-            }
+        if let Some(remote) = &self.remote
+            && let Ok(Some(remote_fp)) = remote.get_fingerprint(key)
+            && remote_fp == expected_fingerprint
+        {
+            let _ = self.local.put(key, expected_fingerprint);
+            self.local.stats().record_hit();
+            return true;
         }
 
         false
@@ -133,10 +132,10 @@ impl CompositeCache {
             .put_with_artifact(key, fingerprint, artifact_hash.clone());
         if let Some(remote) = &self.remote {
             let _ = remote.put_fingerprint(key, fingerprint);
-            if let Some(hash) = artifact_hash {
-                if let Some(blob) = self.local.get_object(&hash) {
-                    let _ = remote.put_artifact(key, &blob);
-                }
+            if let Some(hash) = artifact_hash
+                && let Some(blob) = self.local.get_object(&hash)
+            {
+                let _ = remote.put_artifact(key, &blob);
             }
         }
     }
@@ -144,16 +143,16 @@ impl CompositeCache {
     /// Fetches the artifact blob for `key`: the local CAS first (via the
     /// recorded content hash), then the remote cache.
     pub fn get_artifact(&self, key: &str) -> Option<Vec<u8>> {
-        if let Some(hash) = self.local.artifact_hash(key) {
-            if let Some(blob) = self.local.get_object(&hash) {
-                return Some(blob);
-            }
+        if let Some(hash) = self.local.artifact_hash(key)
+            && let Some(blob) = self.local.get_object(&hash)
+        {
+            return Some(blob);
         }
-        if let Some(remote) = &self.remote {
-            if let Ok(Some(blob)) = remote.get_artifact(key) {
-                let _ = self.local.put_object(&blob_hash_of(&blob), &blob);
-                return Some(blob);
-            }
+        if let Some(remote) = &self.remote
+            && let Ok(Some(blob)) = remote.get_artifact(key)
+        {
+            let _ = self.local.put_object(&blob_hash_of(&blob), &blob);
+            return Some(blob);
         }
         None
     }
@@ -220,20 +219,20 @@ impl<I: TaskExecutor> CompositeCachingExecutor<I> {
 
 impl<I: TaskExecutor> TaskExecutor for CompositeCachingExecutor<I> {
     fn execute(&self, task: &Task) -> Result<TaskOutcome, ExecutorError> {
-        if let Some(CacheEntry { key, fingerprint }) = &task.cache {
-            if self.cache.matches(key, fingerprint) {
-                self.restore_artifacts(task);
-                return Ok(TaskOutcome::cached(task));
-            }
+        if let Some(CacheEntry { key, fingerprint }) = &task.cache
+            && self.cache.matches(key, fingerprint)
+        {
+            self.restore_artifacts(task);
+            return Ok(TaskOutcome::cached(task));
         }
 
         let outcome = self.inner.execute(task)?;
-        if outcome.status == TaskStatus::Executed {
-            if let Some(CacheEntry { key, fingerprint }) = &task.cache {
-                let artifact_hash = self.store_artifacts(task);
-                self.cache
-                    .put_with_artifact(key, fingerprint, artifact_hash);
-            }
+        if outcome.status == TaskStatus::Executed
+            && let Some(CacheEntry { key, fingerprint }) = &task.cache
+        {
+            let artifact_hash = self.store_artifacts(task);
+            self.cache
+                .put_with_artifact(key, fingerprint, artifact_hash);
         }
         Ok(outcome)
     }

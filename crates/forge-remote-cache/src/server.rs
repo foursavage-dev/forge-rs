@@ -47,22 +47,21 @@ impl RemoteCacheServer {
                 let mut guard = fingerprints.write().unwrap();
                 for entry in entries.flatten() {
                     let path = entry.path();
-                    if path.is_file() {
-                        if let Some(name) = path.file_stem().and_then(|s| s.to_str()) {
-                            if let Ok(content) = fs::read_to_string(&path) {
-                                guard.insert(name.to_string(), content.trim().to_string());
-                            }
-                        }
+                    if path.is_file()
+                        && let Some(name) = path.file_stem().and_then(|s| s.to_str())
+                        && let Ok(content) = fs::read_to_string(&path)
+                    {
+                        guard.insert(name.to_string(), content.trim().to_string());
                     }
                 }
             }
 
             let index_path = art_dir.join("index.json");
-            if let Ok(content) = fs::read_to_string(index_path) {
-                if let Ok(index) = serde_json::from_str::<HashMap<String, String>>(&content) {
-                    let mut guard = artifact_index.write().unwrap();
-                    guard.extend(index);
-                }
+            if let Ok(content) = fs::read_to_string(index_path)
+                && let Ok(index) = serde_json::from_str::<HashMap<String, String>>(&content)
+            {
+                let mut guard = artifact_index.write().unwrap();
+                guard.extend(index);
             }
         }
 
@@ -161,7 +160,7 @@ impl RemoteCacheServer {
         fingerprints: Arc<RwLock<HashMap<String, String>>>,
         artifacts: Arc<RwLock<HashMap<String, Vec<u8>>>>,
         artifact_index: Arc<RwLock<HashMap<String, String>>>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), anyhow::Error> {
         let _ = stream.set_read_timeout(Some(Duration::from_secs(30)));
         let _ = stream.set_write_timeout(Some(Duration::from_secs(30)));
 
@@ -171,7 +170,7 @@ impl RemoteCacheServer {
 
         while reader.read_line(&mut line)? > 0 {
             if line.len() > 64 * 1024 * 1024 {
-                return Err("request line exceeds maximum size limit".into());
+                return Err(anyhow::anyhow!("request line exceeds maximum size limit"));
             }
             let trimmed = line.trim();
             if trimmed.is_empty() {
@@ -311,15 +310,15 @@ impl RemoteCacheServer {
                     guard.insert(key.clone(), fingerprint.clone());
                 }
 
-                if let Some(dir) = storage_dir {
-                    if let Some(safe_k) = Self::safe_key_identifier(&key) {
-                        let fp_dir = dir.join("fingerprints");
-                        let _ = fs::create_dir_all(&fp_dir);
-                        let target_path = fp_dir.join(format!("{safe_k}.json"));
-                        let tmp_path = fp_dir.join(format!("{safe_k}.tmp"));
-                        if fs::write(&tmp_path, &fingerprint).is_ok() {
-                            let _ = fs::rename(&tmp_path, &target_path);
-                        }
+                if let Some(dir) = storage_dir
+                    && let Some(safe_k) = Self::safe_key_identifier(&key)
+                {
+                    let fp_dir = dir.join("fingerprints");
+                    let _ = fs::create_dir_all(&fp_dir);
+                    let target_path = fp_dir.join(format!("{safe_k}.json"));
+                    let tmp_path = fp_dir.join(format!("{safe_k}.tmp"));
+                    if fs::write(&tmp_path, &fingerprint).is_ok() {
+                        let _ = fs::rename(&tmp_path, &target_path);
                     }
                 }
 
@@ -408,28 +407,28 @@ impl RemoteCacheServer {
                     guard.insert(hash.clone(), bytes.clone());
                 }
 
-                if let Some(dir) = storage_dir {
-                    if let Some(safe_h) = Self::safe_key_identifier(&content_hash) {
-                        let art_dir = dir.join("artifacts");
-                        let _ = fs::create_dir_all(art_dir.join("objects"));
-                        let target_path = art_dir.join("objects").join(&safe_h);
-                        let tmp_path = art_dir.join("objects").join(format!("{safe_h}.tmp"));
-                        if fs::write(&tmp_path, &bytes).is_ok() {
-                            let _ = fs::rename(&tmp_path, &target_path);
-                        }
-                        {
-                            let mut guard = artifact_index.write().unwrap();
-                            guard.insert(hash.clone(), safe_h);
-                        }
-                        let index_path = art_dir.join("index.json");
-                        let snapshot = {
-                            let guard = artifact_index.read().unwrap();
-                            serde_json::to_vec(&*guard).unwrap_or_default()
-                        };
-                        let tmp_index = art_dir.join("index.json.tmp");
-                        if fs::write(&tmp_index, snapshot).is_ok() {
-                            let _ = fs::rename(&tmp_index, index_path);
-                        }
+                if let Some(dir) = storage_dir
+                    && let Some(safe_h) = Self::safe_key_identifier(&content_hash)
+                {
+                    let art_dir = dir.join("artifacts");
+                    let _ = fs::create_dir_all(art_dir.join("objects"));
+                    let target_path = art_dir.join("objects").join(&safe_h);
+                    let tmp_path = art_dir.join("objects").join(format!("{safe_h}.tmp"));
+                    if fs::write(&tmp_path, &bytes).is_ok() {
+                        let _ = fs::rename(&tmp_path, &target_path);
+                    }
+                    {
+                        let mut guard = artifact_index.write().unwrap();
+                        guard.insert(hash.clone(), safe_h);
+                    }
+                    let index_path = art_dir.join("index.json");
+                    let snapshot = {
+                        let guard = artifact_index.read().unwrap();
+                        serde_json::to_vec(&*guard).unwrap_or_default()
+                    };
+                    let tmp_index = art_dir.join("index.json.tmp");
+                    if fs::write(&tmp_index, snapshot).is_ok() {
+                        let _ = fs::rename(&tmp_index, index_path);
                     }
                 }
 

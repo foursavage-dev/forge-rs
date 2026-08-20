@@ -31,12 +31,12 @@ pub fn get_default_install_dir() -> PathBuf {
 pub fn find_source_forge_binary() -> Option<PathBuf> {
     let binary_name = if cfg!(windows) { "forge.exe" } else { "forge" };
 
-    if let Ok(exe_path) = std::env::current_exe() {
-        if let Some(parent) = exe_path.parent() {
-            let candidate = parent.join(binary_name);
-            if candidate.is_file() {
-                return Some(candidate);
-            }
+    if let Ok(exe_path) = std::env::current_exe()
+        && let Some(parent) = exe_path.parent()
+    {
+        let candidate = parent.join(binary_name);
+        if candidate.is_file() {
+            return Some(candidate);
         }
     }
 
@@ -77,20 +77,18 @@ pub fn perform_installation(target_dir: &Path, source_binary: Option<&Path>) -> 
                 )
             })?;
         }
-    } else if let Ok(current_exe) = std::env::current_exe() {
-        if let Some(name) = current_exe.file_name() {
-            if (name.to_string_lossy().eq_ignore_ascii_case("forge.exe")
-                || name.to_string_lossy() == "forge")
-                && current_exe != destination_file
-            {
-                fs::copy(&current_exe, &destination_file).map_err(|e| {
-                    format!(
-                        "Failed to copy current executable to {}: {e}",
-                        destination_file.display()
-                    )
-                })?;
-            }
-        }
+    } else if let Ok(current_exe) = std::env::current_exe()
+        && let Some(name) = current_exe.file_name()
+        && (name.to_string_lossy().eq_ignore_ascii_case("forge.exe")
+            || name.to_string_lossy() == "forge")
+        && current_exe != destination_file
+    {
+        fs::copy(&current_exe, &destination_file).map_err(|e| {
+            format!(
+                "Failed to copy current executable to {}: {e}",
+                destination_file.display()
+            )
+        })?;
     }
 
     #[cfg(unix)]
@@ -147,10 +145,10 @@ pub fn perform_uninstallation(target_dir: &Path) -> Result<(), String> {
         let _ = fs::remove_file(meta_path);
     }
 
-    if let Ok(read_dir) = fs::read_dir(target_dir) {
-        if read_dir.count() == 0 {
-            let _ = fs::remove_dir(target_dir);
-        }
+    if let Ok(read_dir) = fs::read_dir(target_dir)
+        && read_dir.count() == 0
+    {
+        let _ = fs::remove_dir(target_dir);
     }
 
     Ok(())

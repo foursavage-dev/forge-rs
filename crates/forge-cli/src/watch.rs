@@ -122,7 +122,7 @@ pub fn run_watch(
         let mut changed_paths = HashSet::new();
         for p in first_event.paths {
             if is_relevant_path(&p) {
-                predictive_engine.record_touch(&p);
+                predictive_engine.record_touch(&p, None);
                 changed_paths.insert(p);
             }
         }
@@ -132,7 +132,7 @@ pub fn run_watch(
             if let Ok(event) = rx.recv_timeout(Duration::from_millis(20)) {
                 for p in event.paths {
                     if is_relevant_path(&p) {
-                        predictive_engine.record_touch(&p);
+                        predictive_engine.record_touch(&p, None);
                         changed_paths.insert(p);
                     }
                 }

@@ -19,7 +19,7 @@ jobs:
     name: Core & CLI Integration Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run Core Tests
@@ -31,7 +31,7 @@ jobs:
     name: Subsystems Integration Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run Remote Cache Tests

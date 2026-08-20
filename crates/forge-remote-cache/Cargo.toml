@@ -7,6 +7,7 @@ license.workspace = true
 description = "Remote build cache client and tiered L1/L2 caching for forge"
 
 [dependencies]
+anyhow = { workspace = true }
 base64 = "0.23"
 blake3 = "1"
 serde = { version = "1", features = ["derive"] }

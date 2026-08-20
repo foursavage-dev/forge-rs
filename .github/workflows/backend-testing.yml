@@ -19,7 +19,7 @@ jobs:
     name: Core Language Backends Testing
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Test Rust, CC, Go, TS, Python backends
@@ -29,7 +29,7 @@ jobs:
     name: Extended Language Backends Testing
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Test Java, Dotnet, Swift, Dart, Zig, Docker backends

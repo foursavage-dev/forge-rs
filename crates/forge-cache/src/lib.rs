@@ -501,16 +501,15 @@ impl LocalCache {
                         .and_then(|name| name.to_str())
                         .map(|name| !ref_counts.contains_key(name))
                         .unwrap_or(false);
-                if is_tmp || orphan {
-                    if let Ok(metadata) = fs::metadata(&path) {
-                        if fs::remove_file(&path).is_ok() {
-                            removed.insert(path_str);
-                            if !is_tmp {
-                                report.removed_objects += 1;
-                            }
-                            report.freed_bytes += metadata.len();
-                        }
+                if (is_tmp || orphan)
+                    && let Ok(metadata) = fs::metadata(&path)
+                    && fs::remove_file(&path).is_ok()
+                {
+                    removed.insert(path_str);
+                    if !is_tmp {
+                        report.removed_objects += 1;
                     }
+                    report.freed_bytes += metadata.len();
                 }
             }
 
@@ -618,13 +617,12 @@ fn drop_record_and_cascade(
         if count <= 1 {
             let object_path = objects_dir.join(hash);
             let object_str = object_path.to_string_lossy().to_string();
-            if removed.insert(object_str) {
-                if let Ok(metadata) = fs::metadata(&object_path) {
-                    if fs::remove_file(&object_path).is_ok() {
-                        report.removed_objects += 1;
-                        freed += metadata.len();
-                    }
-                }
+            if removed.insert(object_str)
+                && let Ok(metadata) = fs::metadata(&object_path)
+                && fs::remove_file(&object_path).is_ok()
+            {
+                report.removed_objects += 1;
+                freed += metadata.len();
             }
         }
     }
@@ -655,13 +653,12 @@ fn cleanup_tmp_files(dir: &Path, now: u64, age_secs: u64, removed: &mut HashSet<
         let Some(age) = file_age_secs(&path, now) else {
             continue;
         };
-        if age >= age_secs {
-            if let Ok(metadata) = fs::metadata(&path) {
-                if fs::remove_file(&path).is_ok() {
-                    removed.insert(path_str);
-                    freed += metadata.len();
-                }
-            }
+        if age >= age_secs
+            && let Ok(metadata) = fs::metadata(&path)
+            && fs::remove_file(&path).is_ok()
+        {
+            removed.insert(path_str);
+            freed += metadata.len();
         }
     }
     freed
@@ -786,23 +783,22 @@ impl<I: TaskExecutor> CachingExecutor<I> {
 
 impl<I: TaskExecutor> TaskExecutor for CachingExecutor<I> {
     fn execute(&self, task: &Task) -> Result<TaskOutcome, ExecutorError> {
-        if let Some(CacheEntry { key, fingerprint }) = &task.cache {
-            if self.cache.matches(key, fingerprint) {
-                // Note: CAS artifact restoration will be handled by the caller/CLI
-                // for now, we just return cached status
-                return Ok(TaskOutcome::cached(task));
-            }
+        if let Some(CacheEntry { key, fingerprint }) = &task.cache
+            && self.cache.matches(key, fingerprint)
+        {
+            // Note: CAS artifact restoration will be handled by the caller/CLI
+            // for now, we just return cached status
+            return Ok(TaskOutcome::cached(task));
         }
         let outcome = self.inner.execute(task)?;
-        if outcome.status == TaskStatus::Executed {
-            if let Some(CacheEntry { key, fingerprint }) = &task.cache {
-                if let Err(_error) = self.cache.put(key, fingerprint) {
-                    self.cache.stats().record_error();
-                }
+        if outcome.status == TaskStatus::Executed
+            && let Some(CacheEntry { key, fingerprint }) = &task.cache
+            && let Err(_error) = self.cache.put(key, fingerprint)
+        {
+            self.cache.stats().record_error();
 
-                // Note: CAS artifact storage will be handled by the caller/CLI
-                // for now, we skip async operations in sync context
-            }
+            // Note: CAS artifact storage will be handled by the caller/CLI
+            // for now, we skip async operations in sync context
         }
         Ok(outcome)
     }

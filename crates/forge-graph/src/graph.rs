@@ -75,6 +75,23 @@ impl<T> BuildGraph<T> {
         id
     }
 
+    pub fn merge_subgraph(&mut self, other: BuildGraph<T>) -> HashMap<NodeId, NodeId> {
+        let mut id_map = HashMap::new();
+        for (other_idx, node) in other.nodes.into_iter().enumerate() {
+            let old_id = NodeId(other_idx);
+            let new_id = self.add_node(node.payload);
+            id_map.insert(old_id, new_id);
+        }
+        for (dep_idx, deps) in other.deps.into_iter().enumerate() {
+            let dependent = id_map[&NodeId(dep_idx)];
+            for dep in deps {
+                let dependency = id_map[&dep];
+                let _ = self.add_dependency(dependency, dependent);
+            }
+        }
+        id_map
+    }
+
     pub fn nodes(&self) -> &[Node<T>] {
         &self.nodes
     }
@@ -588,5 +605,27 @@ mod tests {
             Ok(&[][..]),
             "the edge through the dropped middle node is cut"
         );
+    }
+
+    #[test]
+    fn test_merge_subgraph() {
+        let mut g1 = BuildGraph::new();
+        let a = g1.add_node("a");
+        let b = g1.add_node("b");
+        g1.add_dependency(a, b).unwrap();
+
+        let mut g2 = BuildGraph::new();
+        let c = g2.add_node("c");
+        let d = g2.add_node("d");
+        g2.add_dependency(c, d).unwrap();
+
+        let id_map = g1.merge_subgraph(g2);
+        assert_eq!(g1.len(), 4);
+        assert_eq!(id_map.len(), 2);
+
+        let new_c = id_map[&c];
+        let new_d = id_map[&d];
+        assert_eq!(g1.deps(new_d).unwrap(), &[new_c]);
+        assert_eq!(g1.validate(), Ok(()));
     }
 }

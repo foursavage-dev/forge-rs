@@ -84,14 +84,14 @@ edition = "2024"
 fn version_flag_prints_name_and_version() {
     let output = run(forge().arg("--version"));
     assert!(output.status.success());
-    assert!(stdout(&output).contains("forge 0.1.0"));
+    assert!(stdout(&output).contains(&format!("forge {}", env!("CARGO_PKG_VERSION"))));
 }
 
 #[test]
 fn version_subcommand_prints_name_and_version() {
     let output = run(forge().arg("version"));
     assert!(output.status.success());
-    assert!(stdout(&output).contains("forge 0.1.0"));
+    assert!(stdout(&output).contains(&format!("forge {}", env!("CARGO_PKG_VERSION"))));
 }
 
 #[test]

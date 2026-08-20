@@ -33,11 +33,11 @@ pub fn run_run(args: RunArgs) -> ExitCode {
     let mut target_pkg = None;
     if let Some(pkg_name) = &args.package {
         for id in project.workspace_members() {
-            if let Some(pkg) = project.package(id) {
-                if pkg.name.as_str() == *pkg_name {
-                    target_pkg = Some(pkg);
-                    break;
-                }
+            if let Some(pkg) = project.package(id)
+                && pkg.name.as_str() == *pkg_name
+            {
+                target_pkg = Some(pkg);
+                break;
             }
         }
         if target_pkg.is_none() {
@@ -107,6 +107,7 @@ pub fn run_run(args: RunArgs) -> ExitCode {
         kernel_bypass: false,
         wasm_sandbox: false,
         super_opt: false,
+        explain: false,
     };
 
     let build_status = crate::run_build_mode(common_args, BuildMode::Build);

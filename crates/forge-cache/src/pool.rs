@@ -6,7 +6,7 @@
 //! during fingerprint computation and cache operations.
 //!
 //! Performance optimizations:
-//! - Object pooling for Vec<u8> buffers
+//! - Object pooling for `Vec<u8>` buffers
 //! - Zero-allocation for common buffer sizes
 //! - Cache-friendly memory layout
 
@@ -17,7 +17,7 @@ use std::sync::Arc;
 /// Size tiers for memory pools (powers of 2 for efficient reuse)
 const SIZE_TIERS: &[usize] = &[256, 1024, 4096, 16384, 65536, 262144];
 
-/// Memory pool for Vec<u8> buffers
+/// Memory pool for `Vec<u8>` buffers
 #[derive(Debug)]
 pub struct BufferPool {
     /// Multiple pools for different size tiers
@@ -75,15 +75,15 @@ impl BufferPool {
         stats.deallocations += 1;
 
         // Only pool buffers that match our size tiers
-        if let Some(&tier_size) = SIZE_TIERS.get(tier_index) {
-            if capacity >= tier_size * 2 / 3 && capacity <= tier_size * 3 / 2 {
-                if let Some(pool) = self.pools.get(tier_index) {
-                    let mut pool = pool.lock();
-                    // Limit pool size to prevent unbounded growth
-                    if pool.len() < 10 {
-                        pool.push_back(buffer);
-                    }
-                }
+        if let Some(&tier_size) = SIZE_TIERS.get(tier_index)
+            && capacity >= tier_size * 2 / 3
+            && capacity <= tier_size * 3 / 2
+            && let Some(pool) = self.pools.get(tier_index)
+        {
+            let mut pool = pool.lock();
+            // Limit pool size to prevent unbounded growth
+            if pool.len() < 10 {
+                pool.push_back(buffer);
             }
         }
     }

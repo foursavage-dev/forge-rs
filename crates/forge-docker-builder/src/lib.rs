@@ -29,7 +29,7 @@ impl DockerBuilderService {
         &self,
         dockerfile_path: &str,
         options: BuildOptions,
-    ) -> Result<DockerImage, Box<dyn std::error::Error>> {
+    ) -> Result<DockerImage, anyhow::Error> {
         self.builder.build(dockerfile_path, options).await
     }
 }

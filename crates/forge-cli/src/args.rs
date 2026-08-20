@@ -56,6 +56,8 @@ pub enum Command {
     Plugin(PluginArgs),
     Fix(FixArgs),
     Ui(UiArgs),
+    Query(QueryArgs),
+    Daemon(DaemonArgs),
 }
 
 #[derive(Debug, Args)]
@@ -99,6 +101,8 @@ pub struct NewArgs {
 pub struct DoctorArgs {
     #[arg(long)]
     pub ai: bool,
+    #[arg(long)]
+    pub fix: bool,
 }
 
 /// Arguments for affected command
@@ -337,6 +341,37 @@ pub struct CommonArgs {
     pub wasm_sandbox: bool,
     #[arg(long = "super-opt")]
     pub super_opt: bool,
+    #[arg(long = "explain")]
+    pub explain: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct QueryArgs {
+    pub expr: String,
+    #[arg(long, short)]
+    pub path: Option<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct DaemonArgs {
+    #[command(subcommand)]
+    pub command: DaemonCommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum DaemonCommand {
+    Start {
+        #[arg(long, default_value_t = 9527)]
+        port: u16,
+    },
+    Status {
+        #[arg(long, default_value_t = 9527)]
+        port: u16,
+    },
+    Stop {
+        #[arg(long, default_value_t = 9527)]
+        port: u16,
+    },
 }
 
 /// Arguments for live-patch command

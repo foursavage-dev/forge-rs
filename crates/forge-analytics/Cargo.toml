@@ -1,6 +1,6 @@
 [package]
 name = "forge-analytics"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 authors = ["Foursavage Dev <foursavage@proton.me>"]
 license = "MIT"
@@ -10,6 +10,7 @@ keywords = ["analytics", "dashboard", "cache", "metrics"]
 categories = ["development-tools"]
 
 [dependencies]
+anyhow = { workspace = true }
 forge-core = { path = "../forge-core" }
 forge-cache = { path = "../forge-cache" }
 

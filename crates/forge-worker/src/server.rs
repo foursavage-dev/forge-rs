@@ -144,7 +144,7 @@ impl WorkerServer {
     pub fn handle_client(
         stream: &mut TcpStream,
         expected_token: &Option<String>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), anyhow::Error> {
         let active_jobs = AtomicUsize::new(0);
         let vfs = Arc::new(VirtualFileSystem::new(1024 * 1024 * 100));
         Self::handle_connection(
@@ -166,7 +166,7 @@ impl WorkerServer {
         active_jobs: &AtomicUsize,
         start_time: Instant,
         vfs: Arc<VirtualFileSystem>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), anyhow::Error> {
         let _ = stream.set_read_timeout(Some(Duration::from_secs(300)));
         let _ = stream.set_write_timeout(Some(Duration::from_secs(300)));
 
@@ -183,22 +183,22 @@ impl WorkerServer {
         }
 
         if let Ok(req) = serde_json::from_str::<RemoteTaskRequest>(trimmed) {
-            if let Some(expected) = expected_token {
-                if req.auth_token.as_ref() != Some(expected) {
-                    let err_res = RemoteTaskResponse {
-                        task_id: req.task_id,
-                        exit_code: Some(1),
-                        stdout: String::new(),
-                        stderr: "unauthorized: invalid auth token".to_string(),
-                        duration_ms: 0,
-                        error: Some("unauthorized".to_string()),
-                    };
-                    let out = serde_json::to_string(&err_res)?;
-                    stream.write_all(out.as_bytes())?;
-                    stream.write_all(b"\n")?;
-                    stream.flush()?;
-                    return Ok(());
-                }
+            if let Some(expected) = expected_token
+                && req.auth_token.as_ref() != Some(expected)
+            {
+                let err_res = RemoteTaskResponse {
+                    task_id: req.task_id,
+                    exit_code: Some(1),
+                    stdout: String::new(),
+                    stderr: "unauthorized: invalid auth token".to_string(),
+                    duration_ms: 0,
+                    error: Some("unauthorized".to_string()),
+                };
+                let out = serde_json::to_string(&err_res)?;
+                stream.write_all(out.as_bytes())?;
+                stream.write_all(b"\n")?;
+                stream.flush()?;
+                return Ok(());
             }
 
             active_jobs.fetch_add(1, Ordering::SeqCst);
@@ -282,20 +282,20 @@ impl WorkerServer {
         }
 
         if let Ok(vfs_req) = serde_json::from_str::<VfsFileRequest>(trimmed) {
-            if let Some(expected) = expected_token {
-                if vfs_req.auth_token.as_ref() != Some(expected) {
-                    let err_resp = VfsFileResponse {
-                        success: false,
-                        content_base64: None,
-                        error: Some("unauthorized".to_string()),
-                        metadata: None,
-                    };
-                    let out = serde_json::to_string(&err_resp)?;
-                    stream.write_all(out.as_bytes())?;
-                    stream.write_all(b"\n")?;
-                    stream.flush()?;
-                    return Ok(());
-                }
+            if let Some(expected) = expected_token
+                && vfs_req.auth_token.as_ref() != Some(expected)
+            {
+                let err_resp = VfsFileResponse {
+                    success: false,
+                    content_base64: None,
+                    error: Some("unauthorized".to_string()),
+                    metadata: None,
+                };
+                let out = serde_json::to_string(&err_resp)?;
+                stream.write_all(out.as_bytes())?;
+                stream.write_all(b"\n")?;
+                stream.flush()?;
+                return Ok(());
             }
 
             let file_path = Path::new(&vfs_req.file_path);
@@ -331,33 +331,55 @@ impl WorkerServer {
         }
 
         if let Ok(ping_req) = serde_json::from_str::<WorkerPingRequest>(trimmed) {
-            if let Some(expected) = expected_token {
-                if ping_req.auth_token.as_ref() != Some(expected) {
-                    let err_resp = WorkerPingResponse {
-                        status: "unauthorized".to_string(),
-                        health: WorkerHealthInfo {
-                            worker_name: worker_name.to_string(),
-                            active_jobs: active_jobs.load(Ordering::SeqCst),
-                            max_concurrency,
-                            uptime_secs: start_time.elapsed().as_secs(),
-                        },
-                        error: Some("invalid authentication token".to_string()),
-                    };
-                    let out = serde_json::to_string(&err_resp)?;
-                    stream.write_all(out.as_bytes())?;
-                    stream.write_all(b"\n")?;
-                    stream.flush()?;
-                    return Ok(());
-                }
+            if let Some(expected) = expected_token
+                && ping_req.auth_token.as_ref() != Some(expected)
+            {
+                let current_jobs = active_jobs.load(Ordering::SeqCst);
+                let cpu_est = if max_concurrency > 0 {
+                    Some(((current_jobs as f32) / (max_concurrency as f32) * 100.0).min(100.0))
+                } else {
+                    None
+                };
+                let mem_est = Some((current_jobs as u64) * 64 * 1024 * 1024);
+
+                let err_resp = WorkerPingResponse {
+                    status: "unauthorized".to_string(),
+                    health: WorkerHealthInfo {
+                        worker_name: worker_name.to_string(),
+                        active_jobs: current_jobs,
+                        max_concurrency,
+                        uptime_secs: start_time.elapsed().as_secs(),
+                        cpu_usage_pct: cpu_est,
+                        memory_used_bytes: mem_est,
+                        memory_total_bytes: Some(1024 * 1024 * 1024 * 8),
+                    },
+                    error: Some("invalid authentication token".to_string()),
+                };
+                let out = serde_json::to_string(&err_resp)?;
+                stream.write_all(out.as_bytes())?;
+                stream.write_all(b"\n")?;
+                stream.flush()?;
+                return Ok(());
             }
+
+            let current_jobs = active_jobs.load(Ordering::SeqCst);
+            let cpu_est = if max_concurrency > 0 {
+                Some(((current_jobs as f32) / (max_concurrency as f32) * 100.0).min(100.0))
+            } else {
+                None
+            };
+            let mem_est = Some((current_jobs as u64) * 64 * 1024 * 1024);
 
             let resp = WorkerPingResponse {
                 status: "ok".to_string(),
                 health: WorkerHealthInfo {
                     worker_name: worker_name.to_string(),
-                    active_jobs: active_jobs.load(Ordering::SeqCst),
+                    active_jobs: current_jobs,
                     max_concurrency,
                     uptime_secs: start_time.elapsed().as_secs(),
+                    cpu_usage_pct: cpu_est,
+                    memory_used_bytes: mem_est,
+                    memory_total_bytes: Some(1024 * 1024 * 1024 * 8),
                 },
                 error: None,
             };
@@ -385,10 +407,9 @@ impl WorkerServer {
     }
 }
 
-/// Decodes and extracts a packed source snapshot into a fresh temp dir.
-fn unpack_source(ctx: &SourceContext) -> Result<PathBuf, Box<dyn std::error::Error>> {
+fn unpack_source(ctx: &SourceContext) -> anyhow::Result<PathBuf> {
     if ctx.format != "tar.zst" {
-        return Err(format!("unsupported source format: {}", ctx.format).into());
+        return Err(anyhow::anyhow!("unsupported source format: {}", ctx.format));
     }
     let mut decoder = base64::read::DecoderReader::new(
         ctx.data_base64.as_bytes(),
@@ -399,20 +420,15 @@ fn unpack_source(ctx: &SourceContext) -> Result<PathBuf, Box<dyn std::error::Err
 
     let root = tempfile::Builder::new()
         .prefix("forge-source-")
-        .tempdir()
-        .map_err(|e| e.to_string())?
+        .tempdir()?
         .keep();
-    unpack_artifacts(&blob, &root).map_err(|e| e.to_string())?;
+    unpack_artifacts(&blob, &root).map_err(|e| anyhow::anyhow!(e.to_string()))?;
     Ok(root)
 }
 
-/// Decodes and extracts a packed source snapshot into VFS for on-demand streaming
-fn unpack_source_to_vfs(
-    ctx: &SourceContext,
-    vfs: &VirtualFileSystem,
-) -> Result<PathBuf, Box<dyn std::error::Error>> {
+fn unpack_source_to_vfs(ctx: &SourceContext, vfs: &VirtualFileSystem) -> anyhow::Result<PathBuf> {
     if ctx.format != "tar.zst" {
-        return Err(format!("unsupported source format: {}", ctx.format).into());
+        return Err(anyhow::anyhow!("unsupported source format: {}", ctx.format));
     }
 
     let mut decoder = base64::read::DecoderReader::new(
@@ -422,19 +438,16 @@ fn unpack_source_to_vfs(
     let mut blob = Vec::new();
     decoder.read_to_end(&mut blob)?;
 
-    // First extract to temp directory
     let temp_root = tempfile::Builder::new()
         .prefix("forge-source-vfs-")
-        .tempdir()
-        .map_err(|e| e.to_string())?
+        .tempdir()?
         .keep();
-    unpack_artifacts(&blob, &temp_root).map_err(|e| e.to_string())?;
+    unpack_artifacts(&blob, &temp_root).map_err(|e| anyhow::anyhow!(e.to_string()))?;
 
-    // Mount to VFS
     let vfs_mount = ctx.vfs_mount.as_deref().unwrap_or("/vfs");
     let vfs_path = Path::new(vfs_mount);
     vfs.mount_local(&temp_root, vfs_path)
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| anyhow::anyhow!(e.to_string()))?;
 
     Ok(temp_root)
 }

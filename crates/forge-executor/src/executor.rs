@@ -76,45 +76,34 @@ fn run_with_timeout(
 ) -> Result<std::process::Output, std::io::Error> {
     use std::io::Read;
     use std::process::Stdio;
+    use wait_timeout::ChildExt;
 
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
     let mut child = command.spawn()?;
     let mut stdout = child.stdout.take().expect("piped stdout is present");
     let mut stderr = child.stderr.take().expect("piped stderr is present");
-    let out_thread = std::thread::spawn(move || {
-        let mut buf = Vec::new();
-        let _ = stdout.read_to_end(&mut buf);
-        buf
-    });
-    let err_thread = std::thread::spawn(move || {
-        let mut buf = Vec::new();
-        let _ = stderr.read_to_end(&mut buf);
-        buf
-    });
 
-    let deadline = Instant::now() + timeout;
-    loop {
-        match child.try_wait() {
-            Ok(Some(status)) => {
-                let stdout = out_thread.join().unwrap_or_default();
-                let stderr = err_thread.join().unwrap_or_default();
-                return Ok(std::process::Output {
-                    status,
-                    stdout,
-                    stderr,
-                });
-            }
-            Ok(None) if Instant::now() >= deadline => {
-                kill_process_tree(&mut child);
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::TimedOut,
-                    format!("timed out after {timeout:?}"),
-                ));
-            }
-            Ok(None) => std::thread::sleep(Duration::from_millis(10)),
-            Err(source) => return Err(source),
+    let status_code = match child.wait_timeout(timeout)? {
+        Some(status) => status,
+        None => {
+            kill_process_tree(&mut child);
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::TimedOut,
+                format!("timed out after {timeout:?}"),
+            ));
         }
-    }
+    };
+
+    let mut out_buf = Vec::new();
+    let mut err_buf = Vec::new();
+    let _ = stdout.read_to_end(&mut out_buf);
+    let _ = stderr.read_to_end(&mut err_buf);
+
+    Ok(std::process::Output {
+        status: status_code,
+        stdout: out_buf,
+        stderr: err_buf,
+    })
 }
 
 impl TaskExecutor for ProcessExecutor {

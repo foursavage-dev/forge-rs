@@ -75,19 +75,19 @@ impl AttestationEngine {
         if let Ok(entries) = fs::read_dir(project_root.join("src")) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                if path.is_file() {
-                    if let Ok(content) = fs::read(&path) {
-                        let hash = blake3::hash(&content).to_hex().to_string();
-                        merkle_hasher.update(hash.as_bytes());
-                        materials.push(SlsaSubject {
-                            name: path
-                                .file_name()
-                                .unwrap_or_default()
-                                .to_string_lossy()
-                                .to_string(),
-                            digest: SlsaDigest { blake3: hash },
-                        });
-                    }
+                if path.is_file()
+                    && let Ok(content) = fs::read(&path)
+                {
+                    let hash = blake3::hash(&content).to_hex().to_string();
+                    merkle_hasher.update(hash.as_bytes());
+                    materials.push(SlsaSubject {
+                        name: path
+                            .file_name()
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                            .to_string(),
+                        digest: SlsaDigest { blake3: hash },
+                    });
                 }
             }
         }

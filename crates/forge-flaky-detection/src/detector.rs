@@ -20,7 +20,7 @@ impl FlakyDetector {
         Self
     }
 
-    pub async fn is_flaky(&self, _test_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
+    pub async fn is_flaky(&self, _test_name: &str) -> Result<bool, anyhow::Error> {
         // Statistical analysis would go here
         // For now, return false as placeholder
         Ok(false)

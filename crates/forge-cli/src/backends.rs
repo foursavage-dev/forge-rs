@@ -466,12 +466,11 @@ pub(crate) fn has_file_with_extension(dir: &Path, extensions: &[&str]) -> bool {
     if let Ok(entries) = std::fs::read_dir(dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.is_file() {
-                if let Some(ext) = path.extension() {
-                    if extensions.iter().any(|e| *e == ext) {
-                        return true;
-                    }
-                }
+            if path.is_file()
+                && let Some(ext) = path.extension()
+                && extensions.iter().any(|e| *e == ext)
+            {
+                return true;
             }
         }
     }
@@ -482,12 +481,11 @@ pub(crate) fn has_dir_with_extension(dir: &Path, extensions: &[&str]) -> bool {
     if let Ok(entries) = std::fs::read_dir(dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.is_dir() {
-                if let Some(ext) = path.extension() {
-                    if extensions.iter().any(|e| *e == ext) {
-                        return true;
-                    }
-                }
+            if path.is_dir()
+                && let Some(ext) = path.extension()
+                && extensions.iter().any(|e| *e == ext)
+            {
+                return true;
             }
         }
     }

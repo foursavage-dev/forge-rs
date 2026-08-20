@@ -4,39 +4,23 @@ use crate::artifact::{Artifact, ArtifactHash, ArtifactMetadata};
 use crate::compression::CompressionAlgorithm;
 use crate::error::{CasError, Result};
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-/// Trait for CAS backend implementations
 #[async_trait]
 pub trait CasBackend: Send + Sync {
-    /// Store an artifact in the CAS
     async fn store(&self, artifact: &Artifact) -> Result<()>;
-
-    /// Retrieve an artifact by hash
     async fn retrieve(&self, hash: &ArtifactHash) -> Result<Artifact>;
-
-    /// Retrieve artifact metadata without reading the artifact payload.
     async fn metadata(&self, hash: &ArtifactHash) -> Result<ArtifactMetadata>;
-
-    /// Check if an artifact exists
     async fn exists(&self, hash: &ArtifactHash) -> Result<bool>;
-
-    /// Delete an artifact
     async fn delete(&self, hash: &ArtifactHash) -> Result<()>;
-
-    /// List all artifacts
     async fn list(&self) -> Result<Vec<ArtifactHash>>;
-
-    /// Get storage statistics
     async fn stats(&self) -> Result<CasStats>;
 }
 
-/// Storage statistics for a CAS backend
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CasStats {
-    /// Total number of artifacts
     pub artifact_count: usize,
-    /// Total storage used in bytes
     pub total_bytes: u64,
     /// Total storage used after compression in bytes
     pub compressed_bytes: u64,
@@ -254,13 +238,12 @@ impl CasBackend for LocalCasBackend {
                     let sub_path = sub_entry.path();
                     if sub_path.is_file()
                         && sub_path.extension().map(|e| e != "meta").unwrap_or(true)
+                        && let Some(hash_str) = sub_path.file_stem().and_then(|s| s.to_str())
                     {
-                        if let Some(hash_str) = sub_path.file_stem().and_then(|s| s.to_str()) {
-                            let dir_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
-                            let full_hash = format!("{}{}", dir_name, hash_str);
-                            if validate_hash(&full_hash).is_ok() {
-                                hashes.push(ArtifactHash::new(full_hash));
-                            }
+                        let dir_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+                        let full_hash = format!("{}{}", dir_name, hash_str);
+                        if validate_hash(&full_hash).is_ok() {
+                            hashes.push(ArtifactHash::new(full_hash));
                         }
                     }
                 }
@@ -326,11 +309,11 @@ pub trait RemoteCasBackend: CasBackend {
     async fn health_check(&self) -> Result<bool>;
 }
 
-/// Placeholder implementation for remote CAS backend
 #[cfg(feature = "remote")]
 pub struct RemoteCasBackendImpl {
-    _config: crate::storage::RemoteConfig,
-    _compression: crate::compression::CompressionAlgorithm,
+    client: reqwest::Client,
+    config: crate::storage::RemoteConfig,
+    compression: crate::compression::CompressionAlgorithm,
 }
 
 #[cfg(feature = "remote")]
@@ -339,11 +322,47 @@ impl RemoteCasBackendImpl {
         config: crate::storage::RemoteConfig,
         compression: crate::compression::CompressionAlgorithm,
     ) -> Result<Self> {
-        // TODO: Implement actual remote backend initialization
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(30))
+            .build()
+            .map_err(|e| CasError::Network(e.to_string()))?;
+
         Ok(Self {
-            _config: config,
-            _compression: compression,
+            client,
+            config,
+            compression,
         })
+    }
+
+    fn artifact_url(&self, hash: &ArtifactHash) -> String {
+        let base = self.config.endpoint.trim_end_matches('/');
+        format!(
+            "{}/{}/artifacts/{}",
+            base,
+            self.config.bucket,
+            hash.as_str()
+        )
+    }
+
+    fn metadata_url(&self, hash: &ArtifactHash) -> String {
+        let base = self.config.endpoint.trim_end_matches('/');
+        format!(
+            "{}/{}/artifacts/{}/metadata",
+            base,
+            self.config.bucket,
+            hash.as_str()
+        )
+    }
+
+    fn apply_auth(&self, mut request: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+        if let Some(auth) = &self.config.auth {
+            if let Some(token) = &auth.token {
+                request = request.bearer_auth(token);
+            } else if let (Some(key), Some(secret)) = (&auth.access_key, &auth.secret_key) {
+                request = request.basic_auth(key, Some(secret));
+            }
+        }
+        request
     }
 }
 
@@ -358,28 +377,72 @@ impl CasBackend for RemoteCasBackendImpl {
         self.download(hash).await
     }
 
-    async fn metadata(&self, _hash: &ArtifactHash) -> Result<ArtifactMetadata> {
-        Err(CasError::BackendError(
-            "Remote metadata lookup not yet implemented".to_string(),
-        ))
+    async fn metadata(&self, hash: &ArtifactHash) -> Result<ArtifactMetadata> {
+        let meta_url = self.metadata_url(hash);
+        let req = self.apply_auth(self.client.get(&meta_url));
+        let resp = req
+            .send()
+            .await
+            .map_err(|e| CasError::Network(e.to_string()))?;
+        if resp.status() == reqwest::StatusCode::NOT_FOUND {
+            return Err(CasError::ArtifactNotFound(hash.to_string()));
+        }
+        if !resp.status().is_success() {
+            return Err(CasError::BackendError(format!(
+                "Failed to retrieve metadata from remote CAS: HTTP {}",
+                resp.status()
+            )));
+        }
+        let meta: ArtifactMetadata = resp
+            .json()
+            .await
+            .map_err(|e| CasError::Serialization(e.to_string()))?;
+        Ok(meta)
     }
 
-    async fn exists(&self, _hash: &ArtifactHash) -> Result<bool> {
-        // TODO: Implement existence check
-        Ok(false)
+    async fn exists(&self, hash: &ArtifactHash) -> Result<bool> {
+        let meta_url = self.metadata_url(hash);
+        let req = self.apply_auth(self.client.head(&meta_url));
+        match req.send().await {
+            Ok(resp) => Ok(resp.status().is_success()),
+            Err(_) => Ok(false),
+        }
     }
 
-    async fn delete(&self, _hash: &ArtifactHash) -> Result<()> {
-        // TODO: Implement deletion
+    async fn delete(&self, hash: &ArtifactHash) -> Result<()> {
+        let url = self.artifact_url(hash);
+        let meta_url = self.metadata_url(hash);
+        let _ = self.apply_auth(self.client.delete(&url)).send().await;
+        let _ = self.apply_auth(self.client.delete(&meta_url)).send().await;
         Ok(())
     }
 
     async fn list(&self) -> Result<Vec<ArtifactHash>> {
-        // TODO: Implement listing
-        Ok(Vec::new())
+        let base = self.config.endpoint.trim_end_matches('/');
+        let url = format!("{}/{}/artifacts", base, self.config.bucket);
+        let req = self.apply_auth(self.client.get(&url));
+        let resp = req
+            .send()
+            .await
+            .map_err(|e| CasError::Network(e.to_string()))?;
+        if !resp.status().is_success() {
+            return Ok(Vec::new());
+        }
+        let hashes: Vec<ArtifactHash> = resp.json().await.unwrap_or_default();
+        Ok(hashes)
     }
 
     async fn stats(&self) -> Result<CasStats> {
+        let base = self.config.endpoint.trim_end_matches('/');
+        let url = format!("{}/{}/stats", base, self.config.bucket);
+        let req = self.apply_auth(self.client.get(&url));
+        if let Ok(resp) = req.send().await {
+            if resp.status().is_success() {
+                if let Ok(stats) = resp.json::<CasStats>().await {
+                    return Ok(stats);
+                }
+            }
+        }
         Ok(CasStats {
             artifact_count: 0,
             total_bytes: 0,
@@ -392,23 +455,105 @@ impl CasBackend for RemoteCasBackendImpl {
 #[cfg(feature = "remote")]
 #[async_trait]
 impl RemoteCasBackend for RemoteCasBackendImpl {
-    async fn upload(&self, _artifact: &Artifact) -> Result<()> {
-        // TODO: Implement actual upload
-        Err(CasError::BackendError(
-            "Remote upload not yet implemented".to_string(),
-        ))
+    async fn upload(&self, artifact: &Artifact) -> Result<()> {
+        let url = self.artifact_url(artifact.hash());
+        let meta_url = self.metadata_url(artifact.hash());
+
+        let (data_to_store, compressed_size) =
+            if self.compression != crate::compression::CompressionAlgorithm::None {
+                let compressed = crate::compression::compress(artifact.data(), self.compression)?;
+                let compressed_size = compressed.len() as u64;
+                (compressed, Some(compressed_size))
+            } else {
+                (artifact.data().to_vec(), None)
+            };
+
+        let mut metadata = artifact.metadata.clone();
+        if let Some(c_size) = compressed_size {
+            metadata = metadata.with_compression(c_size, self.compression.to_string());
+        }
+
+        let meta_json =
+            serde_json::to_vec(&metadata).map_err(|e| CasError::Serialization(e.to_string()))?;
+
+        let meta_req = self
+            .apply_auth(self.client.put(&meta_url))
+            .header("Content-Type", "application/json")
+            .body(meta_json);
+        let meta_resp = meta_req
+            .send()
+            .await
+            .map_err(|e| CasError::Network(e.to_string()))?;
+        if !meta_resp.status().is_success() {
+            return Err(CasError::BackendError(format!(
+                "Failed to upload metadata to remote CAS: HTTP {}",
+                meta_resp.status()
+            )));
+        }
+
+        let data_req = self
+            .apply_auth(self.client.put(&url))
+            .header("Content-Type", "application/octet-stream")
+            .body(data_to_store);
+        let data_resp = data_req
+            .send()
+            .await
+            .map_err(|e| CasError::Network(e.to_string()))?;
+        if !data_resp.status().is_success() {
+            return Err(CasError::BackendError(format!(
+                "Failed to upload artifact data to remote CAS: HTTP {}",
+                data_resp.status()
+            )));
+        }
+
+        Ok(())
     }
 
-    async fn download(&self, _hash: &ArtifactHash) -> Result<Artifact> {
-        // TODO: Implement actual download
-        Err(CasError::BackendError(
-            "Remote download not yet implemented".to_string(),
-        ))
+    async fn download(&self, hash: &ArtifactHash) -> Result<Artifact> {
+        let metadata = self.metadata(hash).await?;
+        let url = self.artifact_url(hash);
+        let req = self.apply_auth(self.client.get(&url));
+        let resp = req
+            .send()
+            .await
+            .map_err(|e| CasError::Network(e.to_string()))?;
+        if resp.status() == reqwest::StatusCode::NOT_FOUND {
+            return Err(CasError::ArtifactNotFound(hash.to_string()));
+        }
+        if !resp.status().is_success() {
+            return Err(CasError::BackendError(format!(
+                "Failed to download artifact from remote CAS: HTTP {}",
+                resp.status()
+            )));
+        }
+        let data = resp
+            .bytes()
+            .await
+            .map_err(|e| CasError::Network(e.to_string()))?
+            .to_vec();
+        let decompressed = if let Some(ref comp) = metadata.compression {
+            let algo = crate::compression::CompressionAlgorithm::from_str(comp)
+                .map_err(CasError::Compression)?;
+            crate::compression::decompress(&data, algo)?
+        } else {
+            data
+        };
+
+        Ok(Artifact {
+            metadata,
+            data: decompressed,
+            original_path: None,
+        })
     }
 
     async fn health_check(&self) -> Result<bool> {
-        // TODO: Implement health check
-        Ok(true)
+        let base = self.config.endpoint.trim_end_matches('/');
+        let url = format!("{}/health", base);
+        let req = self.apply_auth(self.client.get(&url));
+        match req.send().await {
+            Ok(resp) => Ok(resp.status().is_success()),
+            Err(_) => Ok(false),
+        }
     }
 }
 
@@ -651,5 +796,38 @@ mod tests {
 
         let error = backend.retrieve(artifact.hash()).await.unwrap_err();
         assert!(matches!(error, CasError::Hash(_)));
+    }
+
+    #[cfg(feature = "remote")]
+    #[tokio::test]
+    async fn test_remote_cas_initialization_and_url_helpers() {
+        let config = crate::storage::RemoteConfig {
+            backend_type: crate::storage::RemoteBackendType::Custom,
+            endpoint: "https://cas.example.com/api/v1".to_string(),
+            auth: Some(crate::storage::AuthConfig {
+                access_key: Some("test_key".to_string()),
+                secret_key: Some("test_secret".to_string()),
+                token: None,
+            }),
+            bucket: "forge-cache".to_string(),
+            region: None,
+        };
+
+        let backend =
+            RemoteCasBackendImpl::new(config, crate::compression::CompressionAlgorithm::Zstd)
+                .await
+                .unwrap();
+
+        let test_hash = ArtifactHash::new(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string(),
+        );
+        assert_eq!(
+            backend.artifact_url(&test_hash),
+            "https://cas.example.com/api/v1/forge-cache/artifacts/0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        );
+        assert_eq!(
+            backend.metadata_url(&test_hash),
+            "https://cas.example.com/api/v1/forge-cache/artifacts/0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef/metadata"
+        );
     }
 }

@@ -11,10 +11,7 @@ impl MetricsAggregator {
         Self
     }
 
-    pub async fn collect(
-        &self,
-        _project_path: &Path,
-    ) -> Result<CacheMetrics, Box<dyn std::error::Error>> {
+    pub async fn collect(&self, _project_path: &Path) -> Result<CacheMetrics, anyhow::Error> {
         Ok(CacheMetrics {
             hit_rate: 0.0,
             total_hits: 0,

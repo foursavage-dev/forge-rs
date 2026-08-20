@@ -68,12 +68,11 @@ impl TimeMachine {
         for entry in fs::read_dir(&self.storage_dir)? {
             let entry = entry?;
             let path = entry.path();
-            if path.extension().and_then(|e| e.to_str()) == Some("json") {
-                if let Ok(content) = fs::read_to_string(&path) {
-                    if let Ok(snap) = serde_json::from_str::<BuildSnapshot>(&content) {
-                        snapshots.push(snap);
-                    }
-                }
+            if path.extension().and_then(|e| e.to_str()) == Some("json")
+                && let Ok(content) = fs::read_to_string(&path)
+                && let Ok(snap) = serde_json::from_str::<BuildSnapshot>(&content)
+            {
+                snapshots.push(snap);
             }
         }
 

@@ -21,7 +21,7 @@ jobs:
     name: Prohibited & Binary Files Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Check for disallowed files
@@ -44,7 +44,7 @@ jobs:
     name: Cargo Lockfile Synchronization Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Check Cargo.lock is updated

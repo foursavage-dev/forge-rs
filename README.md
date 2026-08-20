@@ -15,6 +15,16 @@ as Cargo, Go, Node.js, Python, C/C++, Docker, and other supported backends.
 > remote-cache, and experimental features as opt-in and validate them in your
 > own environment before relying on them in CI.
 
+
+### 🧪 "Dark-Arts" Experimental Engines
+Forge ships with experimental, highly-optimized performance engines for specific extreme use-cases:
+- **Predictive Engine (Markov-Chain):** Learns developer patterns to pre-compile and warm up cache hits before files are even saved.
+- **ML-Aware Work-Stealing:** Uses historical tracing and dependency tail length scoring to schedule threads with zero starvation.
+- **Autonomous Binary Super-Optimizer:** Synthesizes `AVX-512`/`NEON` instructions directly into compiled ELF binaries via basic-block vectorization.
+- **Live Binary Hot-Patching:** Injects trampoline payloads and live-patches C/Rust code in running processes via simulated memory injection.
+- **Kernel-Bypass DMA Ring-Buffer VFS:** Streams artifacts directly through zero-copy memory ring-buffers, entirely bypassing disk OS sys-calls.
+- **WASM/WASI Hermetic Sandbox:** Runs polyglot plugins securely via strict memory/CPU instruction bounds ("fuel limits").
+
 ## What works today
 
 - Rust workspace discovery and graph-based `build`, `check`, and `test`.
@@ -115,9 +125,11 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for local development and
 
 | Command | Purpose |
 | --- | --- |
-| `forge build`, `check`, `test` | Execute work discovered from the project graph. |
+| `forge build`, `check`, `test` | Execute work discovered from the project graph (supports `--explain`, `--pgo-generate`, `--pgo-use`). |
+| `forge query <EXPR>` | Query graph algebra: `deps(...)`, `rdeps(...)`, `allpaths(...)`, `somepath(...)`, `filter(...)`. |
+| `forge daemon` | Manage background build daemon (`start`, `status`, `stop`) for sub-millisecond warm builds. |
 | `forge run` | Build and run a selected Rust package or binary. |
-| `forge graph` | Print the graph as a tree, JSON, or DOT. |
+| `forge graph` | Print the graph as stage trees, JSON, or DOT. |
 | `forge watch` | Re-run build, check, or test after relevant file changes. |
 | `forge affected --since REV` | Limit work to projects changed since a revision. |
 | `forge cache` | Inspect, prune, and manage the local cache and CAS. |
@@ -128,20 +140,36 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for local development and
 Some commands require a corresponding toolchain on `PATH`. `forge doctor` is a
 good first check when setting up a machine.
 
+## High-Performance Capabilities
+
+- **Hermetic CAS & ZSTD Deduplication**: Blake3 content-addressable storage with tiered L1/L2 composite caching.
+- **GNU Jobserver Pool**: Token-based concurrency control across sub-processes preventing CPU thrashing.
+- **Dynamic Remote Racing**: Races local execution against remote cluster workers, cancelling the slower one.
+- **Distributed Task Execution (DTE)**: LPT bin-packing algorithm balancing CI workloads across workers.
+- **AST Dependency Inference**: Auto-detects dependencies across Rust, TS/JS, Python, and Go source trees.
+- **Graph Query Algebraic Engine**: Bazel-style `deps()`, `rdeps()`, `allpaths()`, and `filter()` queries.
+- **Dirty Rebuild Diagnostics**: Detailed explanations for why a target is rebuilt (`--explain`).
+- **Profile-Guided Optimization (PGO)**: Automated instrumentation, raw profile merging, and optimized compilation.
+
 ## Workspace layout
 
 ```text
 crates/
-  forge-core/       project discovery and package model
-  forge-graph/      dependency graph
-  forge-executor/   process execution and task model
-  forge-scheduler/  parallel scheduling
-  forge-cache/      local fingerprint cache
-  forge-cas/        content-addressable artifact storage
-  forge-backend-*/  language and toolchain adapters
-  forge-cli/        command-line application
-examples/           sample projects
-docs/               additional documentation
+  forge-core/         project discovery, manifest model, and DAG merger
+  forge-graph/        dependency graph, topological sort, and query algebra
+  forge-executor/     process execution, middleware chain, and response files
+  forge-scheduler/    parallel scheduling, jobserver pool, racing, and DTE bin-packing
+  forge-cache/        fingerprint cache and two-phase pruning
+  forge-cas/          content-addressable artifact storage with ZSTD compression
+  forge-incremental/  change detection, AST inference, and dirty explainer
+  forge-backend-*/    11+ language and toolchain adapters
+  forge-worker/       distributed execution server and streaming VFS protocol
+  forge-remote-cache/ gRPC/HTTP remote cache server
+  forge-security/     multi-layer security, secret redaction, and CVE scanner
+  forge-signing/      Ed25519 cryptographic artifact signing and SPDX SBOM
+  forge-cli/          command-line application, daemon IPC, and terminal rendering
+examples/             sample projects
+docs/                 additional documentation
 ```
 
 ## Develop and verify

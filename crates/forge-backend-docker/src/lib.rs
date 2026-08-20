@@ -23,7 +23,7 @@ pub struct DockerBackend {
 }
 
 impl DockerBackend {
-    pub fn new(config: DockerProjectConfig) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(config: DockerProjectConfig) -> Result<Self, anyhow::Error> {
         let toolchain = DockerToolchain::detect()?;
         let fingerprinter = DockerFingerprinter::new(config.clone());
 
@@ -71,9 +71,7 @@ impl DockerBackend {
         None
     }
 
-    pub fn build_task_graph(
-        &self,
-    ) -> Result<BuildGraph<forge_executor::Task>, Box<dyn std::error::Error>> {
+    pub fn build_task_graph(&self) -> Result<BuildGraph<forge_executor::Task>, anyhow::Error> {
         let mut graph = BuildGraph::new();
         let fingerprint = self.fingerprinter.compute()?;
         let stages = self.parse_dockerfile()?;
@@ -110,11 +108,14 @@ impl DockerBackend {
         Ok(graph)
     }
 
-    pub fn validate_config(&self) -> Result<(), Box<dyn std::error::Error>> {
-        if let Some(dockerfile) = &self.config.dockerfile_path {
-            if !dockerfile.exists() {
-                return Err(format!("Dockerfile not found: {}", dockerfile.display()).into());
-            }
+    pub fn validate_config(&self) -> Result<(), anyhow::Error> {
+        if let Some(dockerfile) = &self.config.dockerfile_path
+            && !dockerfile.exists()
+        {
+            return Err(anyhow::anyhow!(
+                "Dockerfile not found: {}",
+                dockerfile.display()
+            ));
         }
         Ok(())
     }
@@ -127,12 +128,12 @@ impl BuildBackend for DockerBackend {
 }
 
 impl DockerBackend {
-    fn parse_dockerfile(&self) -> Result<DockerStages, Box<dyn std::error::Error>> {
+    fn parse_dockerfile(&self) -> Result<DockerStages, anyhow::Error> {
         let dockerfile = self
             .config
             .dockerfile_path
             .as_ref()
-            .ok_or("No Dockerfile specified")?;
+            .ok_or_else(|| anyhow::anyhow!("No Dockerfile specified"))?;
 
         let content = std::fs::read_to_string(dockerfile)?;
         let mut stages = Vec::new();

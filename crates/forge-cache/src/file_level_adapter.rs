@@ -106,31 +106,30 @@ impl<I: TaskExecutor> HybridCachingExecutor<I> {
 impl<I: TaskExecutor> TaskExecutor for HybridCachingExecutor<I> {
     fn execute(&self, task: &Task) -> Result<TaskOutcome, ExecutorError> {
         // Check file-level cache first (if task has registered files)
-        if let Some(CacheEntry { key, .. }) = &task.cache {
-            if self.file_adapter.is_task_files_cached(key) {
-                // All files are cached at file level - can potentially skip execution
-                // For now, we still check task-level cache to maintain compatibility
-                return Ok(TaskOutcome::cached(task));
-            }
+        if let Some(CacheEntry { key, .. }) = &task.cache
+            && self.file_adapter.is_task_files_cached(key)
+        {
+            // All files are cached at file level - can potentially skip execution
+            // For now, we still check task-level cache to maintain compatibility
+            return Ok(TaskOutcome::cached(task));
         }
 
         // Check task-level cache
-        if let Some(CacheEntry { key, fingerprint }) = &task.cache {
-            if self.local_cache.matches(key, fingerprint) {
-                return Ok(TaskOutcome::cached(task));
-            }
+        if let Some(CacheEntry { key, fingerprint }) = &task.cache
+            && self.local_cache.matches(key, fingerprint)
+        {
+            return Ok(TaskOutcome::cached(task));
         }
 
         // Execute the task
         let outcome = self.inner.execute(task)?;
 
         // Cache the result at task level
-        if outcome.status == TaskStatus::Executed {
-            if let Some(CacheEntry { key, fingerprint }) = &task.cache {
-                if let Err(_error) = self.local_cache.put(key, fingerprint) {
-                    self.local_cache.stats().record_error();
-                }
-            }
+        if outcome.status == TaskStatus::Executed
+            && let Some(CacheEntry { key, fingerprint }) = &task.cache
+            && let Err(_error) = self.local_cache.put(key, fingerprint)
+        {
+            self.local_cache.stats().record_error();
         }
 
         Ok(outcome)

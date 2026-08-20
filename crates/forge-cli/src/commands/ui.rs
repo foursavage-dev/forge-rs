@@ -7,11 +7,7 @@ use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::thread;
 
-pub fn run_ui(
-    port: u16,
-    open: bool,
-    project_path: Option<PathBuf>,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run_ui(port: u16, open: bool, project_path: Option<PathBuf>) -> Result<(), anyhow::Error> {
     let root =
         project_path.unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
     let bind_addr = format!("127.0.0.1:{}", port);
@@ -58,10 +54,7 @@ fn open_browser(url: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-fn handle_http_client(
-    mut stream: TcpStream,
-    root: &Path,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn handle_http_client(mut stream: TcpStream, root: &Path) -> Result<(), anyhow::Error> {
     let mut reader = BufReader::new(stream.try_clone()?);
     let mut request_line = String::new();
     if reader.read_line(&mut request_line)? == 0 {
@@ -117,25 +110,27 @@ fn get_workspace_graph_json(root: &Path) -> String {
     if let Ok(entries) = fs::read_dir(&crates_dir) {
         for entry in entries.flatten() {
             let p = entry.path();
-            if p.is_dir() && p.join("Cargo.toml").exists() {
-                if let Some(name) = p.file_name().and_then(|s| s.to_str()) {
-                    let mut deps = Vec::new();
-                    if let Ok(content) = fs::read_to_string(p.join("Cargo.toml")) {
-                        for line in content.lines() {
-                            if line.starts_with("forge-") && line.contains("path =") {
-                                if let Some(dep_name) = line.split('=').next() {
-                                    deps.push(dep_name.trim().to_string());
-                                }
-                            }
+            if p.is_dir()
+                && p.join("Cargo.toml").exists()
+                && let Some(name) = p.file_name().and_then(|s| s.to_str())
+            {
+                let mut deps = Vec::new();
+                if let Ok(content) = fs::read_to_string(p.join("Cargo.toml")) {
+                    for line in content.lines() {
+                        if line.starts_with("forge-")
+                            && line.contains("path =")
+                            && let Some(dep_name) = line.split('=').next()
+                        {
+                            deps.push(dep_name.trim().to_string());
                         }
                     }
-                    packages.push(serde_json::json!({
-                        "name": name,
-                        "dependencies": deps,
-                        "type": "rust-crate",
-                        "status": "cached"
-                    }));
                 }
+                packages.push(serde_json::json!({
+                    "name": name,
+                    "dependencies": deps,
+                    "type": "rust-crate",
+                    "status": "cached"
+                }));
             }
         }
     }
@@ -250,7 +245,7 @@ fn generate_dashboard_html(root: &Path) -> String {
     <header>
         <div class="brand">
             🦀 Forge <span>Telemetry</span>
-            <span class="badge">v0.1.0</span>
+            <span class="badge">v{engine_version}</span>
         </div>
         <div style="font-size: 0.85rem; color: var(--text-secondary);">
             Live Workspace Monitor
@@ -344,6 +339,7 @@ fn generate_dashboard_html(root: &Path) -> String {
 </body>
 </html>"#,
         graph_json = graph_json,
-        stats_json = stats_json
+        stats_json = stats_json,
+        engine_version = env!("CARGO_PKG_VERSION")
     )
 }

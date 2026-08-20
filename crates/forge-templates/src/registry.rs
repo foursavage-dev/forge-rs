@@ -1,4 +1,4 @@
-// Template registry
+#![forbid(unsafe_code)]
 
 use crate::template::PipelineTemplate;
 use std::collections::HashMap;
@@ -18,7 +18,6 @@ impl TemplateRegistry {
     }
 
     fn register_builtin_templates(&mut self) {
-        // Register built-in templates
         self.templates.insert(
             "monorepo".to_string(),
             PipelineTemplate {
@@ -31,11 +30,11 @@ impl TemplateRegistry {
         );
     }
 
-    pub fn get_template(&self, name: &str) -> Result<PipelineTemplate, Box<dyn std::error::Error>> {
+    pub fn get_template(&self, name: &str) -> Result<PipelineTemplate, anyhow::Error> {
         self.templates
             .get(name)
             .cloned()
-            .ok_or_else(|| format!("Template '{}' not found", name).into())
+            .ok_or_else(|| anyhow::anyhow!("Template '{}' not found", name))
     }
 
     pub fn register_template(&mut self, template: PipelineTemplate) {

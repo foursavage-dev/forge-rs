@@ -1,11 +1,13 @@
 #![forbid(unsafe_code)]
 
+pub mod azure;
 pub mod bitbucket;
 pub mod circleci;
 pub mod github;
 pub mod gitlab;
 pub mod matrix;
 
+pub use azure::AzurePipelinesGenerator;
 pub use bitbucket::BitbucketPipelineGenerator;
 pub use circleci::CircleCIGenerator;
 pub use github::GitHubActionsGenerator;
@@ -49,6 +51,7 @@ pub enum CIPlatform {
     GitLabCI,
     CircleCI,
     BitbucketPipelines,
+    AzurePipelines,
     All,
 }
 
@@ -98,8 +101,11 @@ impl CIConfig {
                 let generator = BitbucketPipelineGenerator::new(self.clone());
                 generator.generate_config(matrix)
             }
+            CIPlatform::AzurePipelines => {
+                let generator = AzurePipelinesGenerator::new(self.clone());
+                generator.generate_pipeline(matrix)
+            }
             CIPlatform::All => {
-                // Generate all configurations and return them as a combined output
                 let mut output = String::new();
 
                 let github_gen = GitHubActionsGenerator::new(self.clone());
@@ -116,6 +122,10 @@ impl CIConfig {
 
                 let bitbucket_gen = BitbucketPipelineGenerator::new(self.clone());
                 output.push_str(&bitbucket_gen.generate_config(matrix)?);
+                output.push_str("\n---\n\n");
+
+                let azure_gen = AzurePipelinesGenerator::new(self.clone());
+                output.push_str(&azure_gen.generate_pipeline(matrix)?);
 
                 Ok(output)
             }

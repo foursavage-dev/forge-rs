@@ -42,6 +42,9 @@ pub(crate) fn build_executor(
         if args.send_source {
             cluster = cluster.with_source_packaging();
         }
+        if args.swarm || args.swarm_compute {
+            cluster = cluster.with_strategy(forge_worker::LoadBalancingStrategy::LeastLoaded);
+        }
         Box::new(cluster)
     } else if args.sandbox {
         let sb_config = SandboxConfig::default();
@@ -49,6 +52,15 @@ pub(crate) fn build_executor(
     } else {
         Box::new(local_process)
     };
+
+    let mut middleware_executor = forge_executor::MiddlewareChainExecutor::new(base_executor);
+    if args.turbo_link {
+        middleware_executor = middleware_executor.with_middleware(Box::new(TurboLinkMiddleware));
+    }
+    if args.super_opt {
+        middleware_executor = middleware_executor.with_middleware(Box::new(SuperOptMiddleware));
+    }
+    let base_executor: Box<dyn TaskExecutor> = Box::new(middleware_executor);
 
     if let Some(local_c) = cache {
         if let Some(remote_addr) = &args.remote_cache {
@@ -61,6 +73,46 @@ pub(crate) fn build_executor(
         }
     } else {
         base_executor
+    }
+}
+
+struct TurboLinkMiddleware;
+impl forge_executor::TaskMiddleware for TurboLinkMiddleware {
+    fn pre_execute(
+        &self,
+        task: &mut forge_executor::Task,
+    ) -> Result<(), forge_executor::ExecutorError> {
+        let rustflags = task.spec.env.entry("RUSTFLAGS".to_string()).or_default();
+        if !rustflags.contains("-C link-arg=") {
+            let flags = crate::experimental::turbolink::TurboLinker::generate_rustc_flags();
+            if !flags.is_empty() {
+                if !rustflags.is_empty() {
+                    rustflags.push(' ');
+                }
+                rustflags.push_str(&flags.join(" "));
+            }
+        }
+        Ok(())
+    }
+}
+
+struct SuperOptMiddleware;
+impl forge_executor::TaskMiddleware for SuperOptMiddleware {
+    fn post_execute(
+        &self,
+        task: &forge_executor::Task,
+        outcome: &mut forge_executor::TaskOutcome,
+    ) -> Result<(), forge_executor::ExecutorError> {
+        if outcome.status == forge_executor::TaskStatus::Executed {
+            for artifact in &task.artifacts {
+                if artifact.exists() && artifact.is_file() {
+                    let _ = crate::experimental::super_opt::SuperOptimizer::optimize_binary_simd(
+                        artifact, artifact,
+                    );
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -120,15 +172,16 @@ pub(crate) fn run_build_mode_with(
         kernel_bypass: args.kernel_bypass || config.kernel_bypass,
         wasm_sandbox: args.wasm_sandbox || config.wasm_sandbox,
         super_opt: args.super_opt || config.super_opt,
+        explain: args.explain,
     };
 
-    if merged.ramdisk {
-        if let Ok(rd) = crate::ramdisk::RamDisk::create_turbo_workspace("turbo") {
-            println!(
-                "⚡ In-memory RAM disk turbo enabled: {}",
-                rd.path().display()
-            );
-        }
+    if merged.ramdisk
+        && let Ok(rd) = crate::ramdisk::RamDisk::create_turbo_workspace("turbo")
+    {
+        println!(
+            "⚡ In-memory RAM disk turbo enabled: {}",
+            rd.path().display()
+        );
     }
 
     if merged.swarm || merged.swarm_compute {
@@ -239,6 +292,26 @@ pub(crate) fn run_build_mode_with(
         }
         BackendChoice::Rust => return run_rust_build(&start_dir, &merged, mode, filtered_graph),
         BackendChoice::Auto => {}
+    }
+
+    if filtered_graph.is_none() {
+        let ecosystems = forge_incremental::ecosystem::detect_ecosystems(&start_dir);
+        let unique_ecosystems: std::collections::HashSet<_> =
+            ecosystems.iter().map(|e| e.ecosystem).collect();
+        if unique_ecosystems.len() > 1 {
+            let mut unified_graph = match crate::polyglot::PolyglotGraphBuilder::build_unified_graph(
+                &start_dir, mode,
+            ) {
+                Ok(g) => g,
+                Err(err) => {
+                    eprintln!("error: polyglot graph resolution failed: {err}");
+                    return ExitCode::FAILURE;
+                }
+            };
+            if !unified_graph.is_empty() {
+                return crate::backends::execute_task_graph(&mut unified_graph, &merged);
+            }
+        }
     }
 
     if start_dir.join("Forgefile.json").exists() || start_dir.join("forge.rules.json").exists() {
