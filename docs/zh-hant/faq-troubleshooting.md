@@ -1,69 +1,26 @@
-# Frequently Asked Questions & Troubleshooting
+# 常見問題與疑難排解
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **翻譯與貢獻：** 想用您的母語翻譯或完善本文件？請參閱 [翻譯指南](TRANSLATION.md)。
 
-This document covers common questions, migration recipes, and troubleshooting steps for Fish.
+## 常見問題
 
----
+### 1. Fish 與 Cargo、Turborepo 或 Bazel 有何差別？
+Fish 專為多語言大型單體儲存庫打造，兼具 Rust 原生極致執行效率、Python AI 智慧最佳化以及 Go 雲原生分散式網路，無需 Bazel 複雜的規則設定即可開箱即用。
 
-## Frequently Asked Questions (FAQ)
+### 2. Fish 支援哪些後端語言？
+目前 Fish 官方支援 11 種主流語言與工具鏈：Rust、Go、TypeScript/Node.js、Python、C/C++、Docker、Java、.NET、Swift、Dart 以及 Zig。
 
-### 1. Does Fish replace Cargo, npm, or go build?
-No. Fish is a build **orchestrator**, not a compiler replacement. It coordinates your existing toolchains (Cargo, rustc, Node.js, Go, GCC/Clang, dotnet), analyzes the unified dependency graph, and accelerates builds using hermetic caching, parallel scheduling, and remote execution.
-
-### 2. How do I migrate an existing monorepo to Fish?
-Fish automatically discovers projects from their manifests (`Cargo.toml`, `package.json`, `go.mod`, `pyproject.toml`, `CMakeLists.txt`, `pom.xml`, `*.csproj`).
-1. Navigate to your project root.
-2. Run `fish build` to let Fish discover your workspace.
-3. (Optional) Create a `fish.toml` in your root directory to customize pipeline dependencies and cache paths.
-
-### 3. How does Fish's CAS caching work?
-Fish computes Blake3 fingerprints over input files, toolchain versions, and environment variables. When a task produces output artifacts, they are compressed with Zstandard and stored in a Content-Addressable Storage (CAS) directory (`~/.Fish/cache`). If inputs do not change, Fish materializes artifacts instantly using copy-on-write extents or hardlinks without re-executing compilers.
-
----
-
-## Troubleshooting Recipes
-
-### Issue: Target is rebuilding unexpectedly
-**Solution:**
-Use the `--explain` flag to see why a target was considered dirty:
+### 3. 如何檢查目前機器的開發工具鏈？
+執行以下指令即可：
 ```bash
-fish build --explain
-```
-Common causes include:
-- A source file was recently touched.
-- An upstream dependency's output hash changed.
-- An environment variable difference invalidated the cache.
-
----
-
-### Issue: High RAM usage during parallel builds
-**Solution:**
-When building multiple large crates or C++ modules concurrently, memory pressure can cause disk swapping. Use the `--ram-limit` flag or configure `ram_limit` in `fish.toml`:
-```bash
-fish build --ram-limit 80
-```
-Fish's resource governor will automatically throttle concurrency whenever memory usage crosses the threshold.
-
----
-
-### Issue: Background daemon port conflict (`9527`)
-**Solution:**
-If port `9527` is in use by another process, specify a custom port:
-```bash
-Fish daemon start --port 9588
-```
-Or set the environment variable:
-```bash
-export fish_DAEMON_PORT=9588
+fish doctor --ai
 ```
 
----
+## 疑難排解
 
-### Issue: File lock error on Windows (`os error 5: Access is denied`)
-**Solution:**
-On Windows, running a binary from within the `target/debug` directory locks the executable file on disk. Install Fish globally to `%USERPROFILE%\.cargo\bin`:
+### Windows 分頁檔耗盡錯誤 (`os error 1455`)
+- **原因:** 並行編譯過多大型巨集或重型依賴佔滿分頁檔。
+- **解決方案:** 透過 `--jobs` 限制並行數：
 ```bash
-cargo install --path crates/fish-cli --force
+fish build --jobs 4
 ```
-Then invoke `Fish` directly from any directory.

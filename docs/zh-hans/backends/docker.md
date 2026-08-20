@@ -1,25 +1,31 @@
-# Docker Backend Guide
+# Docker 语言后端支持
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
 
-Fish treats Docker images as first-class build artifacts within your workspace DAG.
+Fish 为各种主流语言项目提供原生高效的构建编排支持。
 
----
+## 自动检测
 
-## Detection & Discovery
+自动检测: `Dockerfile`.
 
-Fish detects Docker components when a `Dockerfile` or `Containerfile` is present in a package directory.
-
----
-
-## Dependency Chaining
-
-Docker build tasks can declare dependencies on upstream compilation outputs:
+## fish.toml 配置文件设置
 
 ```toml
-[pipelines.docker]
-depends_on = ["^build"]
-inputs = ["Dockerfile", "target/release/app"]
+[build]
+backend = "docker"
+jobs = 8
+
+[pipelines.build]
+inputs = ["src/**/*", "Dockerfile"]
+outputs = ["target/**/*"]
 ```
 
-Fish guarantees that all binaries and compiled assets are produced, validated, and placed in the build context before invoking `docker build` or BuildKit.
+## 自动生成的构建任务
+
+- `fish build`: 自动生成的构建任务 (build)
+- `fish test`: 自动生成的构建任务 (test)
+- `fish check`: 自动生成的构建任务 (check)
+
+## 依赖关系提取
+
+- `Dockerfile`

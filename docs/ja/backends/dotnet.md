@@ -1,18 +1,31 @@
-# .NET Backend Guide
+# Dotnet バックエンド
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
 
-Fish integrates with .NET solutions (`*.sln`) and C# projects (`*.csproj`).
+Fish は主要な各プログラミング言語プロジェクトに対して高速なビルドオーケストレーションを提供します。
 
----
+## プロジェクトの自動検出
 
-## Detection & Tasks
+プロジェクトの自動検出: `*.csproj`.
 
-Fish identifies .NET projects by scanning for `*.csproj`, `*.fsproj`, or `*.sln` files.
+## fish.toml での設定
 
-### Mapped Tasks:
-- `build`: `dotnet build --no-restore`
-- `check`: `dotnet format --verify-no-changes`
-- `test`: `dotnet test --no-build`
+```toml
+[build]
+backend = "dotnet"
+jobs = 8
 
-Artifacts in `bin/` and `obj/` are tracked and managed within the unified cache.
+[pipelines.build]
+inputs = ["src/**/*", "*.csproj"]
+outputs = ["target/**/*"]
+```
+
+## 自動生成されるタスク
+
+- `fish build`: 自動生成されるタスク (build)
+- `fish test`: 自動生成されるタスク (test)
+- `fish check`: 自動生成されるタスク (check)
+
+## 依存関係の抽出
+
+- `*.csproj`

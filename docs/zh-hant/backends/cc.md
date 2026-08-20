@@ -1,32 +1,31 @@
-# C/C++ Backend Guide
+# C / C++ 語言後端支援
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
 
-Fish coordinates C and C++ projects using modern compilers (GCC, Clang, MSVC) and CMake.
+Fish 為各種主流語言專案提供原生高效的建置編排支援。
 
----
+## 自動偵測
 
-## Detection & Discovery
+自動偵測: `CMakeLists.txt`.
 
-Fish detects C/C++ projects by looking for `CMakeLists.txt`, `Makefile`, `meson.build`, or root C/C++ header/source structures.
+## fish.toml 設定檔設定
 
----
+```toml
+[build]
+backend = "c / c++"
+jobs = 8
 
-## Fast Linker Integration
+[pipelines.build]
+inputs = ["src/**/*", "CMakeLists.txt"]
+outputs = ["target/**/*"]
+```
 
-Fish automatically queries your environment for modern high-speed linkers:
-- **Linux:** Automatically uses `mold` or `ld.lld` via `-fuse-ld=mold`.
-- **Windows:** Uses `lld-link` or MSVC linker.
-- **macOS:** Uses `ld64.lld` or Apple `ld`.
+## 自動產生的建置任務
 
----
+- `fish build`: 自動產生的建置任務 (build)
+- `fish test`: 自動產生的建置任務 (test)
+- `fish check`: 自動產生的建置任務 (check)
 
-## Response File Support
+## 相依關係提取
 
-When compiling large C/C++ projects with thousands of source files, Fish writes argument vectors exceeding OS length limits into `@fish_args.rsp` response files automatically.
-
----
-
-## Compilation Database (`compile_commands.json`)
-
-Fish automatically generates and exports standard `compile_commands.json` compilation databases for Clangd, Neovim, VS Code, and CLion, mapping compiler include directories and definitions directly from the workspace DAG.
+- `CMakeLists.txt`

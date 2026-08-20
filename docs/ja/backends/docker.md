@@ -1,25 +1,31 @@
-# Docker Backend Guide
+# Docker バックエンド
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
 
-Fish treats Docker images as first-class build artifacts within your workspace DAG.
+Fish は主要な各プログラミング言語プロジェクトに対して高速なビルドオーケストレーションを提供します。
 
----
+## プロジェクトの自動検出
 
-## Detection & Discovery
+プロジェクトの自動検出: `Dockerfile`.
 
-Fish detects Docker components when a `Dockerfile` or `Containerfile` is present in a package directory.
-
----
-
-## Dependency Chaining
-
-Docker build tasks can declare dependencies on upstream compilation outputs:
+## fish.toml での設定
 
 ```toml
-[pipelines.docker]
-depends_on = ["^build"]
-inputs = ["Dockerfile", "target/release/app"]
+[build]
+backend = "docker"
+jobs = 8
+
+[pipelines.build]
+inputs = ["src/**/*", "Dockerfile"]
+outputs = ["target/**/*"]
 ```
 
-Fish guarantees that all binaries and compiled assets are produced, validated, and placed in the build context before invoking `docker build` or BuildKit.
+## 自動生成されるタスク
+
+- `fish build`: 自動生成されるタスク (build)
+- `fish test`: 自動生成されるタスク (test)
+- `fish check`: 自動生成されるタスク (check)
+
+## 依存関係の抽出
+
+- `Dockerfile`

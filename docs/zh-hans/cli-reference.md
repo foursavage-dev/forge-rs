@@ -1,178 +1,52 @@
-# Fish CLI Reference
+# CLI 命令行参考
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **翻译与贡献：** 想用您的母语翻译或完善本文档？请查看 [翻译指南](TRANSLATION.md)。
 
-Complete reference for all Fish command-line interface commands and options.
+Fish 命令行完整命令与参数指南。
 
----
+## 基础命令
 
-## Global Options
+| 命令 | 描述 |
+| :--- | :--- |
+| `fish init` | 在当前目录下初始化 `fish.toml` 配置文件 |
+| `fish new <name>` | 基于预设模板创建新项目或包 |
+| `fish build` | 编译构建工作区中所有目标任务 |
+| `fish check` | 执行快速语法与类型检查 |
+| `fish test` | 并发执行所有单元与集成测试 |
+| `fish clean` | 清理构建产物与本地缓存 |
 
-- `--experimental`: Enable experimental features.
-- `-v, --verbose`: Enable verbose diagnostic output.
-- `-j, --jobs <N>`: Maximum parallel worker threads.
-- `--no-cache`: Bypass both local and remote caches.
-- `--cache-dir <PATH>`: Custom local cache directory.
-- `--explain`: Print detailed rebuild reasons for dirty targets.
-- `--pgo-generate`: Instrument binaries for Profile-Guided Optimization.
-- `--pgo-use`: Compile binaries utilizing gathered PGO profile data.
-
----
-
-## Primary Commands
-
-### `fish init`
-Initializes Fish configuration and scans the workspace to generate multi-language task definitions (`fish.yaml`).
+## AI 智能命令
 
 ```bash
-fish init [--force]
+# 分析构建错误日志
+fish ai analyze --toolchain rust --stderr "<log_content>"
+
+# 优化任务调度图
+fish ai optimize --workers 8
+
+# 推荐需构建的目标包
+fish ai recommend
 ```
 
----
-
-### `fish ui`
-Starts the real-time interactive Web Dashboard & SVG DAG visualizer with 5-language telemetry (English, Vietnamese, Simplified Chinese, Traditional Chinese, Japanese).
+## 网络与分布式命令
 
 ```bash
-fish ui [--port <PORT>] [--open]
+# 启动远程缓存服务端
+fish cache-server --listen 0.0.0.0:8080
+
+# 启动分布式 Worker 节点
+fish worker --coordinator http://coordinator:9090
 ```
 
----
-
-### `fish build`
-Executes build tasks for packages in the workspace.
+## 诊断与辅助工具
 
 ```bash
-fish build [OPTIONS]
-```
+# 运行环境依赖全面检查
+fish doctor --ai
 
-**Common Flags:**
-- `-p, --package <NAME>`: Build a specific package.
-- `--explain`: Diagnose why packages are rebuilt.
-- `--profile [FILE]`: Generate a Chrome trace JSON profile.
-- `--sandbox`: Run in an isolated sandbox.
-- `--ram-limit <PCT>`: Throttle concurrency at memory threshold.
+# 查询包依赖关系
+fish query "deps(//packages/core)"
 
----
-
-### `fish check`
-Performs type checking and static analysis without linking full artifacts.
-
-```bash
-fish check [OPTIONS]
-```
-
----
-
-### `fish test`
-Executes test suites across workspace packages.
-
-```bash
-fish test [OPTIONS]
-```
-
----
-
-### `fish run`
-Builds and runs a selected binary target.
-
-```bash
-fish run -p <PACKAGE> --bin <BINARY> [-- <ARGS>...]
-```
-
----
-
-### `Fish query <EXPR>`
-Evaluates algebraic queries over the workspace dependency graph.
-
-```bash
-Fish query "<EXPRESSION>"
-```
-
-**Supported Functions:**
-- `deps(//pkg)`: All transitive dependencies of `//pkg`.
-- `rdeps(//pkg)`: All transitive reverse dependencies of `//pkg`.
-- `allpaths(//from, //to)`: All paths between `//from` and `//to`.
-- `somepath(//from, //to)`: Shortest path between `//from` and `//to`.
-- `filter('pattern', expr)`: Filter matching packages by keyword or pattern.
-
-**Examples:**
-```bash
-# Find everything required to build fish-cli
-Fish query "deps(//fish-cli)"
-
-# Find all crates affected by a change in fish-graph
-Fish query "rdeps(//fish-graph)"
-
-# Find shortest dependency chain between app and util
-Fish query "somepath(//app, //util)"
-```
-
----
-
-### `Fish daemon`
-Manages the background build daemon for instant warm graph resolutions.
-
-```bash
-# Start the daemon
-Fish daemon start [--port 9527]
-
-# Check daemon status
-Fish daemon status [--port 9527]
-
-# Stop the daemon
-Fish daemon stop [--port 9527]
-```
-
----
-
-### `fish graph`
-Prints or exports the project dependency graph.
-
-```bash
-fish graph [--format <tree|dot|json>]
-```
-
----
-
-### `fish affected`
-Identifies and executes tasks only on packages modified since a Git revision.
-
-```bash
-fish affected --since <GIT_REF> [--mode <build|check|test>]
-```
-
----
-
-### `Fish cache`
-Manages local Content-Addressable Storage (CAS) and fingerprints.
-
-```bash
-# Display cache size and object count
-Fish cache stats
-
-# Remove stale fingerprints and orphaned artifacts
-Fish cache prune
-
-# Inspect CAS storage
-Fish cache cas stats
-Fish cache cas list
-```
-
----
-
-### `fish doctor`
-Checks system toolchains, compilers, linkers, and dependencies for readiness.
-
-```bash
-fish doctor [--fix] [--ai]
-```
-
----
-
-### `fish ci init` / `fish ci export`
-Generates CI workflow configurations for various platforms.
-
-```bash
-fish ci init --platform <github|gitlab|circleci|bitbucket|all>
+# 文件变动实时监听构建
+fish watch
 ```

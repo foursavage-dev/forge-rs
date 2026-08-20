@@ -1,36 +1,31 @@
-# Go Backend Guide
+# Go 語言後端支援
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
 
-Fish integrates with Go workspaces and modules (`go.mod`).
+Fish 為各種主流語言專案提供原生高效的建置編排支援。
 
----
+## 自動偵測
 
-## Detection & Discovery
+自動偵測: `go.mod`.
 
-Fish automatically detects Go projects when a `go.mod` file is present in the package directory.
-
-### Supported Tasks:
-- `build`: Invokes `go build` for binary packages or compiles libraries.
-- `check`: Invokes `go vet ./...` for static analysis.
-- `test`: Invokes `go test ./...` with caching.
-
----
-
-## AST Dependency Inference
-
-Fish scans Go source files for `import (...)` statements, automatically resolving module boundaries and linking them into the unified polyglot DAG without manual configuration.
-
----
-
-## Example `fish.toml`
+## fish.toml 設定檔設定
 
 ```toml
 [build]
 backend = "go"
-jobs = 4
+jobs = 8
 
 [pipelines.build]
-inputs = ["**/*.go", "go.mod", "go.sum"]
-outputs = ["bin/*"]
+inputs = ["src/**/*", "go.mod"]
+outputs = ["target/**/*"]
 ```
+
+## 自動產生的建置任務
+
+- `fish build`: 自動產生的建置任務 (build)
+- `fish test`: 自動產生的建置任務 (test)
+- `fish check`: 自動產生的建置任務 (check)
+
+## 相依關係提取
+
+- `go.mod`

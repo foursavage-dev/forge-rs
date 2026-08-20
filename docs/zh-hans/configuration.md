@@ -1,123 +1,48 @@
-# Fish Configuration Guide
+# 配置指南 (`fish.toml`)
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **翻译与贡献：** 想用您的母语翻译或完善本文档？请查看 [翻译指南](TRANSLATION.md)。
 
-This guide describes how to configure Fish workspaces using `fish.toml`.
+Fish 使用 `fish.toml` 文件进行配置管理。
 
----
-
-## Configuration File Overview
-
-Fish reads project configuration from a `fish.toml` file located in the root of your workspace. If no `fish.toml` is present, Fish applies sensible defaults automatically.
+## 完整示例
 
 ```toml
-[build]
-backend = "rust"
-jobs = 8
-no_cache = false
-sandbox = false
-semantic = true
-critical_path = true
-ram_limit = 85
+[workspace]
+name = "my-monorepo"
+members = [
+    "packages/*",
+    "apps/*"
+]
 
 [cache]
-dir = "~/.Fish/cache"
-reflink = true
+enabled = true
+storage_dir = "~/.fish/cache"
+max_size_gb = 50
+compression = "zstd"
 
-[remote]
-cache_url = "http://127.0.0.1:8080"
-token = "secret-cache-token"
+[scheduler]
+max_jobs = 8
+memory_limit_mb = 8192
+strategy = "critical-path"
 
-[daemon]
-port = 9527
-
-[pipelines.build]
-depends_on = ["^build"]
-inputs = ["src/**/*", "Cargo.toml", "Cargo.lock"]
-outputs = ["target/release/**/*"]
-
-[pipelines.test]
-depends_on = ["build"]
-inputs = ["tests/**/*", "src/**/*"]
+[ai]
+enabled = true
+endpoint = "stdio"
+auto_suggest = true
 ```
 
----
+## 配置项详解
 
-## Top-Level Sections
+### `[workspace]`
+- `name`: 工作区唯一标识名称。
+- `members`: 包含的子项目与包路径 Glob 模式。
 
-### `[build]` —" Execution Settings
+### `[cache]`
+- `enabled`: 是否启用构建缓存。
+- `storage_dir`: CAS 存储目录路径。
+- `max_size_gb`: 本地缓存上限（超额将触发两阶段清理）。
+- `compression`: 产物压缩算法（`zstd` 或 `none`）。
 
-| Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `backend` | string | Auto | Primary toolchain backend (`rust`, `ts`, `go`, `cc`, `python`, `java`, `dotnet`, `docker`). |
-| `jobs` | integer | `num_cpus` | Maximum concurrent worker tasks. |
-| `no_cache` | boolean | `false` | Disable local and remote cache lookup. |
-| `sandbox` | boolean | `false` | Execute tasks in isolated sandbox environments. |
-| `semantic` | boolean | `false` | Enable AST semantic change detection. |
-| `critical_path` | boolean | `false` | Prioritize bottlenecks on the dependency graph critical path. |
-| `ram_limit` | integer (1-100) | `85` | Throttle concurrency when available system memory drops below this percentage. |
-| `timeout` | integer | None | Task execution timeout in seconds. |
-
----
-
-### `[cache]` —" Local Storage Settings
-
-| Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `dir` | string | `~/.Fish/cache` | Path to the local Content-Addressable Storage (CAS) directory. |
-| `reflink` | boolean | `true` | Use Copy-on-Write (CoW) extents or hardlinks to materialize artifacts without I/O copy. |
-
----
-
-### `[remote]` —" Distributed Cache & Execution
-
-| Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `cache_url` | string | None | Remote cache server endpoint (HTTP/gRPC). |
-| `token` | string | None | Authentication bearer token for remote operations. |
-| `workers` | list of strings | `[]` | List of remote worker cluster endpoints (e.g. `["worker1:9000", "worker2:9000"]`). |
-| `send_source` | boolean | `false` | Compress and transmit source snapshots to workers without shared filesystems. |
-
----
-
-### `[daemon]` —" Background IPC Service
-
-| Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `port` | integer | `9527` | Loopback TCP port for the Fish background daemon. |
-
----
-
-### `[pipelines.<task>]` —" Task Pipeline Topology
-
-Configure dependencies and caching boundaries between tasks across packages:
-
-```toml
-[pipelines.build]
-depends_on = ["^build"]
-inputs = ["src/**/*", "Cargo.toml"]
-outputs = ["target/release/*"]
-
-[pipelines.test]
-depends_on = ["build"]
-inputs = ["tests/**/*", "src/**/*"]
-```
-
-- **`^build`**: Topological dependency rule. Ensures that all dependency packages run their `build` task before the dependent package starts.
-- **`inputs`**: Micro-glob patterns. Only files matching these patterns affect the task fingerprint hash.
-- **`outputs`**: File paths to capture into the Content-Addressable Storage (CAS) upon task success.
-
----
-
-## Environment Variable Overrides
-
-Configuration settings can be overridden via environment variables:
-
-| Variable | Overrides |
-| :--- | :--- |
-| `fish_CACHE_DIR` | `cache.dir` |
-| `fish_JOBS` | `build.jobs` |
-| `fish_REMOTE_CACHE` | `remote.cache_url` |
-| `fish_REMOTE_TOKEN` | `remote.token` |
-| `fish_RAM_LIMIT` | `build.ram_limit` |
-| `fish_DAEMON_PORT` | `daemon.port` |
+### `[scheduler]`
+- `max_jobs`: 最大并发构建任务数。
+- `strategy`: 调度算法策略（`critical-path`、`fifo`、`least-loaded`）。

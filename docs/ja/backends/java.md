@@ -1,18 +1,31 @@
-# Java Backend Guide
+# Java バックエンド
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
 
-Fish supports Java workspaces configured with Apache Maven (`pom.xml`) or Gradle (`build.gradle` / `build.gradle.kts`).
+Fish は主要な各プログラミング言語プロジェクトに対して高速なビルドオーケストレーションを提供します。
 
----
+## プロジェクトの自動検出
 
-## Detection & Tasks
+プロジェクトの自動検出: `pom.xml`.
 
-Fish identifies Java packages by detecting `pom.xml` or `build.gradle` manifests.
+## fish.toml での設定
 
-### Mapped Tasks:
-- `build`: `mvn compile` or `gradle assemble`
-- `check`: `mvn checkstyle:check` or `gradle check`
-- `test`: `mvn test` or `gradle test`
+```toml
+[build]
+backend = "java"
+jobs = 8
 
-Outputs (such as `.jar` and `.class` trees) are fingerprinted and cached in the local CAS.
+[pipelines.build]
+inputs = ["src/**/*", "pom.xml"]
+outputs = ["target/**/*"]
+```
+
+## 自動生成されるタスク
+
+- `fish build`: 自動生成されるタスク (build)
+- `fish test`: 自動生成されるタスク (test)
+- `fish check`: 自動生成されるタスク (check)
+
+## 依存関係の抽出
+
+- `pom.xml`

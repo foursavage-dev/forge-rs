@@ -1,25 +1,31 @@
-# Docker Backend Guide
+# Docker Backend
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** [Translation Guidelines](TRANSLATION.md)
 
-Fish treats Docker images as first-class build artifacts within your workspace DAG.
+Fish cung cấp khả năng điều phối build tự động cho các dự án đa ngôn ngữ.
 
----
+## Phát hiện dự án
 
-## Detection & Discovery
+Phát hiện dự án: `Dockerfile`.
 
-Fish detects Docker components when a `Dockerfile` or `Containerfile` is present in a package directory.
-
----
-
-## Dependency Chaining
-
-Docker build tasks can declare dependencies on upstream compilation outputs:
+## Cấu hình trong fish.toml
 
 ```toml
-[pipelines.docker]
-depends_on = ["^build"]
-inputs = ["Dockerfile", "target/release/app"]
+[build]
+backend = "docker"
+jobs = 8
+
+[pipelines.build]
+inputs = ["src/**/*", "Dockerfile"]
+outputs = ["target/**/*"]
 ```
 
-Fish guarantees that all binaries and compiled assets are produced, validated, and placed in the build context before invoking `docker build` or BuildKit.
+## Các tác vụ tự động sinh ra
+
+- `fish build`: Các tác vụ tự động sinh ra (build)
+- `fish test`: Các tác vụ tự động sinh ra (test)
+- `fish check`: Các tác vụ tự động sinh ra (check)
+
+## Trích xuất quan hệ phụ thuộc
+
+- `Dockerfile`

@@ -1,107 +1,48 @@
-# Fish Architecture Guide
+# Fish 系统架构设计
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **翻译与贡献：** 想用您的母语翻译或完善本文档？请查看 [翻译指南](TRANSLATION.md)。
 
-This document provides a comprehensive technical overview of Fish's system architecture, core engine modules, and execution pipeline.
+Fish 采用专为现代化大型代码仓库（Monorepo）设计的 **三引擎架构 (Rust + Python + Go)**，兼具极致构建速度、云原生分布式扩展以及 AI 智能化分析。
 
----
+## 三引擎架构概览
 
-## System Overview
-
-Fish is a high-performance, cache-first build orchestration system designed for polyglot monorepos and distributed development. Rather than replacing native compilers, Fish acts as an intelligent coordination layer across language toolchains, managing dependency DAGs, content-addressable caching (CAS), hermetic isolation, and parallel work-stealing execution.
-
-```text
+```
 ┌─────────────────────────────────────────────────────────────┐
-│                    fish-cli / Web UI                        │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────┐
-│       fish-core (Discovery, Toolchains, compile_commands)   │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────┐
-│           fish-graph (DAG & Algebraic Query Engine)         │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────┐
-│   fish-scheduler (Governor, Jobserver, Racing, Watcher)     │
+│                         CLI 命令行                          │
+│                      (crates/fish-cli)                      │
 └──────────────┬──────────────────────────────┬───────────────┘
                │                              │
-┌──────────────▼──────────────┐┌──────────────▼──────────────┐
-│ fish-executor & Middleware  ││  fish-cache & fish-cas      │
-└──────────────┬──────────────┘└──────────────┬──────────────┘
+               ▼                              ▼
+┌──────────────────────────────┐ ┌────────────────────────────┐
+│      Rust 执行核心 (75%)     │ │      Go 网络调度服务 (10%)  │
+│  - fish-core, fish-graph     │ │  - fish-coordinator       │
+│  - fish-executor, scheduler  │ │  - fish-worker-gateway    │
+│  - fish-cache, fish-cas      │ │  - fish-network, migrator │
+└──────────────┬───────────────┘ └────────────┬───────────────┘
                │                              │
-┌──────────────▼──────────────────────────────▼──────────────┐
-│      11+ Language Backends & Distributed Worker Network     │
+               ▼                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     Python AI 智能服务 (15%)                │
+│   - fish_ai_analyzer   - fish_optimizer                     │
+│   - fish_analytics     - fish_recommender                   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
----
+### 1. Rust 核心执行引擎 (75%)
+- **`fish-core`**: 工作区自动发现、配置清单解析以及微文件过滤。
+- **`fish-graph`**: 有向无环图（DAG）、拓扑排序与代数依赖查询引擎。
+- **`fish-executor`**: 进程控制、沙箱隔离以及中间件流水线。
+- **`fish-scheduler`**: 基于 GNU Jobserver 的高并发工作窃取调度器。
+- **`fish-cache` & `fish-cas`**: Blake3 多层指纹缓存与 ZSTD 压缩存储。
 
-## Core Crates and Responsibilities
+### 2. Python AI 智能层 (15%)
+- **`fish_ai_analyzer`**: 构建失败日志分类、根因定位与修复建议。
+- **`fish_optimizer`**: 关键路径（Critical Path）计算与内存约束调度。
+- **`fish_analytics`**: 构建耗时遥测聚合与瓶颈检测。
+- **`fish_recommender`**: 变更影响分析与不稳定测试（Flaky Tests）检测。
 
-### 1. Workspace Discovery (`fish-core`)
-- **Manifest Discovery**: Scans and parses `Cargo.toml`, `package.json`, `go.mod`, `pyproject.toml`, `CMakeLists.txt`, `pom.xml`, `*.csproj`, `Package.swift`, `pubspec.yaml`, `build.zig`, `Dockerfile`.
-- **Compilation Database**: Generates standard `compile_commands.json` for Clangd and IDEs (`CompilationDatabase`).
-- **Hermetic Toolchains**: Manages and isolates toolchain paths and environments (`ToolchainRegistry`, `ToolchainSpec`).
-- **Micro-Input Filtering**: Glob-based file filtering reducing cache invalidation churn (`MicroInputFilter`).
-
-### 2. Build Graph (`fish-graph`)
-- **Topological Task Graph**: Constructs a Directed Acyclic Graph (DAG) of build tasks with cycle detection.
-- **Algebraic Graph Queries**: Evaluates Bazel-style graph expressions (`deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`).
-- **Dynamic Node Expansion**: Generates sub-task graphs on the fly during execution (`DynamicGraphExpander`).
-
-### 3. Execution & Fast Materialization (`fish-executor`)
-- **Process Orchestration**: Non-blocking asynchronous task execution with timeouts and output stream capture.
-- **Fast Extents Cloning**: Copy-on-Write (CoW) extents and hardlink materialization (`KernelCowCloner`).
-- **Linker Dispatcher**: Auto-detects and synthesizes flags for `mold`, `lld`, `lld-link`, and `msvc` (`LinkerDispatcher`).
-- **Compiler Response Files**: Generates `@fish_args.rsp` files when command arguments exceed operating system limits.
-
-### 4. Scheduler & Resource Control (`fish-scheduler`)
-- **Parallel Work-Stealing**: Lock-free task scheduling across available hardware cores.
-- **Kernel Resource Governor**: Monitors memory pressure and dynamically throttles concurrency to prevent out-of-memory thrashing (`KernelResourceGovernor`).
-- **Compiler Pipelining**: Coordinates multi-stage compilation to unblock downstream targets upon metadata readiness (`PipelinedCompilationCoordinator`).
-- **GNU Jobserver Pool**: Global token pool coordinating thread allocation across nested compiler invocations (`JobserverPool`).
-- **Dynamic Remote Racing**: Races local execution against distributed cluster workers (`DynamicRacingExecutor`).
-- **Distributed Task Execution (DTE)**: Longest Processing Time (LPT) bin-packing for multi-agent CI balancing (`DteBinPacker`).
-- **Real-Time Filesystem Watcher**: Background daemon monitoring file events and pre-warming cache graphs (`FsWatcherDaemon`).
-
-### 5. Content-Addressable Storage (`fish-cache` & `fish-cas`)
-- **Fingerprinting**: Blake3 content hashing over source files, environment variables, and compiler flags.
-- **CAS Storage**: Deduplicated artifact storage with Zstandard compression.
-- **Tiered Composite Caching**: L1 local in-memory/disk cache and L2 remote S3/HTTP cache integration.
-
-### 6. User Interface & Telemetry (`fish-cli`)
-- **Command-Line Interface**: Ergonomic subcommands for build, test, check, graph, doctor, query, affected, and daemon management.
-- **Interactive SVG DAG Visualizer**: Web-based real-time dependency graph canvas with pan/zoom, search, node focus, and critical path highlighting.
-- **5-Language UI Localization**: Built-in dictionary supporting English, Vietnamese, Simplified Chinese, Traditional Chinese, and Japanese.
-- **Background Daemon IPC**: Loopback TCP daemon on `127.0.0.1:9527` for instant warm graph resolutions.
-
----
-
-## Language Backends
-
-Fish includes 11 dedicated language adapters:
-
-| Backend | Identifier | Primary Manifest | Default Compiler / Tool |
-| :--- | :--- | :--- | :--- |
-| **Rust** | `rust` | `Cargo.toml` | `cargo`, `rustc` |
-| **C / C++** | `cc` | `CMakeLists.txt`, `Makefile` | `cmake`, `clang`, `gcc`, `msvc` |
-| **Go** | `go` | `go.mod` | `go build`, `go test` |
-| **TypeScript / Node** | `ts` | `package.json` | `npm`, `pnpm`, `yarn`, `bun` |
-| **Python** | `py` | `pyproject.toml`, `requirements.txt` | `python -m build`, `pytest`, `uv` |
-| **Java / Kotlin** | `java` | `pom.xml`, `build.gradle` | `mvn`, `gradle` |
-| **.NET** | `dotnet` | `*.csproj`, `*.sln` | `dotnet build`, `dotnet test` |
-| **Swift** | `swift` | `Package.swift` | `swift build`, `swift test` |
-| **Dart / Flutter** | `dart` | `pubspec.yaml` | `dart compile`, `flutter build` |
-| **Zig** | `zig` | `build.zig` | `zig build` |
-| **Docker** | `docker` | `Dockerfile` | `docker build` |
-
----
-
-## Security & Verification
-
-- **Artifact Cryptographic Signing (`fish-signing`)**: Ed25519 digital signature generation and verification.
-- **SBOM Generation**: SPDX and CycloneDX Software Bill of Materials export.
-- **Vulnerability Scanner (`fish-security`)**: Automated dependency scanning with CVSS scoring and severity blocking.
-- **Secrets Management (`fish-secrets`)**: HashiCorp Vault, AWS Secrets Manager, and Kubernetes Secret integration with automatic console redaction.
+### 3. Go 云原生网络层 (10%)
+- **`fish-coordinator`**: 节点注册中心、心跳监控与分布式任务分发。
+- **`fish-worker-gateway`**: 高性能反向代理与 Least-Loaded 负载均衡。
+- **`fish-network`**: 连接池管理与 mTLS 传输安全。
+- **`fish-db-migrator`**: 遥测数据库版本迁移工具。
