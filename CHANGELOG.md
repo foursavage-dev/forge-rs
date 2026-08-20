@@ -26,26 +26,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Added
-- Initial release of Forge build orchestration system
-- Support for 10+ language backends (Rust, C/C++, Go, TypeScript, Python, Java, .NET, Swift, Dart, Zig, Docker)
-- CAS (Content-Addressable Storage) artifact cache
-- Distributed cluster execution with remote workers
+- Bazel-style algebraic graph query engine (`forge query` with `deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`)
+- Pants-style automated AST dependency inference (`DependencyInferenceEngine`) for Rust, TypeScript/JavaScript, Python, and Go
+- Nx-style Distributed Task Execution (DTE) bin-packing (`DteBinPacker`) for multi-agent CI balance
+- Ninja-style dirty rebuild diagnostics (`DirtyExplainer`, `forge build --explain`)
+- GNU Jobserver pool integration (`JobserverPool`) for global compiler thread token coordination
+- Dynamic remote racing (`DynamicRacingExecutor`) racing local and remote worker execution
+- Background loopback TCP build daemon (`ForgeDaemon`, `forge daemon start/status/stop`)
+- Response file synthesis (`ResponseFileWriter`, `@forge_args.rsp`) for large compiler argument vectors
+- Profile-Guided Optimization (PGO) orchestration (`PgoManager`, `--pgo-generate`, `--pgo-use`)
+- Task pipeline topology engine (`PipelineResolver`) with cross-package `^build` dependencies
+- Redesigned Stage Tree DAG visualizer for clean terminal representations
+- Support for 11+ language backends (Rust, C/C++, Go, TypeScript, Python, Java, .NET, Swift, Dart, Zig, Docker)
+- CAS (Content-Addressable Storage) artifact cache with Blake3 and Zstandard compression
+- Distributed cluster execution with remote workers and binary streaming protocol
 - Virtual File System (VFS) for on-demand file streaming
 - Plugin system with ScriptPlugin support (Shell, Python, Node, WASM, Lua)
 - CI/CD generator for GitHub Actions, GitLab CI, CircleCI, and Bitbucket Pipelines
-- Build artifact signing & verification with Ed25519
-- SBOM generation (SPDX/CycloneDX formats)
-- Dependency vulnerability scanner
-- Build cache analytics dashboard
-- Multi-platform CI matrix generator
-- Build notification system (Slack/Discord/Email)
-- Flaky test detection & auto-retry
-- Docker image building as first-class artifacts
-- Secret management integration (Vault/AWS/K8s)
-- Incremental build analysis
-- Build pipeline templates
-- VS Code extension with status bar, problem matchers, and tree view
-- Experimental "dark-arts" engines for extreme performance
+- Build artifact signing & verification with Ed25519 and SPDX SBOM generation
+- Dependency vulnerability scanner and HashiCorp Vault / AWS Secrets Manager integration
+- Build cache analytics dashboard and flaky test detection & auto-retry
 
 ### Changed
 - Updated repository to Foursavage organization (foursavage-dev)

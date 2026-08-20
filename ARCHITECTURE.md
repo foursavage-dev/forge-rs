@@ -25,49 +25,61 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 
 ### 2. Build Graph (`forge-graph`)
 
-**Purpose**: Model build dependencies and execution order
+**Purpose**: Model build dependencies, execution order, and algebraic queries
 
 **Responsibilities**:
 - Create directed acyclic graph (DAG) of build tasks
 - Compute topological sort for execution order
+- Subgraph merging for polyglot monorepos (`merge_subgraph`)
 - Track task states (pending, running, completed, failed)
+- Bazel-style algebraic query evaluation (`GraphQueryEngine` supporting `deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`)
 - Detect circular dependencies
 
 **Key Types**:
-- `Graph`: Directed acyclic graph of tasks
+- `BuildGraph`: Directed acyclic graph of tasks
 - `Node`: Individual build task
-- `Edge`: Dependency relationship
-- `Level`: Group of independent tasks for parallel execution
+- `NodeId`: Type-safe index into graph structures
+- `GraphQueryEngine`: Evaluator for graph query expressions
+- `QueryExpr`: Algebraic query AST
 
 ### 3. Executor (`forge-executor`)
 
-**Purpose**: Execute build commands and manage processes
+**Purpose**: Execute build commands, manage processes, and chain execution middleware
 
 **Responsibilities**:
 - Spawn and manage build processes
 - Capture stdout/stderr
 - Handle process timeouts and cancellation
+- Automatic response file synthesis (`@forge_args.rsp`) when arguments exceed OS limits (4KB on Windows, 32KB on POSIX)
+- Extensible task middleware pipeline (`TaskMiddleware`, `TurboLinker`, `SuperOptimizer`)
 - Return execution results
 
 **Key Types**:
 - `CommandSpec`: Command specification with environment
-- `Executor`: Process execution engine
+- `AsyncExecutor`: Non-blocking process execution engine
+- `ResponseFileWriter`: Argument file synthesizer
+- `TaskMiddleware`: Middleware trait for task interception
 - `ExecutionResult`: Result of command execution
 
 ### 4. Scheduler (`forge-scheduler`)
 
-**Purpose**: Schedule tasks for parallel execution
+**Purpose**: Schedule tasks for parallel, speculative, and distributed execution
 
 **Responsibilities**:
 - Maintain ready queue of available tasks
 - Distribute tasks across available workers
+- GNU Jobserver pool integration (`JobserverPool`) for global thread token management across compilers
+- Dynamic remote racing (`DynamicRacingExecutor`): concurrent local vs remote execution with instant cancellation of the slower runner
+- Distributed Task Execution (DTE) bin-packing (`DteBinPacker`) using Longest Processing Time (LPT) scheduling
 - Respect task dependencies
 - Handle task completion and failure
 
 **Key Types**:
 - `Scheduler`: Task scheduling engine
-- `ReadyQueue`: Queue of ready-to-execute tasks
-- `Worker`: Task execution worker
+- `JobserverPool`: Global token-based concurrency pool
+- `DynamicRacingExecutor`: Local vs remote racer
+- `DteBinPacker`: Balanced multi-agent CI partitioner
+- `WorkStealingPool`: Lock-free task distributor
 
 ### 5. Cache (`forge-cache`)
 
@@ -264,12 +276,30 @@ Supports multiple CI/CD platforms:
 
 ### 6. Incremental Analysis (`forge-incremental`)
 
-- Build pattern detection
-- Hotspot identification
-- Refactoring suggestions
-- Rebuild frequency analysis
+- AST-based dependency inference (`DependencyInferenceEngine`) for Rust, TypeScript/JavaScript, Python, and Go
+- Dirty rebuild diagnostics (`DirtyExplainer`, `forge build --explain`) identifying exact source file modifications or hash mismatches
+- Build pattern detection and hotspot identification
+- Refactoring suggestions and rebuild frequency analysis
 
-### 7. Pipeline Templates (`forge-templates`)
+### 7. Build Daemon & IPC (`forge-cli::daemon`)
+
+- Background loopback TCP daemon (`ForgeDaemon`) on `127.0.0.1:9527`
+- Sub-millisecond graph caching and warm execution
+- Commands: `forge daemon start`, `forge daemon status`, `forge daemon stop`
+
+### 8. Profile-Guided Optimization (`forge-cli::pgo`)
+
+- 2-phase LLVM PGO workflow orchestration (`PgoManager`)
+- Automated `-Cprofile-generate` instrumentation and `llvm-profdata merge`
+- Recompilation with `-Cprofile-use` for maximum runtime performance
+
+### 9. Task Pipeline Topology (`forge-cli::pipeline`)
+
+- Turborepo/Nx style topological task pipelines configured via `forge.toml`
+- Cross-package dependency rules (e.g. `^build` ensuring dependency outputs are built first)
+- Configurable environment variable and input file fingerprint hashes
+
+### 10. Pipeline Templates (`forge-templates`)
 
 - Shareable templates
 - Handlebars rendering

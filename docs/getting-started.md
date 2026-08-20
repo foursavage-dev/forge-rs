@@ -78,6 +78,47 @@ forge build --no-cache
 
 # Build with sandbox
 forge build --sandbox
+
+# Build with detailed dirty rebuild explanation
+forge build --explain
+
+# Profile-Guided Optimization (PGO) workflow
+forge build --pgo-generate
+# ... run your benchmarks/workload ...
+forge build --pgo-use
+```
+
+### Graph & Query Commands
+
+```bash
+# Query transitive dependencies (Bazel-style)
+forge query "deps(//forge-cli)"
+
+# Query reverse dependencies
+forge query "rdeps(//forge-graph)"
+
+# Find all paths between two modules
+forge query "allpaths(//forge-cli, //forge-core)"
+
+# Filter dependencies by regex
+forge query "filter('backend', deps(//forge-cli))"
+
+# Visual graph rendering
+forge graph --format tree
+forge graph --format dot
+```
+
+### Build Daemon Commands
+
+```bash
+# Start background build daemon for sub-millisecond warm builds
+forge daemon start
+
+# Check daemon status
+forge daemon status
+
+# Stop background daemon
+forge daemon stop
 ```
 
 ### Test Commands
