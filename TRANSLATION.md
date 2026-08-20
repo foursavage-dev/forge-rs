@@ -1,6 +1,6 @@
 # Documentation Translation Guidelines
 
-We welcome community contributions to help translate the Forge documentation into **any language**. This guide outlines the workflow, disclosure policies, and best practices for translating documentation.
+We welcome community contributions to help translate the Forge documentation into **any language**. This guide outlines the workflow, disclosure policies, relaxed contributor rules, and best practices for translating documentation.
 
 ---
 
@@ -10,6 +10,24 @@ Translation applies exclusively to **documentation** (markdown files under `docs
 
 - **Source code, tests, identifiers, and commit messages** must remain **100% in English**.
 - **CLI commands, flag names, code snippets, and configuration keys** inside the documentation must not be translated.
+
+---
+
+## Relaxed Rules for Documentation Contributors
+
+To make contributing as welcoming and straightforward as possible, the following relaxed policies apply to documentation:
+
+1. **Incremental / Partial Translations Are Welcome**:
+   - You do not need to translate an entire document in one go.
+   - Translating a single section (such as *Installation* or *Quick Start*) is completely acceptable.
+   - For uncompleted sections, you may keep the original English text or leave an HTML comment like `<!-- TODO: translate this section -->`.
+
+2. **No Local Rust Setup Required**:
+   - You do not need to clone the repository or install Rust locally to contribute to docs.
+   - You can edit markdown files directly through the **GitHub Web UI** by clicking the pencil icon on any file.
+
+3. **Fast-Track Review**:
+   - Pull requests for typo corrections, formatting improvements, link updates, and translation refinements are fast-tracked and merged promptly.
 
 ---
 
@@ -74,6 +92,12 @@ docs/
 
 ## How to Submit a Translation
 
+### Option A: Via GitHub Web Interface (Easiest)
+1. Navigate to the file under `docs/` on GitHub.
+2. Click the **Edit this file** (pencil) icon.
+3. Save your changes into a new branch and open a Pull Request.
+
+### Option B: Via Git Command Line
 1. **Create a branch** from `dev`:
    ```bash
    git checkout -b docs/translate-<language>-<topic>

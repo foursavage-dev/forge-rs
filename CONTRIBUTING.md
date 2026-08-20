@@ -164,9 +164,13 @@ We embrace modern developer tooling, including AI coding assistants (e.g., Copil
 5. **Architectural Coherence**: Code must be functional, maintainable, and avoid bloated or dead implementations.
 6. **No Code Comments Violation**: Maintain the codebase policy of zero source code comments where applicable.
 
-### Translating Documentation
+### Documentation & Translation Contributions
 
-We actively welcome community translations of our documentation for any language. AI and machine translation tools are permitted, provided they are explicitly disclosed in the pull request description. Priority is given to translations reviewed or authored by native speakers. See [TRANSLATION.md](TRANSLATION.md) for full guidelines and the disclosure checklist.
+We actively welcome community contributions and translations for our documentation in any language. To make contributing as easy as possible:
+- **No Rust setup required**: You can edit markdown documentation directly in the GitHub Web UI.
+- **Incremental contributions**: Partial translations, typo fixes, and single-section edits are welcome.
+- **Fast-Track review**: Documentation PRs are reviewed and merged on an accelerated schedule.
+- **AI & machine translation**: AI tools are permitted provided they are disclosed in the PR description. Priority is given to native-speaker human review. See [TRANSLATION.md](TRANSLATION.md) for full guidelines.
 
 ### Workspace Structure
 

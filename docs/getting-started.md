@@ -1,5 +1,7 @@
 # Getting Started with Forge
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+
 This guide will help you get started with Forge, a fast, cache-first build orchestration system.
 
 ## Installation
