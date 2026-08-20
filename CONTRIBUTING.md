@@ -25,7 +25,7 @@ Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before participating in th
 
 Before contributing to Forge, make sure you have:
 
-- Rust 1.85 or later
+- Rust 1.88 or later (MSRV 1.88)
 - Git
 - Basic familiarity with Rust and the command line
 
@@ -334,7 +334,7 @@ A clear description of what you expected to happen.
 **Environment**
 
 - OS: [e.g. Windows 11, Ubuntu 24.04]
-- Rust version: [e.g. 1.85.0]
+- Rust version: [e.g. 1.88.0]
 - Forge version: [e.g. 0.1.0]
 
 **Additional Context**

@@ -10,23 +10,21 @@ The TypeScript/JavaScript backend is detected when a `package.json` file is pres
 
 ## Configuration
 
-### forge.ts.json
+Configure the TypeScript/JavaScript backend via `forge.toml` in your project or workspace root:
 
-```json
-{
-  "packageManager": "npm",
-  "scripts": ["build", "test", "lint"],
-  "includeDevDependencies": false,
-  "monorepo": false
-}
+```toml
+[build]
+backend = "ts"
+jobs = 8
+
+[pipelines.build]
+inputs = ["src/**/*.{ts,tsx,js,jsx}", "package.json", "tsconfig.json"]
+outputs = ["dist/**/*", "build/**/*"]
+
+[pipelines.test]
+depends_on = ["build"]
+inputs = ["tests/**/*.{ts,js}", "src/**/*.{ts,js}"]
 ```
-
-### Configuration Options
-
-- `packageManager`: Package manager to use (npm, pnpm, yarn, bun)
-- `scripts`: NPM scripts to run
-- `includeDevDependencies`: Whether to include dev dependencies in fingerprint
-- `monorepo`: Whether this is a monorepo (Nx, Turborepo, Lerna)
 
 ## Supported Package Managers
 

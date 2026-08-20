@@ -24,7 +24,7 @@ If applicable, add screenshots to help explain your problem.
 
 **Environment**
 - OS: [e.g. Windows 10, macOS 12.0, Ubuntu 22.04]
-- Rust version: [e.g. 1.85.0]
+- Rust version: [e.g. 1.88.0]
 - Forge version: [e.g. 0.1.0]
 - Backend: [e.g. Rust, Go, TypeScript]
 

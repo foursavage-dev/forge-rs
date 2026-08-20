@@ -10,27 +10,24 @@ The Rust backend is detected when a `Cargo.toml` file is present in the project 
 
 ## Configuration
 
-### forge.rust.json
+Configure the Rust backend via `forge.toml` in your project or workspace root:
 
-```json
-{
-  "features": ["default"],
-  "all-features": false,
-  "doc": false,
-  "benches": false,
-  "examples": false,
-  "tests": true
-}
+```toml
+[build]
+backend = "rust"
+jobs = 8
+no_cache = false
+semantic = true
+critical_path = true
+
+[pipelines.build]
+inputs = ["src/**/*", "Cargo.toml", "Cargo.lock"]
+outputs = ["target/release/**/*"]
+
+[pipelines.test]
+depends_on = ["build"]
+inputs = ["tests/**/*", "src/**/*"]
 ```
-
-### Configuration Options
-
-- `features`: Default features to enable
-- `all-features`: Whether to enable all features
-- `doc`: Whether to build documentation
-- `benches`: Whether to run benchmarks
-- `examples`: Whether to build examples
-- `tests`: Whether to run tests
 
 ## Tasks Generated
 

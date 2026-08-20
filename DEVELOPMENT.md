@@ -8,7 +8,7 @@ This guide provides detailed information for developers working on Forge.
 
 ### Prerequisites
 
-- Rust 1.85 or later
+- Rust 1.88 or later (MSRV 1.88)
 - Git
 - A text editor or IDE (VS Code recommended)
 - Docker (for testing Docker backend)

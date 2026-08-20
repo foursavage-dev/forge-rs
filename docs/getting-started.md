@@ -193,102 +193,61 @@ forge plugin install ./my-plugin
 
 ## Configuration
 
-### Project Configuration
+### Workspace Configuration (`forge.toml`)
 
-Forge automatically detects project types based on manifest files. For custom configuration, create a `forge.config.json` in your project root:
+Forge automatically detects project types based on manifest files. For custom workspace execution, caching, and pipeline configuration, create a `forge.toml` in your project root:
 
-```json
-{
-  "backend": "rust",
-  "cache": {
-    "enabled": true,
-    "backend": "local"
-  },
-  "workers": {
-    "enabled": false
-  },
-  "signing": {
-    "enabled": true,
-    "key": ".forge/signing.key"
-  }
-}
+```toml
+[build]
+backend = "auto"
+jobs = 8
+no_cache = false
+sandbox = false
+semantic = true
+critical_path = true
+ram_limit = 85
+
+[cache]
+dir = "~/.forge/cache"
+reflink = true
+
+[remote]
+cache_url = "http://127.0.0.1:8080"
+token = "secret-cache-token"
+
+[daemon]
+port = 9527
+
+[pipelines.build]
+depends_on = ["^build"]
+inputs = ["src/**/*", "Cargo.toml"]
+outputs = ["target/release/*"]
+
+[pipelines.test]
+depends_on = ["build"]
+inputs = ["tests/**/*", "src/**/*"]
 ```
 
-### Backend-Specific Configuration
+See [Configuration Guide](configuration.md) for full options.
 
-Each backend can have additional configuration in `forge.<backend>.json` files:
+---
 
-**Rust:**
-```json
-{
-  "features": ["default"],
-  "all-features": false,
-  "doc": false
-}
-```
+## Interactive Telemetry & Web Dashboard
 
-**TypeScript:**
-```json
-{
-  "packageManager": "npm",
-  "scripts": ["build", "test"],
-  "includeDevDependencies": false
-}
-```
-
-## Advanced Features
-
-### Artifact Signing
+Forge includes a built-in real-time interactive DAG visualizer and telemetry dashboard with 5-language localization (English, Vietnamese, Simplified Chinese, Traditional Chinese, Japanese):
 
 ```bash
-# Sign a build artifact
-forge sign artifact.sig
+# Launch web dashboard on port 3000 and open in default browser
+forge ui --port 3000 --open
 
-# Verify an artifact
-forge verify artifact.sig
+# Check JSON graph data
+curl http://localhost:3000/api/graph
 
-# Generate SBOM
-forge sbom generate --format cyclonedx
+# Check hardware and CAS stats
+curl http://localhost:3000/api/stats
 ```
 
-### Security Scanning
-
-```bash
-# Scan for vulnerabilities
-forge security scan
-
-# Scan with blocking policy
-forge security scan --block-on-critical
-
-# Generate security report
-forge security scan --report security-report.json
-```
-
-### Build Analytics
-
-```bash
-# Start analytics dashboard
-forge analytics dashboard --port 8080
-
-# View cache performance
-forge analytics cache --report
-
-# Analyze build patterns
-forge analytics analyze
-```
-
-### Notifications
-
-```bash
-# Configure Slack notifications
-forge notifications add slack --webhook https://hooks.slack.com/...
-
-# Configure Discord notifications
-forge notifications add discord --webhook https://discord.com/api/webhooks/...
-
-# Test notifications
-forge notifications test
-```
+---
 
 ## Troubleshooting
 
@@ -296,9 +255,9 @@ forge notifications test
 
 If a build fails:
 
-1. Check the error message
+1. Check the error message or run `forge build --explain` to diagnose rebuild reasons.
 2. Run with debug logging: `RUST_LOG=debug forge build`
-3. Check if dependencies are installed
+3. Verify toolchain readiness: `forge doctor`
 4. Try clearing cache: `forge cache prune`
 
 ### Cache Issues
@@ -306,7 +265,7 @@ If a build fails:
 If cache doesn't work:
 
 1. Check cache stats: `forge cache stats`
-2. Verify cache backend is accessible
+2. Verify cache directory is writable: `~/.forge/cache`
 3. Clear and rebuild cache: `forge cache prune && forge build`
 
 ### Worker Connection Issues
@@ -314,16 +273,16 @@ If cache doesn't work:
 If workers can't connect:
 
 1. Check network connectivity
-2. Verify worker is running
-3. Check firewall settings
+2. Verify worker is running: `forge worker --listen 0.0.0.0:9000`
+3. Check firewall settings and authentication tokens
 4. Review worker logs
 
 ## Next Steps
 
 - Read the [Architecture Guide](architecture.md)
-- Check the [Development Guide](development.md)
+- Check the [Development Guide](../DEVELOPMENT.md)
+- Explore [CLI Reference](cli-reference.md)
 - Explore [Backend Documentation](backends/)
-- Join our [Discord Community](https://discord.gg/forge)
 
 ## Getting Help
 

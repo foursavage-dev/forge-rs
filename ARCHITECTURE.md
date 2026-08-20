@@ -19,6 +19,8 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - Detect project types based on manifest files
 - Filter input files by micro-globs (`MicroInputFilter`)
 - Build dependency graph between packages
+- Generate IDE compilation databases (`CompilationDatabase`, `compile_commands.json`)
+- Manage and isolate hermetic compiler toolchains (`ToolchainRegistry`, `ToolchainSpec`)
 - Manage package metadata
 
 **Key Types**:
@@ -26,6 +28,8 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - `Workspace`: Collection of packages with dependencies
 - `Manifest`: Project configuration (Cargo.toml, package.json, etc.)
 - `MicroInputFilter`: Fine-grained glob matcher and file filter
+- `CompilationDatabase`: Standard compilation command database
+- `ToolchainRegistry`: Hermetic toolchain configuration manager
 
 ### 2. Build Graph (`forge-graph`)
 
@@ -83,6 +87,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - GNU Jobserver pool integration (`JobserverPool`) for global thread token management across compilers
 - Dynamic remote racing (`DynamicRacingExecutor`): concurrent local vs remote execution
 - Distributed Task Execution (DTE) bin-packing (`DteBinPacker`) using Longest Processing Time (LPT) scheduling
+- Real-time filesystem watcher daemon (`FsWatcherDaemon`) with dirty node invalidation and hot graph cache pre-warming
 - Respect task dependencies
 - Handle task completion and failure
 
@@ -93,6 +98,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - `JobserverPool`: Global token-based concurrency pool
 - `DynamicRacingExecutor`: Local vs remote racer
 - `DteBinPacker`: Balanced multi-agent CI partitioner
+- `FsWatcherDaemon`: Real-time change listener and dirty node tracker
 - `WorkStealingPool`: Lock-free task distributor
 
 ### 5. Cache (`forge-cache`)

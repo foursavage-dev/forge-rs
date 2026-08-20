@@ -8,54 +8,46 @@ This document outlines the planned development roadmap for Forge.
 
 Forge aims to be the most efficient, secure, and developer-friendly build orchestration system for polyglot monorepos and distributed development.
 
-## Current Focus (v0.1.x)
+## Current Version (v0.2.x)
 
-### Phase 1: Core Stability
+### Phase 1: Core Engine & Multi-Language Backends
 - [x] Complete core build orchestration engine
-- [x] Implement all language backends
-- [x] Add distributed worker support
-- [x] Implement CAS artifact cache
-- [x] Add basic CI/CD generation
-- [x] Implement plugin system
-- [x] Add security features (signing, scanning)
-- [x] Create comprehensive documentation
+- [x] Implement all 11 language backends (Rust, C/C++, Go, TS, Py, Java, .NET, Swift, Dart, Zig, Docker)
+- [x] Add distributed worker support and cluster execution
+- [x] Implement Blake3 Content-Addressable Storage (CAS) with Zstandard compression
+- [x] Add CI/CD generation for GitHub, GitLab, CircleCI, Bitbucket
+- [x] Implement extensible plugin system
+- [x] Add security features (Ed25519 signing, SPDX SBOM, vulnerability scanning)
+- [x] Create comprehensive documentation and translation framework
 
-### Phase 2: Production Readiness
-- [x] Performance optimization and profiling
-- [x] Enhanced error handling and diagnostics
-- [ ] Comprehensive test coverage
-- [ ] Security audit and hardening
-- [ ] Production deployment guides
-- [ ] Performance benchmarks
+### Phase 2: Performance, Visualization & Developer Experience
+- [x] Web-based interactive telemetry dashboard & DAG visualizer (`forge ui`) with 5-language UI
+- [x] Standard compilation database generator (`CompilationDatabase`, `compile_commands.json`)
+- [x] Hermetic toolchain registry and system auto-detection (`ToolchainRegistry`)
+- [x] Real-time filesystem watcher daemon with dirty target tracking (`FsWatcherDaemon`)
+- [x] Algebraic graph query engine (`forge query` with `deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`)
+- [x] Copy-on-Write extents cloner (`KernelCowCloner`) and modern linker dispatcher (`mold`, `lld`, `msvc`)
+- [x] Kernel resource governor (`KernelResourceGovernor`) for memory pressure protection
+- [x] GNU Jobserver pool integration (`JobserverPool`) for global compiler thread token coordination
+- [x] Dynamic remote racing (`DynamicRacingExecutor`) and DTE bin-packing (`DteBinPacker`)
+- [x] Profile-Guided Optimization (PGO) automated 2-phase workflow
+- [x] Comprehensive test coverage across all 34 crates (100% tests passed)
 
-## Short-term Goals (v0.2.x)
+---
 
-### Enhanced CI/CD
-- [ ] Advanced matrix generation strategies
-- [ ] CI/CD template library
-- [ ] Automatic PR optimization
-- [ ] Integration with popular CI providers
+## Short-term Goals (v0.3.x)
 
-### Developer Experience
-- [ ] Enhanced VS Code extension
-- [ ] JetBrains plugin
-- [ ] Web-based dashboard
-- [ ] Real-time build visualization
-- [ ] Interactive debugging
+### IDE & Editor Integration
+- [ ] Dedicated VS Code extension with interactive DAG preview and task runner
+- [ ] JetBrains plugin (CLion, IntelliJ, Rider) integration
+- [ ] Language Server Protocol (LSP) workspace diagnostics bridge
 
-### Performance
-- [ ] Build time profiling
-- [ ] Cache optimization algorithms
-- [ ] Parallel execution improvements
-- [ ] Network optimization for distributed builds
+### Distributed Infrastructure & Cloud
+- [ ] Kubernetes operator for elastic worker auto-scaling
+- [ ] gRPC Remote Execution API (REAPI) server compatibility
+- [ ] Automated PEX virtual environment packaging for hermetic Python execution
 
-### Security
-- [ ] Advanced threat detection
-- [ ] Policy-based access control
-- [ ] Audit logging
-- [ ] Compliance reporting (SOC2, etc.)
-
-## Medium-term Goals (v0.3.x)
+## Medium-term Goals (v0.4.x - v0.5.x)
 
 ### Advanced Features
 - [ ] Machine learning-based optimization

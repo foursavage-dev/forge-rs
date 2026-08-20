@@ -1,5 +1,7 @@
 # Polyglot Demo Project
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+
 This is a sample monorepo demonstrating Forge's multi-language build capabilities.
 
 ## Project Structure

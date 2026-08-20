@@ -21,6 +21,24 @@ Complete reference for all Forge command-line interface commands and options.
 
 ## Primary Commands
 
+### `forge init`
+Initializes Forge configuration and scans the workspace to generate multi-language task definitions (`forge.yaml`).
+
+```bash
+forge init [--force]
+```
+
+---
+
+### `forge ui`
+Starts the real-time interactive Web Dashboard & SVG DAG visualizer with 5-language telemetry (English, Vietnamese, Simplified Chinese, Traditional Chinese, Japanese).
+
+```bash
+forge ui [--port <PORT>] [--open]
+```
+
+---
+
 ### `forge build`
 Executes build tasks for packages in the workspace.
 
