@@ -52,7 +52,10 @@ pub fn run_lsp() -> ExitCode {
             continue;
         };
 
-        let method = json_val.get("method").and_then(|v| v.as_str()).unwrap_or("");
+        let method = json_val
+            .get("method")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
         let id = json_val.get("id");
 
         if method == "exit" {
@@ -102,7 +105,8 @@ fn handle_lsp_request(
             "result": null
         }),
         "textDocument/hover" => {
-            let hover_text = "### Fish Manifest Property\nFish build orchestration configuration key.";
+            let hover_text =
+                "### Fish Manifest Property\nFish build orchestration configuration key.";
             serde_json::json!({
                 "jsonrpc": "2.0",
                 "id": id,

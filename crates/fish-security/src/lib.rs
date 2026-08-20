@@ -4,8 +4,8 @@
 
 pub mod backend;
 pub mod error;
-pub mod scanner;
 pub mod rbac;
+pub mod scanner;
 pub mod slsa;
 pub mod vulnerability;
 

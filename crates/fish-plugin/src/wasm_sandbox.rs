@@ -35,7 +35,12 @@ impl WasmPluginSandbox {
         if !self.active {
             return Err("Sandbox terminated".to_string());
         }
-        let out = format!("{{\"status\":\"success\",\"fn\":\"{}\",\"input_len\":{}}}", fn_name, payload.len()).into_bytes();
+        let out = format!(
+            "{{\"status\":\"success\",\"fn\":\"{}\",\"input_len\":{}}}",
+            fn_name,
+            payload.len()
+        )
+        .into_bytes();
         Ok(out)
     }
 
@@ -66,6 +71,10 @@ mod tests {
 
         sandbox.terminate();
         assert!(!sandbox.is_active());
-        assert!(sandbox.execute_function("hook_pre_build", b"payload").is_err());
+        assert!(
+            sandbox
+                .execute_function("hook_pre_build", b"payload")
+                .is_err()
+        );
     }
 }

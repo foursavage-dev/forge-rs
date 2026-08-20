@@ -59,9 +59,23 @@ pub fn run_ai(args: AiArgs) -> ExitCode {
                             if let Some(result) = resp.get("result") {
                                 println!("=== Fish AI Build Diagnostics (IPC) ===");
                                 println!("Toolchain: {}", toolchain);
-                                println!("Category: {}", result.get("category").and_then(|v| v.as_str()).unwrap_or("UNKNOWN"));
-                                println!("Root Cause: {}", result.get("root_cause").and_then(|v| v.as_str()).unwrap_or(""));
-                                if let Some(suggs) = result.get("suggested_fixes").and_then(|v| v.as_array()) {
+                                println!(
+                                    "Category: {}",
+                                    result
+                                        .get("category")
+                                        .and_then(|v| v.as_str())
+                                        .unwrap_or("UNKNOWN")
+                                );
+                                println!(
+                                    "Root Cause: {}",
+                                    result
+                                        .get("root_cause")
+                                        .and_then(|v| v.as_str())
+                                        .unwrap_or("")
+                                );
+                                if let Some(suggs) =
+                                    result.get("suggested_fixes").and_then(|v| v.as_array())
+                                {
                                     println!("Suggested Remediation:");
                                     for s in suggs {
                                         if let Some(fix_str) = s.as_str() {
@@ -80,7 +94,8 @@ pub fn run_ai(args: AiArgs) -> ExitCode {
             println!("Toolchain: {}", toolchain);
             println!("Exit Code: {}", exit_code);
 
-            let category = if error_text.contains("error[E") || error_text.contains("syntax error") {
+            let category = if error_text.contains("error[E") || error_text.contains("syntax error")
+            {
                 "COMPILATION_ERROR"
             } else if error_text.contains("not found") || error_text.contains("could not resolve") {
                 "DEPENDENCY_ERROR"

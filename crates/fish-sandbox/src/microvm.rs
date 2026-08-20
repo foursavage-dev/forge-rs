@@ -41,7 +41,10 @@ impl MicroVmJailer {
         vec![
             "firecracker".to_string(),
             "--config-file".to_string(),
-            self.jail_dir.join("vm_config.json").to_string_lossy().to_string(),
+            self.jail_dir
+                .join("vm_config.json")
+                .to_string_lossy()
+                .to_string(),
         ]
     }
 

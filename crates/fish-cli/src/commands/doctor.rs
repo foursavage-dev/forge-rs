@@ -216,7 +216,10 @@ pub fn run_doctor_with_ai(ai_enabled: bool, fix: bool) -> ExitCode {
         println!("🔧 Applying Automated Remediation (--fix):");
         if let Ok(cache) = LocalCache::default_location() {
             let _ = std::fs::create_dir_all(cache.root());
-            println!("  [fixed] Ensured local cache root exists: {}", cache.root().display());
+            println!(
+                "  [fixed] Ensured local cache root exists: {}",
+                cache.root().display()
+            );
         }
         let manifest_path = std::path::Path::new("fish.toml");
         if !manifest_path.exists() {

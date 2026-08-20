@@ -11,9 +11,19 @@ use fish_executor::{CacheEntry, CommandSpec, Task};
 use fish_graph::{BuildGraph, NodeId};
 
 pub mod fingerprint;
+pub mod linker;
+pub mod nextest;
+pub mod pipelining;
 pub mod rustc;
+pub mod unification;
+pub mod wrapper;
 
+pub use linker::{FastLinker, RustLinkerOptimizer};
+pub use nextest::{NextestRunner, SingleTestResult, TestStatus};
+pub use pipelining::PipelinedCrateCoordinator;
 pub use rustc::RustcCompiler;
+pub use unification::WorkspaceFeatureUnification;
+pub use wrapper::RustcInvocation;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BuildMode {
