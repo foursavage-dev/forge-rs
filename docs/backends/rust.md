@@ -1,5 +1,7 @@
 # Rust Backend
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+
 The Rust backend provides build orchestration for Rust projects using Cargo.
 
 ## Detection

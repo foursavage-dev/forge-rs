@@ -1,5 +1,7 @@
 # Production Deployment Guide
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+
 This guide provides comprehensive instructions for deploying Forge-rs in production environments.
 
 ## Table of Contents

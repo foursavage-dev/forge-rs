@@ -1,5 +1,7 @@
 # Contributor Covenant 3.0 Code of Conduct
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+
 ## Our Pledge
 
 We pledge to make our community welcoming, safe, and equitable for all.

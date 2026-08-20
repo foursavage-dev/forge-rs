@@ -1,5 +1,7 @@
 # Contributing to Forge
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+
 Thank you for your interest in contributing to Forge! This document provides guidelines and instructions for contributing to the project.
 
 Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before participating in the Forge community.

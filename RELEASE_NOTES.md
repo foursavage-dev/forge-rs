@@ -4,6 +4,8 @@
 **Release Date:** August 16, 2026  
 **Author:** ForgeBot 🤖  
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+
 We are thrilled to announce the official release of **Forge v0.1.0**! Forge is a fast, flexible, cache-first build orchestration system designed for high-performance builds across multiple programming languages.
 
 ---

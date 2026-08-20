@@ -1,5 +1,7 @@
 # Forge Roadmap
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+
 This document outlines the planned development roadmap for Forge.
 
 ## Vision

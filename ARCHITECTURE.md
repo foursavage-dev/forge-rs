@@ -1,5 +1,7 @@
 # Forge Architecture
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+
 This document describes the high-level architecture of the Forge build orchestration system.
 
 ## Overview

@@ -1,5 +1,7 @@
 # Forge Architecture
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+
 This document provides an in-depth technical overview of Forge's architecture.
 
 ## System Overview

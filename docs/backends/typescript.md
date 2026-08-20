@@ -1,5 +1,7 @@
 # TypeScript/JavaScript Backend
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+
 The TypeScript/JavaScript backend provides build orchestration for Node.js projects.
 
 ## Detection
