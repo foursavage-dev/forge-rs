@@ -1,16 +1,16 @@
-# ðŸš€ Fish v0.1.0 Release Notes
+# 🚀 Fish v0.1.0 Release Notes
 
 **Release Tag:** `v0.1.0`  
 **Release Date:** August 16, 2026  
-**Author:** FishBot ðŸ¤–  
+**Author:** FishBot 🤖  
 
-> ðŸŒ **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 We are thrilled to announce the official release of **Fish v0.1.0**! Fish is a fast, flexible, cache-first build orchestration system designed for high-performance builds across multiple programming languages.
 
 ---
 
-## ðŸš€ What's New / Highlights
+## 🚀 What's New / Highlights
 
 - **Windows Setup Installer (`fish-setup-windows-x86_64.exe`):**  
   A native 1-click installer app with full multi-language localization (English, Tiáº¿ng Viá»‡t, ç®€ä½“ä¸­æ–‡, ç¹é«”ä¸­æ–‡, æ—¥æœ¬èªž), automatic Windows User PATH configuration via registry broadcast, and toolchain environment diagnostics.
@@ -38,7 +38,7 @@ We are thrilled to announce the official release of **Fish v0.1.0**! Fish is a f
 
 ---
 
-## ðŸ“¦ Installation & Download Instructions
+## 📦 Installation & Download Instructions
 
 ### Windows (Setup Installer - Recommended)
 
@@ -57,7 +57,7 @@ Download **[`fish-setup-windows-x86_64.exe`](https://github.com/foursavage-dev/f
 
 ---
 
-## ðŸ› ï¸ Quick Start
+## 🛠️ Quick Start
 
 ```bash
 # Verify installation

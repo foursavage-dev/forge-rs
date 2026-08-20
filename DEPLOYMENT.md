@@ -1,6 +1,6 @@
 # Production Deployment Guide
 
-> ðŸŒ **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 This guide provides comprehensive instructions for deploying fish-rs in production environments.
 

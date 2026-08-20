@@ -1,6 +1,6 @@
 # Contributing to Fish
 
-> ðŸŒ **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 Thank you for your interest in contributing to Fish! This document provides guidelines and instructions for contributing to the project.
 

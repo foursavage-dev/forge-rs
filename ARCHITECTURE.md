@@ -1,6 +1,6 @@
 # Fish Architecture
 
-> ðŸŒ **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 This document describes the high-level architecture of the Fish build orchestration system.
 

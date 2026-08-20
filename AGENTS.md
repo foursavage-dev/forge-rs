@@ -2,11 +2,11 @@
 
 This document provides guidance for AI coding agents working with the Fish build orchestration system.
 
-## ðŸŽ¯ Purpose
+## 🎯 Purpose
 
 Fish is a Rust build orchestration experiment for projects that use more than one toolchain. This guide helps AI agents understand the project structure, workflow, and best practices to ensure smooth operation and high-quality contributions.
 
-## ðŸ“– Context Reading Order
+## 📖 Context Reading Order
 
 AI agents should read files in this priority order:
 
@@ -22,7 +22,7 @@ AI agents should read files in this priority order:
 ### Phase 3: Detailed Workflow (Read Before Starting Work)
 6. **docs/AI_AGENT_WORKFLOW.md** - **Comprehensive step-by-step workflow guide**
 
-## ðŸ”‘ Critical Information
+## 🔑 Critical Information
 
 ### Version Requirements
 - **MSRV**: Rust 1.88+ (Minimum Supported Rust Version)
@@ -42,7 +42,7 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo fmt --all -- --check
 ```
 
-## ðŸ—ï¸ Architecture Overview
+## 🏗️ Architecture Overview
 
 ### Core Components
 - **fish-core**: Workspace discovery, manifest model, DAG merger
@@ -61,7 +61,7 @@ Rust, C/C++, Go, TypeScript/JavaScript, Python, Java, .NET, Swift, Dart, Zig, Do
 - File watching, affected-project detection
 - Profile-guided optimization (PGO)
 
-## ðŸ› ï¸ Common Tasks
+## 🛠️ Common Tasks
 
 ### Adding a New Language Backend
 1. Create crate: `crates/fish-backend-{lang}/`
@@ -94,7 +94,7 @@ Rust, C/C++, Go, TypeScript/JavaScript, Python, Java, .NET, Swift, Dart, Zig, Do
 - **Key files**: `main.rs`, command modules
 - **Consider**: Error handling, user experience, help text
 
-## ðŸ“ Code Standards
+## 📝 Code Standards
 
 ### Rust Patterns
 - Use `anyhow` for error handling
@@ -112,7 +112,7 @@ Rust, C/C++, Go, TypeScript/JavaScript, Python, Java, .NET, Swift, Dart, Zig, Do
 - Update ARCHITECTURE.md for structural changes
 - Update DEVELOPMENT.md for workflow changes
 
-## ðŸš¨ Before Committing
+## 🚨 Before Committing
 
 1. **Test**: `cargo test --workspace`
 2. **Lint**: `cargo clippy --workspace --all-targets --all-features -- -D warnings`
@@ -120,7 +120,7 @@ Rust, C/C++, Go, TypeScript/JavaScript, Python, Java, .NET, Swift, Dart, Zig, Do
 4. **Review**: Check CONTRIBUTING.md guidelines
 5. **Branch**: Ensure changes are on `dev` branch
 
-## ðŸŽ¯ Comprehensive Workflow Guide
+## 🎯 Comprehensive Workflow Guide
 
 **For detailed step-by-step instructions on how to work with this project, including:**
 - Pre-work context gathering
@@ -133,7 +133,7 @@ Rust, C/C++, Go, TypeScript/JavaScript, Python, Java, .NET, Swift, Dart, Zig, Do
 
 **Please read:** [docs/AI_AGENT_WORKFLOW.md](docs/AI_AGENT_WORKFLOW.md)
 
-## ðŸŽ¯ Quick Reference
+## 🎯 Quick Reference
 
 ### File Locations
 - Core logic: `crates/fish-core/`, `crates/fish-graph/`, `crates/fish-executor/`
@@ -160,7 +160,7 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 - Async: async-trait, tokio (implied)
 - UI: ratatui, crossterm, anstyle
 
-## ðŸ“ž Additional Resources
+## 📞 Additional Resources
 
 ### Project Documentation
 - [README.md](README.md) - Project overview
