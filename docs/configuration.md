@@ -1,0 +1,123 @@
+# Forge Configuration Guide
+
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+
+This guide describes how to configure Forge workspaces using `forge.toml`.
+
+---
+
+## Configuration File Overview
+
+Forge reads project configuration from a `forge.toml` file located in the root of your workspace. If no `forge.toml` is present, Forge applies sensible defaults automatically.
+
+```toml
+[build]
+backend = "rust"
+jobs = 8
+no_cache = false
+sandbox = false
+semantic = true
+critical_path = true
+ram_limit = 85
+
+[cache]
+dir = "~/.forge/cache"
+reflink = true
+
+[remote]
+cache_url = "http://127.0.0.1:8080"
+token = "secret-cache-token"
+
+[daemon]
+port = 9527
+
+[pipelines.build]
+depends_on = ["^build"]
+inputs = ["src/**/*", "Cargo.toml", "Cargo.lock"]
+outputs = ["target/release/**/*"]
+
+[pipelines.test]
+depends_on = ["build"]
+inputs = ["tests/**/*", "src/**/*"]
+```
+
+---
+
+## Top-Level Sections
+
+### `[build]` — Execution Settings
+
+| Key | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `backend` | string | Auto | Primary toolchain backend (`rust`, `ts`, `go`, `cc`, `python`, `java`, `dotnet`, `docker`). |
+| `jobs` | integer | `num_cpus` | Maximum concurrent worker tasks. |
+| `no_cache` | boolean | `false` | Disable local and remote cache lookup. |
+| `sandbox` | boolean | `false` | Execute tasks in isolated sandbox environments. |
+| `semantic` | boolean | `false` | Enable AST semantic change detection. |
+| `critical_path` | boolean | `false` | Prioritize bottlenecks on the dependency graph critical path. |
+| `ram_limit` | integer (1-100) | `85` | Throttle concurrency when available system memory drops below this percentage. |
+| `timeout` | integer | None | Task execution timeout in seconds. |
+
+---
+
+### `[cache]` — Local Storage Settings
+
+| Key | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `dir` | string | `~/.forge/cache` | Path to the local Content-Addressable Storage (CAS) directory. |
+| `reflink` | boolean | `true` | Use Copy-on-Write (CoW) extents or hardlinks to materialize artifacts without I/O copy. |
+
+---
+
+### `[remote]` — Distributed Cache & Execution
+
+| Key | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `cache_url` | string | None | Remote cache server endpoint (HTTP/gRPC). |
+| `token` | string | None | Authentication bearer token for remote operations. |
+| `workers` | list of strings | `[]` | List of remote worker cluster endpoints (e.g. `["worker1:9000", "worker2:9000"]`). |
+| `send_source` | boolean | `false` | Compress and transmit source snapshots to workers without shared filesystems. |
+
+---
+
+### `[daemon]` — Background IPC Service
+
+| Key | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `port` | integer | `9527` | Loopback TCP port for the Forge background daemon. |
+
+---
+
+### `[pipelines.<task>]` — Task Pipeline Topology
+
+Configure dependencies and caching boundaries between tasks across packages:
+
+```toml
+[pipelines.build]
+depends_on = ["^build"]
+inputs = ["src/**/*", "Cargo.toml"]
+outputs = ["target/release/*"]
+
+[pipelines.test]
+depends_on = ["build"]
+inputs = ["tests/**/*", "src/**/*"]
+```
+
+- **`^build`**: Topological dependency rule. Ensures that all dependency packages run their `build` task before the dependent package starts.
+- **`inputs`**: Micro-glob patterns. Only files matching these patterns affect the task fingerprint hash.
+- **`outputs`**: File paths to capture into the Content-Addressable Storage (CAS) upon task success.
+
+---
+
+## Environment Variable Overrides
+
+Configuration settings can be overridden via environment variables:
+
+| Variable | Overrides |
+| :--- | :--- |
+| `FORGE_CACHE_DIR` | `cache.dir` |
+| `FORGE_JOBS` | `build.jobs` |
+| `FORGE_REMOTE_CACHE` | `remote.cache_url` |
+| `FORGE_REMOTE_TOKEN` | `remote.token` |
+| `FORGE_RAM_LIMIT` | `build.ram_limit` |
+| `FORGE_DAEMON_PORT` | `daemon.port` |
