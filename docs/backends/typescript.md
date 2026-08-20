@@ -1,6 +1,6 @@
 # TypeScript/JavaScript Backend
 
-> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 The TypeScript/JavaScript backend provides build orchestration for Node.js projects.
 
@@ -117,21 +117,21 @@ The TypeScript/JavaScript backend fingerprints:
 
 ```bash
 cd my-typescript-project
-Fish build
+fish build
 ```
 
 ### Project with pnpm
 
 ```bash
 cd my-pnpm-project
-Fish build
+fish build
 ```
 
 ### Nx Monorepo
 
 ```bash
 cd my-nx-monorepo
-Fish build
+fish build
 ```
 
 ## Performance Optimization

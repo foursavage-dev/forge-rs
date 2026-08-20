@@ -1,6 +1,6 @@
 # AI Agent Guide for Fish
 
-This document provides guidance for AI coding agents working with the Fish build orchestration system.
+This document provides guidance for AI coding agents working with the fish build orchestration system.
 
 ## 🎯 Purpose
 
@@ -61,7 +61,7 @@ Rust, C/C++, Go, TypeScript/JavaScript, Python, Java, .NET, Swift, Dart, Zig, Do
 - File watching, affected-project detection
 - Profile-guided optimization (PGO)
 
-## 🛠️ Common Tasks
+## 🛠️ Common Tasks
 
 ### Adding a New Language Backend
 1. Create crate: `crates/fish-backend-{lang}/`

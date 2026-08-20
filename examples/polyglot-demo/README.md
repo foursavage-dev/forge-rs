@@ -1,18 +1,18 @@
 # Polyglot Demo Project
 
-> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 This is a sample monorepo demonstrating fish's multi-language build capabilities.
 
 ## Project Structure
 
-```
+```text
 polyglot-demo/
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ rust-service/    # Rust backend service
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ go-service/      # Go microservice
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ web-frontend/    # TypeScript frontend
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ docker-compose/  # Docker configuration
-Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ fish.toml       # fish configuration
+├── rust-service/    # Rust backend service
+├── go-service/      # Go microservice
+├── web-frontend/    # TypeScript frontend
+├── docker-compose/  # Docker configuration
+└── fish.toml        # fish configuration
 ```
 
 ## Build with fish

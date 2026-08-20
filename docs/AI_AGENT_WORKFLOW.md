@@ -1,8 +1,8 @@
 # AI Agent Workflow Guide for Fish
 
-This document provides detailed step-by-step instructions for AI coding agents working with the Fish build orchestration system. Following this workflow ensures minimal errors, smooth operation, and high-quality contributions.
+This document provides detailed step-by-step instructions for AI coding agents working with the fish build orchestration system. Following this workflow ensures minimal errors, smooth operation, and high-quality contributions.
 
-## Ã°Å¸Å½Â¯ Overview
+## 🎯 Overview
 
 This guide outlines a comprehensive workflow designed to:
 - Minimize introduction of bugs and errors
@@ -13,7 +13,7 @@ This guide outlines a comprehensive workflow designed to:
 
 ---
 
-## Ã°Å¸â€œâ€“ Phase 1: Pre-Work Context Gathering
+## 📖 Phase 1: Pre-Work Context Gathering
 
 ### Step 1.1: Read Essential Documentation (Mandatory)
 
@@ -66,7 +66,7 @@ cargo test --workspace
 
 ---
 
-## Ã°Å¸â€Â Phase 2: Task Analysis and Planning
+## 🎯 Phase 2: Task Analysis and Planning
 
 ### Step 2.1: Understand the Task Requirements
 
@@ -79,12 +79,12 @@ cargo test --workspace
 ### Step 2.2: Identify Affected Components
 
 **Map your task to specific crates:**
-- Core functionality Ã¢â€ â€™ `fish-core`, `fish-graph`, `fish-executor`
-- Scheduling logic Ã¢â€ â€™ `fish-scheduler`
-- Caching Ã¢â€ â€™ `fish-cache`, `fish-cas`
-- Language support Ã¢â€ â€™ `fish-backend-*`
-- CLI Ã¢â€ â€™ `fish-cli`
-- Security Ã¢â€ â€™ `fish-security`, `fish-signing`
+- Core functionality ➔ `fish-core`, `fish-graph`, `fish-executor`
+- Scheduling logic ➔ `fish-scheduler`
+- Caching ➔ `fish-cache`, `fish-cas`
+- Language support ➔ `fish-backend-*`
+- CLI ➔ `fish-cli`
+- Security ➔ `fish-security`, `fish-signing`
 
 ### Step 2.3: Review Existing Patterns
 
@@ -105,7 +105,7 @@ cargo test --workspace
 
 ---
 
-## Ã°Å¸â€ºÂ Ã¯Â¸Â Phase 3: Implementation
+## 🛠️ Phase 3: Implementation
 
 ### Step 3.1: Follow Rust Best Practices
 
@@ -159,7 +159,7 @@ cargo test --workspace
 
 ---
 
-## Ã¢Å“â€¦ Phase 4: Verification and Validation
+## ✅¦ Phase 4: Verification and Validation
 
 ### Step 4.1: Run Full Test Suite
 
@@ -229,7 +229,7 @@ cargo run -p fish-cli -- --help
 
 ---
 
-## Ã°Å¸â€â€™ Phase 5: Security and Safety
+## 🔒 Phase 5: Security and Safety
 
 ### Step 5.1: Security Review
 
@@ -257,7 +257,7 @@ cargo run -p fish-cli -- --help
 
 ---
 
-## Ã°Å¸â€œÂ Phase 6: Documentation and Communication
+## 📝 Phase 6: Documentation and Communication
 
 ### Step 6.1: Update CHANGELOG
 
@@ -298,7 +298,7 @@ Detailed explanation of the change, including:
 
 ---
 
-## Ã°Å¸Å¡Â¨ Phase 7: Troubleshooting Common Issues
+## 🚨 Phase 7: Troubleshooting Common Issues
 
 ### Issue 7.1: Build Failures
 
@@ -333,7 +333,7 @@ Detailed explanation of the change, including:
 
 ---
 
-## Ã°Å¸Å½Â¯ Phase 8: Quality Assurance Checklist
+## 🎯 Phase 8: Quality Assurance Checklist
 
 ### Pre-Commit Checklist
 
@@ -362,7 +362,7 @@ Detailed explanation of the change, including:
 
 ---
 
-## Ã°Å¸â€â€ž Phase 9: Continuous Improvement
+## 🔄 Phase 9: Continuous Improvement
 
 ### Step 9.1: Learn from Issues
 
@@ -382,7 +382,7 @@ Detailed explanation of the change, including:
 
 ---
 
-## Ã°Å¸â€œÅ  Quick Reference Commands
+## 📊 Quick Reference Commands
 
 ### Essential Commands
 ```bash
@@ -421,35 +421,35 @@ cargo audit
 
 ---
 
-## Ã°Å¸Å½â€œ Best Practices Summary
+## 🏆 Best Practices Summary
 
 ### Do's
-- Ã¢Å“â€¦ Read documentation before coding
-- Ã¢Å“â€¦ Follow existing patterns in the codebase
-- Ã¢Å“â€¦ Write tests for new functionality
-- Ã¢Å“â€¦ Run full test suite before committing
-- Ã¢Å“â€¦ Fix all clippy warnings
-- Ã¢Å“â€¦ Update documentation
-- Ã¢Å“â€¦ Use meaningful commit messages
-- Ã¢Å“â€¦ Develop on `dev` branch
-- Ã¢Å“â€¦ Consider performance implications
-- Ã¢Å“â€¦ Review security implications
+- ✅¦ Read documentation before coding
+- ✅¦ Follow existing patterns in the codebase
+- ✅¦ Write tests for new functionality
+- ✅¦ Run full test suite before committing
+- ✅¦ Fix all clippy warnings
+- ✅¦ Update documentation
+- ✅¦ Use meaningful commit messages
+- ✅¦ Develop on `dev` branch
+- ✅¦ Consider performance implications
+- ✅¦ Review security implications
 
 ### Don'ts
-- Ã¢ÂÅ’ Skip reading ARCHITECTURE.md
-- Ã¢ÂÅ’ Commit directly to `main` branch
-- Ã¢ÂÅ’ Ignore test failures
-- Ã¢ÂÅ’ Suppress clippy warnings without justification
-- Ã¢ÂÅ’ Use unstable features without MSRV consideration
-- Ã¢ÂÅ’ Commit secrets or sensitive data
-- Ã¢ÂÅ’ Make large changes without testing
-- Ã¢ÂÅ’ Break existing APIs without documentation
-- Ã¢ÂÅ’ Ignore error handling patterns
-- Ã¢ÂÅ’ Skip integration testing
+- ❌ Skip reading ARCHITECTURE.md
+- ❌ Commit directly to `main` branch
+- ❌ Ignore test failures
+- ❌ Suppress clippy warnings without justification
+- ❌ Use unstable features without MSRV consideration
+- ❌ Commit secrets or sensitive data
+- ❌ Make large changes without testing
+- ❌ Break existing APIs without documentation
+- ❌ Ignore error handling patterns
+- ❌ Skip integration testing
 
 ---
 
-## Ã°Å¸â€ Ëœ Emergency Procedures
+## 🚨 Emergency Procedures
 
 ### When Something Goes Wrong
 
@@ -483,7 +483,7 @@ git clean -fd
 
 ---
 
-## Ã°Å¸â€œÅ¾ Additional Resources
+## 📞 Additional Resources
 
 ### Project Documentation
 - [README.md](../README.md) - Project overview
@@ -499,19 +499,19 @@ git clean -fd
 
 ---
 
-## Ã°Å¸Å½Â¯ Success Criteria
+## 🎯 Success Criteria
 
 **A successful AI agent contribution should:**
-- Ã¢Å“â€¦ Pass all workspace tests
-- Ã¢Å“â€¦ Have zero clippy warnings
-- Ã¢Å“â€¦ Be properly formatted
-- Ã¢Å“â€¦ Follow project patterns
-- Ã¢Å“â€¦ Include comprehensive tests
-- Ã¢Å“â€¦ Update relevant documentation
-- Ã¢Å“â€¦ Maintain MSRV compatibility
-- Ã¢Å“â€¦ Be properly committed to `dev` branch
-- Ã¢Å“â€¦ Include meaningful commit messages
-- Ã¢Å“â€¦ Not introduce security vulnerabilities
+- ✅¦ Pass all workspace tests
+- ✅¦ Have zero clippy warnings
+- ✅¦ Be properly formatted
+- ✅¦ Follow project patterns
+- ✅¦ Include comprehensive tests
+- ✅¦ Update relevant documentation
+- ✅¦ Maintain MSRV compatibility
+- ✅¦ Be properly committed to `dev` branch
+- ✅¦ Include meaningful commit messages
+- ✅¦ Not introduce security vulnerabilities
 
 ---
 

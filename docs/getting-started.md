@@ -1,6 +1,6 @@
 # Getting Started with Fish
 
-> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 This guide will help you get started with Fish, a fast, cache-first build orchestration system.
 
@@ -41,7 +41,7 @@ cargo install fish-cli --git https://github.com/requla11/fish
 
 ```bash
 cd your-rust-project
-Fish build
+fish build
 ```
 
 ### Building a Polyglot Monorepo
@@ -52,13 +52,13 @@ git clone https://github.com/requla11/fish.git
 cd fish/examples/polyglot-demo
 
 # Build all services
-Fish build
+fish build
 
 # View the build graph
-Fish graph
+fish graph
 
 # Run tests
-Fish test
+fish test
 ```
 
 ## Basic Commands
@@ -67,27 +67,27 @@ Fish test
 
 ```bash
 # Build the entire workspace
-Fish build
+fish build
 
 # Build specific package
-Fish build -p my-package
+fish build -p my-package
 
 # Build with 8 parallel jobs
-Fish build -j 8
+fish build -j 8
 
 # Build without cache
-Fish build --no-cache
+fish build --no-cache
 
 # Build with sandbox
-Fish build --sandbox
+fish build --sandbox
 
 # Build with detailed dirty rebuild explanation
-Fish build --explain
+fish build --explain
 
 # Profile-Guided Optimization (PGO) workflow
-Fish build --pgo-generate
+fish build --pgo-generate
 # ... run your benchmarks/workload ...
-Fish build --pgo-use
+fish build --pgo-use
 ```
 
 ### Graph & Query Commands
@@ -106,8 +106,8 @@ Fish query "allpaths(//fish-cli, //fish-core)"
 Fish query "filter('backend', deps(//fish-cli))"
 
 # Visual graph rendering
-Fish graph --format tree
-Fish graph --format dot
+fish graph --format tree
+fish graph --format dot
 ```
 
 ### Build Daemon Commands
@@ -127,13 +127,13 @@ Fish daemon stop
 
 ```bash
 # Run all tests
-Fish test
+fish test
 
 # Test specific package
-Fish test -p my-package
+fish test -p my-package
 
 # Test with cache disabled
-Fish test --no-cache
+fish test --no-cache
 ```
 
 ### Cache Commands
@@ -156,39 +156,39 @@ Fish cache-server --listen 0.0.0.0:8080
 Fish worker --listen 0.0.0.0:9000
 
 # Build with distributed workers
-Fish build --workers worker1:9000,worker2:9000
+fish build --workers worker1:9000,worker2:9000
 ```
 
 ### CI/CD Commands
 
 ```bash
 # Generate GitHub Actions workflow
-Fish ci init --platform github
+fish ci init --platform github
 
 # Generate GitLab CI pipeline
-Fish ci init --platform gitlab
+fish ci init --platform gitlab
 
 # Generate CircleCI config
-Fish ci init --platform circleci
+fish ci init --platform circleci
 
 # Generate Bitbucket Pipelines
-Fish ci init --platform bitbucket
+fish ci init --platform bitbucket
 
 # Generate all platform configs
-Fish ci init --platform all
+fish ci init --platform all
 ```
 
 ### Plugin Commands
 
 ```bash
 # List available plugins
-Fish plugin list
+fish plugin list
 
 # Execute a plugin command
-Fish plugin execute my-plugin build
+fish plugin execute my-plugin build
 
 # Install a plugin
-Fish plugin install ./my-plugin
+fish plugin install ./my-plugin
 ```
 
 ## Configuration
@@ -238,7 +238,7 @@ Fish includes a built-in real-time interactive DAG visualizer and telemetry dash
 
 ```bash
 # Launch web dashboard on port 3000 and open in default browser
-Fish ui --port 3000 --open
+fish ui --port 3000 --open
 
 # Check JSON graph data
 curl http://localhost:3000/api/graph
@@ -255,9 +255,9 @@ curl http://localhost:3000/api/stats
 
 If a build fails:
 
-1. Check the error message or run `Fish build --explain` to diagnose rebuild reasons.
-2. Run with debug logging: `RUST_LOG=debug Fish build`
-3. Verify toolchain readiness: `Fish doctor`
+1. Check the error message or run `fish build --explain` to diagnose rebuild reasons.
+2. Run with debug logging: `RUST_LOG=debug fish build`
+3. Verify toolchain readiness: `fish doctor`
 4. Try clearing cache: `Fish cache prune`
 
 ### Cache Issues
@@ -266,7 +266,7 @@ If cache doesn't work:
 
 1. Check cache stats: `Fish cache stats`
 2. Verify cache directory is writable: `~/.Fish/cache`
-3. Clear and rebuild cache: `Fish cache prune && Fish build`
+3. Clear and rebuild cache: `Fish cache prune && fish build`
 
 ### Worker Connection Issues
 

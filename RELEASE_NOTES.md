@@ -4,7 +4,7 @@
 **Release Date:** August 16, 2026  
 **Author:** FishBot 🤖  
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 We are thrilled to announce the official release of **Fish v0.1.0**! Fish is a fast, flexible, cache-first build orchestration system designed for high-performance builds across multiple programming languages.
 
@@ -64,8 +64,8 @@ Download **[`fish-setup-windows-x86_64.exe`](https://github.com/requla11/fish/re
 Fish --help
 
 # Initialize a project
-Fish init
+fish init
 
 # Build with smart caching
-Fish build
+fish build
 ```

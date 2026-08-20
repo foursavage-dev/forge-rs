@@ -1,6 +1,6 @@
 # Production Deployment Guide
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 This guide provides comprehensive instructions for deploying Fish in production environments.
 
@@ -160,9 +160,9 @@ export fish_SECURITY_LEVEL="strict"
 For local development, use default settings with local caching:
 
 ```bash
-Fish build
-Fish test
-Fish check
+fish build
+fish test
+fish check
 ```
 
 ### Strategy 2: CI/CD Pipeline
@@ -183,9 +183,9 @@ jobs:
       - name: Install Fish
         run: cargo install fish-cli --release
       - name: Build with Fish
-        run: Fish build --no-cache
+        run: fish build --no-cache
       - name: Test with Fish
-        run: Fish test --no-cache
+        run: fish test --no-cache
 ```
 
 #### GitLab CI
@@ -194,8 +194,8 @@ build:
   image: rust:latest
   script:
     - cargo install fish-cli --release
-    - Fish build --no-cache
-    - Fish test --no-cache
+    - fish build --no-cache
+    - fish test --no-cache
 ```
 
 ### Strategy 3: Distributed Build System
@@ -340,8 +340,8 @@ allowed_filesystem = ["/safe/path"]
 Use Fish's secrets management:
 
 ```bash
-Fish secret set API_KEY "your-api-key"
-Fish secret get API_KEY
+fish secret set API_KEY "your-api-key"
+fish secret get API_KEY
 ```
 
 ### Audit Logging
@@ -415,7 +415,7 @@ Fish cache clear
 Fish cache verify
 
 # Rebuild without cache
-Fish build --no-cache
+fish build --no-cache
 ```
 
 #### Issue: Out of memory errors
@@ -455,7 +455,7 @@ remote_concurrent_requests = 5  # Reduce concurrent requests
 Enable debug logging for troubleshooting:
 
 ```bash
-Fish build --verbose --log-level debug
+fish build --verbose --log-level debug
 ```
 
 ### Diagnostic Collection

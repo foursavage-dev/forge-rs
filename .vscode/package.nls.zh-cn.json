@@ -1,14 +1,14 @@
 {
-  "fish.command.build": "fish: æž„å»ºé¡¹ç›®",
-  "fish.command.test": "fish: è¿è¡Œæµ‹è¯•",
-  "fish.command.graph": "fish: æŸ¥çœ‹ä¾èµ–æ‹“æ‰‘å›¾",
-  "fish.command.ui": "fish: æ‰“å¼€ Web æŽ§åˆ¶å°ä¸Ž DAG ç”»å¸ƒ",
-  "fish.command.explain": "fish: è§£é‡Šé‡æ–°æž„å»ºåŽŸå› ",
-  "fish.command.exportCompileCommands": "fish: å¯¼å‡º compile_commands.json (Clangd & LSP)",
-  "fish.command.clean": "fish: æ¸…ç†æž„å»ºäº§ç‰©",
-  "fish.command.doctor": "fish: ç³»ç»ŸçŽ¯å¢ƒè¯Šæ–­",
-  "fish.command.affected": "fish: æ˜¾ç¤ºå—å½±å“çš„è½¯ä»¶åŒ…",
-  "fish.command.refreshPackages": "fish: åˆ·æ–°è½¯ä»¶åŒ…åˆ—è¡¨",
-  "fish.command.buildPackage": "fish: æž„å»ºæ‰€é€‰è½¯ä»¶åŒ…",
-  "fish.command.testPackage": "fish: æµ‹è¯•æ‰€é€‰è½¯ä»¶åŒ…"
+  "fish.command.build": "fish: 构建项目",
+  "fish.command.test": "fish: 运行测试",
+  "fish.command.graph": "fish: 查看依赖拓扑图",
+  "fish.command.ui": "fish: 打开 Web 控制台与 DAG 画布",
+  "fish.command.explain": "fish: 解释重新构建原因",
+  "fish.command.exportCompileCommands": "fish: 导出 compile_commands.json (Clangd & LSP)",
+  "fish.command.clean": "fish: 清理构建产物",
+  "fish.command.doctor": "fish: 系统环境诊断",
+  "fish.command.affected": "fish: 显示受影响的软件包",
+  "fish.command.refreshPackages": "fish: 刷新软件包列表",
+  "fish.command.buildPackage": "fish: 构建所选软件包",
+  "fish.command.testPackage": "fish: 测试所选软件包"
 }

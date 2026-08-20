@@ -1,6 +1,6 @@
 # Frequently Asked Questions & Troubleshooting
 
-> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 This document covers common questions, migration recipes, and troubleshooting steps for Fish.
 
@@ -14,7 +14,7 @@ No. Fish is a build **orchestrator**, not a compiler replacement. It coordinates
 ### 2. How do I migrate an existing monorepo to Fish?
 Fish automatically discovers projects from their manifests (`Cargo.toml`, `package.json`, `go.mod`, `pyproject.toml`, `CMakeLists.txt`, `pom.xml`, `*.csproj`).
 1. Navigate to your project root.
-2. Run `Fish build` to let Fish discover your workspace.
+2. Run `fish build` to let Fish discover your workspace.
 3. (Optional) Create a `fish.toml` in your root directory to customize pipeline dependencies and cache paths.
 
 ### 3. How does Fish's CAS caching work?
@@ -28,7 +28,7 @@ Fish computes Blake3 fingerprints over input files, toolchain versions, and envi
 **Solution:**
 Use the `--explain` flag to see why a target was considered dirty:
 ```bash
-Fish build --explain
+fish build --explain
 ```
 Common causes include:
 - A source file was recently touched.
@@ -41,7 +41,7 @@ Common causes include:
 **Solution:**
 When building multiple large crates or C++ modules concurrently, memory pressure can cause disk swapping. Use the `--ram-limit` flag or configure `ram_limit` in `fish.toml`:
 ```bash
-Fish build --ram-limit 80
+fish build --ram-limit 80
 ```
 Fish's resource governor will automatically throttle concurrency whenever memory usage crosses the threshold.
 

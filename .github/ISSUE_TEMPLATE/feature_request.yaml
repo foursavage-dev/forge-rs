@@ -1,39 +1,48 @@
----
-name: Feature request
-about: Suggest an idea for Fish
-title: '[FEATURE] '
-labels: enhancement
-assignees: ''
----
-
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
-
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
-
-**Describe alternatives you've considered**
-A clear description of any alternative solutions or features you've considered.
-
-**Additional context**
-Add any other context or screenshots about the feature request here.
-
-**Use Cases**
-Describe specific use cases for this feature:
-
-1. Use case 1
-2. Use case 2
-3. Use case 3
-
-**Priority**
-How important is this feature to you?
-- [ ] Critical
-- [ ] High
-- [ ] Medium
-- [ ] Low
-
-**Implementation Ideas**
-If you have ideas about how this could be implemented, please describe them here.
-
-**Additional Resources**
-Links to relevant documentation, similar tools, or examples.
+name: Feature Request
+description: Propose a new feature, optimization, or language backend for Fish
+title: "[FEATURE]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a feature to make Fish better!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a specific problem or limitation?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution or workflow you would like to see.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Describe any alternative solutions or workarounds you have considered.
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      options:
+        - Core & DAG Engine
+        - Scheduler & Concurrency
+        - Cache & CAS Storage
+        - Language Backend
+        - CLI & Developer Experience
+        - Web UI & Dashboard
+        - Distributed Workers / Remote Cache
+    validations:
+      required: true
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be willing to submit a Pull Request for this feature.

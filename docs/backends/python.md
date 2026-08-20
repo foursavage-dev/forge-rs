@@ -1,6 +1,6 @@
 # Python Backend
 
-> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 The Python backend provides build orchestration for Python projects.
 
@@ -86,21 +86,21 @@ The Python backend fingerprints:
 
 ```bash
 cd my-python-project
-Fish build
+fish build
 ```
 
 ### Poetry Project
 
 ```bash
 cd my-poetry-project
-Fish build
+fish build
 ```
 
 ### Project with Tests
 
 ```bash
 cd my-python-project
-Fish test
+fish test
 ```
 
 ## Performance Optimization
