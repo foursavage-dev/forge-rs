@@ -24,3 +24,9 @@ Forge automatically queries your environment for modern high-speed linkers:
 ## Response File Support
 
 When compiling large C/C++ projects with thousands of source files, Forge writes argument vectors exceeding OS length limits into `@forge_args.rsp` response files automatically.
+
+---
+
+## Compilation Database (`compile_commands.json`)
+
+Forge automatically generates and exports standard `compile_commands.json` compilation databases for Clangd, Neovim, VS Code, and CLion, mapping compiler include directories and definitions directly from the workspace DAG.
