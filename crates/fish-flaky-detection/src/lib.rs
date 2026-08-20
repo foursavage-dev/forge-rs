@@ -67,6 +67,7 @@ mod tests {
             failure_rate: 0.25,
             total_runs: 20,
             failed_runs: 5,
+            flip_count: 2,
             last_detected: chrono::Utc::now(),
         };
         let json = serde_json::to_string(&flaky).unwrap();

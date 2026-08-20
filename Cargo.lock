@@ -1302,6 +1302,7 @@ name = "fish-docker-builder"
 version = "0.2.0"
 dependencies = [
  "anyhow",
+ "blake3",
  "bollard",
  "fish-core",
  "serde",
