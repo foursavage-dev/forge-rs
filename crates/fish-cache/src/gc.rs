@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -61,6 +61,10 @@ impl BackgroundCacheGc {
         self.running.load(Ordering::SeqCst)
     }
 
+    pub fn config(&self) -> &GcConfig {
+        &self.config
+    }
+
     pub fn scan_and_evict(&self) -> (usize, u64) {
         let mut removed_count = 0;
         let mut freed_bytes = 0;
@@ -75,24 +79,24 @@ impl BackgroundCacheGc {
 
             for entry in entries.flatten() {
                 let path = entry.path();
-                if let Ok(meta) = path.metadata() {
-                    if meta.is_file() {
-                        let size = meta.len();
-                        let mtime = meta
-                            .modified()
-                            .ok()
-                            .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-                            .map(|d| d.as_secs())
-                            .unwrap_or(now);
+                if let Ok(meta) = path.metadata()
+                    && meta.is_file()
+                {
+                    let size = meta.len();
+                    let mtime = meta
+                        .modified()
+                        .ok()
+                        .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+                        .map(|d| d.as_secs())
+                        .unwrap_or(now);
 
-                        if now.saturating_sub(mtime) > self.config.ttl.as_secs() {
-                            if std::fs::remove_file(&path).is_ok() {
-                                removed_count += 1;
-                                freed_bytes += size;
-                            }
-                        } else {
-                            file_entries.push((path, size, mtime));
+                    if now.saturating_sub(mtime) > self.config.ttl.as_secs() {
+                        if std::fs::remove_file(&path).is_ok() {
+                            removed_count += 1;
+                            freed_bytes += size;
                         }
+                    } else {
+                        file_entries.push((path, size, mtime));
                     }
                 }
             }

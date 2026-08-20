@@ -1,5 +1,5 @@
 use std::collections::BTreeSet;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FileAccessType {
@@ -38,6 +38,10 @@ impl EbpfSyscallTracer {
 
     pub fn is_supported() -> bool {
         cfg!(target_os = "linux")
+    }
+
+    pub fn is_enabled(&self) -> bool {
+        self.enabled
     }
 
     pub fn record_access(&mut self, pid: u32, path: PathBuf, access_type: FileAccessType) {

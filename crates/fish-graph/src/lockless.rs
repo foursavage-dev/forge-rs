@@ -1,5 +1,4 @@
 use std::collections::{BTreeSet, HashMap};
-use std::sync::Arc;
 
 #[derive(Debug, Clone, Default)]
 pub struct LocklessGraphNode {
@@ -77,11 +76,11 @@ impl LocklessDependencyGraph {
                 let mut best_prefix = Vec::new();
 
                 for dep in &node.dependencies {
-                    if let Some((w, path)) = longest_paths.get(dep) {
-                        if *w > max_dep_weight {
-                            max_dep_weight = *w;
-                            best_prefix = path.clone();
-                        }
+                    if let Some((w, path)) = longest_paths.get(dep)
+                        && *w > max_dep_weight
+                    {
+                        max_dep_weight = *w;
+                        best_prefix = path.clone();
                     }
                 }
 

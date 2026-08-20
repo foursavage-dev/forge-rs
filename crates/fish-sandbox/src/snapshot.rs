@@ -30,7 +30,7 @@ impl SnapshotManager {
     pub fn create_snapshot(
         &self,
         snapshot_id: &str,
-        lower_dir: &Path,
+        _lower_dir: &Path,
     ) -> Result<SandboxSnapshot, std::io::Error> {
         let snap_dir = self.base_root.join(snapshot_id);
         let upper_dir = snap_dir.join("upper");

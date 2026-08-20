@@ -1,4 +1,3 @@
-use std::path::PathBuf;
 use std::process::ExitCode;
 
 use crate::args::WhyArgs;

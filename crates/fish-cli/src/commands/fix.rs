@@ -31,26 +31,26 @@ pub fn run_fix(args: FixArgs) -> ExitCode {
             if let Some(mut stdin) = child.stdin.take() {
                 let _ = writeln!(stdin, "{}", rpc_request);
             }
-            if let Ok(output) = child.wait_with_output() {
-                if output.status.success() {
-                    let out_str = String::from_utf8_lossy(&output.stdout);
-                    if let Ok(resp) = serde_json::from_str::<serde_json::Value>(&out_str) {
-                        if let Some(result) = resp.get("result") {
-                            println!("AI Remediation Proposal:");
-                            println!(
-                                "  Status: {}",
-                                result.get("status").and_then(|v| v.as_str()).unwrap_or("")
-                            );
-                            println!(
-                                "  Explanation: {}",
-                                result
-                                    .get("explanation")
-                                    .and_then(|v| v.as_str())
-                                    .unwrap_or("")
-                            );
-                            return ExitCode::SUCCESS;
-                        }
-                    }
+            if let Ok(output) = child.wait_with_output()
+                && output.status.success()
+            {
+                let out_str = String::from_utf8_lossy(&output.stdout);
+                if let Ok(resp) = serde_json::from_str::<serde_json::Value>(&out_str)
+                    && let Some(result) = resp.get("result")
+                {
+                    println!("AI Remediation Proposal:");
+                    println!(
+                        "  Status: {}",
+                        result.get("status").and_then(|v| v.as_str()).unwrap_or("")
+                    );
+                    println!(
+                        "  Explanation: {}",
+                        result
+                            .get("explanation")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("")
+                    );
+                    return ExitCode::SUCCESS;
                 }
             }
         }

@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
@@ -36,6 +36,10 @@ impl CasGarbageCollector {
         }
     }
 
+    pub fn config(&self) -> &CasGcConfig {
+        &self.config
+    }
+
     pub fn start(&self) {
         self.active.store(true, Ordering::SeqCst);
     }
@@ -56,15 +60,14 @@ impl CasGarbageCollector {
         if let Ok(entries) = std::fs::read_dir(objects_dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
-                    if !referenced_hashes.contains(file_name) {
-                        if let Ok(meta) = path.metadata() {
-                            let size = meta.len();
-                            if std::fs::remove_file(&path).is_ok() {
-                                pruned += 1;
-                                freed += size;
-                            }
-                        }
+                if let Some(file_name) = path.file_name().and_then(|n| n.to_str())
+                    && !referenced_hashes.contains(file_name)
+                    && let Ok(meta) = path.metadata()
+                {
+                    let size = meta.len();
+                    if std::fs::remove_file(&path).is_ok() {
+                        pruned += 1;
+                        freed += size;
                     }
                 }
             }
