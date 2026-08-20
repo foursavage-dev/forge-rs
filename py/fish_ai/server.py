@@ -3,14 +3,20 @@ import sys
 from typing import Dict, Any
 
 from .analyzer import FishAiAnalyzer
+from .autofix import AiAutoFixer
 from .benchmarks import AiBenchmarkSuite
 from .prewarmer import PredictiveBuildPrewarmer
 from .risk_scorer import PredictivePrRiskScorer
+from .semantic_impact import SemanticImpactAnalyzer
+from .test_reorder import SmartTestReorderer
 
 analyzer = FishAiAnalyzer()
+autofixer = AiAutoFixer()
 benchmark_suite = AiBenchmarkSuite()
 prewarmer = PredictiveBuildPrewarmer()
 risk_scorer = PredictivePrRiskScorer()
+semantic_analyzer = SemanticImpactAnalyzer()
+test_reorderer = SmartTestReorderer()
 
 def handle_rpc_request(req: Dict[str, Any]) -> Dict[str, Any]:
     method = req.get("method")
@@ -24,6 +30,12 @@ def handle_rpc_request(req: Dict[str, Any]) -> Dict[str, Any]:
         res = analyzer.analyze(toolchain, stderr, exit_code)
         return {"jsonrpc": "2.0", "id": req_id, "result": res}
 
+    elif method == "autofix":
+        content = params.get("file_content", "")
+        msg = params.get("error_message", "")
+        res = autofixer.generate_fix(content, msg)
+        return {"jsonrpc": "2.0", "id": req_id, "result": res}
+
     elif method == "benchmark_ai":
         manifest = params.get("manifest", "")
         case_idx = params.get("index", 0)
@@ -35,6 +47,17 @@ def handle_rpc_request(req: Dict[str, Any]) -> Dict[str, Any]:
         added = params.get("lines_added", 0)
         deleted = params.get("lines_deleted", 0)
         res = risk_scorer.compute_pr_risk(files, added, deleted)
+        return {"jsonrpc": "2.0", "id": req_id, "result": res}
+
+    elif method == "semantic_impact":
+        files = params.get("files", [])
+        symbols = params.get("symbols", [])
+        res = semantic_analyzer.analyze_semantic_impact(files, symbols)
+        return {"jsonrpc": "2.0", "id": req_id, "result": res}
+
+    elif method == "test_reorder":
+        tests = params.get("tests", [])
+        res = test_reorderer.prioritize_tests(tests)
         return {"jsonrpc": "2.0", "id": req_id, "result": res}
 
     elif method == "prewarm_cache":

@@ -2,6 +2,9 @@
 #![allow(missing_docs)]
 #![warn(clippy::all)]
 
+pub mod semantic_impact;
+pub use semantic_impact::SemanticImpactGraph;
+
 pub mod abi_extractor;
 pub mod analyzer;
 pub mod ast_cache;

@@ -1,5 +1,8 @@
 #![forbid(unsafe_code)]
 
+pub mod adapters;
+pub use adapters::{DetectedMonorepoKind, MonorepoDiscoveryResult, ZeroConfigAdapter};
+
 pub mod backend;
 pub mod backend_utils;
 pub mod compile_commands;
