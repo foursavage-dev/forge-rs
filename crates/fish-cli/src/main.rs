@@ -52,6 +52,7 @@ fn main() -> ExitCode {
             println!("fish {}", env!("CARGO_PKG_VERSION"));
             ExitCode::SUCCESS
         }
+        Command::Ai(args) => commands::run_ai(args),
         Command::Init(args) => commands::run_init(args.path, args.force),
         Command::New(args) => commands::run_new(&args.name, args.template.as_deref(), args.path),
         Command::Build(args) => run_build_mode(args.common, BuildMode::Build),

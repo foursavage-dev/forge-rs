@@ -1,4 +1,5 @@
 pub mod affected;
+pub mod ai;
 pub mod attestation;
 pub mod cache;
 pub mod ci;
@@ -31,3 +32,5 @@ pub use run::run_run;
 pub use timemachine::{run_history, run_rewind};
 pub use ui::run_ui;
 pub use worker::run_worker;
+
+pub use ai::run_ai;

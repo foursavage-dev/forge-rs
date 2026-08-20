@@ -58,6 +58,7 @@ pub enum Command {
     Ui(UiArgs),
     Query(QueryArgs),
     Daemon(DaemonArgs),
+    Ai(AiArgs),
 }
 
 #[derive(Debug, Args)]
@@ -528,4 +529,37 @@ pub enum GraphFormat {
     Tree,
     Json,
     Dot,
+}
+
+#[derive(Debug, Args)]
+pub struct AiArgs {
+    #[command(subcommand)]
+    pub action: AiAction,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum AiAction {
+    Analyze {
+        #[arg(long, short, default_value = "rust")]
+        toolchain: String,
+        #[arg(long)]
+        stderr: Option<String>,
+        #[arg(long)]
+        file: Option<PathBuf>,
+        #[arg(long, default_value_t = 1)]
+        exit_code: i32,
+    },
+    Optimize {
+        #[arg(long, short)]
+        path: Option<PathBuf>,
+        #[arg(long, default_value_t = 8)]
+        workers: usize,
+    },
+    Recommend {
+        #[arg(long, short)]
+        path: Option<PathBuf>,
+        #[arg(long)]
+        files: Vec<String>,
+    },
+    Ping,
 }
