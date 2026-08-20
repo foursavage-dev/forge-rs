@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package fish.v1;
+
+option go_package = "github.com/requla11/fish/go/pkg/proto/v1;fishv1";
+
+import "fish/v1/build.proto";
+
+message WorkerRegistration {
+  string worker_id = 1;
+  string address = 2;
+  int32 cpu_cores = 3;
+  int64 memory_bytes = 4;
+  repeated string supported_toolchains = 5;
+  map<string, string> tags = 6;
+}
+
+message WorkerHeartbeat {
+  string worker_id = 1;
+  double cpu_load = 2;
+  int64 available_memory_bytes = 3;
+  int32 active_jobs = 4;
+  int64 timestamp = 5;
+}
+
+message HeartbeatAck {
+  bool accepted = 1;
+  int64 next_heartbeat_interval_ms = 2;
+}
+
+message TaskAssignment {
+  string job_id = 1;
+  BuildTask task = 2;
+}
+
+message TaskStatusUpdate {
+  string job_id = 1;
+  string task_id = 2;
+  string state = 3;
+  TaskResult result = 4;
+}
+
+service CoordinatorService {
+  rpc RegisterWorker(WorkerRegistration) returns (HeartbeatAck);
+  rpc SendHeartbeat(WorkerHeartbeat) returns (HeartbeatAck);
+  rpc DispatchTask(TaskAssignment) returns (TaskStatusUpdate);
+}

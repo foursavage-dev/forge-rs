@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fish-ai"
+version = "0.1.0"
+description = "Fish Polyglot Build System AI & Analytics Services"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
