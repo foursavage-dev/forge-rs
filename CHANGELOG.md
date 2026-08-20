@@ -55,10 +55,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Raised MSRV from 1.86 to 1.88
 
 ### Dependencies
-- Updated ratatui 0.30.0 â†’ 0.30.2, ratatui-crossterm 0.1.0 â†’ 0.1.2, ratatui-widgets 0.3.0 â†’ 0.3.2
-- Updated time 0.3.45 â†’ 0.3.55 (time-core 0.1.9, time-macros 0.2.32)
-- Updated ICU provider crates 2.2.0 â†’ 2.3.0
-- Updated num-conv 0.1.0 â†’ 0.2.2, instability 0.3.10 â†’ 0.3.13, cargo-platform 0.3.1 â†’ 0.3.2
+- Updated ratatui 0.30.0 -> 0.30.2, ratatui-crossterm 0.1.0 -> 0.1.2, ratatui-widgets 0.3.0 -> 0.3.2
+- Updated time 0.3.45 -> 0.3.55 (time-core 0.1.9, time-macros 0.2.32)
+- Updated ICU provider crates 2.2.0 -> 2.3.0
+- Updated num-conv 0.1.0 -> 0.2.2, instability 0.3.10 -> 0.3.13, cargo-platform 0.3.1 -> 0.3.2
 - Added darling 0.24.0 for derive macros; removed strum 0.27.2 / strum_macros 0.27.2
 - Resolved RUSTSEC-2026-0253 via lru 0.18.2 / ratatui-core 0.1.2
 

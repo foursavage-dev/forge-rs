@@ -35,9 +35,9 @@ version.
 
 Fish uses two main branches:
 
-- **`main`** "” The stable branch and the primary source of code for the
+- **`main`** - The stable branch and the primary source of code for the
   project. Code in `main` should be tested and considered stable.
-- **`dev`** "” The development and experimental branch. New features, changes,
+- **`dev`** - The development and experimental branch. New features, changes,
   fixes, and other experimental code are developed and tested here first.
 
 Changes should **not be merged directly into `main`** during normal
@@ -49,13 +49,13 @@ In short:
 
 ```text
 dev
- â”‚
- â”‚  develop + test
- â–¼
+  ↓
+  ↓  develop + test
+  ↓
 [verified / stable]
- â”‚
- â”‚  merge
- â–¼
+  ↓
+  ↓  merge
+  ↓
 main
 ```
 
@@ -100,17 +100,17 @@ fish build --jobs 8 --profile build-trace.json
 fish graph --format tree
 
 # Rebuild when source files change.
-Fish watch --mode test
+fish watch --mode test
 
 # Launch the interactive Web Dashboard & DAG visualizer.
 fish ui --port 3000 --open
 
 # See the local cache's size and record count.
-Fish cache stats
+fish cache stats
 ```
 
-Fish stores its local cache in `~/.Fish/cache` by default. Set
-`fish_CACHE_DIR` or pass `--cache-dir <path>` to use a project- or
+Fish stores its local cache in `~/.fish/cache` by default. Set
+`FISH_CACHE_DIR` or pass `--cache-dir <path>` to use a project- or
 CI-specific location.
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for local development and
@@ -123,16 +123,16 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for local development and
 | `fish init` | Initialize Fish configuration and generate task definitions for detected project languages. |
 | `fish build`, `check`, `test` | Execute work discovered from the project graph (supports `--explain`, `--pgo-generate`, `--pgo-use`). |
 | `fish ui` | Start the interactive Web Dashboard & DAG visualizer with 5-language telemetry. |
-| `Fish query <EXPR>` | Query graph algebra: `deps(...)`, `rdeps(...)`, `allpaths(...)`, `somepath(...)`, `filter(...)`. |
-| `Fish daemon` | Manage background build daemon (`start`, `status`, `stop`) for sub-millisecond warm builds. |
+| `fish query <EXPR>` | Query graph algebra: `deps(...)`, `rdeps(...)`, `allpaths(...)`, `somepath(...)`, `filter(...)`. |
+| `fish daemon` | Manage background build daemon (`start`, `status`, `stop`) for sub-millisecond warm builds. |
 | `fish run` | Build and run a selected Rust package or binary. |
 | `fish graph` | Print the graph as stage trees, JSON, or DOT. |
-| `Fish watch` | Re-run build, check, or test after relevant file changes. |
+| `fish watch` | Re-run build, check, or test after relevant file changes. |
 | `fish affected --since REV` | Limit work to projects changed since a revision. |
-| `Fish cache` | Inspect, prune, and manage the local cache and CAS. |
+| `fish cache` | Inspect, prune, and manage the local cache and CAS. |
 | `fish ci init` / `export` | Generate CI configurations for GitHub, GitLab, CircleCI, Bitbucket. |
 | `fish doctor` | Check local toolchain readiness and diagnose system environment. |
-| `Fish worker` / `cache-server` | Start optional remote-execution services. |
+| `fish worker` / `cache-server` | Start optional remote-execution services. |
 
 Some commands require a corresponding toolchain on `PATH`. `fish doctor` is a
 good first check when setting up a machine.

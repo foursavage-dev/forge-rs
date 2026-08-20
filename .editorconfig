@@ -1,6 +1,4 @@
-# EditorConfig is awesome: https://EditorConfig.org
-
-root = true
+﻿root = true
 
 [*]
 charset = utf-8
@@ -8,17 +6,10 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.{rs,toml}]
+[*.rs]
 indent_style = space
 indent_size = 4
-max_line_length = 100
 
-[*.{json,yml,yaml}]
+[*.{json,yaml,yml,toml,md,ts,js,html}]
 indent_style = space
 indent_size = 2
-
-[*.{md,txt}]
-trim_trailing_whitespace = false
-
-[Makefile]
-indent_style = tab

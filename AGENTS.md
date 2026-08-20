@@ -61,7 +61,7 @@ Rust, C/C++, Go, TypeScript/JavaScript, Python, Java, .NET, Swift, Dart, Zig, Do
 - File watching, affected-project detection
 - Profile-guided optimization (PGO)
 
-## 🛠️ Common Tasks
+## 🛠️ Common Tasks
 
 ### Adding a New Language Backend
 1. Create crate: `crates/fish-backend-{lang}/`
