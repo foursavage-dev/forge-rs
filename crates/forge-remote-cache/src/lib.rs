@@ -298,11 +298,11 @@ mod tests {
     fn test_tcp_remote_cache_server_and_client() {
         let temp = tempdir().unwrap();
         let (server, addr, _server_handle) = start_test_server(
-            Some("secret123".to_string()),
+            Some("test-auth-token-placeholder".to_string()),
             Some(temp.path().to_path_buf()),
         );
 
-        let client = TcpRemoteCacheClient::new(&addr, Some("secret123".to_string()));
+        let client = TcpRemoteCacheClient::new(&addr, Some("test-auth-token-placeholder".to_string()));
         assert!(client.ping().unwrap());
 
         client.put_fingerprint("task_alpha", "fp_999").unwrap();

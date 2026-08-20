@@ -52,7 +52,7 @@ mod tests {
     async fn test_vault_secrets_manager() {
         let mgr = VaultSecretManager::new(
             "https://vault.local:8200".to_string(),
-            "token123".to_string(),
+            "test-token-placeholder".to_string(),
         );
         let service = SecretsService::new(Box::new(mgr));
         let secret = service.get_secret("db_pass").await.unwrap();

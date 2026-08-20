@@ -44,14 +44,15 @@ impl RemoteCacheServer {
             let _ = fs::create_dir_all(art_dir.join("objects"));
 
             if let Ok(entries) = fs::read_dir(&fp_dir) {
-                let mut guard = fingerprints.write().unwrap();
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_file()
-                        && let Some(name) = path.file_stem().and_then(|s| s.to_str())
-                        && let Ok(content) = fs::read_to_string(&path)
-                    {
-                        guard.insert(name.to_string(), content.trim().to_string());
+                if let Ok(mut guard) = fingerprints.write() {
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        if path.is_file()
+                            && let Some(name) = path.file_stem().and_then(|s| s.to_str())
+                            && let Ok(content) = fs::read_to_string(&path)
+                        {
+                            guard.insert(name.to_string(), content.trim().to_string());
+                        }
                     }
                 }
             }
@@ -60,8 +61,9 @@ impl RemoteCacheServer {
             if let Ok(content) = fs::read_to_string(index_path)
                 && let Ok(index) = serde_json::from_str::<HashMap<String, String>>(&content)
             {
-                let mut guard = artifact_index.write().unwrap();
-                guard.extend(index);
+                if let Ok(mut guard) = artifact_index.write() {
+                    guard.extend(index);
+                }
             }
         }
 
@@ -259,11 +261,12 @@ impl RemoteCacheServer {
                         error: Some("invalid authentication token".to_string()),
                     };
                 }
-                let guard = fingerprints.read().unwrap();
+                let guard = fingerprints.read().ok();
+                let stored_entries = guard.as_ref().map(|g| g.len()).unwrap_or(0);
                 CacheResponse::Pong {
                     status: "ok".to_string(),
                     version: env!("CARGO_PKG_VERSION").to_string(),
-                    stored_entries: guard.len(),
+                    stored_entries,
                     error: None,
                 }
             }
@@ -276,20 +279,29 @@ impl RemoteCacheServer {
                         error: Some("unauthorized".to_string()),
                     };
                 }
-                let guard = fingerprints.read().unwrap();
-                if let Some(fp) = guard.get(&key) {
-                    CacheResponse::Fingerprint {
-                        key,
-                        found: true,
-                        fingerprint: Some(fp.clone()),
-                        error: None,
+                let guard = fingerprints.read().ok();
+                if let Some(guard) = guard {
+                    if let Some(fp) = guard.get(&key) {
+                        CacheResponse::Fingerprint {
+                            key,
+                            found: true,
+                            fingerprint: Some(fp.clone()),
+                            error: None,
+                        }
+                    } else {
+                        CacheResponse::Fingerprint {
+                            key,
+                            found: false,
+                            fingerprint: None,
+                            error: None,
+                        }
                     }
                 } else {
                     CacheResponse::Fingerprint {
                         key,
                         found: false,
                         fingerprint: None,
-                        error: None,
+                        error: Some("internal server error".to_string()),
                     }
                 }
             }
@@ -306,8 +318,9 @@ impl RemoteCacheServer {
                     };
                 }
                 {
-                    let mut guard = fingerprints.write().unwrap();
-                    guard.insert(key.clone(), fingerprint.clone());
+                    if let Ok(mut guard) = fingerprints.write() {
+                        guard.insert(key.clone(), fingerprint.clone());
+                    }
                 }
 
                 if let Some(dir) = storage_dir
@@ -339,16 +352,14 @@ impl RemoteCacheServer {
                 }
 
                 let in_memory = {
-                    let guard = artifacts.read().unwrap();
-                    guard.get(&hash).cloned()
+                    artifacts.read().ok().and_then(|guard| guard.get(&hash).cloned())
                 };
 
                 let data_opt = if in_memory.is_some() {
                     in_memory
                 } else if let Some(dir) = storage_dir {
                     let content_hash = {
-                        let guard = artifact_index.read().unwrap();
-                        guard.get(&hash).cloned()
+                        artifact_index.read().ok().and_then(|guard| guard.get(&hash).cloned())
                     };
                     content_hash.and_then(|h| {
                         Self::safe_key_identifier(&h).and_then(|safe_h| {
@@ -403,8 +414,9 @@ impl RemoteCacheServer {
                 let content_hash = blob_hash(&bytes);
 
                 {
-                    let mut guard = artifacts.write().unwrap();
-                    guard.insert(hash.clone(), bytes.clone());
+                    if let Ok(mut guard) = artifacts.write() {
+                        guard.insert(hash.clone(), bytes.clone());
+                    }
                 }
 
                 if let Some(dir) = storage_dir
@@ -418,13 +430,13 @@ impl RemoteCacheServer {
                         let _ = fs::rename(&tmp_path, &target_path);
                     }
                     {
-                        let mut guard = artifact_index.write().unwrap();
-                        guard.insert(hash.clone(), safe_h);
+                        if let Ok(mut guard) = artifact_index.write() {
+                            guard.insert(hash.clone(), safe_h);
+                        }
                     }
                     let index_path = art_dir.join("index.json");
                     let snapshot = {
-                        let guard = artifact_index.read().unwrap();
-                        serde_json::to_vec(&*guard).unwrap_or_default()
+                        artifact_index.read().ok().and_then(|guard| serde_json::to_vec(&*guard).ok()).unwrap_or_default()
                     };
                     let tmp_index = art_dir.join("index.json.tmp");
                     if fs::write(&tmp_index, snapshot).is_ok() {

@@ -113,7 +113,9 @@ impl CasBackend for LocalCasBackend {
         tokio::fs::write(&tmp_data, &data_to_store)
             .await
             .map_err(CasError::Io)?;
-        let _ = tokio::fs::rename(&tmp_data, &data_path).await;
+        tokio::fs::rename(&tmp_data, &data_path)
+            .await
+            .map_err(CasError::Io)?;
 
         let mut metadata = artifact.metadata.clone();
         if let Some(size) = compressed_size {
@@ -127,7 +129,9 @@ impl CasBackend for LocalCasBackend {
         tokio::fs::write(&tmp_meta, metadata_json)
             .await
             .map_err(CasError::Io)?;
-        let _ = tokio::fs::rename(&tmp_meta, &metadata_path).await;
+        tokio::fs::rename(&tmp_meta, &metadata_path)
+            .await
+            .map_err(CasError::Io)?;
 
         Ok(())
     }
