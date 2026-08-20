@@ -1468,15 +1468,18 @@ dependencies = [
 name = "forge-scheduler"
 version = "0.2.0"
 dependencies = [
+ "anyhow",
  "criterion",
  "crossbeam-channel",
  "dashmap",
  "forge-executor",
  "forge-graph",
  "jobserver",
+ "notify",
  "serde",
  "serde_json",
  "sysinfo",
+ "tempfile",
  "thiserror",
  "tokio",
 ]
