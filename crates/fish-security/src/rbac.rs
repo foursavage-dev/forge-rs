@@ -80,14 +80,20 @@ impl AccessController {
         }
 
         for role_name in &claims.roles {
-            if let Some(role) = self.roles.get(role_name) {
-                if role.permissions.contains(&required) {
-                    return true;
-                }
+            if let Some(role) = self.roles.get(role_name)
+                && role.permissions.contains(&required)
+            {
+                return true;
             }
         }
 
         false
+    }
+}
+
+impl Default for AccessController {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

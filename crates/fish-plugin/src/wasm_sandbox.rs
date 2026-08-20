@@ -38,9 +38,12 @@ impl WasmPluginSandbox {
     }
 
     fn register_builtin_hooks(&mut self) {
-        self.exported_functions.insert("hook_pre_build".to_string(), 1);
-        self.exported_functions.insert("hook_post_build".to_string(), 2);
-        self.exported_functions.insert("hook_cache_filter".to_string(), 3);
+        self.exported_functions
+            .insert("hook_pre_build".to_string(), 1);
+        self.exported_functions
+            .insert("hook_post_build".to_string(), 2);
+        self.exported_functions
+            .insert("hook_cache_filter".to_string(), 3);
     }
 
     pub fn is_active(&self) -> bool {
@@ -78,8 +81,7 @@ impl WasmPluginSandbox {
             return Err(format!("Exported WASM function `{fn_name}` not found"));
         }
 
-        let mut stack: Vec<WasmValue> = Vec::new();
-        stack.push(WasmValue::I32(payload.len() as i32));
+        let _stack: Vec<WasmValue> = vec![WasmValue::I32(payload.len() as i32)];
 
         let mut result = Vec::new();
         result.extend_from_slice(b"WASM_EXEC_OK:");

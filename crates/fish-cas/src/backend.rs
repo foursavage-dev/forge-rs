@@ -440,12 +440,11 @@ impl CasBackend for RemoteCasBackendImpl {
         let base = self.config.endpoint.trim_end_matches('/');
         let url = format!("{}/{}/stats", base, self.config.bucket);
         let req = self.apply_auth(self.client.get(&url));
-        if let Ok(resp) = req.send().await {
-            if resp.status().is_success() {
-                if let Ok(stats) = resp.json::<CasStats>().await {
-                    return Ok(stats);
-                }
-            }
+        if let Ok(resp) = req.send().await
+            && resp.status().is_success()
+            && let Ok(stats) = resp.json::<CasStats>().await
+        {
+            return Ok(stats);
         }
         Ok(CasStats {
             artifact_count: 0,

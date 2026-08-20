@@ -2,23 +2,12 @@ use crate::image::DockerImage;
 use serde::{Deserialize, Serialize};
 use std::process::Command;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BuildOptions {
     pub tags: Vec<String>,
     pub build_args: Vec<(String, String)>,
     pub no_cache: bool,
     pub target: Option<String>,
-}
-
-impl Default for BuildOptions {
-    fn default() -> Self {
-        Self {
-            tags: Vec::new(),
-            build_args: Vec::new(),
-            no_cache: false,
-            target: None,
-        }
-    }
 }
 
 pub struct DockerBuilder;
@@ -70,7 +59,9 @@ impl DockerBuilder {
                 (id, stdout.len() as u64)
             }
             _ => {
-                let synthetic_id = blake3::hash(dockerfile_path.as_bytes()).to_hex().to_string();
+                let synthetic_id = blake3::hash(dockerfile_path.as_bytes())
+                    .to_hex()
+                    .to_string();
                 (synthetic_id, 0)
             }
         };

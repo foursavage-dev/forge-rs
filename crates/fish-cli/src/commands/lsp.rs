@@ -20,9 +20,7 @@ pub fn run_lsp() -> ExitCode {
             continue;
         }
 
-        let len_str = line_trimmed
-            .trim_start_matches("Content-Length:")
-            .trim();
+        let len_str = line_trimmed.trim_start_matches("Content-Length:").trim();
         let content_length: usize = len_str.parse().unwrap_or(0);
 
         let mut empty_line = String::new();
@@ -65,23 +63,55 @@ pub fn run_lsp() -> ExitCode {
 
 fn get_hover_documentation(key: &str) -> &'static str {
     match key {
-        "backend" => "**backend** (`string`)\n\nPrimary toolchain adapter for the package or workspace (e.g. `rust`, `go`, `ts`, `py`, `cc`, `docker`).",
-        "jobs" => "**jobs** (`integer`)\n\nMaximum concurrent worker tasks. Defaults to system logical CPU count.",
-        "no_cache" => "**no_cache** (`boolean`)\n\nWhen true, bypasses both local and remote Content-Addressable Storage (CAS) caches.",
-        "sandbox" => "**sandbox** (`boolean`)\n\nEnables process isolation using Linux Bubblewrap, macOS sandbox-exec, or Windows Job Objects.",
-        "semantic" => "**semantic** (`boolean`)\n\nEnables AST-level semantic change detection to avoid rebuilding downstream packages when public interface is unchanged.",
-        "critical_path" => "**critical_path** (`boolean`)\n\nPrioritizes tasks along the longest dependency chain in the DAG.",
-        "ram_limit" => "**ram_limit** (`integer 1-100`)\n\nMemory usage threshold percentage to dynamically throttle concurrency and prevent OOM.",
-        "dir" => "**dir** (`string`)\n\nPath to the Content-Addressable Storage (CAS) directory (defaults to `~/.fish/cache`).",
-        "reflink" => "**reflink** (`boolean`)\n\nEnables Copy-on-Write (CoW) extents or hardlinks to materialize cached artifacts with 0ms I/O copy.",
-        "cache_url" => "**cache_url** (`string`)\n\nHTTP/gRPC endpoint for remote artifact cache server.",
+        "backend" => {
+            "**backend** (`string`)\n\nPrimary toolchain adapter for the package or workspace (e.g. `rust`, `go`, `ts`, `py`, `cc`, `docker`)."
+        }
+        "jobs" => {
+            "**jobs** (`integer`)\n\nMaximum concurrent worker tasks. Defaults to system logical CPU count."
+        }
+        "no_cache" => {
+            "**no_cache** (`boolean`)\n\nWhen true, bypasses both local and remote Content-Addressable Storage (CAS) caches."
+        }
+        "sandbox" => {
+            "**sandbox** (`boolean`)\n\nEnables process isolation using Linux Bubblewrap, macOS sandbox-exec, or Windows Job Objects."
+        }
+        "semantic" => {
+            "**semantic** (`boolean`)\n\nEnables AST-level semantic change detection to avoid rebuilding downstream packages when public interface is unchanged."
+        }
+        "critical_path" => {
+            "**critical_path** (`boolean`)\n\nPrioritizes tasks along the longest dependency chain in the DAG."
+        }
+        "ram_limit" => {
+            "**ram_limit** (`integer 1-100`)\n\nMemory usage threshold percentage to dynamically throttle concurrency and prevent OOM."
+        }
+        "dir" => {
+            "**dir** (`string`)\n\nPath to the Content-Addressable Storage (CAS) directory (defaults to `~/.fish/cache`)."
+        }
+        "reflink" => {
+            "**reflink** (`boolean`)\n\nEnables Copy-on-Write (CoW) extents or hardlinks to materialize cached artifacts with 0ms I/O copy."
+        }
+        "cache_url" => {
+            "**cache_url** (`string`)\n\nHTTP/gRPC endpoint for remote artifact cache server."
+        }
         "token" => "**token** (`string`)\n\nBearer authentication token for remote operations.",
-        "workers" => "**workers** (`array of strings`)\n\nRemote cluster worker node endpoints (e.g. `[\"worker1:9000\", \"worker2:9000\"]`).",
-        "port" => "**port** (`integer`)\n\nLoopback TCP port for Fish background build daemon (default `9527`).",
-        "depends_on" => "**depends_on** (`array of strings`)\n\nList of prerequisite tasks required before this pipeline stage executes.",
-        "inputs" => "**inputs** (`array of globs`)\n\nFile patterns included in the task fingerprint hash computation.",
-        "outputs" => "**outputs** (`array of globs`)\n\nArtifact file patterns produced and saved into the CAS cache.",
-        _ => "### Fish Manifest Configuration Key\nConfiguration property for the Fish build orchestration system.",
+        "workers" => {
+            "**workers** (`array of strings`)\n\nRemote cluster worker node endpoints (e.g. `[\"worker1:9000\", \"worker2:9000\"]`)."
+        }
+        "port" => {
+            "**port** (`integer`)\n\nLoopback TCP port for Fish background build daemon (default `9527`)."
+        }
+        "depends_on" => {
+            "**depends_on** (`array of strings`)\n\nList of prerequisite tasks required before this pipeline stage executes."
+        }
+        "inputs" => {
+            "**inputs** (`array of globs`)\n\nFile patterns included in the task fingerprint hash computation."
+        }
+        "outputs" => {
+            "**outputs** (`array of globs`)\n\nArtifact file patterns produced and saved into the CAS cache."
+        }
+        _ => {
+            "### Fish Manifest Configuration Key\nConfiguration property for the Fish build orchestration system."
+        }
     }
 }
 
@@ -116,8 +146,11 @@ fn handle_request(
         }),
         "textDocument/hover" => {
             let position = req.get("params").and_then(|p| p.get("position"));
-            let line_num = position.and_then(|pos| pos.get("line")).and_then(|l| l.as_u64()).unwrap_or(0);
-            
+            let line_num = position
+                .and_then(|pos| pos.get("line"))
+                .and_then(|l| l.as_u64())
+                .unwrap_or(0);
+
             let hover_text = if line_num == 0 {
                 "### [build] Configuration Section\nGlobal execution and toolchain configuration."
             } else {

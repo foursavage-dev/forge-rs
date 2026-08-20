@@ -27,9 +27,7 @@ impl FlakyDetector {
 
     pub fn record_run(&self, test_name: &str, passed: bool) {
         let mut map = self.history.write().unwrap();
-        map.entry(test_name.to_string())
-            .or_default()
-            .push(passed);
+        map.entry(test_name.to_string()).or_default().push(passed);
     }
 
     pub async fn is_flaky(&self, test_name: &str) -> Result<bool, anyhow::Error> {
