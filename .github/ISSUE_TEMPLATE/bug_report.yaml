@@ -1,0 +1,67 @@
+name: Bug Report
+description: File a bug report to help us improve Fish
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can maintainers reproduce the issue?
+      placeholder: |
+        1. Run `fish build`
+        2. Modify `src/lib.rs`
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Linux (x86_64 / ARM64)
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Windows (x86_64)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Fish Version
+      placeholder: e.g. 0.1.0 or commit hash
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Diagnostic Logs / Fish doctor output
+      description: Paste terminal output or `fish doctor` report.
+      render: shell
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have checked existing issues to avoid duplicates.
+          required: true
+        - label: I have verified this is not a user configuration issue.
+          required: false

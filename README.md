@@ -1,6 +1,6 @@
 # Fish
 
-[![CI](https://github.com/requla11/fish/actions/workflows/dogfood.yml/badge.svg)](https://github.com/requla11/fish/actions/workflows/dogfood.yml)
+[![CI](https://github.com/requla11/fish/actions/workflows/dogfood.yaml/badge.svg)](https://github.com/requla11/fish/actions/workflows/dogfood.yaml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.88%2B-orange.svg)](https://www.rust-lang.org)
 

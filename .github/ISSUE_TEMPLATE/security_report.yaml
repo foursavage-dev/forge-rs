@@ -1,0 +1,30 @@
+name: Security Report
+description: Report a security vulnerability in Fish
+title: "[SECURITY]: "
+labels: ["security"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please refer to our [Security Policy](https://github.com/requla11/fish/blob/main/SECURITY.md) for vulnerability disclosure guidelines.
+  - type: textarea
+    id: vulnerability
+    attributes:
+      label: Vulnerability Description
+      description: Describe the security flaw and affected component.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Proof of Concept / Reproduction
+      description: Steps or payload required to exploit the vulnerability.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: What can an attacker achieve by exploiting this?
+    validations:
+      required: true
