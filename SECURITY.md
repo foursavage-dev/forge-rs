@@ -2,98 +2,163 @@
 
 ## Supported Versions
 
-Currently, only the latest version of Forge is supported with security updates.
+Forge currently provides security updates for the latest supported release series.
 
-| Version | Supported          |
-| ------- | ------------------- |
-| 0.1.x   | :white_check_mark: |
+| Version | Supported |
+| ------- | --------- |
+| 0.2.x   | :white_check_mark: |
+
+Older release series may no longer receive security updates. Users are encouraged to upgrade to the latest supported version whenever possible.
 
 ## Reporting a Vulnerability
 
-If you discover a potential security vulnerability in Forge, please **do not** open a public issue.
+If you discover a potential security vulnerability in Forge, please **do not open a public issue** or publicly disclose the vulnerability before a fix or coordinated disclosure has been arranged.
 
-Instead, send an email to **foursavage@proton.me** with the following information:
+Instead, report the vulnerability privately by email:
+
+**foursavage@proton.me**
+
+Please include as much of the following information as possible:
 
 - A description of the vulnerability
-- Steps to reproduce the vulnerability
-- Affected versions
-- Potential impact
+- Steps to reproduce the issue
+- Affected Forge versions or components
+- Potential security impact
+- Relevant logs, proof-of-concept code, or other technical details
 - Any proposed mitigation or fix
 
-The Foursavage security team will:
+Please do not include unnecessary personal or sensitive information in your report.
 
-1. Acknowledge receipt of your report within 48 hours
-2. Provide a detailed response within 7 days
-3. Work with you to understand and validate the issue
-4. Determine the severity and timeline for disclosure
-5. Coordinate the release of a fix with you
+### Response Process
+
+Forge Maintainers will:
+
+1. Acknowledge receipt of the report as soon as reasonably possible, with a target of 48 hours.
+2. Review and validate the reported vulnerability.
+3. Determine the severity and affected components.
+4. Work with the reporter to understand the issue and possible mitigations.
+5. Develop and test an appropriate fix.
+6. Coordinate disclosure and release of the fix when appropriate.
+
+Response times may vary depending on the severity, complexity, and availability of the maintainers.
+
+### Coordinated Disclosure
+
+Security vulnerabilities should be handled privately until a fix or appropriate mitigation is available.
+
+Forge Maintainers may coordinate disclosure with the reporter, including:
+
+- The affected versions
+- The fixed version
+- The nature and impact of the vulnerability
+- Available mitigations
+- Appropriate credit for the reporter, if requested
+
+The security of Forge users and contributors will be prioritized when determining the disclosure timeline.
 
 ## Security Features
 
-Forge includes several security-related features:
+Forge includes security-related capabilities designed to improve the integrity and security of builds and execution environments.
 
 ### Artifact Signing & Verification
+
 - Ed25519 cryptographic signing of build artifacts
-- SBOM generation (SPDX/CycloneDX formats)
-- Automated verification of artifact integrity
-- Source-to-build chain tracking
+- SBOM generation using supported formats such as SPDX and CycloneDX
+- Automated artifact integrity verification
+- Source-to-build traceability
 
 ### Dependency Vulnerability Scanning
-- Multi-backend vulnerability scanning (Rust, NPM, Maven)
-- Severity-based blocking policies
-- CVSS score tracking
+
+- Vulnerability scanning for supported dependency ecosystems
+- Severity-based security policies
+- CVSS-based vulnerability assessment
 - Automated security reports
 
 ### Secret Management
-- Secure secret injection with HashiCorp Vault
-- AWS Secrets Manager integration
-- Kubernetes secrets support
-- Audit trail for secret usage
+
+Forge supports integration with external secret-management systems where configured, including:
+
+- HashiCorp Vault
+- AWS Secrets Manager
+- Kubernetes Secrets
 
 ### VFS Security
+
+Forge provides security controls for filesystem access and isolated execution environments, including:
+
 - Capability-based filesystem permissions
 - Isolated worker environments
-- Sandbox execution for custom plugins
+- Sandboxed execution for supported plugins
+
+Security capabilities may vary between Forge components and configurations. Users should consult the relevant documentation before relying on a specific security feature.
 
 ## Secure Development Practices
 
-Forge follows secure development practices:
+Forge aims to follow secure development practices, including:
 
-- **No unsafe code**: `#![forbid(unsafe_code)]` in relevant crates
-- **Security review**: All code undergoes security review
-- **Dependency auditing**: Regular dependency updates and vulnerability scanning
-- **Input validation**: Comprehensive input validation across all backends
-- **Least privilege**: Minimal permissions for all operations
+- **Memory safety:** Prefer safe Rust abstractions and prohibit `unsafe` code in crates where `#![forbid(unsafe_code)]` is applicable.
+- **Security review:** Security-sensitive changes should receive appropriate review.
+- **Dependency auditing:** Dependencies should be regularly reviewed and checked for known vulnerabilities.
+- **Input validation:** External and untrusted input should be validated before processing.
+- **Least privilege:** Components should operate with only the permissions they require.
+- **Secure defaults:** Security-sensitive functionality should use safe defaults where practical.
+- **Security testing:** Security-sensitive functionality should include appropriate tests and regression coverage.
 
 ## Security Best Practices for Users
 
 ### Production Deployment
-1. Use artifact signing for all production builds
-2. Enable dependency vulnerability scanning
-3. Use secret management instead of environment variables
-4. Keep Forge updated to the latest version
-5. Review and rotate signing keys regularly
+
+Users deploying Forge in production should:
+
+1. Keep Forge updated to the latest supported release.
+2. Verify artifact signatures where artifact signing is available.
+3. Run dependency and security checks as part of the build pipeline.
+4. Use a dedicated secret-management solution for sensitive credentials.
+5. Follow the principle of least privilege.
+6. Protect signing keys and rotate them according to organizational security requirements.
+7. Review security logs and audit information where available.
 
 ### CI/CD Integration
-1. Verify artifact signatures before deployment
-2. Run security scans in CI pipelines
-3. Use temporary credentials with minimal permissions
-4. Enable audit logging for all operations
+
+For CI/CD environments:
+
+1. Verify artifact integrity before deployment.
+2. Run security checks as part of CI pipelines.
+3. Use short-lived credentials where possible.
+4. Grant CI jobs only the permissions they require.
+5. Avoid exposing secrets to untrusted build steps.
+6. Keep CI runners and dependencies up to date.
 
 ### Distributed Workers
-1. Use TLS for all worker communications
-2. Authenticate all worker connections
-3. Enable VFS for secure file access
-4. Isolate worker environments
+
+When using distributed workers:
+
+1. Use encrypted communication such as TLS.
+2. Authenticate worker connections.
+3. Restrict worker permissions.
+4. Isolate worker environments where possible.
+5. Limit filesystem access to the directories and resources required by the worker.
 
 ## Security Advisories
 
-Past security advisories will be published in the [Security Advisories](https://github.com/foursavage-dev/forge-rs/security/advisories) section.
+Security advisories may be published through the GitHub Security Advisories system:
+
+https://github.com/foursavage-dev/forge-rs/security/advisories
+
+Security advisories may include information about:
+
+- Affected versions
+- Severity
+- Security impact
+- Mitigations
+- Fixed versions
 
 ## Acknowledgments
 
-We thank all security researchers who help keep Forge secure. Please review our [Security Policy](https://github.com/foursavage-dev/forge-rs/blob/main/SECURITY.md) for details.
+We thank all security researchers and contributors who responsibly report vulnerabilities and help improve the security of Forge.
+
+Security researchers may receive credit for valid vulnerability reports unless they prefer to remain anonymous.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for the full license text.
