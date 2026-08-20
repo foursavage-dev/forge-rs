@@ -2,7 +2,7 @@
 
 > 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
-This guide provides comprehensive instructions for deploying fish-rs in production environments.
+This guide provides comprehensive instructions for deploying Fish in production environments.
 
 ## Table of Contents
 
@@ -67,24 +67,24 @@ cargo install fish-cli --release
 ### Method 2: Build from Source
 
 ```bash
-git clone https://github.com/foursavage-dev/fish-rs.git
-cd fish-rs
+git clone https://github.com/requla11/fish.git
+cd fish
 cargo build --release --workspace
 cargo install --path crates/fish-cli
 ```
 
 ### Method 3: Binary Download
 
-Download the latest release from [GitHub Releases](https://github.com/foursavage-dev/fish-rs/releases).
+Download the latest release from [GitHub Releases](https://github.com/requla11/fish/releases).
 
 ```bash
 # Linux
-wget https://github.com/foursavage-dev/fish-rs/releases/latest/download/fish-linux-x86_64
+wget https://github.com/requla11/fish/releases/latest/download/fish-linux-x86_64
 chmod +x fish-linux-x86_64
 sudo mv fish-linux-x86_64 /usr/local/bin/Fish
 
 # macOS
-wget https://github.com/foursavage-dev/fish-rs/releases/latest/download/fish-darwin-x86_64
+wget https://github.com/requla11/fish/releases/latest/download/fish-darwin-x86_64
 chmod +x fish-darwin-x86_64
 sudo mv fish-darwin-x86_64 /usr/local/bin/Fish
 
@@ -520,8 +520,8 @@ tar -xzf fish-cache-backup.tar.gz -C ~/
 ## Support
 
 For issues and questions:
-- GitHub Issues: https://github.com/foursavage-dev/fish-rs/issues
-- Documentation: https://github.com/foursavage-dev/fish-rs/blob/main/README.md
+- GitHub Issues: https://github.com/requla11/fish/issues
+- Documentation: https://github.com/requla11/fish/blob/main/README.md
 - Discord: [Join our Discord server]
 
 ## License

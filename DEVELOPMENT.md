@@ -17,8 +17,8 @@ This guide provides detailed information for developers working on Fish.
 
 ```bash
 # Clone the repository
-git clone https://github.com/foursavage-dev/fish-rs.git
-cd fish-rs
+git clone https://github.com/requla11/fish.git
+cd fish
 
 # Install development dependencies
 cargo install cargo-watch

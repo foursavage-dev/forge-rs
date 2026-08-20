@@ -78,5 +78,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-language backend support
 - Basic CI/CD generation
 
-[Unreleased]: https://github.com/foursavage-dev/fish-rs/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/foursavage-dev/fish-rs/releases/tag/v0.1.0
+[Unreleased]: https://github.com/requla11/fish/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/requla11/fish/releases/tag/v0.1.0

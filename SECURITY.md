@@ -145,7 +145,7 @@ When using distributed workers:
 
 Security advisories may be published through the GitHub Security Advisories system:
 
-https://github.com/foursavage-dev/fish-rs/security/advisories
+https://github.com/requla11/fish/security/advisories
 
 Security advisories may include information about:
 

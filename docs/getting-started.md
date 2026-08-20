@@ -10,20 +10,20 @@ This guide will help you get started with Fish, a fast, cache-first build orches
 
 **Linux & macOS:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/foursavage-dev/fish-rs/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/requla11/fish/main/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://raw.githubusercontent.com/foursavage-dev/fish-rs/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/requla11/fish/main/install.ps1 | iex
 ```
 
 ### From Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/foursavage-dev/fish-rs.git
-cd fish-rs
+git clone https://github.com/requla11/fish.git
+cd fish
 
 # Build and install
 cargo install --path crates/fish-cli
@@ -32,7 +32,7 @@ cargo install --path crates/fish-cli
 ### Cargo Install
 
 ```bash
-cargo install fish-cli --git https://github.com/foursavage-dev/fish-rs
+cargo install fish-cli --git https://github.com/requla11/fish
 ```
 
 ## Quick Start
@@ -48,8 +48,8 @@ Fish build
 
 ```bash
 # Clone the example monorepo
-git clone https://github.com/foursavage-dev/fish-rs.git
-cd fish-rs/examples/polyglot-demo
+git clone https://github.com/requla11/fish.git
+cd fish/examples/polyglot-demo
 
 # Build all services
 Fish build
@@ -288,5 +288,5 @@ If workers can't connect:
 
 - [Documentation](../README.md)
 - [Support](../SUPPORT.md)
-- [GitHub Issues](https://github.com/foursavage-dev/fish-rs/issues)
+- [GitHub Issues](https://github.com/requla11/fish/issues)
 - [Email](foursavage@proton.me)

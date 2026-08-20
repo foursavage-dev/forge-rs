@@ -39,9 +39,9 @@ jobs:
 
       - name: Build Binary
         run: |
-          cargo build --release --bin Fish --target ${{ matrix.target }}
+          cargo build --release -p fish-cli --bin fish --target ${{ matrix.target }}
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cargo build --release --bin fish-setup --target ${{ matrix.target }}
+            cargo build --release -p fish-installer --bin fish-setup --target ${{ matrix.target }}
           fi
         shell: bash
 
@@ -49,10 +49,10 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp target/${{ matrix.target }}/release/Fish.exe ./${{ matrix.artifact_name }}
+            cp target/${{ matrix.target }}/release/fish.exe ./${{ matrix.artifact_name }}
             cp target/${{ matrix.target }}/release/fish-setup.exe ./fish-setup-windows-x86_64.exe
           else
-            cp target/${{ matrix.target }}/release/Fish ./${{ matrix.artifact_name }}
+            cp target/${{ matrix.target }}/release/fish ./${{ matrix.artifact_name }}
           fi
 
       - name: Upload Binary

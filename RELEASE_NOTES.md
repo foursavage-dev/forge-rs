@@ -42,18 +42,18 @@ We are thrilled to announce the official release of **Fish v0.1.0**! Fish is a f
 
 ### Windows (Setup Installer - Recommended)
 
-Download **[`fish-setup-windows-x86_64.exe`](https://github.com/foursavage-dev/fish-rs/releases/download/v0.1.0/fish-setup-windows-x86_64.exe)** and double-click to install Fish. The installer will automatically add Fish to your User `PATH` environment variable.
+Download **[`fish-setup-windows-x86_64.exe`](https://github.com/requla11/fish/releases/download/v0.1.0/fish-setup-windows-x86_64.exe)** and double-click to install Fish. The installer will automatically add Fish to your User `PATH` environment variable.
 
 ### Direct Binary Downloads
 
 | Platform | Download Link |
 | :--- | :--- |
-| **Windows (Setup Installer)** | [`fish-setup-windows-x86_64.exe`](https://github.com/foursavage-dev/fish-rs/releases/download/v0.1.0/fish-setup-windows-x86_64.exe) |
-| **Windows (Portable x86_64)** | [`fish-windows-x86_64.exe`](https://github.com/foursavage-dev/fish-rs/releases/download/v0.1.0/fish-windows-x86_64.exe) |
-| **Linux (x86_64)** | [`fish-linux-x86_64`](https://github.com/foursavage-dev/fish-rs/releases/download/v0.1.0/fish-linux-x86_64) |
-| **macOS (Apple Silicon M1/M2/M3/M4)** | [`fish-macos-aarch64`](https://github.com/foursavage-dev/fish-rs/releases/download/v0.1.0/fish-macos-aarch64) |
-| **macOS (Intel x86_64)** | [`fish-macos-x86_64`](https://github.com/foursavage-dev/fish-rs/releases/download/v0.1.0/fish-macos-x86_64) |
-| **Verification Checksums** | [`SHA256SUMS.txt`](https://github.com/foursavage-dev/fish-rs/releases/download/v0.1.0/SHA256SUMS.txt) |
+| **Windows (Setup Installer)** | [`fish-setup-windows-x86_64.exe`](https://github.com/requla11/fish/releases/download/v0.1.0/fish-setup-windows-x86_64.exe) |
+| **Windows (Portable x86_64)** | [`fish-windows-x86_64.exe`](https://github.com/requla11/fish/releases/download/v0.1.0/fish-windows-x86_64.exe) |
+| **Linux (x86_64)** | [`fish-linux-x86_64`](https://github.com/requla11/fish/releases/download/v0.1.0/fish-linux-x86_64) |
+| **macOS (Apple Silicon M1/M2/M3/M4)** | [`fish-macos-aarch64`](https://github.com/requla11/fish/releases/download/v0.1.0/fish-macos-aarch64) |
+| **macOS (Intel x86_64)** | [`fish-macos-x86_64`](https://github.com/requla11/fish/releases/download/v0.1.0/fish-macos-x86_64) |
+| **Verification Checksums** | [`SHA256SUMS.txt`](https://github.com/requla11/fish/releases/download/v0.1.0/SHA256SUMS.txt) |
 
 ---
 

@@ -26,7 +26,7 @@ definitions:
     - step: &setup-fish
         name: Setup Fish
         script:
-          - curl -L https://github.com/foursavage-dev/forge-rs/releases/latest/download/fish-linux -o fish
+          - curl -L https://github.com/requla11/fish/releases/latest/download/fish-linux -o fish
           - chmod +x fish
           - sudo mv fish /usr/local/bin/
     - step: &cache-restore

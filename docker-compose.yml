@@ -53,11 +53,11 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     volumes:
-      - .:/fish-rs
+      - .:/fish
       - cargo_cache:/usr/local/cargo/registry
       - cargo_cache:/usr/local/cargo/git
-      - target_cache:/fish-rs/target
-    working_dir: /fish-rs
+      - target_cache:/fish/target
+    working_dir: /fish
     environment:
       CARGO_HOME: /usr/local/cargo
       RUST_LOG: debug

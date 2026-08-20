@@ -70,7 +70,7 @@ jobs:
         if: matrix.os != 'windows-latest'
         shell: bash
         run: |
-          BIN_NAME="Fish"
+          BIN_NAME="fish"
           PKG_NAME="fish-${{ github.ref_name || github.event.inputs.tag || 'pr' }}-${{ matrix.target }}"
           mkdir -p "$PKG_NAME"
           cp "target/${{ matrix.target }}/release/$BIN_NAME" "$PKG_NAME/"
@@ -82,7 +82,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          BIN_NAME="Fish.exe"
+          BIN_NAME="fish.exe"
           PKG_NAME="fish-${{ github.ref_name || github.event.inputs.tag || 'pr' }}-${{ matrix.target }}"
           mkdir -p "$PKG_NAME"
           cp "target/${{ matrix.target }}/release/$BIN_NAME" "$PKG_NAME/"

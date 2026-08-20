@@ -35,14 +35,14 @@ Before contributing to Fish, make sure you have:
 2. Clone your fork locally:
 
    ```bash
-   git clone https://github.com/YOUR_USERNAME/fish-rs.git
-   cd fish-rs
+   git clone https://github.com/YOUR_USERNAME/fish.git
+   cd fish
    ```
 
 3. Add the upstream remote:
 
    ```bash
-   git remote add upstream https://github.com/foursavage-dev/fish-rs.git
+   git remote add upstream https://github.com/requla11/fish.git
    ```
 
 4. Verify the configured remotes:

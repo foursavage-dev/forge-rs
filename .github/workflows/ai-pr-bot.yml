@@ -31,23 +31,23 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Bootstrap Fish
-        run: cargo build --release --bin Fish
+        run: cargo build --release -p fish-cli
 
       - name: Analyze Affected Crates and Performance
         id: analysis
         run: |
-          AFFECTED_OUTPUT=$(./target/release/Fish affected --since origin/${{ github.base_ref }} || echo "all")
+          AFFECTED_OUTPUT=$(./target/release/fish affected --since origin/${{ github.base_ref }} || echo "all")
           echo "affected<<EOF" >> $GITHUB_OUTPUT
           echo "$AFFECTED_OUTPUT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
           START_TIME=$(date +%s%N)
-          ./target/release/Fish build --no-cache
+          ./target/release/fish build --no-cache
           END_TIME=$(date +%s%N)
           COLD_DURATION=$(( (END_TIME - START_TIME) / 1000000 ))
 
           START_WARM=$(date +%s%N)
-          ./target/release/Fish build
+          ./target/release/fish build
           END_WARM=$(date +%s%N)
           WARM_DURATION=$(( (END_WARM - START_WARM) / 1000000 ))
 
@@ -97,7 +97,7 @@ jobs:
           fi
 
           if [ -z "$AI_TEXT" ]; then
-            AI_TEXT="### Ã°Å¸Â¦â‚¬ Fish Bot Analysis
+            AI_TEXT="### 🐟 Fish Bot Analysis
           - **Cold Build Duration:** $(awk "BEGIN {print $COLD_MS/1000}")s
           - **Warm Cache Duration:** $(awk "BEGIN {print $WARM_MS/1000}")s
           - **Affected Modules:**

@@ -1,4 +1,4 @@
-# AI Agent Workflow Guide for fish-rs
+# AI Agent Workflow Guide for Fish
 
 This document provides detailed step-by-step instructions for AI coding agents working with the Fish build orchestration system. Following this workflow ensures minimal errors, smooth operation, and high-quality contributions.
 
@@ -515,4 +515,4 @@ git clean -fd
 
 ---
 
-**Following this workflow ensures that AI agents can contribute to fish-rs effectively while maintaining code quality, minimizing errors, and ensuring smooth project operation.**
+**Following this workflow ensures that AI agents can contribute to Fish effectively while maintaining code quality, minimizing errors, and ensuring smooth project operation.**

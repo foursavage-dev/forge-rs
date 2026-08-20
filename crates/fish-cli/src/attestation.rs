@@ -97,7 +97,7 @@ impl AttestationEngine {
         let mut builder_info = HashMap::new();
         builder_info.insert(
             "id".to_string(),
-            "https://github.com/requla11/fish-rs@v0.1.0".to_string(),
+            "https://github.com/requla11/fish@v0.1.0".to_string(),
         );
         builder_info.insert(
             "timestamp".to_string(),

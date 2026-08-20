@@ -2,7 +2,7 @@
 set -e
 
 FISH_VERSION="0.2.0"
-FISH_REPO="foursavage-dev/forge-rs"
+FISH_REPO="requla11/fish"
 INSTALL_DIR="/usr/local/bin"
 TEMP_DIR=$(mktemp -d)
 
@@ -43,7 +43,7 @@ else
     
     cd "${TEMP_DIR}"
     git clone --depth 1 --branch main "https://github.com/${FISH_REPO}.git" fish-rs
-    cd fish-rs
+    cd fish
     cargo build --release -p fish-cli
     
     cp target/release/fish "${TEMP_DIR}/fish"

@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $FISH_VERSION = "0.2.0"
-$FISH_REPO = "foursavage-dev/forge-rs"
+$FISH_REPO = "requla11/fish"
 $INSTALL_DIR = "$env:USERPROFILE\.fish\bin"
 $TEMP_DIR = Join-Path $env:TEMP "fish-install"
 

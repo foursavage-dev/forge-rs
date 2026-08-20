@@ -17,7 +17,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  Fish:
+  fish:
     name: Fish builds Fish
     runs-on: ubuntu-latest
     steps:
@@ -26,19 +26,19 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Bootstrap Fish
-        run: cargo build --locked
+        run: cargo build -p fish-cli
 
       - name: Fish build
-        run: ./target/debug/Fish build
+        run: ./target/debug/fish build
 
       - name: Fish check
-        run: ./target/debug/Fish check --no-cache
+        run: ./target/debug/fish check --no-cache
 
       - name: Fish test
-        run: ./target/debug/Fish test --no-cache
+        run: ./target/debug/fish test --no-cache
 
       - name: Fish graph
-        run: ./target/debug/Fish graph --format dot
+        run: ./target/debug/fish graph --format dot
 
       - name: Fish run
-        run: ./target/debug/Fish run -p fish-cli --bin Fish -- --version
+        run: ./target/debug/fish run -p fish-cli --bin fish -- --version

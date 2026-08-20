@@ -35,7 +35,7 @@ jobs:
           $ISSUE_BODY
 
           Analyze this issue:
-          1. If it contains a bug, compilation failure, toolchain issue, or \`Fish doctor\` output, diagnose the root cause and provide actionable, step-by-step fix commands.
+          1. If it contains a bug, compilation failure, toolchain issue, or \`fish doctor\` output, diagnose the root cause and provide actionable, step-by-step fix commands.
           2. If it is a feature request or question, provide a polite and helpful response.
           3. Recommend 1-3 labels (from: bug, question, enhancement, documentation, os:windows, os:linux, os:macos, toolchain:rust, toolchain:cc, toolchain:go, toolchain:ts, cache:remote).
           Format your answer in clean GitHub Markdown."
@@ -54,7 +54,7 @@ jobs:
           fi
 
           if [ -z "$AI_TEXT" ]; then
-            AI_TEXT="Hello @$ISSUE_AUTHOR! Ã°Å¸â€˜â€¹ Thank you for opening this issue. A maintainer will review it shortly. If you encountered an error, please ensure you have attached the output of \`Fish doctor\`."
+            AI_TEXT="Hello @$ISSUE_AUTHOR! 👋 Thank you for opening this issue. A maintainer will review it shortly. If you encountered an error, please ensure you have attached the output of \`fish doctor\`."
           fi
 
           echo "reply<<EOF" >> $GITHUB_OUTPUT

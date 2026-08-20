@@ -1,4 +1,4 @@
-# AI Agent Guide for fish-rs
+# AI Agent Guide for Fish
 
 This document provides guidance for AI coding agents working with the Fish build orchestration system.
 

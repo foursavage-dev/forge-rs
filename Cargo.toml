@@ -42,7 +42,7 @@ version = "0.2.0"
 edition = "2024"
 rust-version = "1.88"
 license = "MIT"
-repository = "https://github.com/foursavage-dev/fish-rs"
+repository = "https://github.com/requla11/fish"
 description = "Fish is a fast, flexible, cache-first build orchestration system for Rust and beyond."
 
 [workspace.dependencies]
