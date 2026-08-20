@@ -280,13 +280,13 @@ curl http://localhost:3000/api/stats
 ## 下一步
 
 - 阅读 [系统架构指南](architecture.md)
-- 查阅 [开发指南](../DEVELOPMENT.md)
+- 查阅 [开发指南](../development.md)
 - 探索 [CLI 命令参考](cli-reference.md)
 - 查看 [各语言后端文档](backends/)
 
 ## 获取帮助
 
-- [官方文档](../README.md)
-- [技术支持](../SUPPORT.md)
+- [官方文档](../getting-started.md)
+- [技术支持](../support.md)
 - [GitHub Issues 反馈](https://github.com/requla11/fish/issues)
-- [联系邮箱](foursavage@proton.me)
+- [联系邮箱](mailto:foursavage@proton.me)

@@ -1,6 +1,6 @@
 # Fish API Documentation
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
 
 This document provides API documentation for Fish's main components.
 
@@ -489,4 +489,4 @@ APIs follow semantic versioning. Breaking changes will increment the major versi
 
 ## License
 
-MIT License - see [LICENSE](../../LICENSE) for details.
+MIT License - see [LICENSE](https://github.com/requla11/fish/blob/main/LICENSE) for details.

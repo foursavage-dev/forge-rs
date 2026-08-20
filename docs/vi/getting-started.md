@@ -280,13 +280,13 @@ Nếu worker không thể kết nối:
 ## Bước tiếp theo
 
 - Đọc [Hướng dẫn Kiến trúc](architecture.md)
-- Xem [Hướng dẫn Phát triển](../DEVELOPMENT.md)
+- Xem [Hướng dẫn Phát triển](../development.md)
 - Khám phá [Danh mục Lệnh CLI](cli-reference.md)
 - Khám phá [Tài liệu Backend ngôn ngữ](backends/)
 
 ## Trợ giúp & Hỗ trợ
 
-- [Tài liệu chính thức](../README.md)
-- [Hỗ trợ kỹ thuật](../SUPPORT.md)
+- [Tài liệu chính thức](../getting-started.md)
+- [Hỗ trợ kỹ thuật](../support.md)
 - [Báo lỗi GitHub Issues](https://github.com/requla11/fish/issues)
-- [Email liên hệ](foursavage@proton.me)
+- [Email liên hệ](mailto:foursavage@proton.me)

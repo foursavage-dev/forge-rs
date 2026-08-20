@@ -280,13 +280,13 @@ curl http://localhost:3000/api/stats
 ## 次のステップ
 
 - [アーキテクチャガイド](architecture.md) を読む
-- [開発ガイド](../DEVELOPMENT.md) を確認
+- [開発ガイド](../development.md) を確認
 - [CLI コマンドリファレンス](cli-reference.md) を参照
 - [言語別バックエンドドキュメント](backends/) を確認
 
 ## サポートと問い合わせ
 
-- [公式ドキュメント](../README.md)
-- [サポート窓口](../SUPPORT.md)
+- [公式ドキュメント](../getting-started.md)
+- [サポート窓口](../support.md)
 - [GitHub Issues](https://github.com/requla11/fish/issues)
-- [連絡先メール](foursavage@proton.me)
+- [連絡先メール](mailto:foursavage@proton.me)

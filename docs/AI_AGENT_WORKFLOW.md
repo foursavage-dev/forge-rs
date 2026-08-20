@@ -1,6 +1,6 @@
 # AI Agent Workflow Guide for Fish
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 This document provides detailed step-by-step instructions for AI coding agents working with the fish build orchestration system. Following this workflow ensures minimal errors, smooth operation, and high-quality contributions.
 
@@ -488,11 +488,11 @@ git clean -fd
 ## 📞 Additional Resources
 
 ### Project Documentation
-- [README.md](../README.md) - Project overview
-- [ARCHITECTURE.md](../ARCHITECTURE.md) - System architecture
-- [DEVELOPMENT.md](../DEVELOPMENT.md) - Development setup
-- [CONTRIBUTING.md](../CONTRIBUTING.md) - Contribution guidelines
-- [ROADMAP.md](../ROADMAP.md) - Project roadmap
+- [README.md](getting-started.md) - Project overview
+- [ARCHITECTURE.md](architecture.md) - System architecture
+- [DEVELOPMENT.md](development.md) - Development setup
+- [CONTRIBUTING.md](contributing.md) - Contribution guidelines
+- [ROADMAP.md](ROADMAP.md) - Project roadmap
 
 ### External Resources
 - [Rust Book](https://doc.rust-lang.org/book/)
