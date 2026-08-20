@@ -1,0 +1,15 @@
+[package]
+name = "fish-ci-generator"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Automatic CI/CD matrix generation for Fish build system"
+
+[dependencies]
+fish-core = { workspace = true }
+fish-graph = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+handlebars = "6"

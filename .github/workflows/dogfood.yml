@@ -17,28 +17,28 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  forge:
-    name: Forge builds Forge
+  fish:
+    name: Fish builds Fish
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Bootstrap forge
-        run: cargo build --locked
+      - name: Bootstrap Fish
+        run: cargo build -p fish-cli
 
-      - name: forge build
-        run: ./target/debug/forge build
+      - name: Fish build
+        run: ./target/debug/fish build
 
-      - name: forge check
-        run: ./target/debug/forge check --no-cache
+      - name: Fish check
+        run: ./target/debug/fish check --no-cache
 
-      - name: forge test
-        run: ./target/debug/forge test --no-cache
+      - name: Fish test
+        run: ./target/debug/fish test --no-cache
 
-      - name: forge graph
-        run: ./target/debug/forge graph --format dot
+      - name: Fish graph
+        run: ./target/debug/fish graph --format dot
 
-      - name: forge run
-        run: ./target/debug/forge run -p forge-cli --bin forge -- --version
+      - name: Fish run
+        run: ./target/debug/fish run -p fish-cli --bin fish -- --version

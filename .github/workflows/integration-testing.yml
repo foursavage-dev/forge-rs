@@ -31,9 +31,9 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run Core Tests
-        run: cargo test -p forge-core --test project
+        run: cargo test -p fish-core --test project
       - name: Run CLI Integration Tests
-        run: cargo test -p forge-cli --test build --test init_and_new
+        run: cargo test -p fish-cli --test build --test init_and_new
 
   subsystems-integration:
     name: Subsystems Integration Tests
@@ -43,9 +43,9 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run Remote Cache Tests
-        run: cargo test -p forge-remote-cache --lib
+        run: cargo test -p fish-remote-cache --lib
       - name: Run Worker Integration Tests
-        run: cargo test -p forge-worker --test remote_exec
+        run: cargo test -p fish-worker --test remote_exec
 
   integration-summary:
     name: Integration Summary

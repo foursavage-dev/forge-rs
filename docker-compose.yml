@@ -16,9 +16,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: forge_analytics
-      POSTGRES_USER: forge
-      POSTGRES_PASSWORD: forge_password
+      POSTGRES_DB: fish_analytics
+      POSTGRES_USER: Fish
+      POSTGRES_PASSWORD: fish_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -29,8 +29,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: forge
-      MINIO_ROOT_PASSWORD: forge_password
+      MINIO_ROOT_USER: Fish
+      MINIO_ROOT_PASSWORD: fish_password
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
@@ -41,7 +41,7 @@ services:
     ports:
       - "8200:8200"
     environment:
-      VAULT_DEV_ROOT_TOKEN_ID: forge-dev-token
+      VAULT_DEV_ROOT_TOKEN_ID: fish-dev-token
     cap_add:
       - IPC_LOCK
     volumes:
@@ -53,11 +53,11 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     volumes:
-      - .:/forge-rs
+      - .:/fish
       - cargo_cache:/usr/local/cargo/registry
       - cargo_cache:/usr/local/cargo/git
-      - target_cache:/forge-rs/target
-    working_dir: /forge-rs
+      - target_cache:/fish/target
+    working_dir: /fish
     environment:
       CARGO_HOME: /usr/local/cargo
       RUST_LOG: debug

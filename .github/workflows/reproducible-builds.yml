@@ -42,14 +42,14 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: First build pass
         run: |
-          cargo build --release -p forge-cli
-          sha256sum target/release/forge > build1.sha256
+          cargo build --release -p fish-cli
+          sha256sum target/release/fish > build1.sha256
       - name: Clean intermediate artifacts
-        run: cargo clean -p forge-cli
+        run: cargo clean -p fish-cli
       - name: Second build pass
         run: |
-          cargo build --release -p forge-cli
-          sha256sum target/release/forge > build2.sha256
+          cargo build --release -p fish-cli
+          sha256sum target/release/fish > build2.sha256
       - name: Verify reproducibility hash
         run: |
           echo "Comparing build artifact hashes:"

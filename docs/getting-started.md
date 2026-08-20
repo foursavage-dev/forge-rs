@@ -1,8 +1,8 @@
-# Getting Started with Forge
+# Getting Started with Fish
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
 
-This guide will help you get started with Forge, a fast, cache-first build orchestration system.
+This guide will help you get started with Fish, a fast, cache-first build orchestration system.
 
 ## Installation
 
@@ -10,29 +10,29 @@ This guide will help you get started with Forge, a fast, cache-first build orche
 
 **Linux & macOS:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/foursavage-dev/forge-rs/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/requla11/fish/main/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://raw.githubusercontent.com/foursavage-dev/forge-rs/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/requla11/fish/main/install.ps1 | iex
 ```
 
 ### From Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/foursavage-dev/forge-rs.git
-cd forge-rs
+git clone https://github.com/requla11/fish.git
+cd fish
 
 # Build and install
-cargo install --path crates/forge-cli
+cargo install --path crates/fish-cli
 ```
 
 ### Cargo Install
 
 ```bash
-cargo install forge-cli --git https://github.com/foursavage-dev/forge-rs
+cargo install fish-cli --git https://github.com/requla11/fish
 ```
 
 ## Quick Start
@@ -41,24 +41,24 @@ cargo install forge-cli --git https://github.com/foursavage-dev/forge-rs
 
 ```bash
 cd your-rust-project
-forge build
+Fish build
 ```
 
 ### Building a Polyglot Monorepo
 
 ```bash
 # Clone the example monorepo
-git clone https://github.com/foursavage-dev/forge-rs.git
-cd forge-rs/examples/polyglot-demo
+git clone https://github.com/requla11/fish.git
+cd fish/examples/polyglot-demo
 
 # Build all services
-forge build
+Fish build
 
 # View the build graph
-forge graph
+Fish graph
 
 # Run tests
-forge test
+Fish test
 ```
 
 ## Basic Commands
@@ -67,135 +67,135 @@ forge test
 
 ```bash
 # Build the entire workspace
-forge build
+Fish build
 
 # Build specific package
-forge build -p my-package
+Fish build -p my-package
 
 # Build with 8 parallel jobs
-forge build -j 8
+Fish build -j 8
 
 # Build without cache
-forge build --no-cache
+Fish build --no-cache
 
 # Build with sandbox
-forge build --sandbox
+Fish build --sandbox
 
 # Build with detailed dirty rebuild explanation
-forge build --explain
+Fish build --explain
 
 # Profile-Guided Optimization (PGO) workflow
-forge build --pgo-generate
+Fish build --pgo-generate
 # ... run your benchmarks/workload ...
-forge build --pgo-use
+Fish build --pgo-use
 ```
 
 ### Graph & Query Commands
 
 ```bash
 # Query transitive dependencies (Bazel-style)
-forge query "deps(//forge-cli)"
+Fish query "deps(//fish-cli)"
 
 # Query reverse dependencies
-forge query "rdeps(//forge-graph)"
+Fish query "rdeps(//fish-graph)"
 
 # Find all paths between two modules
-forge query "allpaths(//forge-cli, //forge-core)"
+Fish query "allpaths(//fish-cli, //fish-core)"
 
 # Filter dependencies by regex
-forge query "filter('backend', deps(//forge-cli))"
+Fish query "filter('backend', deps(//fish-cli))"
 
 # Visual graph rendering
-forge graph --format tree
-forge graph --format dot
+Fish graph --format tree
+Fish graph --format dot
 ```
 
 ### Build Daemon Commands
 
 ```bash
 # Start background build daemon for sub-millisecond warm builds
-forge daemon start
+Fish daemon start
 
 # Check daemon status
-forge daemon status
+Fish daemon status
 
 # Stop background daemon
-forge daemon stop
+Fish daemon stop
 ```
 
 ### Test Commands
 
 ```bash
 # Run all tests
-forge test
+Fish test
 
 # Test specific package
-forge test -p my-package
+Fish test -p my-package
 
 # Test with cache disabled
-forge test --no-cache
+Fish test --no-cache
 ```
 
 ### Cache Commands
 
 ```bash
 # View cache statistics
-forge cache stats
+Fish cache stats
 
 # Clean cache
-forge cache prune
+Fish cache prune
 
 # Start cache server
-forge cache-server --listen 0.0.0.0:8080
+Fish cache-server --listen 0.0.0.0:8080
 ```
 
 ### Distributed Build Commands
 
 ```bash
 # Start a worker
-forge worker --listen 0.0.0.0:9000
+Fish worker --listen 0.0.0.0:9000
 
 # Build with distributed workers
-forge build --workers worker1:9000,worker2:9000
+Fish build --workers worker1:9000,worker2:9000
 ```
 
 ### CI/CD Commands
 
 ```bash
 # Generate GitHub Actions workflow
-forge ci init --platform github
+Fish ci init --platform github
 
 # Generate GitLab CI pipeline
-forge ci init --platform gitlab
+Fish ci init --platform gitlab
 
 # Generate CircleCI config
-forge ci init --platform circleci
+Fish ci init --platform circleci
 
 # Generate Bitbucket Pipelines
-forge ci init --platform bitbucket
+Fish ci init --platform bitbucket
 
 # Generate all platform configs
-forge ci init --platform all
+Fish ci init --platform all
 ```
 
 ### Plugin Commands
 
 ```bash
 # List available plugins
-forge plugin list
+Fish plugin list
 
 # Execute a plugin command
-forge plugin execute my-plugin build
+Fish plugin execute my-plugin build
 
 # Install a plugin
-forge plugin install ./my-plugin
+Fish plugin install ./my-plugin
 ```
 
 ## Configuration
 
-### Workspace Configuration (`forge.toml`)
+### Workspace Configuration (`fish.toml`)
 
-Forge automatically detects project types based on manifest files. For custom workspace execution, caching, and pipeline configuration, create a `forge.toml` in your project root:
+Fish automatically detects project types based on manifest files. For custom workspace execution, caching, and pipeline configuration, create a `fish.toml` in your project root:
 
 ```toml
 [build]
@@ -208,7 +208,7 @@ critical_path = true
 ram_limit = 85
 
 [cache]
-dir = "~/.forge/cache"
+dir = "~/.Fish/cache"
 reflink = true
 
 [remote]
@@ -234,11 +234,11 @@ See [Configuration Guide](configuration.md) for full options.
 
 ## Interactive Telemetry & Web Dashboard
 
-Forge includes a built-in real-time interactive DAG visualizer and telemetry dashboard with 5-language localization (English, Vietnamese, Simplified Chinese, Traditional Chinese, Japanese):
+Fish includes a built-in real-time interactive DAG visualizer and telemetry dashboard with 5-language localization (English, Vietnamese, Simplified Chinese, Traditional Chinese, Japanese):
 
 ```bash
 # Launch web dashboard on port 3000 and open in default browser
-forge ui --port 3000 --open
+Fish ui --port 3000 --open
 
 # Check JSON graph data
 curl http://localhost:3000/api/graph
@@ -255,25 +255,25 @@ curl http://localhost:3000/api/stats
 
 If a build fails:
 
-1. Check the error message or run `forge build --explain` to diagnose rebuild reasons.
-2. Run with debug logging: `RUST_LOG=debug forge build`
-3. Verify toolchain readiness: `forge doctor`
-4. Try clearing cache: `forge cache prune`
+1. Check the error message or run `Fish build --explain` to diagnose rebuild reasons.
+2. Run with debug logging: `RUST_LOG=debug Fish build`
+3. Verify toolchain readiness: `Fish doctor`
+4. Try clearing cache: `Fish cache prune`
 
 ### Cache Issues
 
 If cache doesn't work:
 
-1. Check cache stats: `forge cache stats`
-2. Verify cache directory is writable: `~/.forge/cache`
-3. Clear and rebuild cache: `forge cache prune && forge build`
+1. Check cache stats: `Fish cache stats`
+2. Verify cache directory is writable: `~/.Fish/cache`
+3. Clear and rebuild cache: `Fish cache prune && Fish build`
 
 ### Worker Connection Issues
 
 If workers can't connect:
 
 1. Check network connectivity
-2. Verify worker is running: `forge worker --listen 0.0.0.0:9000`
+2. Verify worker is running: `Fish worker --listen 0.0.0.0:9000`
 3. Check firewall settings and authentication tokens
 4. Review worker logs
 
@@ -288,5 +288,5 @@ If workers can't connect:
 
 - [Documentation](../README.md)
 - [Support](../SUPPORT.md)
-- [GitHub Issues](https://github.com/foursavage-dev/forge-rs/issues)
+- [GitHub Issues](https://github.com/requla11/fish/issues)
 - [Email](foursavage@proton.me)

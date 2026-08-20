@@ -1,8 +1,8 @@
 # Production Deployment Guide
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
-This guide provides comprehensive instructions for deploying Forge-rs in production environments.
+This guide provides comprehensive instructions for deploying Fish in production environments.
 
 ## Table of Contents
 
@@ -61,47 +61,47 @@ choco install python nodejs golang openjdk17
 ### Method 1: Cargo Install
 
 ```bash
-cargo install forge-cli --release
+cargo install fish-cli --release
 ```
 
 ### Method 2: Build from Source
 
 ```bash
-git clone https://github.com/foursavage-dev/forge-rs.git
-cd forge-rs
+git clone https://github.com/requla11/fish.git
+cd fish
 cargo build --release --workspace
-cargo install --path crates/forge-cli
+cargo install --path crates/fish-cli
 ```
 
 ### Method 3: Binary Download
 
-Download the latest release from [GitHub Releases](https://github.com/foursavage-dev/forge-rs/releases).
+Download the latest release from [GitHub Releases](https://github.com/requla11/fish/releases).
 
 ```bash
 # Linux
-wget https://github.com/foursavage-dev/forge-rs/releases/latest/download/forge-linux-x86_64
-chmod +x forge-linux-x86_64
-sudo mv forge-linux-x86_64 /usr/local/bin/forge
+wget https://github.com/requla11/fish/releases/latest/download/fish-linux-x86_64
+chmod +x fish-linux-x86_64
+sudo mv fish-linux-x86_64 /usr/local/bin/Fish
 
 # macOS
-wget https://github.com/foursavage-dev/forge-rs/releases/latest/download/forge-darwin-x86_64
-chmod +x forge-darwin-x86_64
-sudo mv forge-darwin-x86_64 /usr/local/bin/forge
+wget https://github.com/requla11/fish/releases/latest/download/fish-darwin-x86_64
+chmod +x fish-darwin-x86_64
+sudo mv fish-darwin-x86_64 /usr/local/bin/Fish
 
 # Windows
-# Download forge-windows-x86_64.exe and add to PATH
+# Download fish-windows-x86_64.exe and add to PATH
 ```
 
 ## Configuration
 
-### Forge Configuration File
+### Fish Configuration File
 
-Create a `forge.toml` in your project root:
+Create a `fish.toml` in your project root:
 
 ```toml
 [general]
 # Cache directory
-cache_dir = "~/.forge/cache"
+cache_dir = "~/.Fish/cache"
 # Maximum cache size (e.g., "10GB", "500MB")
 max_cache_size = "10GB"
 # Number of parallel jobs
@@ -146,11 +146,11 @@ remote_cache_url = "https://cache.example.com"
 
 ```bash
 # Override configuration with environment variables
-export FORGE_CACHE_DIR="/custom/cache/dir"
-export FORGE_MAX_CACHE_SIZE="20GB"
-export FORGE_PARALLEL_JOBS="8"
-export FORGE_VERBOSE="true"
-export FORGE_SECURITY_LEVEL="strict"
+export fish_CACHE_DIR="/custom/cache/dir"
+export fish_MAX_CACHE_SIZE="20GB"
+export fish_PARALLEL_JOBS="8"
+export fish_VERBOSE="true"
+export fish_SECURITY_LEVEL="strict"
 ```
 
 ## Deployment Strategies
@@ -160,18 +160,18 @@ export FORGE_SECURITY_LEVEL="strict"
 For local development, use default settings with local caching:
 
 ```bash
-forge build
-forge test
-forge check
+Fish build
+Fish test
+Fish check
 ```
 
 ### Strategy 2: CI/CD Pipeline
 
-Integrate Forge into your CI pipeline:
+Integrate Fish into your CI pipeline:
 
 #### GitHub Actions
 ```yaml
-name: Build with Forge
+name: Build with Fish
 
 on: [push, pull_request]
 
@@ -180,12 +180,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Forge
-        run: cargo install forge-cli --release
-      - name: Build with Forge
-        run: forge build --no-cache
-      - name: Test with Forge
-        run: forge test --no-cache
+      - name: Install Fish
+        run: cargo install fish-cli --release
+      - name: Build with Fish
+        run: Fish build --no-cache
+      - name: Test with Fish
+        run: Fish test --no-cache
 ```
 
 #### GitLab CI
@@ -193,9 +193,9 @@ jobs:
 build:
   image: rust:latest
   script:
-    - cargo install forge-cli --release
-    - forge build --no-cache
-    - forge test --no-cache
+    - cargo install fish-cli --release
+    - Fish build --no-cache
+    - Fish test --no-cache
 ```
 
 ### Strategy 3: Distributed Build System
@@ -215,44 +215,44 @@ worker_pool_size = 10
 
 ### Strategy 4: Kubernetes Deployment
 
-Deploy Forge as a Kubernetes deployment:
+Deploy Fish as a Kubernetes deployment:
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: forge-builder
+  name: fish-builder
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: forge-builder
+      app: fish-builder
   template:
     metadata:
       labels:
-        app: forge-builder
+        app: fish-builder
     spec:
       containers:
-      - name: forge
-        image: forge:latest
-        command: ["forge", "build"]
+      - name: Fish
+        image: Fish:latest
+        command: ["Fish", "build"]
         volumeMounts:
         - name: cache
           mountPath: /cache
       volumes:
       - name: cache
         persistentVolumeClaim:
-          claimName: forge-cache-pvc
+          claimName: fish-cache-pvc
 ```
 
 ## Monitoring and Observability
 
 ### Health Checks
 
-Forge provides built-in health checks:
+Fish provides built-in health checks:
 
 ```bash
-forge health
+Fish health
 ```
 
 Health check output:
@@ -276,10 +276,10 @@ Health check output:
 
 ### Metrics Collection
 
-Forge collects performance metrics:
+Fish collects performance metrics:
 
 ```bash
-forge metrics
+Fish metrics
 ```
 
 Metrics include:
@@ -298,7 +298,7 @@ Configure logging levels:
 # Log level: trace, debug, info, warn, error
 log_level = "info"
 # Log file path
-log_file = "/var/log/forge/forge.log"
+log_file = "/var/log/Fish/Fish.log"
 ```
 
 ### Diagnostic Reports
@@ -306,7 +306,7 @@ log_file = "/var/log/forge/forge.log"
 Generate diagnostic reports:
 
 ```bash
-forge diagnostics
+Fish diagnostics
 ```
 
 ## Security Considerations
@@ -337,11 +337,11 @@ allowed_filesystem = ["/safe/path"]
 
 ### Credential Management
 
-Use Forge's secrets management:
+Use Fish's secrets management:
 
 ```bash
-forge secret set API_KEY "your-api-key"
-forge secret get API_KEY
+Fish secret set API_KEY "your-api-key"
+Fish secret get API_KEY
 ```
 
 ### Audit Logging
@@ -351,7 +351,7 @@ Enable audit logging for compliance:
 ```toml
 [security]
 audit_log = true
-audit_log_path = "/var/log/forge/audit.log"
+audit_log_path = "/var/log/Fish/audit.log"
 ```
 
 ## Performance Tuning
@@ -409,13 +409,13 @@ remote_concurrent_requests = 10
 **Solution**:
 ```bash
 # Clear cache
-forge cache clear
+Fish cache clear
 
 # Verify cache integrity
-forge cache verify
+Fish cache verify
 
 # Rebuild without cache
-forge build --no-cache
+Fish build --no-cache
 ```
 
 #### Issue: Out of memory errors
@@ -432,13 +432,13 @@ max_memory = "4GB"  # Increase memory limit
 **Solution**:
 ```bash
 # Check cache hit rate
-forge cache stats
+Fish cache stats
 
 # Enable remote cache
-# Update forge.toml with remote_url
+# Update fish.toml with remote_url
 
 # Increase parallel jobs
-# Update forge.toml with parallel_jobs
+# Update fish.toml with parallel_jobs
 ```
 
 #### Issue: Network timeout with remote cache
@@ -455,7 +455,7 @@ remote_concurrent_requests = 5  # Reduce concurrent requests
 Enable debug logging for troubleshooting:
 
 ```bash
-forge build --verbose --log-level debug
+Fish build --verbose --log-level debug
 ```
 
 ### Diagnostic Collection
@@ -463,7 +463,7 @@ forge build --verbose --log-level debug
 Collect diagnostic information:
 
 ```bash
-forge diagnostics --output forge-diagnostics.json
+Fish diagnostics --output fish-diagnostics.json
 ```
 
 ## Maintenance
@@ -474,13 +474,13 @@ Regular cache maintenance:
 
 ```bash
 # Prune old cache entries
-forge cache prune --older-than 30d
+Fish cache prune --older-than 30d
 
 # Compress cache
-forge cache compress
+Fish cache compress
 
 # Verify cache integrity
-forge cache verify
+Fish cache verify
 ```
 
 ### Log Rotation
@@ -489,39 +489,39 @@ Configure log rotation:
 
 ```toml
 [general]
-log_file = "/var/log/forge/forge.log"
+log_file = "/var/log/Fish/Fish.log"
 log_max_size = "100MB"
 log_max_files = 10
 ```
 
 ### Updates
 
-Update Forge to the latest version:
+Update Fish to the latest version:
 
 ```bash
-cargo install forge-cli --force
+cargo install fish-cli --force
 ```
 
 ### Backup and Recovery
 
-Backup Forge configuration and cache:
+Backup Fish configuration and cache:
 
 ```bash
 # Backup configuration
-cp forge.toml forge.toml.backup
+cp fish.toml fish.toml.backup
 
 # Backup cache
-tar -czf forge-cache-backup.tar.gz ~/.forge/cache
+tar -czf fish-cache-backup.tar.gz ~/.Fish/cache
 
 # Restore cache
-tar -xzf forge-cache-backup.tar.gz -C ~/
+tar -xzf fish-cache-backup.tar.gz -C ~/
 ```
 
 ## Support
 
 For issues and questions:
-- GitHub Issues: https://github.com/foursavage-dev/forge-rs/issues
-- Documentation: https://github.com/foursavage-dev/forge-rs/blob/main/README.md
+- GitHub Issues: https://github.com/requla11/fish/issues
+- Documentation: https://github.com/requla11/fish/blob/main/README.md
 - Discord: [Join our Discord server]
 
 ## License

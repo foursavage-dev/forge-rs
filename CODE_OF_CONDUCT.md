@@ -1,6 +1,6 @@
 # Contributor Covenant 3.0 Code of Conduct
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 ## Our Pledge
 
@@ -28,7 +28,7 @@ We agree to restrict the following behaviors in our community. Instances, threat
 
 1. **Harassment.** Violating explicitly expressed boundaries or engaging in unnecessary personal attention after any clear request to stop.
 2. **Character attacks.** Making insulting, demeaning, or pejorative comments directed at a community member or group of people.
-3. **Stereotyping or discrimination.** Characterizing anyone’s personality or behavior on the basis of immutable identities or traits.
+3. **Stereotyping or discrimination.** Characterizing anyoneâ€™s personality or behavior on the basis of immutable identities or traits.
 4. **Sexualization.** Behaving in a way that would generally be considered inappropriately intimate in the context or purpose of the community.
 5. **Violating confidentiality.** Sharing or acting on someone's personal or private information without their permission.
 6. **Endangerment.** Causing, encouraging, or threatening violence or other harm toward any person or group.
@@ -41,27 +41,27 @@ We agree to restrict the following behaviors in our community. Instances, threat
 3. **Promotional materials.** Sharing marketing or other commercial content in a way that is outside the norms of the community.
 4. **Irresponsible communication.** Failing to responsibly present content which includes, links or describes any other restricted behaviors.
 
-## Forge-Specific Rules
+## fish-Specific Rules
 
-The following rules are specific to the Forge community and may be added, removed, or modified by the Forge Maintainers when necessary to reflect the needs, circumstances, and evolving norms of the community.
+The following rules are specific to the Fish community and may be added, removed, or modified by the Fish Maintainers when necessary to reflect the needs, circumstances, and evolving norms of the community.
 
 Any changes should remain consistent with the principles and intent of this Code of Conduct.
 
 In addition to the behaviors described above, contributors and community members are expected to:
 
-1. **Respect project infrastructure.** Do not intentionally abuse, overload, disrupt, or damage Forge's repositories, CI/CD systems, services, or other project infrastructure.
+1. **Respect project infrastructure.** Do not intentionally abuse, overload, disrupt, or damage Fish's repositories, CI/CD systems, services, or other project infrastructure.
 
 2. **Use project resources responsibly.** Do not intentionally consume disproportionate amounts of shared resources without a legitimate reason.
 
-3. **Keep contributions relevant.** Issues, pull requests, discussions, and other contributions should be reasonably related to Forge and its development.
+3. **Keep contributions relevant.** Issues, pull requests, discussions, and other contributions should be reasonably related to Fish and its development.
 
 4. **Respect the review process.** Do not intentionally bypass, manipulate, or interfere with project review, moderation, or maintainer decisions.
 
-5. **Do not impersonate project members.** Do not falsely represent yourself as a Forge Maintainer, contributor, or official representative.
+5. **Do not impersonate project members.** Do not falsely represent yourself as a Fish Maintainer, contributor, or official representative.
 
 6. **Respect licenses and attribution.** Contributions must comply with the applicable licenses and properly credit third-party work where required.
 
-7. **No fraud or scams.** Do not use Forge, its repositories, infrastructure, community spaces, or project identity to conduct, facilitate, promote, or disguise scams, fraud, phishing, impersonation, or other deceptive activities.
+7. **No fraud or scams.** Do not use Fish, its repositories, infrastructure, community spaces, or project identity to conduct, facilitate, promote, or disguise scams, fraud, phishing, impersonation, or other deceptive activities.
 
 ## Reporting an Issue
 
@@ -69,19 +69,19 @@ Tensions can occur between community members even when they are trying their bes
 
 When an incident does occur, it is important to report it promptly.
 
-To report a possible violation, please contact the **Forge Maintainers privately** through the contact method provided in the repository's `SECURITY.md` file.
+To report a possible violation, please contact the **Fish Maintainers privately** through the contact method provided in the repository's `SECURITY.md` file.
 
-Forge Maintainers take reports of violations seriously and will make every effort to respond in a timely manner. They will investigate all reports of code of conduct violations, reviewing relevant messages, logs, and other available evidence, or interviewing witnesses and other participants when appropriate.
+Fish Maintainers take reports of violations seriously and will make every effort to respond in a timely manner. They will investigate all reports of code of conduct violations, reviewing relevant messages, logs, and other available evidence, or interviewing witnesses and other participants when appropriate.
 
-Forge Maintainers will keep investigation and enforcement actions as transparent as possible while prioritizing safety and confidentiality. In order to honor these values, enforcement actions are carried out in private with the involved parties, but communicating to the whole community may be part of a mutually agreed-upon resolution.
+Fish Maintainers will keep investigation and enforcement actions as transparent as possible while prioritizing safety and confidentiality. In order to honor these values, enforcement actions are carried out in private with the involved parties, but communicating to the whole community may be part of a mutually agreed-upon resolution.
 
 ## Addressing and Repairing Harm
 
-If an investigation by the Forge Maintainers finds that this Code of Conduct has been violated, the following enforcement ladder may be used to determine how best to repair harm, based on the incident's impact on the individuals involved and the community as a whole. Depending on the severity of a violation, lower rungs on the ladder may be skipped.
+If an investigation by the Fish Maintainers finds that this Code of Conduct has been violated, the following enforcement ladder may be used to determine how best to repair harm, based on the incident's impact on the individuals involved and the community as a whole. Depending on the severity of a violation, lower rungs on the ladder may be skipped.
 
 1. **Warning**
    1. **Event:** A violation involving a single incident or series of incidents.
-   2. **Consequence:** A private, written warning from the Forge Maintainers.
+   2. **Consequence:** A private, written warning from the Fish Maintainers.
    3. **Repair:** Examples of repair include a private written apology, acknowledgement of responsibility, and seeking clarification on expectations.
 
 2. **Temporarily Limited Activities**
@@ -90,22 +90,22 @@ If an investigation by the Forge Maintainers finds that this Code of Conduct has
    3. **Repair:** Examples of repair may include making an apology, using the cooldown period to reflect on actions and impact, and being thoughtful about re-entering community spaces after the period is over.
 
 3. **Temporary Suspension**
-   1. **Event:** A pattern of repeated violation which the Forge Maintainers have tried to address with warnings, or a single serious violation.
+   1. **Event:** A pattern of repeated violation which the Fish Maintainers have tried to address with warnings, or a single serious violation.
    2. **Consequence:** A private written warning with conditions for return from suspension. In general, temporary suspensions give the person being suspended time to reflect upon their behavior and possible corrective actions.
    3. **Repair:** Examples of repair include respecting the spirit of the suspension, meeting the specified conditions for return, and being thoughtful about how to reintegrate with the community when the suspension is lifted.
 
 4. **Permanent Ban**
-   1. **Event:** A pattern of repeated code of conduct violations that other steps on the ladder have failed to resolve, or a violation so serious that the Forge Maintainers determine there is no way to keep the community safe with this person as a member.
+   1. **Event:** A pattern of repeated code of conduct violations that other steps on the ladder have failed to resolve, or a violation so serious that the Fish Maintainers determine there is no way to keep the community safe with this person as a member.
    2. **Consequence:** Access to all community spaces, tools, and communication channels is removed. In general, permanent bans should be rarely used, should have strong reasoning behind them, and should only be resorted to if working through other remedies has failed to change the behavior.
    3. **Repair:** There is no possible repair in cases of this severity.
 
-This enforcement ladder is intended as a guideline. It does not limit the ability of Forge Maintainers to use their discretion and judgment, in keeping with the best interests of our community.
+This enforcement ladder is intended as a guideline. It does not limit the ability of Fish Maintainers to use their discretion and judgment, in keeping with the best interests of our community.
 
 ## Scope
 
-This Code of Conduct applies within all community spaces associated with Forge, including the official GitHub repository, issue tracker, discussions, and other spaces officially operated by the project.
+This Code of Conduct applies within all community spaces associated with Fish, including the official GitHub repository, issue tracker, discussions, and other spaces officially operated by the project.
 
-It also applies when an individual is officially representing Forge in public or other spaces. Examples of representing our community include using an official email address, posting via an official social media account, or acting as an appointed representative at an online or offline event.
+It also applies when an individual is officially representing Fish in public or other spaces. Examples of representing our community include using an official email address, posting via an official social media account, or acting as an appointed representative at an online or offline event.
 
 ## Attribution
 
@@ -119,4 +119,4 @@ Translations are provided at [https://www.contributor-covenant.org/translations]
 
 Additional enforcement and community guideline resources can be found at [https://www.contributor-covenant.org/resources](https://www.contributor-covenant.org/resources).
 
-The enforcement ladder was inspired by the work of [Mozilla’s code of conduct team](https://github.com/mozilla/inclusion).
+The enforcement ladder was inspired by the work of [Mozillaâ€™s code of conduct team](https://github.com/mozilla/inclusion).

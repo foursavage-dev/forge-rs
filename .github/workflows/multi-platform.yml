@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: Run Core Tests
-        run: cargo test -p forge-core -p forge-cache -p forge-scheduler -p forge-executor --lib
+        run: cargo test -p fish-core -p fish-cache -p fish-scheduler -p fish-executor --lib
 
   test-macos:
     name: Test macOS
@@ -40,7 +40,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run Core Tests
-        run: cargo test -p forge-core -p forge-cache -p forge-remote-cache --lib
+        run: cargo test -p fish-core -p fish-cache -p fish-remote-cache --lib
 
   test-windows:
     name: Test Windows
@@ -50,7 +50,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run Core Tests
-        run: cargo test -p forge-core -p forge-cache -p forge-scheduler --lib
+        run: cargo test -p fish-core -p fish-cache -p fish-scheduler --lib
 
   platform-summary:
     name: Platform Summary

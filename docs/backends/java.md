@@ -1,14 +1,14 @@
 # Java Backend Guide
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
 
-Forge supports Java workspaces configured with Apache Maven (`pom.xml`) or Gradle (`build.gradle` / `build.gradle.kts`).
+Fish supports Java workspaces configured with Apache Maven (`pom.xml`) or Gradle (`build.gradle` / `build.gradle.kts`).
 
 ---
 
 ## Detection & Tasks
 
-Forge identifies Java packages by detecting `pom.xml` or `build.gradle` manifests.
+Fish identifies Java packages by detecting `pom.xml` or `build.gradle` manifests.
 
 ### Mapped Tasks:
 - `build`: `mvn compile` or `gradle assemble`

@@ -1,8 +1,8 @@
 # Development Guide
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
-This guide provides detailed information for developers working on Forge.
+This guide provides detailed information for developers working on Fish.
 
 ## Development Environment
 
@@ -17,8 +17,8 @@ This guide provides detailed information for developers working on Forge.
 
 ```bash
 # Clone the repository
-git clone https://github.com/foursavage-dev/forge-rs.git
-cd forge-rs
+git clone https://github.com/requla11/fish.git
+cd fish
 
 # Install development dependencies
 cargo install cargo-watch
@@ -37,17 +37,17 @@ Install the recommended extensions:
 ## Workspace Structure
 
 ```
-forge-rs/
-├── crates/                 # All workspace crates
-│   ├── forge-core/         # Core functionality
-│   ├── forge-cli/          # CLI interface
-│   ├── forge-backend-*/    # Language backends
-│   └── ...                 # Other crates
-├── examples/               # Example projects
-├── docs/                   # Documentation
-├── tests/                  # Integration tests
-├── Cargo.toml              # Workspace configuration
-└── README.md               # Project overview
+fish-rs/
+â”œâ”€â”€ crates/                 # All workspace crates
+â”‚   â”œâ”€â”€ fish-core/         # Core functionality
+â”‚   â”œâ”€â”€ fish-cli/          # CLI interface
+â”‚   â”œâ”€â”€ fish-backend-*/    # Language backends
+â”‚   â””â”€â”€ ...                 # Other crates
+â”œâ”€â”€ examples/               # Example projects
+â”œâ”€â”€ docs/                   # Documentation
+â”œâ”€â”€ tests/                  # Integration tests
+â”œâ”€â”€ Cargo.toml              # Workspace configuration
+â””â”€â”€ README.md               # Project overview
 ```
 
 ## Building
@@ -59,7 +59,7 @@ forge-rs/
 cargo build --workspace
 
 # Build specific crate
-cargo build -p forge-cli
+cargo build -p fish-cli
 
 # Build with all features
 cargo build --workspace --all-features
@@ -72,7 +72,7 @@ cargo build --workspace --all-features
 cargo build --release
 
 # Build specific crate in release mode
-cargo build -p forge-cli --release
+cargo build -p fish-cli --release
 ```
 
 ## Testing
@@ -84,7 +84,7 @@ cargo build -p forge-cli --release
 cargo test --workspace
 
 # Run tests for specific crate
-cargo test -p forge-cli
+cargo test -p fish-cli
 
 # Run tests with output
 cargo test --workspace -- --nocapture
@@ -130,7 +130,7 @@ mod tests {
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 # Run Clippy on specific crate
-cargo clippy -p forge-cli -- -D warnings
+cargo clippy -p fish-cli -- -D warnings
 ```
 
 ### Formatting
@@ -159,20 +159,20 @@ cargo doc --workspace --no-deps --open
 
 ```bash
 # Run CLI with debug output
-RUST_LOG=debug cargo run --bin forge -- build
+RUST_LOG=debug cargo run --bin Fish -- build
 
 # Run with specific log level
-RUST_LOG=forge_core=debug cargo run --bin forge -- build
+RUST_LOG=fish_core=debug cargo run --bin Fish -- build
 ```
 
 ### Debugging Tests
 
 ```bash
 # Run specific test with output
-cargo test -p forge-cli test_name -- --nocapture
+cargo test -p fish-cli test_name -- --nocapture
 
 # Run test with debugger
-rust-gdb target/debug/forge-cli test_name
+rust-gdb target/debug/fish-cli test_name
 ```
 
 ## Profiling
@@ -184,32 +184,32 @@ rust-gdb target/debug/forge-cli test_name
 cargo build --release
 
 # Run with perf (Linux)
-perf record -g target/release/forge build
+perf record -g target/release/Fish build
 perf report
 
 # Use flamegraph (Linux)
 cargo install flamegraph
-cargo flamegraph --bin forge build
+cargo flamegraph --bin Fish build
 ```
 
 ### Memory Profiling
 
 ```bash
 # Use heaptrack (Linux)
-heaptrack target/release/forge build
+heaptrack target/release/Fish build
 
 # Use valgrind (Linux)
-valgrind --leak-check=full target/release/forge build
+valgrind --leak-check=full target/release/Fish build
 ```
 
 ## Working with Backends
 
 ### Adding a New Backend
 
-1. Create new crate: `crates/forge-backend-<lang>/`
+1. Create new crate: `crates/fish-backend-<lang>/`
 2. Implement the backend trait
 3. Add to workspace members in `Cargo.toml`
-4. Add backend detection in `forge-core`
+4. Add backend detection in `fish-core`
 5. Write tests
 6. Add documentation
 
@@ -218,7 +218,7 @@ valgrind --leak-check=full target/release/forge build
 ```rust
 pub struct Backend;
 
-impl forge_core::backend::Backend for Backend {
+impl fish_core::backend::Backend for Backend {
     fn detect(&self, path: &Path) -> bool {
         // Detect if project uses this backend
     }
@@ -237,10 +237,10 @@ impl forge_core::backend::Backend for Backend {
 
 ### Plugin Development
 
-1. Create plugin directory: `.forge/plugins/<plugin-name>/`
+1. Create plugin directory: `.Fish/plugins/<plugin-name>/`
 2. Create `plugin.json` configuration
 3. Implement plugin script
-4. Test with `forge plugin execute <name> <command>`
+4. Test with `Fish plugin execute <name> <command>`
 
 ### Plugin Configuration
 
@@ -264,22 +264,22 @@ impl forge_core::backend::Backend for Backend {
 
 ```bash
 # Generate GitHub Actions workflow
-cargo run --bin forge -- ci init --platform github
+cargo run --bin Fish -- ci init --platform github
 
 # Generate GitLab CI pipeline
-cargo run --bin forge -- ci init --platform gitlab
+cargo run --bin Fish -- ci init --platform gitlab
 
 # Generate CircleCI config
-cargo run --bin forge -- ci init --platform circleci
+cargo run --bin Fish -- ci init --platform circleci
 
 # Generate Bitbucket Pipelines
-cargo run --bin forge -- ci init --platform bitbucket
+cargo run --bin Fish -- ci init --platform bitbucket
 ```
 
 ### Adding New CI Platform
 
-1. Add platform to `CIPlatform` enum in `forge-ci-generator`
-2. Create generator module in `crates/forge-ci-generator/src/`
+1. Add platform to `CIPlatform` enum in `fish-ci-generator`
+2. Create generator module in `crates/fish-ci-generator/src/`
 3. Implement generator trait
 4. Add CLI parsing
 5. Write tests
@@ -291,13 +291,13 @@ cargo run --bin forge -- ci init --platform bitbucket
 
 ```bash
 # Test artifact signing
-cargo run --bin forge -- sign artifact.sig
+cargo run --bin Fish -- sign artifact.sig
 
 # Test vulnerability scanning
-cargo run --bin forge -- security scan
+cargo run --bin Fish -- security scan
 
 # Test secret management
-cargo run --bin forge -- secrets get my-secret
+cargo run --bin Fish -- secrets get my-secret
 ```
 
 ### Security Guidelines
@@ -317,10 +317,10 @@ cargo run --bin forge -- secrets get my-secret
 cargo bench --workspace
 
 # Profile specific operation
-cargo flamegraph --bin forge build
+cargo flamegraph --bin Fish build
 
 # Analyze cache performance
-cargo run --bin forge -- cache stats
+cargo run --bin Fish -- cache stats
 ```
 
 ### Optimization Strategies
@@ -358,7 +358,7 @@ cargo run --bin forge -- cache stats
 /// # Examples
 ///
 /// ```
-/// use forge_core::fingerprint;
+/// use fish_core::fingerprint;
 ///
 /// let hash = fingerprint::compute_file("Cargo.toml").unwrap();
 /// println!("Hash: {}", hash);

@@ -42,4 +42,4 @@ jobs:
 
       - name: Run Property Tests
         run: |
-          cargo test -p forge-core -p forge-cache -p forge-cas -- --nocapture
+          cargo test -p fish-core -p fish-cache -p fish-cas -- --nocapture

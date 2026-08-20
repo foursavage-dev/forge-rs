@@ -1,17 +1,17 @@
-# Forge VS Code Extension
+# fish VS Code Extension
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
 
-Basic VS Code extension for Forge build system integration.
+Basic VS Code extension for fish build system integration.
 
 ## Features
 
-- Build project: `Forge: Build Project`
-- Run tests: `Forge: Run Tests`
-- Show build graph: `Forge: Show Build Graph`
-- Clean artifacts: `Forge: Clean Build Artifacts`
-- Run diagnostics: `Forge: Run Diagnostics`
-- Show affected packages: `Forge: Show Affected Packages`
+- Build project: `fish: Build Project`
+- Run tests: `fish: Run Tests`
+- Show build graph: `fish: Show Build Graph`
+- Clean artifacts: `fish: Clean Build Artifacts`
+- Run diagnostics: `fish: Run Diagnostics`
+- Show affected packages: `fish: Show Affected Packages`
 
 ## Installation
 
@@ -24,9 +24,9 @@ Basic VS Code extension for Forge build system integration.
 
 ```json
 {
-  "forge.path": "forge",
-  "forge.experimental": false,
-  "forge.maxJobs": 4
+  "fish.path": "fish",
+  "fish.experimental": false,
+  "fish.maxJobs": 4
 }
 ```
 
@@ -41,7 +41,7 @@ npm run watch
 ## Future Enhancements
 
 - Real-time build output parsing
-- IntelliSense for forge.toml
+- IntelliSense for fish.toml
 - Build graph visualization
 - Circular dependency detection
 - Task completion for build targets

@@ -1,8 +1,8 @@
-# Forge API Documentation
+# Fish API Documentation
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
 
-This document provides API documentation for Forge's main components.
+This document provides API documentation for Fish's main components.
 
 ## Table of Contents
 
@@ -348,7 +348,7 @@ pub enum Error {
 ### Discover Workspace
 
 ```rust
-use forge_core::Workspace;
+use fish_core::Workspace;
 
 let workspace = Workspace::new(PathBuf::from("/path/to/project"))?;
 workspace.discover()?;
@@ -361,7 +361,7 @@ for package in workspace.get_build_order() {
 ### Build Package
 
 ```rust
-use forge_cli::build;
+use fish_cli::build;
 
 let result = build(vec!["my-package".to_string()], 4, false, false).await?;
 println!("Build completed in {:.2}s", result.duration);
@@ -370,7 +370,7 @@ println!("Build completed in {:.2}s", result.duration);
 ### Sign Artifact
 
 ```rust
-use forge_signing::SigningService;
+use fish_signing::SigningService;
 
 let service = SigningService::new(keypair);
 let signature = service.sign_artifact(
@@ -382,7 +382,7 @@ let signature = service.sign_artifact(
 ### Scan for Vulnerabilities
 
 ```rust
-use forge_security::VulnerabilityScanner;
+use fish_security::VulnerabilityScanner;
 
 let scanner = VulnerabilityScanner::new();
 let report = scanner.scan(PathBuf::from("/path/to/project"), &options).await?;
@@ -411,7 +411,7 @@ async fn main() -> Result<()> {
 
 ## Streaming Support
 
-For large operations, Forge supports streaming:
+For large operations, Fish supports streaming:
 
 ```rust
 pub async fn build_streaming(

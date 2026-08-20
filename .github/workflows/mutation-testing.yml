@@ -25,6 +25,6 @@ jobs:
       - name: Install cargo-mutants
         uses: taiki-e/install-action@cargo-mutants
 
-      - name: Run Mutation Tests on forge-core
+      - name: Run Mutation Tests on fish-core
         run: |
-          cargo mutants --package forge-core --no-shuffle --timeout 60
+          cargo mutants --package fish-core --no-shuffle --timeout 60

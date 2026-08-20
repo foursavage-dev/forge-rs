@@ -4,72 +4,70 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-interface BuildStatus {
-    status: 'idle' | 'building' | 'success' | 'failed';
-    cacheHitRate?: number;
-    packageCount?: number;
-}
-
 let buildStatusBarItem: vscode.StatusBarItem;
 let cacheHitRateItem: vscode.StatusBarItem;
 let packageTreeProvider: PackageTreeProvider;
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Forge extension is now active!');
-
-    // Create status bar items
     buildStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    buildStatusBarItem.command = 'forge.build';
-    buildStatusBarItem.text = '$(package) Forge: Idle';
+    buildStatusBarItem.command = 'fish.build';
+    buildStatusBarItem.text = '$(package) fish: Ready';
     buildStatusBarItem.show();
 
     cacheHitRateItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 90);
-    cacheHitRateItem.text = '$(database) Cache: 0%';
+    cacheHitRateItem.command = 'fish.ui';
+    cacheHitRateItem.text = '$(dashboard) fish UI';
     cacheHitRateItem.show();
 
-    // Initialize package tree provider
     packageTreeProvider = new PackageTreeProvider();
-    vscode.window.registerTreeDataProvider('forgePackages', packageTreeProvider);
+    vscode.window.registerTreeDataProvider('fishPackages', packageTreeProvider);
 
-    // Build command
-    const buildCommand = vscode.commands.registerCommand('forge.build', async () => {
-        await runForgeCommand('build');
+    const buildCommand = vscode.commands.registerCommand('fish.build', async () => {
+        await runfishCommand('build');
     });
 
-    // Test command
-    const testCommand = vscode.commands.registerCommand('forge.test', async () => {
-        await runForgeCommand('test');
+    const testCommand = vscode.commands.registerCommand('fish.test', async () => {
+        await runfishCommand('test');
     });
 
-    // Graph command
-    const graphCommand = vscode.commands.registerCommand('forge.graph', async () => {
-        await runForgeCommand('graph');
+    const graphCommand = vscode.commands.registerCommand('fish.graph', async () => {
+        await runfishCommand('graph');
     });
 
-    // Clean command
-    const cleanCommand = vscode.commands.registerCommand('forge.clean', async () => {
-        await runForgeCommand('clean');
+    const uiCommand = vscode.commands.registerCommand('fish.ui', async () => {
+        await runfishCommand('ui --port 3000 --open');
     });
 
-    // Doctor command
-    const doctorCommand = vscode.commands.registerCommand('forge.doctor', async () => {
-        await runForgeCommand('doctor');
+    const explainCommand = vscode.commands.registerCommand('fish.explain', async () => {
+        await runfishCommand('build --explain');
     });
 
-    // Affected command
-    const affectedCommand = vscode.commands.registerCommand('forge.affected', async () => {
-        await runForgeCommand('affected');
+    const exportCompileCommands = vscode.commands.registerCommand('fish.exportCompileCommands', async () => {
+        await runfishCommand('build');
+        vscode.window.showInformationMessage('fish: compile_commands.json exported successfully for Clangd & LSP.');
     });
 
-    // Refresh packages command
-    const refreshCommand = vscode.commands.registerCommand('forge.refreshPackages', async () => {
+    const doctorCommand = vscode.commands.registerCommand('fish.doctor', async () => {
+        await runfishCommand('doctor');
+    });
+
+    const affectedCommand = vscode.commands.registerCommand('fish.affected', async () => {
+        await runfishCommand('affected');
+    });
+
+    const refreshCommand = vscode.commands.registerCommand('fish.refreshPackages', async () => {
         await packageTreeProvider.refresh();
     });
 
-    // Build specific package command
-    const buildPackageCommand = vscode.commands.registerCommand('forge.buildPackage', async (node: PackageNode) => {
+    const buildPackageCommand = vscode.commands.registerCommand('fish.buildPackage', async (node: PackageNode) => {
         if (node) {
-            await runForgeCommand(`build --package ${node.label}`);
+            await runfishCommand(`build -p ${node.label}`);
+        }
+    });
+
+    const testPackageCommand = vscode.commands.registerCommand('fish.testPackage', async (node: PackageNode) => {
+        if (node) {
+            await runfishCommand(`test -p ${node.label}`);
         }
     });
 
@@ -77,110 +75,43 @@ export function activate(context: vscode.ExtensionContext) {
         buildCommand,
         testCommand,
         graphCommand,
-        cleanCommand,
+        uiCommand,
+        explainCommand,
+        exportCompileCommands,
         doctorCommand,
         affectedCommand,
         refreshCommand,
         buildPackageCommand,
+        testPackageCommand,
         buildStatusBarItem,
         cacheHitRateItem
     );
 }
 
-async function runForgeCommand(command: string) {
-    const config = vscode.workspace.getConfiguration('forge');
-    const forgePath = config.get<string>('path', 'forge');
-    const experimental = config.get<boolean>('experimental', false);
-    const maxJobs = config.get<number>('maxJobs', 4);
+export function deactivate() {}
 
-    let cmd = `${forgePath} ${command}`;
-    
-    if (experimental) {
-        cmd += ' --experimental';
-    }
-    
-    if (maxJobs > 0) {
-        cmd += ` -j ${maxJobs}`;
-    }
+async function runfishCommand(command: string) {
+    const config = vscode.workspace.getConfiguration('fish');
+    const fishPath = config.get<string>('path', 'fish');
+    const rootPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '.';
+
+    buildStatusBarItem.text = '$(sync~spin) fish: Running...';
+
+    const outputChannel = vscode.window.createOutputChannel('fish');
+    outputChannel.show();
+    outputChannel.appendLine(`> ${fishPath} ${command}`);
 
     try {
-        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-        if (!workspaceFolder) {
-            vscode.window.showErrorMessage('No workspace folder found');
-            return;
-        }
-
-        // Update status bar to building
-        buildStatusBarItem.text = '$(sync~spin) Forge: Building...';
-        buildStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBar.warningBackground');
-
-        const terminal = vscode.window.createTerminal(`Forge ${command}`);
-        terminal.sendText(`cd "${workspaceFolder.uri.fsPath}"`);
-        terminal.sendText(cmd);
-        terminal.show();
-
-        // Monitor terminal output for build status
-        monitorBuildOutput(terminal);
-
-    } catch (error) {
-        vscode.window.showErrorMessage(`Forge command failed: ${error}`);
-        buildStatusBarItem.text = '$(x) Forge: Failed';
-        buildStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBar.errorBackground');
-    }
-}
-
-function monitorBuildOutput(terminal: vscode.Terminal) {
-    // In a real implementation, you would parse terminal output
-    // For now, we'll simulate completion after a timeout
-    setTimeout(() => {
-        buildStatusBarItem.text = '$(check) Forge: Success';
-        buildStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBar.successBackground');
-        cacheHitRateItem.text = '$(database) Cache: 85%';
-    }, 3000);
-}
-
-class PackageTreeProvider implements vscode.TreeDataProvider<PackageNode> {
-    private _onDidChangeTreeData = new vscode.EventEmitter<PackageNode | undefined | null | void>();
-    readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
-
-    private packages: PackageNode[] = [];
-
-    constructor() {
-        this.loadPackages();
-    }
-
-    refresh(): void {
-        this.loadPackages();
-        this._onDidChangeTreeData.fire(undefined);
-    }
-
-    private async loadPackages() {
-        // In a real implementation, this would parse Cargo.toml or forge configuration
-        // For now, we'll create mock package data
-        this.packages = [
-            new PackageNode('forge-core', vscode.TreeItemCollapsibleState.Collapsed),
-            new PackageNode('forge-cli', vscode.TreeItemCollapsibleState.Collapsed),
-            new PackageNode('forge-worker', vscode.TreeItemCollapsibleState.Collapsed),
-            new PackageNode('forge-cache', vscode.TreeItemCollapsibleState.Collapsed),
-        ];
-    }
-
-    getTreeItem(element: PackageNode): vscode.TreeItem {
-        return element;
-    }
-
-    getChildren(element?: PackageNode): Thenable<PackageNode[]> {
-        if (!element) {
-            return Promise.resolve(this.packages);
-        }
-        
-        // Return tasks for a package
-        const tasks = [
-            new PackageNode('build', vscode.TreeItemCollapsibleState.None, element.label),
-            new PackageNode('test', vscode.TreeItemCollapsibleState.None, element.label),
-            new PackageNode('clean', vscode.TreeItemCollapsibleState.None, element.label),
-        ];
-        return Promise.resolve(tasks);
+        const { stdout, stderr } = await execAsync(`${fishPath} ${command}`, { cwd: rootPath });
+        if (stdout) outputChannel.append(stdout);
+        if (stderr) outputChannel.append(stderr);
+        buildStatusBarItem.text = '$(check) fish: Succeeded';
+        vscode.window.showInformationMessage(`fish: Command completed successfully.`);
+    } catch (err: any) {
+        if (err.stdout) outputChannel.append(err.stdout);
+        if (err.stderr) outputChannel.append(err.stderr);
+        buildStatusBarItem.text = '$(error) fish: Failed';
+        vscode.window.showErrorMessage(`fish: Command failed. Check fish output panel.`);
     }
 }
 
@@ -188,30 +119,52 @@ class PackageNode extends vscode.TreeItem {
     constructor(
         public readonly label: string,
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-        public readonly parentPackage?: string
+        public readonly dependencies: string[] = []
     ) {
         super(label, collapsibleState);
-        
-        if (parentPackage) {
-            this.contextValue = 'task';
-            this.command = {
-                command: 'forge.buildPackage',
-                title: 'Build',
-                arguments: [this]
-            };
-        } else {
-            this.contextValue = 'package';
-            this.iconPath = new vscode.ThemeIcon('package');
-        }
+        this.contextValue = 'fishPackage';
+        this.iconPath = new vscode.ThemeIcon('package');
+        this.tooltip = `${label} (${dependencies.length} direct dependencies)`;
     }
 }
 
-export function deactivate() {
-    console.log('Forge extension is now deactivated');
-    if (buildStatusBarItem) {
-        buildStatusBarItem.dispose();
+class PackageTreeProvider implements vscode.TreeDataProvider<PackageNode> {
+    private _onDidChangeTreeData: vscode.EventEmitter<PackageNode | undefined | void> = new vscode.EventEmitter<PackageNode | undefined | void>();
+    readonly onDidChangeTreeData: vscode.Event<PackageNode | undefined | void> = this._onDidChangeTreeData.event;
+
+    refresh(): void {
+        this._onDidChangeTreeData.fire();
     }
-    if (cacheHitRateItem) {
-        cacheHitRateItem.dispose();
+
+    getTreeItem(element: PackageNode): vscode.TreeItem {
+        return element;
+    }
+
+    async getChildren(element?: PackageNode): Promise<PackageNode[]> {
+        if (element) {
+            return element.dependencies.map(
+                dep => new PackageNode(dep, vscode.TreeItemCollapsibleState.None)
+            );
+        }
+
+        const config = vscode.workspace.getConfiguration('fish');
+        const fishPath = config.get<string>('path', 'fish');
+        const rootPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '.';
+
+        try {
+            const { stdout } = await execAsync(`${fishPath} graph --format json`, { cwd: rootPath });
+            const data = JSON.parse(stdout);
+            const packages = data.packages || data.nodes || [];
+            return packages.map((pkg: any) => {
+                const name = pkg.name || pkg.id || 'unknown';
+                const deps = pkg.dependencies || [];
+                const state = deps.length > 0
+                    ? vscode.TreeItemCollapsibleState.Collapsed
+                    : vscode.TreeItemCollapsibleState.None;
+                return new PackageNode(name, state, deps);
+            });
+        } catch {
+            return [new PackageNode('Workspace Packages (Run fish: Refresh)', vscode.TreeItemCollapsibleState.None)];
+        }
     }
 }

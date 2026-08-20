@@ -1,8 +1,8 @@
 # Maintainers
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
-This document lists the maintainers of the Forge project and their responsibilities.
+This document lists the maintainers of the Fish project and their responsibilities.
 
 ## Core Maintainers
 
@@ -24,77 +24,77 @@ This document lists the maintainers of the Forge project and their responsibilit
   - Rust backend development
   - Cargo integration
   - Performance optimization
-- **Review areas**: `forge-backend-rust/`, `forge-core/`
+- **Review areas**: `fish-backend-rust/`, `fish-core/`
 
 #### C/C++ Backend
 - **Responsibilities**:
   - C/C++ backend development
   - gcc/clang/msvc integration
   - Header dependency tracking
-- **Review areas**: `forge-backend-cc/`
+- **Review areas**: `fish-backend-cc/`
 
 #### Go Backend
 - **Responsibilities**:
   - Go backend development
   - go.mod integration
   - Module support
-- **Review areas**: `forge-backend-go/`
+- **Review areas**: `fish-backend-go/`
 
 #### TypeScript/JS Backend
 - **Responsibilities**:
   - TypeScript/JS backend development
   - package.json integration
   - Monorepo support
-- **Review areas**: `forge-backend-ts/`
+- **Review areas**: `fish-backend-ts/`
 
 #### Python Backend
 - **Responsibilities**:
   - Python backend development
   - pyproject.toml integration
   - Virtual environment support
-- **Review areas**: `forge-backend-py/`
+- **Review areas**: `fish-backend-py/`
 
 #### Java Backend
 - **Responsibilities**:
   - Java backend development
   - Maven/Gradle integration
   - Kotlin support
-- **Review areas**: `forge-backend-java/`
+- **Review areas**: `fish-backend-java/`
 
 #### .NET Backend
 - **Responsibilities**:
   - .NET backend development
   - csproj/sln integration
   - Multi-target support
-- **Review areas**: `forge-backend-dotnet/`
+- **Review areas**: `fish-backend-dotnet/`
 
 #### Swift Backend
 - **Responsibilities**:
   - Swift backend development
   - Package.swift integration
   - iOS/macOS support
-- **Review areas**: `forge-backend-swift/`
+- **Review areas**: `fish-backend-swift/`
 
 #### Dart Backend
 - **Responsibilities**:
   - Dart backend development
   - pubspec.yaml integration
   - Flutter support
-- **Review areas**: `forge-backend-dart/`
+- **Review areas**: `fish-backend-dart/`
 
 #### Zig Backend
 - **Responsibilities**:
   - Zig backend development
   - build.zig integration
   - Cross-compilation
-- **Review areas**: `forge-backend-zig/`
+- **Review areas**: `fish-backend-zig/`
 
 #### Docker Backend
 - **Responsibilities**:
   - Docker backend development
   - Dockerfile integration
   - Container support
-- **Review areas**: `forge-backend-docker/`
+- **Review areas**: `fish-backend-docker/`
 
 ### Feature Maintainers
 
@@ -103,35 +103,35 @@ This document lists the maintainers of the Forge project and their responsibilit
   - Cache implementation
   - CAS engine
   - Remote cache
-- **Review areas**: `forge-cache/`, `forge-cas/`, `forge-remote-cache/`
+- **Review areas**: `fish-cache/`, `fish-cas/`, `fish-remote-cache/`
 
 #### Distributed Execution
 - **Responsibilities**:
   - Worker daemon
   - Cluster execution
   - VFS implementation
-- **Review areas**: `forge-worker/`
+- **Review areas**: `fish-worker/`
 
 #### Security
 - **Responsibilities**:
   - Artifact signing
   - Vulnerability scanning
   - Secret management
-- **Review areas**: `forge-signing/`, `forge-security/`, `forge-secrets/`
+- **Review areas**: `fish-signing/`, `fish-security/`, `fish-secrets/`
 
 #### CI/CD
 - **Responsibilities**:
   - CI generator
   - Multi-platform support
   - Template system
-- **Review areas**: `forge-ci-generator/`, `forge-multiplatform/`, `forge-templates/`
+- **Review areas**: `fish-ci-generator/`, `fish-multiplatform/`, `fish-templates/`
 
 #### CLI & UX
 - **Responsibilities**:
   - CLI implementation
   - User experience
   - Documentation
-- **Review areas**: `forge-cli/`, `docs/`
+- **Review areas**: `fish-cli/`, `docs/`
 
 ### Infrastructure Maintainers
 
@@ -240,4 +240,4 @@ Maintainers are recognized in:
 
 ## Acknowledgments
 
-We thank all maintainers and contributors who make Forge possible.
+We thank all maintainers and contributors who make Fish possible.

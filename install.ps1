@@ -1,57 +1,47 @@
-# Forge Installation Script for Windows
-# Usage: irm https://raw.githubusercontent.com/foursavage-dev/forge-rs/main/install.ps1 | iex
-
 $ErrorActionPreference = "Stop"
 
-$FORGE_VERSION = "0.1.0"
-$FORGE_REPO = "foursavage-dev/forge-rs"
-$INSTALL_DIR = "$env:USERPROFILE\.forge\bin"
-$TEMP_DIR = Join-Path $env:TEMP "forge-install"
+$FISH_VERSION = "0.2.0"
+$FISH_REPO = "requla11/fish"
+$INSTALL_DIR = "$env:USERPROFILE\.fish\bin"
+$TEMP_DIR = Join-Path $env:TEMP "fish-install"
 
-Write-Host "🦀 Installing Forge v${FORGE_VERSION}..." -ForegroundColor Green
+Write-Host "🐟 Installing Fish v${FISH_VERSION}..." -ForegroundColor Green
 
-# Detect architecture
 $ARCH = if ([Environment]::Is64BitOperatingSystem) { "amd64" } else { "x86" }
-$BINARY_NAME = "forge-windows-${ARCH}"
-$DOWNLOAD_URL = "https://github.com/${FORGE_REPO}/releases/download/v${FORGE_VERSION}/${BINARY_NAME}.exe"
+$BINARY_NAME = "fish-windows-${ARCH}"
+$DOWNLOAD_URL = "https://github.com/${FISH_REPO}/releases/download/v${FISH_VERSION}/${BINARY_NAME}.exe"
 
-Write-Host "📥 Downloading Forge from ${DOWNLOAD_URL}..." -ForegroundColor Cyan
+Write-Host "📥 Downloading Fish from ${DOWNLOAD_URL}..." -ForegroundColor Cyan
 
-# Create temp directory
 New-Item -ItemType Directory -Force -Path $TEMP_DIR | Out-Null
 New-Item -ItemType Directory -Force -Path $INSTALL_DIR | Out-Null
 
-# Try to download binary
 try {
-    Invoke-WebRequest -Uri $DOWNLOAD_URL -OutFile "$TEMP_DIR\forge.exe" -UseBasicParsing
+    Invoke-WebRequest -Uri $DOWNLOAD_URL -OutFile "$TEMP_DIR\fish.exe" -UseBasicParsing
     Write-Host "✅ Download successful" -ForegroundColor Green
 } catch {
     Write-Host "⚠️  Pre-built binary not found, building from source..." -ForegroundColor Yellow
     Write-Host "📦 This requires Rust to be installed" -ForegroundColor Yellow
     
-    # Check if cargo is available
     if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
         Write-Host "❌ Rust/Cargo not found. Please install Rust first:" -ForegroundColor Red
         Write-Host "   irm https://sh.rustup.rs | iex" -ForegroundColor Cyan
         exit 1
     }
     
-    # Clone and build
     Push-Location $TEMP_DIR
-    git clone --depth 1 --branch main "https://github.com/${FORGE_REPO}.git" forge-rs
-    Set-Location forge-rs
-    cargo build --release
+    git clone --depth 1 --branch main "https://github.com/${FISH_REPO}.git" fish-rs
+    Set-Location fish-rs
+    cargo build --release -p fish-cli
     
-    Copy-Item "target\release\forge.exe" "$TEMP_DIR\forge.exe"
+    Copy-Item "target\release\fish.exe" "$TEMP_DIR\fish.exe"
     Write-Host "✅ Build successful" -ForegroundColor Green
     Pop-Location
 }
 
-# Install binary
 Write-Host "📝 Installing to ${INSTALL_DIR}..." -ForegroundColor Cyan
-Move-Item "$TEMP_DIR\forge.exe" "${INSTALL_DIR}\forge.exe" -Force
+Move-Item "$TEMP_DIR\fish.exe" "${INSTALL_DIR}\fish.exe" -Force
 
-# Add to PATH if not already there
 $PATH_ENV = [Environment]::GetEnvironmentVariable("Path", "User")
 if ($PATH_ENV -notlike "*${INSTALL_DIR}*") {
     Write-Host "🔧 Adding ${INSTALL_DIR} to PATH..." -ForegroundColor Yellow
@@ -59,16 +49,14 @@ if ($PATH_ENV -notlike "*${INSTALL_DIR}*") {
     Write-Host "⚠️  Please restart your terminal to use PATH changes" -ForegroundColor Yellow
 }
 
-# Cleanup
 Remove-Item -Recurse -Force $TEMP_DIR -ErrorAction SilentlyContinue
 
-# Verify installation
-if (Get-Command forge -ErrorAction SilentlyContinue) {
-    Write-Host "✅ Forge installed successfully!" -ForegroundColor Green
-    Write-Host "🎉 Run 'forge --help' to get started" -ForegroundColor Green
-    forge --version
+if (Get-Command fish -ErrorAction SilentlyContinue) {
+    Write-Host "✅ Fish installed successfully!" -ForegroundColor Green
+    Write-Host "🎉 Run 'fish --help' to get started" -ForegroundColor Green
+    fish --version
 } else {
     Write-Host "❌ Installation failed" -ForegroundColor Red
-    Write-Host "You can run forge directly from: ${INSTALL_DIR}\forge.exe" -ForegroundColor Yellow
+    Write-Host "You can run fish directly from: ${INSTALL_DIR}\fish.exe" -ForegroundColor Yellow
     exit 1
 }

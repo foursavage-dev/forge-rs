@@ -63,7 +63,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run CLI integration tests
-        run: cargo test -p forge-cli --test build
+        run: cargo test -p fish-cli --test build
 
   build:
     name: build
@@ -76,9 +76,9 @@ jobs:
         run: cargo build --release
       - name: Verify CLI binary execution
         run: |
-          ./target/release/forge --version
-          ./target/release/forge --help
-          ./target/release/forge doctor
+          ./target/release/fish --version
+          ./target/release/fish --help
+          ./target/release/fish doctor
 
   ci-status:
     name: CI Status

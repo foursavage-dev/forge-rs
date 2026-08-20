@@ -990,6 +990,565 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d45db016d36b838f563236e9193d0ee6ce38f3f68b6c94e914b4929c96bbb890"
 
 [[package]]
+name = "fish-analytics"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fish-cache",
+ "fish-core",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fish-backend-cc"
+version = "0.2.0"
+dependencies = [
+ "blake3",
+ "fish-cache",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "fish-scheduler",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "fish-backend-dart"
+version = "0.2.0"
+dependencies = [
+ "blake3",
+ "fish-cache",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "fish-scheduler",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "toml",
+]
+
+[[package]]
+name = "fish-backend-docker"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "blake3",
+ "fish-cache",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fish-backend-dotnet"
+version = "0.2.0"
+dependencies = [
+ "blake3",
+ "fish-cache",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "fish-scheduler",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "toml",
+]
+
+[[package]]
+name = "fish-backend-go"
+version = "0.2.0"
+dependencies = [
+ "blake3",
+ "fish-cache",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "fish-scheduler",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "fish-backend-java"
+version = "0.2.0"
+dependencies = [
+ "blake3",
+ "fish-cache",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "fish-scheduler",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "toml",
+]
+
+[[package]]
+name = "fish-backend-py"
+version = "0.2.0"
+dependencies = [
+ "blake3",
+ "fish-cache",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "fish-scheduler",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "toml",
+]
+
+[[package]]
+name = "fish-backend-rust"
+version = "0.2.0"
+dependencies = [
+ "blake3",
+ "cargo_metadata",
+ "fish-cache",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "fish-scheduler",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "fish-backend-swift"
+version = "0.2.0"
+dependencies = [
+ "blake3",
+ "fish-cache",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "fish-scheduler",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "toml",
+]
+
+[[package]]
+name = "fish-backend-ts"
+version = "0.2.0"
+dependencies = [
+ "blake3",
+ "fish-cache",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "fish-scheduler",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "fish-backend-zig"
+version = "0.2.0"
+dependencies = [
+ "blake3",
+ "fish-cache",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "fish-scheduler",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "toml",
+]
+
+[[package]]
+name = "fish-cache"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "criterion",
+ "crossbeam-channel",
+ "dashmap",
+ "fish-cas",
+ "fish-executor",
+ "parking_lot",
+ "serde",
+ "serde_json",
+ "spin",
+ "tempfile",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fish-cas"
+version = "0.2.0"
+dependencies = [
+ "async-trait",
+ "blake3",
+ "chrono",
+ "criterion",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tame-gcs",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "zstd",
+]
+
+[[package]]
+name = "fish-ci-generator"
+version = "0.2.0"
+dependencies = [
+ "fish-core",
+ "fish-graph",
+ "handlebars",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "fish-cli"
+version = "0.2.0"
+dependencies = [
+ "anstream",
+ "anstyle",
+ "anyhow",
+ "blake3",
+ "cargo_metadata",
+ "clap",
+ "crossterm",
+ "fish-backend-cc",
+ "fish-backend-dart",
+ "fish-backend-docker",
+ "fish-backend-dotnet",
+ "fish-backend-go",
+ "fish-backend-java",
+ "fish-backend-py",
+ "fish-backend-rust",
+ "fish-backend-swift",
+ "fish-backend-ts",
+ "fish-backend-zig",
+ "fish-cache",
+ "fish-cas",
+ "fish-ci-generator",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "fish-incremental",
+ "fish-plugin",
+ "fish-remote-cache",
+ "fish-sandbox",
+ "fish-scheduler",
+ "fish-worker",
+ "notify",
+ "ratatui",
+ "serde",
+ "serde_json",
+ "spin",
+ "tempfile",
+ "tokio",
+ "toml",
+ "wait-timeout",
+]
+
+[[package]]
+name = "fish-core"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "blake3",
+ "cargo_metadata",
+ "fish-graph",
+ "regex",
+ "serde",
+ "serde_json",
+ "spin",
+ "tempfile",
+ "thiserror",
+ "toml",
+ "uuid",
+]
+
+[[package]]
+name = "fish-docker-builder"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "bollard",
+ "fish-core",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fish-executor"
+version = "0.2.0"
+dependencies = [
+ "fastrand",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "wait-timeout",
+]
+
+[[package]]
+name = "fish-flaky-detection"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fish-core",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fish-graph"
+version = "0.2.0"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
+name = "fish-incremental"
+version = "0.2.0"
+dependencies = [
+ "chrono",
+ "fish-core",
+ "fish-graph",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fish-installer"
+version = "0.2.0"
+dependencies = [
+ "anstream",
+ "anstyle",
+ "clap",
+ "crossterm",
+ "fish-core",
+ "serde",
+ "serde_json",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "fish-multiplatform"
+version = "0.2.0"
+dependencies = [
+ "fish-ci-generator",
+ "fish-core",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fish-notifications"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "fish-core",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fish-plugin"
+version = "0.2.0"
+dependencies = [
+ "blake3",
+ "fish-cache",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "fish-scheduler",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "fish-remote-cache"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "base64 0.23.1",
+ "blake3",
+ "fish-cache",
+ "fish-executor",
+ "serde",
+ "serde_json",
+ "tar",
+ "tempfile",
+ "thiserror",
+ "zstd",
+]
+
+[[package]]
+name = "fish-sandbox"
+version = "0.2.0"
+dependencies = [
+ "fish-core",
+ "fish-executor",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "fish-scheduler"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "criterion",
+ "crossbeam-channel",
+ "dashmap",
+ "fish-executor",
+ "fish-graph",
+ "jobserver",
+ "notify",
+ "serde",
+ "serde_json",
+ "sysinfo",
+ "tempfile",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fish-secrets"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "fish-core",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fish-security"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fish-core",
+ "regex",
+ "reqwest",
+ "semver",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fish-signing"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "base64 0.23.1",
+ "chrono",
+ "cyclonedx-bom",
+ "ed25519",
+ "ed25519-dalek",
+ "fish-cas",
+ "fish-core",
+ "rand",
+ "rand_core",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "sha2",
+ "spdx",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "fish-templates"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "fish-core",
+ "handlebars",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fish-worker"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "base64 0.23.1",
+ "blake3",
+ "fish-cache",
+ "fish-core",
+ "fish-executor",
+ "fish-graph",
+ "fish-remote-cache",
+ "fish-scheduler",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
 name = "fluent-uri"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1011,565 +1570,6 @@ name = "foldhash"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
-
-[[package]]
-name = "forge-analytics"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "chrono",
- "forge-cache",
- "forge-core",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "forge-backend-cc"
-version = "0.2.0"
-dependencies = [
- "blake3",
- "forge-cache",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "forge-scheduler",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
-]
-
-[[package]]
-name = "forge-backend-dart"
-version = "0.2.0"
-dependencies = [
- "blake3",
- "forge-cache",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "forge-scheduler",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "toml",
-]
-
-[[package]]
-name = "forge-backend-docker"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "blake3",
- "forge-cache",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "forge-backend-dotnet"
-version = "0.2.0"
-dependencies = [
- "blake3",
- "forge-cache",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "forge-scheduler",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "toml",
-]
-
-[[package]]
-name = "forge-backend-go"
-version = "0.2.0"
-dependencies = [
- "blake3",
- "forge-cache",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "forge-scheduler",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
-]
-
-[[package]]
-name = "forge-backend-java"
-version = "0.2.0"
-dependencies = [
- "blake3",
- "forge-cache",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "forge-scheduler",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "toml",
-]
-
-[[package]]
-name = "forge-backend-py"
-version = "0.2.0"
-dependencies = [
- "blake3",
- "forge-cache",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "forge-scheduler",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "toml",
-]
-
-[[package]]
-name = "forge-backend-rust"
-version = "0.2.0"
-dependencies = [
- "blake3",
- "cargo_metadata",
- "forge-cache",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "forge-scheduler",
- "tempfile",
- "thiserror",
-]
-
-[[package]]
-name = "forge-backend-swift"
-version = "0.2.0"
-dependencies = [
- "blake3",
- "forge-cache",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "forge-scheduler",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "toml",
-]
-
-[[package]]
-name = "forge-backend-ts"
-version = "0.2.0"
-dependencies = [
- "blake3",
- "forge-cache",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "forge-scheduler",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
-]
-
-[[package]]
-name = "forge-backend-zig"
-version = "0.2.0"
-dependencies = [
- "blake3",
- "forge-cache",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "forge-scheduler",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "toml",
-]
-
-[[package]]
-name = "forge-cache"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "criterion",
- "crossbeam-channel",
- "dashmap",
- "forge-cas",
- "forge-executor",
- "parking_lot",
- "serde",
- "serde_json",
- "spin",
- "tempfile",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "forge-cas"
-version = "0.2.0"
-dependencies = [
- "async-trait",
- "blake3",
- "chrono",
- "criterion",
- "reqwest",
- "serde",
- "serde_json",
- "tame-gcs",
- "tempfile",
- "thiserror",
- "tokio",
- "zstd",
-]
-
-[[package]]
-name = "forge-ci-generator"
-version = "0.2.0"
-dependencies = [
- "forge-core",
- "forge-graph",
- "handlebars",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "forge-cli"
-version = "0.2.0"
-dependencies = [
- "anstream",
- "anstyle",
- "anyhow",
- "blake3",
- "cargo_metadata",
- "clap",
- "crossterm",
- "forge-backend-cc",
- "forge-backend-dart",
- "forge-backend-docker",
- "forge-backend-dotnet",
- "forge-backend-go",
- "forge-backend-java",
- "forge-backend-py",
- "forge-backend-rust",
- "forge-backend-swift",
- "forge-backend-ts",
- "forge-backend-zig",
- "forge-cache",
- "forge-cas",
- "forge-ci-generator",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "forge-incremental",
- "forge-plugin",
- "forge-remote-cache",
- "forge-sandbox",
- "forge-scheduler",
- "forge-worker",
- "notify",
- "ratatui",
- "serde",
- "serde_json",
- "spin",
- "tempfile",
- "tokio",
- "toml",
- "wait-timeout",
-]
-
-[[package]]
-name = "forge-core"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "blake3",
- "cargo_metadata",
- "forge-graph",
- "regex",
- "serde",
- "serde_json",
- "spin",
- "tempfile",
- "thiserror",
- "toml",
- "uuid",
-]
-
-[[package]]
-name = "forge-docker-builder"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "bollard",
- "forge-core",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "forge-executor"
-version = "0.2.0"
-dependencies = [
- "fastrand",
- "tempfile",
- "thiserror",
- "tokio",
- "wait-timeout",
-]
-
-[[package]]
-name = "forge-flaky-detection"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "chrono",
- "forge-core",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "forge-graph"
-version = "0.2.0"
-dependencies = [
- "thiserror",
-]
-
-[[package]]
-name = "forge-incremental"
-version = "0.2.0"
-dependencies = [
- "chrono",
- "forge-core",
- "forge-graph",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "forge-installer"
-version = "0.2.0"
-dependencies = [
- "anstream",
- "anstyle",
- "clap",
- "crossterm",
- "forge-core",
- "serde",
- "serde_json",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "forge-multiplatform"
-version = "0.2.0"
-dependencies = [
- "forge-ci-generator",
- "forge-core",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "forge-notifications"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "forge-core",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "forge-plugin"
-version = "0.2.0"
-dependencies = [
- "blake3",
- "forge-cache",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "forge-scheduler",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
-]
-
-[[package]]
-name = "forge-remote-cache"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "base64 0.23.1",
- "blake3",
- "forge-cache",
- "forge-executor",
- "serde",
- "serde_json",
- "tar",
- "tempfile",
- "thiserror",
- "zstd",
-]
-
-[[package]]
-name = "forge-sandbox"
-version = "0.2.0"
-dependencies = [
- "forge-core",
- "forge-executor",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
-]
-
-[[package]]
-name = "forge-scheduler"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "criterion",
- "crossbeam-channel",
- "dashmap",
- "forge-executor",
- "forge-graph",
- "jobserver",
- "notify",
- "serde",
- "serde_json",
- "sysinfo",
- "tempfile",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "forge-secrets"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "forge-core",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "forge-security"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "chrono",
- "forge-core",
- "regex",
- "reqwest",
- "semver",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "forge-signing"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "base64 0.23.1",
- "chrono",
- "cyclonedx-bom",
- "ed25519",
- "ed25519-dalek",
- "forge-cas",
- "forge-core",
- "rand",
- "rand_core",
- "serde",
- "serde_bytes",
- "serde_json",
- "sha2",
- "spdx",
- "tempfile",
- "thiserror",
- "tokio",
- "uuid",
-]
-
-[[package]]
-name = "forge-templates"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "forge-core",
- "handlebars",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "forge-worker"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "base64 0.23.1",
- "blake3",
- "forge-cache",
- "forge-core",
- "forge-executor",
- "forge-graph",
- "forge-remote-cache",
- "forge-scheduler",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
-]
 
 [[package]]
 name = "form_urlencoded"

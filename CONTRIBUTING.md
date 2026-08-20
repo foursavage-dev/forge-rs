@@ -1,10 +1,10 @@
-# Contributing to Forge
+# Contributing to Fish
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
-Thank you for your interest in contributing to Forge! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to Fish! This document provides guidelines and instructions for contributing to the project.
 
-Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before participating in the Forge community.
+Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before participating in the Fish community.
 
 ## Table of Contents
 
@@ -23,7 +23,7 @@ Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before participating in th
 
 ### Prerequisites
 
-Before contributing to Forge, make sure you have:
+Before contributing to Fish, make sure you have:
 
 - Rust 1.88 or later (MSRV 1.88)
 - Git
@@ -35,14 +35,14 @@ Before contributing to Forge, make sure you have:
 2. Clone your fork locally:
 
    ```bash
-   git clone https://github.com/YOUR_USERNAME/forge-rs.git
-   cd forge-rs
+   git clone https://github.com/YOUR_USERNAME/fish.git
+   cd fish
    ```
 
 3. Add the upstream remote:
 
    ```bash
-   git remote add upstream https://github.com/foursavage-dev/forge-rs.git
+   git remote add upstream https://github.com/requla11/fish.git
    ```
 
 4. Verify the configured remotes:
@@ -55,7 +55,7 @@ Before contributing to Forge, make sure you have:
 
 ### Branches
 
-Forge uses separate branches for development and stable releases.
+Fish uses separate branches for development and stable releases.
 
 - **`dev`** is the primary development branch and may contain features and changes that are still being tested.
 - **`main`** contains stable code intended for releases.
@@ -75,7 +75,7 @@ cargo build --workspace
 Build a specific crate:
 
 ```bash
-cargo build -p forge-cli
+cargo build -p fish-cli
 ```
 
 Build with optimizations:
@@ -95,7 +95,7 @@ cargo test --workspace
 Run tests for a specific crate:
 
 ```bash
-cargo test -p forge-cli
+cargo test -p fish-cli
 ```
 
 Run tests with output:
@@ -177,14 +177,14 @@ We actively welcome community contributions and translations for our documentati
 ### Workspace Structure
 
 ```text
-forge-rs/
-├── crates/
-│   ├── forge-core/           # Core functionality
-│   ├── forge-cli/            # Command-line interface
-│   ├── forge-backend-*/      # Language backends
-│   └── ...                   # Other feature crates
-├── examples/                 # Example projects
-└── docs/                     # Documentation
+fish-rs/
+â”œâ”€â”€ crates/
+â”‚   â”œâ”€â”€ fish-core/           # Core functionality
+â”‚   â”œâ”€â”€ fish-cli/            # Command-line interface
+â”‚   â”œâ”€â”€ fish-backend-*/      # Language backends
+â”‚   â””â”€â”€ ...                   # Other feature crates
+â”œâ”€â”€ examples/                 # Example projects
+â””â”€â”€ docs/                     # Documentation
 ```
 
 ## Testing
@@ -223,7 +223,7 @@ mod tests {
 
 ### Commit Message Format
 
-Forge follows the Conventional Commits format:
+Fish follows the Conventional Commits format:
 
 ```text
 <type>(<scope>): <description>
@@ -308,7 +308,7 @@ Before opening a bug report:
 1. Check existing issues to avoid duplicates.
 2. Search the documentation.
 3. Try to reproduce the issue.
-4. Make sure you are using a supported version of Forge.
+4. Make sure you are using a supported version of Fish.
 5. Include relevant environment and version information.
 
 ### Bug Report Template
@@ -335,7 +335,7 @@ A clear description of what you expected to happen.
 
 - OS: [e.g. Windows 11, Ubuntu 24.04]
 - Rust version: [e.g. 1.88.0]
-- Forge version: [e.g. 0.1.0]
+- Fish version: [e.g. 0.1.0]
 
 **Additional Context**
 
@@ -414,11 +414,11 @@ Large or complex changes may require additional review time.
 
 ## Getting Help
 
-If you need help contributing to Forge:
+If you need help contributing to Fish:
 
 - Open an issue for bugs or feature requests.
 - Check the project documentation.
-- Join the Forge Discord community when available.
+- Join the Fish Discord community when available.
 - Email: [foursavage@proton.me](mailto:foursavage@proton.me)
 - Check the [documentation](docs/).
 
@@ -426,6 +426,6 @@ For security-related issues, follow the private reporting instructions in `SECUR
 
 ## License
 
-By contributing to Forge, you agree that your contributions will be licensed under the MIT License.
+By contributing to Fish, you agree that your contributions will be licensed under the MIT License.
 
-Forge is distributed under the MIT License. See [`LICENSE`](LICENSE) for the full license text.
+Fish is distributed under the MIT License. See [`LICENSE`](LICENSE) for the full license text.

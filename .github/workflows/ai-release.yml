@@ -20,16 +20,16 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact_name: forge-linux-x86_64
+            artifact_name: fish-linux-x86_64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact_name: forge-windows-x86_64.exe
+            artifact_name: fish-windows-x86_64.exe
           - os: macos-latest
             target: x86_64-apple-darwin
-            artifact_name: forge-macos-x86_64
+            artifact_name: fish-macos-x86_64
           - os: macos-latest
             target: aarch64-apple-darwin
-            artifact_name: forge-macos-aarch64
+            artifact_name: fish-macos-aarch64
     steps:
       - uses: actions/checkout@v4
 
@@ -39,9 +39,9 @@ jobs:
 
       - name: Build Binary
         run: |
-          cargo build --release --bin forge --target ${{ matrix.target }}
+          cargo build --release -p fish-cli --bin fish --target ${{ matrix.target }}
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cargo build --release --bin forge-setup --target ${{ matrix.target }}
+            cargo build --release -p fish-installer --bin fish-setup --target ${{ matrix.target }}
           fi
         shell: bash
 
@@ -49,10 +49,10 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp target/${{ matrix.target }}/release/forge.exe ./${{ matrix.artifact_name }}
-            cp target/${{ matrix.target }}/release/forge-setup.exe ./forge-setup-windows-x86_64.exe
+            cp target/${{ matrix.target }}/release/fish.exe ./${{ matrix.artifact_name }}
+            cp target/${{ matrix.target }}/release/fish-setup.exe ./fish-setup-windows-x86_64.exe
           else
-            cp target/${{ matrix.target }}/release/forge ./${{ matrix.artifact_name }}
+            cp target/${{ matrix.target }}/release/fish ./${{ matrix.artifact_name }}
           fi
 
       - name: Upload Binary
@@ -61,7 +61,7 @@ jobs:
           name: ${{ matrix.artifact_name }}
           path: |
             ${{ matrix.artifact_name }}
-            forge-setup-windows-x86_64.exe
+            fish-setup-windows-x86_64.exe
           if-no-files-found: ignore
 
   create-release:
@@ -95,12 +95,12 @@ jobs:
         run: |
           cd release-artifacts
           ls -la
-          sha256sum forge-* > SHA256SUMS.txt || true
+          sha256sum fish-* > SHA256SUMS.txt || true
           cat SHA256SUMS.txt || true
           cd ..
 
           COMMITS=$(git log -n 25 --oneline)
-          PROMPT="You are ForgeBot, releasing version $TAG_NAME of the Forge build system.
+          PROMPT="You are FishBot, releasing version $TAG_NAME of the Fish build system.
           Recent Git Commit History:
           $COMMITS
 
@@ -131,7 +131,7 @@ jobs:
           ### Highlights
           - High performance build orchestration
           - Polyglot backend execution and incremental caching
-          - Windows Setup Installer app (forge-setup-windows-x86_64.exe) with multi-language support (EN, VI, ZH-CN, ZH-TW, JA) and PATH configuration
+          - Windows Setup Installer app (fish-setup-windows-x86_64.exe) with multi-language support (EN, VI, ZH-CN, ZH-TW, JA) and PATH configuration
 
           ### Commits
           \`\`\`

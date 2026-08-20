@@ -31,7 +31,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Test Rust, CC, Go, TS, Python backends
-        run: cargo test -p forge-backend-rust -p forge-backend-cc -p forge-backend-go -p forge-backend-ts -p forge-backend-py --lib
+        run: cargo test -p fish-backend-rust -p fish-backend-cc -p fish-backend-go -p fish-backend-ts -p fish-backend-py --lib
 
   extended-backends:
     name: Extended Language Backends Testing
@@ -41,4 +41,4 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Test Java, Dotnet, Swift, Dart, Zig, Docker backends
-        run: cargo test -p forge-backend-java -p forge-backend-dotnet -p forge-backend-swift -p forge-backend-dart -p forge-backend-zig -p forge-backend-docker --lib
+        run: cargo test -p fish-backend-java -p fish-backend-dotnet -p fish-backend-swift -p fish-backend-dart -p fish-backend-zig -p fish-backend-docker --lib

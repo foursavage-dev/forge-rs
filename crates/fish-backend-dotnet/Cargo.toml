@@ -1,0 +1,22 @@
+[package]
+name = "fish-backend-dotnet"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "C#/.NET backend for the Fish build tool"
+
+[dependencies]
+blake3 = "1"
+fish-core = { path = "../fish-core" }
+fish-executor = { path = "../fish-executor" }
+fish-graph = { path = "../fish-graph" }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+
+[dev-dependencies]
+fish-cache = { path = "../fish-cache" }
+fish-scheduler = { path = "../fish-scheduler" }
+tempfile = "3"

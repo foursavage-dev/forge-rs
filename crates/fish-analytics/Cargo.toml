@@ -1,0 +1,21 @@
+[package]
+name = "fish-analytics"
+version = "0.2.0"
+edition = "2024"
+authors = ["Foursavage Dev <foursavage@proton.me>"]
+license = "MIT"
+repository = "https://github.com/requla11/fish"
+description = "Build cache analytics dashboard for Fish"
+keywords = ["analytics", "dashboard", "cache", "metrics"]
+categories = ["development-tools"]
+
+[dependencies]
+anyhow = { workspace = true }
+fish-core = { path = "../fish-core" }
+fish-cache = { path = "../fish-cache" }
+
+thiserror = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.40", features = ["full"] }
+chrono = { version = "0.4", features = ["serde"] }

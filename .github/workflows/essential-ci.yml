@@ -31,7 +31,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run Core Tests
-        run: cargo test -p forge-core -p forge-scheduler -p forge-cache -p forge-cas -p forge-executor --lib
+        run: cargo test -p fish-core -p fish-scheduler -p fish-cache -p fish-cas -p fish-executor --lib
 
   critical-quality:
     name: Critical Quality Checks
@@ -45,7 +45,7 @@ jobs:
       - name: Check format
         run: cargo fmt --all -- --check
       - name: Check clippy
-        run: cargo clippy -p forge-core -p forge-scheduler -p forge-cache -p forge-cas -p forge-executor -- -D warnings
+        run: cargo clippy -p fish-core -p fish-scheduler -p fish-cache -p fish-cas -p fish-executor -- -D warnings
 
   essential-status:
     name: Essential CI Status

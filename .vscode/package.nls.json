@@ -1,0 +1,14 @@
+{
+  "fish.command.build": "fish: Build Project",
+  "fish.command.test": "fish: Run Tests",
+  "fish.command.graph": "fish: Show Build Graph",
+  "fish.command.ui": "fish: Open Web Dashboard & DAG Canvas",
+  "fish.command.explain": "fish: Explain Rebuild Reasons",
+  "fish.command.exportCompileCommands": "fish: Export compile_commands.json for Clangd & LSP",
+  "fish.command.clean": "fish: Clean Build Artifacts",
+  "fish.command.doctor": "fish: Run Diagnostics",
+  "fish.command.affected": "fish: Show Affected Packages",
+  "fish.command.refreshPackages": "fish: Refresh Package Tree",
+  "fish.command.buildPackage": "fish: Build Selected Package",
+  "fish.command.testPackage": "fish: Run Tests for Selected Package"
+}

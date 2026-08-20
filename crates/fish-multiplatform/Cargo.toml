@@ -1,0 +1,19 @@
+[package]
+name = "fish-multiplatform"
+version = "0.2.0"
+edition = "2024"
+authors = ["Foursavage Dev <foursavage@proton.me>"]
+license = "MIT"
+repository = "https://github.com/requla11/fish"
+description = "Multi-platform CI matrix generator for Fish"
+keywords = ["ci", "matrix", "multiplatform", "cross-platform"]
+categories = ["development-tools"]
+
+[dependencies]
+fish-core = { path = "../fish-core" }
+fish-ci-generator = { path = "../fish-ci-generator" }
+
+thiserror = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.40", features = ["full"] }

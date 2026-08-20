@@ -26,7 +26,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run cache benchmarks
-        run: cargo bench -p forge-cache
+        run: cargo bench -p fish-cache
       - name: Upload benchmark results
         uses: actions/upload-artifact@v7
         with:
@@ -42,7 +42,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run scheduler benchmarks
-        run: cargo test -p forge-scheduler --release -- --nocapture
+        run: cargo test -p fish-scheduler --release -- --nocapture
 
   concurrent-performance:
     name: Concurrent Performance Testing
@@ -52,7 +52,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run concurrent executor benchmarks
-        run: cargo test -p forge-executor --release -- --nocapture
+        run: cargo test -p fish-executor --release -- --nocapture
 
   benchmark-summary:
     name: Benchmark Summary

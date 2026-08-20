@@ -1,6 +1,6 @@
 # Rust Backend
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
 
 The Rust backend provides build orchestration for Rust projects using Cargo.
 
@@ -10,7 +10,7 @@ The Rust backend is detected when a `Cargo.toml` file is present in the project 
 
 ## Configuration
 
-Configure the Rust backend via `forge.toml` in your project or workspace root:
+Configure the Rust backend via `fish.toml` in your project or workspace root:
 
 ```toml
 [build]
@@ -78,21 +78,21 @@ The Rust backend fingerprints:
 
 ```bash
 cd my-rust-project
-forge build
+Fish build
 ```
 
 ### Workspace with Features
 
 ```bash
 cd my-workspace
-forge build -p my-package --features "serde,uuid"
+Fish build -p my-package --features "serde,uuid"
 ```
 
 ### Workspace with Tests
 
 ```bash
 cd my-workspace
-forge test
+Fish test
 ```
 
 ## Limitations
@@ -121,4 +121,4 @@ Check that native dependencies are installed and toolchain is correct.
 
 ### Cache not working
 
-Clear cache: `forge cache prune` and rebuild.
+Clear cache: `Fish cache prune` and rebuild.

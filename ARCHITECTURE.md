@@ -1,16 +1,16 @@
-# Forge Architecture
+# Fish Architecture
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
-This document describes the high-level architecture of the Forge build orchestration system.
+This document describes the high-level architecture of the Fish build orchestration system.
 
 ## Overview
 
-Forge is a cache-first, polyglot build orchestration system designed for monorepos and polyglot projects. It uses a dependency graph, parallel scheduler, executor, and CAS artifact cache to optimize build performance.
+Fish is a cache-first, polyglot build orchestration system designed for monorepos and polyglot projects. It uses a dependency graph, parallel scheduler, executor, and CAS artifact cache to optimize build performance.
 
 ## Core Components
 
-### 1. Workspace Discovery (`forge-core`)
+### 1. Workspace Discovery (`fish-core`)
 
 **Purpose**: Discover and model the project structure
 
@@ -31,7 +31,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - `CompilationDatabase`: Standard compilation command database
 - `ToolchainRegistry`: Hermetic toolchain configuration manager
 
-### 2. Build Graph (`forge-graph`)
+### 2. Build Graph (`fish-graph`)
 
 **Purpose**: Model build dependencies, execution order, and algebraic queries
 
@@ -52,7 +52,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - `GraphQueryEngine`: Evaluator for graph query expressions
 - `QueryExpr`: Algebraic query AST
 
-### 3. Executor (`forge-executor`)
+### 3. Executor (`fish-executor`)
 
 **Purpose**: Execute build commands, manage processes, and handle file system cloning
 
@@ -62,7 +62,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - Handle process timeouts and cancellation
 - Fast file system cloning using copy-on-write extents and hardlinks (`KernelCowCloner`)
 - Fast linker auto-detection and flag synthesis (`LinkerDispatcher` supporting `mold`, `lld`, and `msvc`)
-- Automatic response file synthesis (`@forge_args.rsp`) when arguments exceed OS limits
+- Automatic response file synthesis (`@fish_args.rsp`) when arguments exceed OS limits
 - Extensible task middleware pipeline (`TaskMiddleware`, `TurboLinker`, `SuperOptimizer`)
 - Return execution results
 
@@ -75,7 +75,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - `TaskMiddleware`: Middleware trait for task interception
 - `ExecutionResult`: Result of command execution
 
-### 4. Scheduler (`forge-scheduler`)
+### 4. Scheduler (`fish-scheduler`)
 
 **Purpose**: Schedule tasks for parallel, speculative, and distributed execution
 
@@ -101,7 +101,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - `FsWatcherDaemon`: Real-time change listener and dirty node tracker
 - `WorkStealingPool`: Lock-free task distributor
 
-### 5. Cache (`forge-cache`)
+### 5. Cache (`fish-cache`)
 
 **Purpose**: Fingerprint-based caching for incremental builds
 
@@ -116,7 +116,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - `CacheEntry`: Cached execution result
 - `FileLevelCache`: File-level caching strategy
 
-### 6. CAS Engine (`forge-cas`)
+### 6. CAS Engine (`fish-cas`)
 
 **Purpose**: Content-Addressable Storage for artifact caching
 
@@ -131,7 +131,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - `LocalStorage`: Local file system storage
 - `RemoteStorage`: Remote storage (S3, GCS, MinIO)
 
-### 7. Remote Cache (`forge-remote-cache`)
+### 7. Remote Cache (`fish-remote-cache`)
 
 **Purpose**: Tiered L1/L2 composite caching
 
@@ -145,7 +145,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - `CompositeCache`: Tiered cache implementation
 - `CachePolicy`: Cache population and eviction policies
 
-### 8. Worker (`forge-worker`)
+### 8. Worker (`fish-worker`)
 
 **Purpose**: Distributed build execution
 
@@ -160,7 +160,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - `ClusterExecutor`: Cluster task execution
 - `VirtualFileSystem`: In-memory VFS
 
-### 9. Sandboxing (`forge-sandbox`)
+### 9. Sandboxing (`fish-sandbox`)
 
 **Purpose**: Hermetic environment isolation
 
@@ -174,7 +174,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - `Sandbox`: Sandbox implementation
 - `SandboxConfig`: Sandbox configuration
 
-### 10. Plugin System (`forge-plugin`)
+### 10. Plugin System (`fish-plugin`)
 
 **Purpose**: Extensible rule system
 
@@ -205,35 +205,35 @@ pub trait Backend {
 
 ### Supported Backends
 
-- **Rust** (`forge-backend-rust`): Cargo workspaces
-- **C/C++** (`forge-backend-cc`): gcc/clang/msvc
-- **Go** (`forge-backend-go`): go.mod
-- **TypeScript/JS** (`forge-backend-ts`): package.json
-- **Python** (`forge-backend-py`): pyproject.toml
-- **Java** (`forge-backend-java`): Maven/Gradle
-- **.NET** (`forge-backend-dotnet`): csproj/sln
-- **Swift** (`forge-backend-swift`): Package.swift
-- **Dart** (`forge-backend-dart`): pubspec.yaml
-- **Zig** (`forge-backend-zig`): build.zig
-- **Docker** (`forge-backend-docker`): Dockerfile
+- **Rust** (`fish-backend-rust`): Cargo workspaces
+- **C/C++** (`fish-backend-cc`): gcc/clang/msvc
+- **Go** (`fish-backend-go`): go.mod
+- **TypeScript/JS** (`fish-backend-ts`): package.json
+- **Python** (`fish-backend-py`): pyproject.toml
+- **Java** (`fish-backend-java`): Maven/Gradle
+- **.NET** (`fish-backend-dotnet`): csproj/sln
+- **Swift** (`fish-backend-swift`): Package.swift
+- **Dart** (`fish-backend-dart`): pubspec.yaml
+- **Zig** (`fish-backend-zig`): build.zig
+- **Docker** (`fish-backend-docker`): Dockerfile
 
 ## Security Features
 
-### 1. Artifact Signing (`forge-signing`)
+### 1. Artifact Signing (`fish-signing`)
 
 - Ed25519 cryptographic signing
 - SBOM generation (SPDX/CycloneDX)
 - Artifact verification
 - Source-to-build chain tracking
 
-### 2. Security Scanner (`forge-security`)
+### 2. Security Scanner (`fish-security`)
 
 - Dependency vulnerability scanning
 - Multi-backend support
 - Severity-based blocking
 - CVSS score tracking
 
-### 3. Secret Management (`forge-secrets`)
+### 3. Secret Management (`fish-secrets`)
 
 - HashiCorp Vault integration
 - AWS Secrets Manager
@@ -242,7 +242,7 @@ pub trait Backend {
 
 ## CI/CD Generation
 
-### CI Generator (`forge-ci-generator`)
+### CI Generator (`fish-ci-generator`)
 
 Supports multiple CI/CD platforms:
 - GitHub Actions
@@ -259,67 +259,67 @@ Supports multiple CI/CD platforms:
 
 ## Advanced Features
 
-### 1. Build Analytics (`forge-analytics`)
+### 1. Build Analytics (`fish-analytics`)
 
 - Real-time cache hit rate tracking
 - Build metrics collection
 - Performance visualization
 - Optimization suggestions
 
-### 2. Multi-Platform CI (`forge-multiplatform`)
+### 2. Multi-Platform CI (`fish-multiplatform`)
 
 - Platform detection
 - Target triple generation
 - Matrix configuration
 - Parallel execution
 
-### 3. Notifications (`forge-notifications`)
+### 3. Notifications (`fish-notifications`)
 
 - Slack webhook integration
 - Discord webhook support
 - Email notifications
 - Rich build context
 
-### 4. Flaky Test Detection (`forge-flaky-detection`)
+### 4. Flaky Test Detection (`fish-flaky-detection`)
 
 - Statistical analysis
 - Configurable retry policies
 - Test history tracking
 - Failure rate monitoring
 
-### 5. Docker Builder (`forge-docker-builder`)
+### 5. Docker Builder (`fish-docker-builder`)
 
 - First-class Docker artifacts
 - Layer caching
 - Registry integration
 - Multi-stage builds
 
-### 6. Incremental Analysis (`forge-incremental`)
+### 6. Incremental Analysis (`fish-incremental`)
 
 - AST-based dependency inference (`DependencyInferenceEngine`) for Rust, TypeScript/JavaScript, Python, and Go
-- Dirty rebuild diagnostics (`DirtyExplainer`, `forge build --explain`) identifying exact source file modifications or hash mismatches
+- Dirty rebuild diagnostics (`DirtyExplainer`, `Fish build --explain`) identifying exact source file modifications or hash mismatches
 - Build pattern detection and hotspot identification
 - Refactoring suggestions and rebuild frequency analysis
 
-### 7. Build Daemon & IPC (`forge-cli::daemon`)
+### 7. Build Daemon & IPC (`fish-cli::daemon`)
 
-- Background loopback TCP daemon (`ForgeDaemon`) on `127.0.0.1:9527`
+- Background loopback TCP daemon (`FishDaemon`) on `127.0.0.1:9527`
 - Sub-millisecond graph caching and warm execution
-- Commands: `forge daemon start`, `forge daemon status`, `forge daemon stop`
+- Commands: `Fish daemon start`, `Fish daemon status`, `Fish daemon stop`
 
-### 8. Profile-Guided Optimization (`forge-cli::pgo`)
+### 8. Profile-Guided Optimization (`fish-cli::pgo`)
 
 - 2-phase LLVM PGO workflow orchestration (`PgoManager`)
 - Automated `-Cprofile-generate` instrumentation and `llvm-profdata merge`
 - Recompilation with `-Cprofile-use` for maximum runtime performance
 
-### 9. Task Pipeline Topology (`forge-cli::pipeline`)
+### 9. Task Pipeline Topology (`fish-cli::pipeline`)
 
-- Turborepo/Nx style topological task pipelines configured via `forge.toml`
+- Turborepo/Nx style topological task pipelines configured via `fish.toml`
 - Cross-package dependency rules (e.g. `^build` ensuring dependency outputs are built first)
 - Configurable environment variable and input file fingerprint hashes
 
-### 10. Pipeline Templates (`forge-templates`)
+### 10. Pipeline Templates (`fish-templates`)
 
 - Shareable templates
 - Handlebars rendering
@@ -332,17 +332,17 @@ Supports multiple CI/CD platforms:
 
 ```
 1. Workspace Discovery
-   ↓
+   â†“
 2. Dependency Graph Construction
-   ↓
+   â†“
 3. Cache Fingerprint Computation
-   ↓
+   â†“
 4. Scheduler Task Distribution
-   ↓
+   â†“
 5. Executor Process Management
-   ↓
+   â†“
 6. Result Collection & Caching
-   ↓
+   â†“
 7. Build Completion
 ```
 
@@ -350,15 +350,15 @@ Supports multiple CI/CD platforms:
 
 ```
 1. Worker Registration
-   ↓
+   â†“
 2. Task Distribution
-   ↓
+   â†“
 3. VFS File Streaming
-   ↓
+   â†“
 4. Remote Execution
-   ↓
+   â†“
 5. Result Aggregation
-   ↓
+   â†“
 6. Cache Population
 ```
 

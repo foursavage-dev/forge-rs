@@ -1,0 +1,14 @@
+{
+  "fish.command.build": "fish: æž„å»ºé¡¹ç›®",
+  "fish.command.test": "fish: è¿è¡Œæµ‹è¯•",
+  "fish.command.graph": "fish: æŸ¥çœ‹ä¾èµ–æ‹“æ‰‘å›¾",
+  "fish.command.ui": "fish: æ‰“å¼€ Web æŽ§åˆ¶å°ä¸Ž DAG ç”»å¸ƒ",
+  "fish.command.explain": "fish: è§£é‡Šé‡æ–°æž„å»ºåŽŸå› ",
+  "fish.command.exportCompileCommands": "fish: å¯¼å‡º compile_commands.json (Clangd & LSP)",
+  "fish.command.clean": "fish: æ¸…ç†æž„å»ºäº§ç‰©",
+  "fish.command.doctor": "fish: ç³»ç»ŸçŽ¯å¢ƒè¯Šæ–­",
+  "fish.command.affected": "fish: æ˜¾ç¤ºå—å½±å“çš„è½¯ä»¶åŒ…",
+  "fish.command.refreshPackages": "fish: åˆ·æ–°è½¯ä»¶åŒ…åˆ—è¡¨",
+  "fish.command.buildPackage": "fish: æž„å»ºæ‰€é€‰è½¯ä»¶åŒ…",
+  "fish.command.testPackage": "fish: æµ‹è¯•æ‰€é€‰è½¯ä»¶åŒ…"
+}

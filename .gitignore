@@ -3,6 +3,7 @@
 debug
 target
 build
+.fish
 .forge
 
 # VS Code extension build and dependency artifacts

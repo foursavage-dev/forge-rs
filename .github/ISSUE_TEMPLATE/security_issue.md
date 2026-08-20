@@ -6,7 +6,7 @@ labels: security
 assignees: ''
 ---
 
-**⚠️ IMPORTANT: Do not report security vulnerabilities publicly!**
+**Ã¢Å¡Â Ã¯Â¸Â IMPORTANT: Do not report security vulnerabilities publicly!**
 
 For security vulnerabilities, please email: **foursavage@proton.me**
 
@@ -27,4 +27,4 @@ Please read our [Security Policy](../SECURITY.md) for details on:
 
 ## Acknowledgments
 
-We appreciate your help in keeping Forge secure!
+We appreciate your help in keeping Fish secure!

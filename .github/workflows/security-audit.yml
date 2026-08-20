@@ -55,7 +55,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Test security modules
-        run: cargo test -p forge-security -p forge-secrets -p forge-signing --lib
+        run: cargo test -p fish-security -p fish-secrets -p fish-signing --lib
 
   codeql:
     name: CodeQL Analysis

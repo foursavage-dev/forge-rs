@@ -1,0 +1,23 @@
+[package]
+name = "fish-dashboard"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Interactive web dashboard for Fish build system with flamegraph visualization"
+
+[dependencies]
+fish-core = { workspace = true }
+fish-graph = { workspace = true }
+fish-cache = { workspace = true }
+fish-cas = { workspace = true }
+fish-executor = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { version = "1", features = ["full"] }
+actix-web = "4"
+actix-cors = "0.7"
+actix-files = "0.6"
+chrono = { version = "0.4", features = ["serde"] }
+regex = "1"
