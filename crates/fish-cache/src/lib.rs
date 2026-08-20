@@ -3,11 +3,13 @@
 pub mod async_io;
 pub mod file_level;
 pub mod file_level_adapter;
+pub mod gc;
 pub mod pool;
 pub mod strategies;
 
 pub use async_io::{AsyncCache, AsyncFileReader, AsyncFileWriter, AsyncIoError};
 pub use file_level_adapter::{FileLevelCacheAdapter, HybridCachingExecutor};
+pub use gc::{BackgroundCacheGc, EvictionPolicy, GcConfig};
 pub use pool::{BufferPool, PoolStats, ScopedBuffer};
 pub use strategies::{LruCache, PredictiveCache, SpinLockLruCache, TieredCache};
 

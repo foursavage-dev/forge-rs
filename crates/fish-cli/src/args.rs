@@ -60,6 +60,7 @@ pub enum Command {
     Daemon(DaemonArgs),
     Ai(AiArgs),
     Lsp(LspArgs),
+    Why(WhyArgs),
 }
 
 #[derive(Debug, Args)]
@@ -569,4 +570,11 @@ pub enum AiAction {
         files: Vec<String>,
     },
     Ping,
+}
+
+#[derive(Debug, Args)]
+pub struct WhyArgs {
+    pub target: String,
+    #[arg(long, short)]
+    pub path: Option<PathBuf>,
 }
