@@ -1,5 +1,7 @@
 # AI Agent Workflow Guide for Fish
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+
 This document provides detailed step-by-step instructions for AI coding agents working with the fish build orchestration system. Following this workflow ensures minimal errors, smooth operation, and high-quality contributions.
 
 ## 🎯 Overview
