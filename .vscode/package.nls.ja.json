@@ -1,14 +1,14 @@
 {
-  "forge.command.build": "Forge: プロジェクトをビルド",
-  "forge.command.test": "Forge: テストを実行",
-  "forge.command.graph": "Forge: 依存関係グラフを表示",
-  "forge.command.ui": "Forge: Web ダッシュボードと DAG キャンバスを開く",
-  "forge.command.explain": "Forge: 再ビルドの理由を説明",
-  "forge.command.exportCompileCommands": "Forge: Clangd および LSP 用に compile_commands.json をエクスポート",
-  "forge.command.clean": "Forge: ビルド成果物をクリーンアップ",
-  "forge.command.doctor": "Forge: システム環境診断を実行",
-  "forge.command.affected": "Forge: 影響を受けるパッケージを表示",
-  "forge.command.refreshPackages": "Forge: パッケージツリーを更新",
-  "forge.command.buildPackage": "Forge: 選択したパッケージをビルド",
-  "forge.command.testPackage": "Forge: 選択したパッケージをテスト"
+  "fish.command.build": "fish: ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã‚’ãƒ“ãƒ«ãƒ‰",
+  "fish.command.test": "fish: ãƒ†ã‚¹ãƒˆã‚’å®Ÿè¡Œ",
+  "fish.command.graph": "fish: ä¾å­˜é–¢ä¿‚ã‚°ãƒ©ãƒ•ã‚’è¡¨ç¤º",
+  "fish.command.ui": "fish: Web ãƒ€ãƒƒã‚·ãƒ¥ãƒœãƒ¼ãƒ‰ã¨ DAG ã‚­ãƒ£ãƒ³ãƒã‚¹ã‚’é–‹ã",
+  "fish.command.explain": "fish: å†ãƒ“ãƒ«ãƒ‰ã®ç†ç”±ã‚’èª¬æ˜Ž",
+  "fish.command.exportCompileCommands": "fish: Clangd ãŠã‚ˆã³ LSP ç”¨ã« compile_commands.json ã‚’ã‚¨ã‚¯ã‚¹ãƒãƒ¼ãƒˆ",
+  "fish.command.clean": "fish: ãƒ“ãƒ«ãƒ‰æˆæžœç‰©ã‚’ã‚¯ãƒªãƒ¼ãƒ³ã‚¢ãƒƒãƒ—",
+  "fish.command.doctor": "fish: ã‚·ã‚¹ãƒ†ãƒ ç’°å¢ƒè¨ºæ–­ã‚’å®Ÿè¡Œ",
+  "fish.command.affected": "fish: å½±éŸ¿ã‚’å—ã‘ã‚‹ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ã‚’è¡¨ç¤º",
+  "fish.command.refreshPackages": "fish: ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ãƒ„ãƒªãƒ¼ã‚’æ›´æ–°",
+  "fish.command.buildPackage": "fish: é¸æŠžã—ãŸãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ã‚’ãƒ“ãƒ«ãƒ‰",
+  "fish.command.testPackage": "fish: é¸æŠžã—ãŸãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ã‚’ãƒ†ã‚¹ãƒˆ"
 }

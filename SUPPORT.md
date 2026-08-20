@@ -1,8 +1,8 @@
 # Support
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> ðŸŒ **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
-This document provides support resources for Forge users.
+This document provides support resources for Fish users.
 
 ## Getting Help
 
@@ -25,7 +25,7 @@ This document provides support resources for Forge users.
 
 ### Installation Problems
 
-#### Forge not found after installation
+#### Fish not found after installation
 
 **Solution**: Ensure the installation directory is in your PATH:
 
@@ -34,7 +34,7 @@ This document provides support resources for Forge users.
 export PATH="$HOME/.local/bin:$PATH"
 
 # Windows
-# Add forge installation directory to PATH
+# Add Fish installation directory to PATH
 ```
 
 #### Permission denied on Linux/macOS
@@ -42,7 +42,7 @@ export PATH="$HOME/.local/bin:$PATH"
 **Solution**: Make the binary executable:
 
 ```bash
-chmod +x ~/.local/bin/forge
+chmod +x ~/.local/bin/Fish
 ```
 
 ### Build Issues
@@ -71,7 +71,7 @@ go install golang.org/dl/go@latest
 **Solution**: Clear the cache:
 
 ```bash
-forge cache prune
+Fish cache prune
 ```
 
 ### Performance Issues
@@ -79,16 +79,16 @@ forge cache prune
 #### Slow builds
 
 **Solutions**:
-1. Check cache hit rate: `forge cache stats`
-2. Enable parallel builds: `forge build -j $(nproc)`
+1. Check cache hit rate: `Fish cache stats`
+2. Enable parallel builds: `Fish build -j $(nproc)`
 3. Use distributed workers if available
-4. Profile with: `forge build --profile`
+4. Profile with: `Fish build --profile`
 
 #### High memory usage
 
 **Solutions**:
-1. Reduce parallel jobs: `forge build -j 4`
-2. Clear cache: `forge cache prune`
+1. Reduce parallel jobs: `Fish build -j 4`
+2. Clear cache: `Fish cache prune`
 3. Check for memory leaks
 
 ### CI/CD Issues
@@ -99,10 +99,10 @@ forge cache prune
 
 ```bash
 # Supported platforms
-forge ci init --platform github    # GitHub Actions
-forge ci init --platform gitlab    # GitLab CI
-forge ci init --platform circleci  # CircleCI
-forge ci init --platform bitbucket # Bitbucket Pipelines
+Fish ci init --platform github    # GitHub Actions
+Fish ci init --platform gitlab    # GitLab CI
+Fish ci init --platform circleci  # CircleCI
+Fish ci init --platform bitbucket # Bitbucket Pipelines
 ```
 
 #### Generated CI doesn't work
@@ -160,11 +160,11 @@ pip install --upgrade pip
 
 ### General Troubleshooting
 
-1. **Check version**: `forge --version`
-2. **Check environment**: `forge doctor`
-3. **Enable debug logging**: `RUST_LOG=debug forge build`
-4. **Clear cache**: `forge cache prune`
-5. **Update Forge**: Install latest version
+1. **Check version**: `Fish --version`
+2. **Check environment**: `Fish doctor`
+3. **Enable debug logging**: `RUST_LOG=debug Fish build`
+4. **Clear cache**: `Fish cache prune`
+5. **Update Fish**: Install latest version
 6. **Check for known issues**: GitHub issues
 
 ### Diagnostic Information
@@ -173,10 +173,10 @@ When reporting issues, include:
 
 ```bash
 # Version
-forge --version
+Fish --version
 
 # Environment
-forge doctor
+Fish doctor
 
 # System info
 uname -a
@@ -185,7 +185,7 @@ uname -a
 rustc --version
 
 # Detailed logs
-RUST_LOG=debug forge build 2>&1 | tee debug.log
+RUST_LOG=debug Fish build 2>&1 | tee debug.log
 ```
 
 ## Feature Requests
@@ -239,7 +239,7 @@ Steps to reproduce
 What should happen
 
 **Environment**
-OS, Rust version, Forge version
+OS, Rust version, Fish version
 
 **Additional Context**
 Logs, screenshots, etc.
@@ -271,4 +271,4 @@ For enterprise support, SLAs, and priority assistance:
 
 ## Acknowledgments
 
-Support from the community helps make Forge better. Thank you!
+Support from the community helps make Fish better. Thank you!

@@ -1,14 +1,14 @@
 {
-  "forge.command.build": "Forge: 建置專案",
-  "forge.command.test": "Forge: 執行測試",
-  "forge.command.graph": "Forge: 檢視依賴拓撲圖",
-  "forge.command.ui": "Forge: 開啟 Web 控制台與 DAG 畫布",
-  "forge.command.explain": "Forge: 解釋重新建置原因",
-  "forge.command.exportCompileCommands": "Forge: 匯出 compile_commands.json (Clangd & LSP)",
-  "forge.command.clean": "Forge: 清理建置產物",
-  "forge.command.doctor": "Forge: 系統環境診斷",
-  "forge.command.affected": "Forge: 顯示受影響的軟體套件",
-  "forge.command.refreshPackages": "Forge: 重新整理軟體套件列表",
-  "forge.command.buildPackage": "Forge: 建置所選軟體套件",
-  "forge.command.testPackage": "Forge: 測試所選軟體套件"
+  "fish.command.build": "fish: å»ºç½®å°ˆæ¡ˆ",
+  "fish.command.test": "fish: åŸ·è¡Œæ¸¬è©¦",
+  "fish.command.graph": "fish: æª¢è¦–ä¾è³´æ‹“æ’²åœ–",
+  "fish.command.ui": "fish: é–‹å•Ÿ Web æŽ§åˆ¶å°èˆ‡ DAG ç•«å¸ƒ",
+  "fish.command.explain": "fish: è§£é‡‹é‡æ–°å»ºç½®åŽŸå› ",
+  "fish.command.exportCompileCommands": "fish: åŒ¯å‡º compile_commands.json (Clangd & LSP)",
+  "fish.command.clean": "fish: æ¸…ç†å»ºç½®ç”¢ç‰©",
+  "fish.command.doctor": "fish: ç³»çµ±ç’°å¢ƒè¨ºæ–·",
+  "fish.command.affected": "fish: é¡¯ç¤ºå—å½±éŸ¿çš„è»Ÿé«”å¥—ä»¶",
+  "fish.command.refreshPackages": "fish: é‡æ–°æ•´ç†è»Ÿé«”å¥—ä»¶åˆ—è¡¨",
+  "fish.command.buildPackage": "fish: å»ºç½®æ‰€é¸è»Ÿé«”å¥—ä»¶",
+  "fish.command.testPackage": "fish: æ¸¬è©¦æ‰€é¸è»Ÿé«”å¥—ä»¶"
 }

@@ -24,10 +24,10 @@ build:
     - test
   script:
     - cargo build --workspace --release
-    - cargo build -p forge-cli --release
+    - cargo build -p fish-cli --release
   artifacts:
     paths:
-      - target/release/forge
+      - target/release/Fish
   cache:
     key: "$CI_COMMIT_REF_SLUG-build"
     paths:

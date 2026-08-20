@@ -9,7 +9,7 @@ import (
 func main() {
 	http.HandleFunc("/", handleRequest)
 
-	fmt.Println("🚀 Go Service starting on port 8081...")
+	fmt.Println("ðŸš€ Go Service starting on port 8081...")
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }
 

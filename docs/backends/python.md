@@ -1,6 +1,6 @@
 # Python Backend
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
 
 The Python backend provides build orchestration for Python projects.
 
@@ -10,7 +10,7 @@ The Python backend is detected when a `pyproject.toml` or `setup.py` file is pre
 
 ## Configuration
 
-Configure the Python backend via `forge.toml` in your project or workspace root:
+Configure the Python backend via `fish.toml` in your project or workspace root:
 
 ```toml
 [build]
@@ -86,21 +86,21 @@ The Python backend fingerprints:
 
 ```bash
 cd my-python-project
-forge build
+Fish build
 ```
 
 ### Poetry Project
 
 ```bash
 cd my-poetry-project
-forge build
+Fish build
 ```
 
 ### Project with Tests
 
 ```bash
 cd my-python-project
-forge test
+Fish test
 ```
 
 ## Performance Optimization
@@ -127,4 +127,4 @@ Install Poetry: `curl -sSL https://install.python-poetry.org | python3 -`
 
 ### Cache not working
 
-Clear cache: `forge cache prune` and rebuild.
+Clear cache: `Fish cache prune` and rebuild.

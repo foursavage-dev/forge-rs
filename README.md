@@ -1,16 +1,16 @@
-# Forge
+# Fish
 
-[![CI](https://github.com/foursavage-dev/forge-rs/actions/workflows/dogfood.yml/badge.svg)](https://github.com/foursavage-dev/forge-rs/actions/workflows/dogfood.yml)
+[![CI](https://github.com/foursavage-dev/fish-rs/actions/workflows/dogfood.yml/badge.svg)](https://github.com/foursavage-dev/fish-rs/actions/workflows/dogfood.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.88%2B-orange.svg)](https://www.rust-lang.org)
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> ðŸŒ **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
-Forge is a Rust build-orchestration experiment for projects that use more than
+Fish is a Rust build-orchestration experiment for projects that use more than
 one toolchain. It discovers supported projects, constructs a dependency graph,
 and runs build, check, and test work with local caching and parallel scheduling.
 
-Forge does not replace compilers or package managers. It coordinates tools such
+Fish does not replace compilers or package managers. It coordinates tools such
 as Cargo, Go, Node.js, Python, C/C++, Docker, and other supported backends.
 
 > Status: pre-1.0. The CLI and configuration may change. Treat distributed,
@@ -28,16 +28,16 @@ as Cargo, Go, Node.js, Python, C/C++, Docker, and other supported backends.
 - Optional remote cache/worker, sandbox, signing, and experimental modules.
 
 The source tree contains the authoritative list of commands and supported
-options. Run `forge --help` and `forge <command> --help` for your installed
+options. Run `Fish --help` and `Fish <command> --help` for your installed
 version.
 
 ## Branch Policy
 
-Forge uses two main branches:
+Fish uses two main branches:
 
-- **`main`** — The stable branch and the primary source of code for the
+- **`main`** â€” The stable branch and the primary source of code for the
   project. Code in `main` should be tested and considered stable.
-- **`dev`** — The development and experimental branch. New features, changes,
+- **`dev`** â€” The development and experimental branch. New features, changes,
   fixes, and other experimental code are developed and tested here first.
 
 Changes should **not be merged directly into `main`** during normal
@@ -49,13 +49,13 @@ In short:
 
 ```text
 dev
- │
- │  develop + test
- ▼
+ â”‚
+ â”‚  develop + test
+ â–¼
 [verified / stable]
- │
- │  merge
- ▼
+ â”‚
+ â”‚  merge
+ â–¼
 main
 ```
 
@@ -67,15 +67,15 @@ main
 ### From source
 
 ```bash
-cargo install --path crates/forge-cli
+cargo install --path crates/fish-cli
 ```
 
 ### Development checkout
 
 ```bash
-git clone https://github.com/foursavage-dev/forge-rs.git
-cd forge-rs
-cargo build -p forge-cli
+git clone https://github.com/foursavage-dev/fish-rs.git
+cd fish-rs
+cargo build -p fish-cli
 ```
 
 The project requires Rust 1.88 or later (MSRV 1.88).
@@ -85,32 +85,32 @@ The project requires Rust 1.88 or later (MSRV 1.88).
 Build a supported project from its root:
 
 ```bash
-forge build
-forge test
-forge graph --format dot
+Fish build
+Fish test
+Fish graph --format dot
 ```
 
 Useful variants:
 
 ```bash
 # Select parallelism and write a trace profile.
-forge build --jobs 8 --profile build-trace.json
+Fish build --jobs 8 --profile build-trace.json
 
 # Inspect the detected projects and their dependencies.
-forge graph --format tree
+Fish graph --format tree
 
 # Rebuild when source files change.
-forge watch --mode test
+Fish watch --mode test
 
 # Launch the interactive Web Dashboard & DAG visualizer.
-forge ui --port 3000 --open
+Fish ui --port 3000 --open
 
 # See the local cache's size and record count.
-forge cache stats
+Fish cache stats
 ```
 
-Forge stores its local cache in `~/.forge/cache` by default. Set
-`FORGE_CACHE_DIR` or pass `--cache-dir <path>` to use a project- or
+Fish stores its local cache in `~/.Fish/cache` by default. Set
+`fish_CACHE_DIR` or pass `--cache-dir <path>` to use a project- or
 CI-specific location.
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for local development and
@@ -120,21 +120,21 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for local development and
 
 | Command | Purpose |
 | --- | --- |
-| `forge init` | Initialize Forge configuration and generate task definitions for detected project languages. |
-| `forge build`, `check`, `test` | Execute work discovered from the project graph (supports `--explain`, `--pgo-generate`, `--pgo-use`). |
-| `forge ui` | Start the interactive Web Dashboard & DAG visualizer with 5-language telemetry. |
-| `forge query <EXPR>` | Query graph algebra: `deps(...)`, `rdeps(...)`, `allpaths(...)`, `somepath(...)`, `filter(...)`. |
-| `forge daemon` | Manage background build daemon (`start`, `status`, `stop`) for sub-millisecond warm builds. |
-| `forge run` | Build and run a selected Rust package or binary. |
-| `forge graph` | Print the graph as stage trees, JSON, or DOT. |
-| `forge watch` | Re-run build, check, or test after relevant file changes. |
-| `forge affected --since REV` | Limit work to projects changed since a revision. |
-| `forge cache` | Inspect, prune, and manage the local cache and CAS. |
-| `forge ci init` / `export` | Generate CI configurations for GitHub, GitLab, CircleCI, Bitbucket. |
-| `forge doctor` | Check local toolchain readiness and diagnose system environment. |
-| `forge worker` / `cache-server` | Start optional remote-execution services. |
+| `Fish init` | Initialize Fish configuration and generate task definitions for detected project languages. |
+| `Fish build`, `check`, `test` | Execute work discovered from the project graph (supports `--explain`, `--pgo-generate`, `--pgo-use`). |
+| `Fish ui` | Start the interactive Web Dashboard & DAG visualizer with 5-language telemetry. |
+| `Fish query <EXPR>` | Query graph algebra: `deps(...)`, `rdeps(...)`, `allpaths(...)`, `somepath(...)`, `filter(...)`. |
+| `Fish daemon` | Manage background build daemon (`start`, `status`, `stop`) for sub-millisecond warm builds. |
+| `Fish run` | Build and run a selected Rust package or binary. |
+| `Fish graph` | Print the graph as stage trees, JSON, or DOT. |
+| `Fish watch` | Re-run build, check, or test after relevant file changes. |
+| `Fish affected --since REV` | Limit work to projects changed since a revision. |
+| `Fish cache` | Inspect, prune, and manage the local cache and CAS. |
+| `Fish ci init` / `export` | Generate CI configurations for GitHub, GitLab, CircleCI, Bitbucket. |
+| `Fish doctor` | Check local toolchain readiness and diagnose system environment. |
+| `Fish worker` / `cache-server` | Start optional remote-execution services. |
 
-Some commands require a corresponding toolchain on `PATH`. `forge doctor` is a
+Some commands require a corresponding toolchain on `PATH`. `Fish doctor` is a
 good first check when setting up a machine.
 
 ## High-Performance Capabilities
@@ -156,19 +156,19 @@ good first check when setting up a machine.
 
 ```text
 crates/
-  forge-core/         project discovery, manifest model, and DAG merger
-  forge-graph/        dependency graph, topological sort, and query algebra
-  forge-executor/     process execution, middleware chain, and response files
-  forge-scheduler/    parallel scheduling, jobserver pool, racing, and DTE bin-packing
-  forge-cache/        fingerprint cache and two-phase pruning
-  forge-cas/          content-addressable artifact storage with ZSTD compression
-  forge-incremental/  change detection, AST inference, and dirty explainer
-  forge-backend-*/    11+ language and toolchain adapters
-  forge-worker/       distributed execution server and streaming VFS protocol
-  forge-remote-cache/ gRPC/HTTP remote cache server
-  forge-security/     multi-layer security, secret redaction, and CVE scanner
-  forge-signing/      Ed25519 cryptographic artifact signing and SPDX SBOM
-  forge-cli/          command-line application, daemon IPC, and terminal rendering
+  fish-core/         project discovery, manifest model, and DAG merger
+  fish-graph/        dependency graph, topological sort, and query algebra
+  fish-executor/     process execution, middleware chain, and response files
+  fish-scheduler/    parallel scheduling, jobserver pool, racing, and DTE bin-packing
+  fish-cache/        fingerprint cache and two-phase pruning
+  fish-cas/          content-addressable artifact storage with ZSTD compression
+  fish-incremental/  change detection, AST inference, and dirty explainer
+  fish-backend-*/    11+ language and toolchain adapters
+  fish-worker/       distributed execution server and streaming VFS protocol
+  fish-remote-cache/ gRPC/HTTP remote cache server
+  fish-security/     multi-layer security, secret redaction, and CVE scanner
+  fish-signing/      Ed25519 cryptographic artifact signing and SPDX SBOM
+  fish-cli/          command-line application, daemon IPC, and terminal rendering
 examples/             sample projects
 docs/                 additional documentation
 ```
@@ -184,6 +184,10 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 Security reports are handled under [SECURITY.md](SECURITY.md).
 
+## AI Agent Guide
+
+For AI coding agents working with this project, please refer to [AGENTS.md](AGENTS.md) for guidance on context reading order, coding patterns, and workflow instructions. The comprehensive step-by-step workflow is available in [docs/AI_AGENT_WORKFLOW.md](docs/AI_AGENT_WORKFLOW.md).
+
 ## License
 
-Forge is licensed under the [MIT License](LICENSE).
+Fish is licensed under the [MIT License](LICENSE).

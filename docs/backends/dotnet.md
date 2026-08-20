@@ -1,14 +1,14 @@
 # .NET Backend Guide
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
 
-Forge integrates with .NET solutions (`*.sln`) and C# projects (`*.csproj`).
+Fish integrates with .NET solutions (`*.sln`) and C# projects (`*.csproj`).
 
 ---
 
 ## Detection & Tasks
 
-Forge identifies .NET projects by scanning for `*.csproj`, `*.fsproj`, or `*.sln` files.
+Fish identifies .NET projects by scanning for `*.csproj`, `*.fsproj`, or `*.sln` files.
 
 ### Mapped Tasks:
 - `build`: `dotnet build --no-restore`

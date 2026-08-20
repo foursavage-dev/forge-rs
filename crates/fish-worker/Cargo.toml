@@ -1,0 +1,24 @@
+[package]
+name = "fish-worker"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Distributed remote execution daemon and worker client for Fish"
+
+[dependencies]
+anyhow = { workspace = true }
+base64 = "0.23"
+blake3 = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = { workspace = true }
+fish-core = { workspace = true }
+fish-executor = { workspace = true }
+fish-graph = { workspace = true }
+fish-remote-cache = { workspace = true }
+tempfile = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+fish-cache = { workspace = true }
+fish-scheduler = { workspace = true }

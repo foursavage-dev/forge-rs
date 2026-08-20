@@ -1,6 +1,6 @@
 # TypeScript/JavaScript Backend
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
 
 The TypeScript/JavaScript backend provides build orchestration for Node.js projects.
 
@@ -10,7 +10,7 @@ The TypeScript/JavaScript backend is detected when a `package.json` file is pres
 
 ## Configuration
 
-Configure the TypeScript/JavaScript backend via `forge.toml` in your project or workspace root:
+Configure the TypeScript/JavaScript backend via `fish.toml` in your project or workspace root:
 
 ```toml
 [build]
@@ -117,21 +117,21 @@ The TypeScript/JavaScript backend fingerprints:
 
 ```bash
 cd my-typescript-project
-forge build
+Fish build
 ```
 
 ### Project with pnpm
 
 ```bash
 cd my-pnpm-project
-forge build
+Fish build
 ```
 
 ### Nx Monorepo
 
 ```bash
 cd my-nx-monorepo
-forge build
+Fish build
 ```
 
 ## Performance Optimization
@@ -158,4 +158,4 @@ Check tsconfig.json and ensure types are installed.
 
 ### Cache not working
 
-Clear cache: `forge cache prune` and rebuild.
+Clear cache: `Fish cache prune` and rebuild.

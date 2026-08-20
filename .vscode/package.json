@@ -1,7 +1,7 @@
 {
-  "name": "forge-vscode",
-  "displayName": "Forge Build System",
-  "description": "VS Code extension for Forge build orchestration system",
+  "name": "fish-vscode",
+  "displayName": "fish Build System",
+  "description": "VS Code extension for fish build orchestration system",
   "version": "0.1.0",
   "publisher": "requla11",
   "engines": {
@@ -11,80 +11,80 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:forge.build",
-    "onCommand:forge.test",
-    "onCommand:forge.graph",
-    "onCommand:forge.clean",
-    "onCommand:forge.doctor",
-    "onCommand:forge.affected",
-    "onView:forgePackages"
+    "onCommand:fish.build",
+    "onCommand:fish.test",
+    "onCommand:fish.graph",
+    "onCommand:fish.clean",
+    "onCommand:fish.doctor",
+    "onCommand:fish.affected",
+    "onView:fishPackages"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "forge.build",
-        "title": "Forge: Build Project"
+        "command": "fish.build",
+        "title": "fish: Build Project"
       },
       {
-        "command": "forge.test",
-        "title": "Forge: Run Tests"
+        "command": "fish.test",
+        "title": "fish: Run Tests"
       },
       {
-        "command": "forge.graph",
-        "title": "Forge: Show Build Graph"
+        "command": "fish.graph",
+        "title": "fish: Show Build Graph"
       },
       {
-        "command": "forge.clean",
-        "title": "Forge: Clean Build Artifacts"
+        "command": "fish.clean",
+        "title": "fish: Clean Build Artifacts"
       },
       {
-        "command": "forge.doctor",
-        "title": "Forge: Run Diagnostics"
+        "command": "fish.doctor",
+        "title": "fish: Run Diagnostics"
       },
       {
-        "command": "forge.affected",
-        "title": "Forge: Show Affected Packages"
+        "command": "fish.affected",
+        "title": "fish: Show Affected Packages"
       },
       {
-        "command": "forge.ui",
-        "title": "Forge: Open Web Dashboard & DAG Canvas"
+        "command": "fish.ui",
+        "title": "fish: Open Web Dashboard & DAG Canvas"
       },
       {
-        "command": "forge.explain",
-        "title": "Forge: Explain Rebuild Reasons"
+        "command": "fish.explain",
+        "title": "fish: Explain Rebuild Reasons"
       },
       {
-        "command": "forge.exportCompileCommands",
-        "title": "Forge: Export compile_commands.json for Clangd & LSP"
+        "command": "fish.exportCompileCommands",
+        "title": "fish: Export compile_commands.json for Clangd & LSP"
       },
       {
-        "command": "forge.refreshPackages",
-        "title": "Forge: Refresh Package Tree",
+        "command": "fish.refreshPackages",
+        "title": "fish: Refresh Package Tree",
         "icon": "$(refresh)"
       },
       {
-        "command": "forge.buildPackage",
-        "title": "Forge: Build Selected Package"
+        "command": "fish.buildPackage",
+        "title": "fish: Build Selected Package"
       },
       {
-        "command": "forge.testPackage",
-        "title": "Forge: Run Tests for Selected Package"
+        "command": "fish.testPackage",
+        "title": "fish: Run Tests for Selected Package"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "forge-container",
-          "title": "Forge",
+          "id": "fish-container",
+          "title": "fish",
           "icon": "$(package)"
         }
       ]
     },
     "views": {
-      "forge-container": [
+      "fish-container": [
         {
-          "id": "forgePackages",
+          "id": "fishPackages",
           "name": "Packages",
           "when": "workspaceHasFolder"
         }
@@ -148,32 +148,32 @@
     ],
     "statusBarItems": [
       {
-        "id": "forge.status",
-        "name": "Forge Build Status",
+        "id": "fish.status",
+        "name": "fish Build Status",
         "alignment": "left",
         "priority": 100
       },
       {
-        "id": "forge.cacheHitRate",
-        "name": "Forge Cache Hit Rate",
+        "id": "fish.cacheHitRate",
+        "name": "fish Cache Hit Rate",
         "alignment": "right",
         "priority": 90
       }
     ],
     "configuration": {
-      "title": "Forge",
+      "title": "fish",
       "properties": {
-        "forge.path": {
+        "fish.path": {
           "type": "string",
-          "default": "forge",
-          "description": "Path to forge executable"
+          "default": "fish",
+          "description": "Path to fish executable"
         },
-        "forge.experimental": {
+        "fish.experimental": {
           "type": "boolean",
           "default": false,
           "description": "Enable experimental features"
         },
-        "forge.maxJobs": {
+        "fish.maxJobs": {
           "type": "number",
           "default": 4,
           "description": "Maximum parallel jobs"

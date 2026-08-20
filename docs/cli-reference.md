@@ -1,8 +1,8 @@
-# Forge CLI Reference
+# Fish CLI Reference
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
 
-Complete reference for all Forge command-line interface commands and options.
+Complete reference for all Fish command-line interface commands and options.
 
 ---
 
@@ -21,29 +21,29 @@ Complete reference for all Forge command-line interface commands and options.
 
 ## Primary Commands
 
-### `forge init`
-Initializes Forge configuration and scans the workspace to generate multi-language task definitions (`forge.yaml`).
+### `Fish init`
+Initializes Fish configuration and scans the workspace to generate multi-language task definitions (`fish.yaml`).
 
 ```bash
-forge init [--force]
+Fish init [--force]
 ```
 
 ---
 
-### `forge ui`
+### `Fish ui`
 Starts the real-time interactive Web Dashboard & SVG DAG visualizer with 5-language telemetry (English, Vietnamese, Simplified Chinese, Traditional Chinese, Japanese).
 
 ```bash
-forge ui [--port <PORT>] [--open]
+Fish ui [--port <PORT>] [--open]
 ```
 
 ---
 
-### `forge build`
+### `Fish build`
 Executes build tasks for packages in the workspace.
 
 ```bash
-forge build [OPTIONS]
+Fish build [OPTIONS]
 ```
 
 **Common Flags:**
@@ -55,38 +55,38 @@ forge build [OPTIONS]
 
 ---
 
-### `forge check`
+### `Fish check`
 Performs type checking and static analysis without linking full artifacts.
 
 ```bash
-forge check [OPTIONS]
+Fish check [OPTIONS]
 ```
 
 ---
 
-### `forge test`
+### `Fish test`
 Executes test suites across workspace packages.
 
 ```bash
-forge test [OPTIONS]
+Fish test [OPTIONS]
 ```
 
 ---
 
-### `forge run`
+### `Fish run`
 Builds and runs a selected binary target.
 
 ```bash
-forge run -p <PACKAGE> --bin <BINARY> [-- <ARGS>...]
+Fish run -p <PACKAGE> --bin <BINARY> [-- <ARGS>...]
 ```
 
 ---
 
-### `forge query <EXPR>`
+### `Fish query <EXPR>`
 Evaluates algebraic queries over the workspace dependency graph.
 
 ```bash
-forge query "<EXPRESSION>"
+Fish query "<EXPRESSION>"
 ```
 
 **Supported Functions:**
@@ -98,81 +98,81 @@ forge query "<EXPRESSION>"
 
 **Examples:**
 ```bash
-# Find everything required to build forge-cli
-forge query "deps(//forge-cli)"
+# Find everything required to build fish-cli
+Fish query "deps(//fish-cli)"
 
-# Find all crates affected by a change in forge-graph
-forge query "rdeps(//forge-graph)"
+# Find all crates affected by a change in fish-graph
+Fish query "rdeps(//fish-graph)"
 
 # Find shortest dependency chain between app and util
-forge query "somepath(//app, //util)"
+Fish query "somepath(//app, //util)"
 ```
 
 ---
 
-### `forge daemon`
+### `Fish daemon`
 Manages the background build daemon for instant warm graph resolutions.
 
 ```bash
 # Start the daemon
-forge daemon start [--port 9527]
+Fish daemon start [--port 9527]
 
 # Check daemon status
-forge daemon status [--port 9527]
+Fish daemon status [--port 9527]
 
 # Stop the daemon
-forge daemon stop [--port 9527]
+Fish daemon stop [--port 9527]
 ```
 
 ---
 
-### `forge graph`
+### `Fish graph`
 Prints or exports the project dependency graph.
 
 ```bash
-forge graph [--format <tree|dot|json>]
+Fish graph [--format <tree|dot|json>]
 ```
 
 ---
 
-### `forge affected`
+### `Fish affected`
 Identifies and executes tasks only on packages modified since a Git revision.
 
 ```bash
-forge affected --since <GIT_REF> [--mode <build|check|test>]
+Fish affected --since <GIT_REF> [--mode <build|check|test>]
 ```
 
 ---
 
-### `forge cache`
+### `Fish cache`
 Manages local Content-Addressable Storage (CAS) and fingerprints.
 
 ```bash
 # Display cache size and object count
-forge cache stats
+Fish cache stats
 
 # Remove stale fingerprints and orphaned artifacts
-forge cache prune
+Fish cache prune
 
 # Inspect CAS storage
-forge cache cas stats
-forge cache cas list
+Fish cache cas stats
+Fish cache cas list
 ```
 
 ---
 
-### `forge doctor`
+### `Fish doctor`
 Checks system toolchains, compilers, linkers, and dependencies for readiness.
 
 ```bash
-forge doctor [--fix] [--ai]
+Fish doctor [--fix] [--ai]
 ```
 
 ---
 
-### `forge ci init` / `forge ci export`
+### `Fish ci init` / `Fish ci export`
 Generates CI workflow configurations for various platforms.
 
 ```bash
-forge ci init --platform <github|gitlab|circleci|bitbucket|all>
+Fish ci init --platform <github|gitlab|circleci|bitbucket|all>
 ```

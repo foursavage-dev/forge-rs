@@ -1,12 +1,12 @@
-# Forge Roadmap
+# Fish Roadmap
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> ðŸŒ **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
-This document outlines the planned development roadmap for Forge.
+This document outlines the planned development roadmap for Fish.
 
 ## Vision
 
-Forge aims to be the most efficient, secure, and developer-friendly build orchestration system for polyglot monorepos and distributed development.
+Fish aims to be the most efficient, secure, and developer-friendly build orchestration system for polyglot monorepos and distributed development.
 
 ## Current Version (v0.2.x)
 
@@ -21,11 +21,11 @@ Forge aims to be the most efficient, secure, and developer-friendly build orches
 - [x] Create comprehensive documentation and translation framework
 
 ### Phase 2: Performance, Visualization & Developer Experience
-- [x] Web-based interactive telemetry dashboard & DAG visualizer (`forge ui`) with 5-language UI
+- [x] Web-based interactive telemetry dashboard & DAG visualizer (`Fish ui`) with 5-language UI
 - [x] Standard compilation database generator (`CompilationDatabase`, `compile_commands.json`)
 - [x] Hermetic toolchain registry and system auto-detection (`ToolchainRegistry`)
 - [x] Real-time filesystem watcher daemon with dirty target tracking (`FsWatcherDaemon`)
-- [x] Algebraic graph query engine (`forge query` with `deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`)
+- [x] Algebraic graph query engine (`Fish query` with `deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`)
 - [x] Copy-on-Write extents cloner (`KernelCowCloner`) and modern linker dispatcher (`mold`, `lld`, `msvc`)
 - [x] Kernel resource governor (`KernelResourceGovernor`) for memory pressure protection
 - [x] GNU Jobserver pool integration (`JobserverPool`) for global compiler thread token coordination

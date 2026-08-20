@@ -30,24 +30,24 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Bootstrap Forge
-        run: cargo build --release --bin forge
+      - name: Bootstrap Fish
+        run: cargo build --release --bin Fish
 
       - name: Analyze Affected Crates and Performance
         id: analysis
         run: |
-          AFFECTED_OUTPUT=$(./target/release/forge affected --since origin/${{ github.base_ref }} || echo "all")
+          AFFECTED_OUTPUT=$(./target/release/Fish affected --since origin/${{ github.base_ref }} || echo "all")
           echo "affected<<EOF" >> $GITHUB_OUTPUT
           echo "$AFFECTED_OUTPUT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
           START_TIME=$(date +%s%N)
-          ./target/release/forge build --no-cache
+          ./target/release/Fish build --no-cache
           END_TIME=$(date +%s%N)
           COLD_DURATION=$(( (END_TIME - START_TIME) / 1000000 ))
 
           START_WARM=$(date +%s%N)
-          ./target/release/forge build
+          ./target/release/Fish build
           END_WARM=$(date +%s%N)
           WARM_DURATION=$(( (END_WARM - START_WARM) / 1000000 ))
 
@@ -65,10 +65,10 @@ jobs:
           WARM_MS: ${{ steps.analysis.outputs.warm_ms }}
         run: |
           GIT_DIFF=$(git diff origin/${{ github.base_ref }} --stat)
-          PROMPT="You are ForgeBot, an elite AI assistant and reviewer for the Forge build system repository.
+          PROMPT="You are FishBot, an elite AI assistant and reviewer for the Fish build system repository.
           PR Title: $PR_TITLE
           PR Description: $PR_BODY
-          Affected packages detected by forge:
+          Affected packages detected by Fish:
           $AFFECTED
           Benchmark results:
           - Cold build duration: ${COLD_MS}ms
@@ -97,7 +97,7 @@ jobs:
           fi
 
           if [ -z "$AI_TEXT" ]; then
-            AI_TEXT="### 🦀 Forge Bot Analysis
+            AI_TEXT="### Ã°Å¸Â¦â‚¬ Fish Bot Analysis
           - **Cold Build Duration:** $(awk "BEGIN {print $COLD_MS/1000}")s
           - **Warm Cache Duration:** $(awk "BEGIN {print $WARM_MS/1000}")s
           - **Affected Modules:**
@@ -122,7 +122,7 @@ jobs:
               issue_number: context.payload.pull_request.number,
             });
 
-            const botComment = comments.find(c => c.body.includes('Forge Bot Analysis') || c.body.includes('Performance & Build Metrics') || c.body.includes('ForgeBot'));
+            const botComment = comments.find(c => c.body.includes('Fish Bot Analysis') || c.body.includes('Performance & Build Metrics') || c.body.includes('FishBot'));
 
             if (botComment) {
               await github.rest.issues.updateComment({

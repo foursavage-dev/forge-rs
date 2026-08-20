@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report to help us improve Forge
+about: Create a report to help us improve Fish
 title: '[BUG] '
 labels: bug
 assignees: ''
@@ -25,7 +25,7 @@ If applicable, add screenshots to help explain your problem.
 **Environment**
 - OS: [e.g. Windows 10, macOS 12.0, Ubuntu 22.04]
 - Rust version: [e.g. 1.88.0]
-- Forge version: [e.g. 0.1.0]
+- Fish version: [e.g. 0.1.0]
 - Backend: [e.g. Rust, Go, TypeScript]
 
 **Additional Context**

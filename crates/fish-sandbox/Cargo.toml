@@ -1,0 +1,15 @@
+[package]
+name = "fish-sandbox"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Hermetic build sandboxing, environment sanitization, and execution isolation for Fish"
+
+[dependencies]
+fish-core = { workspace = true }
+fish-executor = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tempfile = { workspace = true }
+thiserror = { workspace = true }

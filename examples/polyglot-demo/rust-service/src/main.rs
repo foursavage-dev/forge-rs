@@ -3,10 +3,10 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("🦀 Rust Service starting on port 8080...");
+    println!("ðŸ¦€ Rust Service starting on port 8080...");
     
     let listener = TcpListener::bind("127.0.0.1:8080").await?;
-    println!("✅ Rust Service listening on 127.0.0.1:8080");
+    println!("âœ… Rust Service listening on 127.0.0.1:8080");
     
     loop {
         let (mut socket, _) = listener.accept().await?;

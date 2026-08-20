@@ -1,12 +1,12 @@
 # Release Process
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> ðŸŒ **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
-This document describes the process for releasing new versions of Forge.
+This document describes the process for releasing new versions of Fish.
 
 ## Versioning
 
-Forge follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
+Fish follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
 
 - **MAJOR**: Incompatible API changes
 - **MINOR**: Backwards-compatible functionality additions
@@ -130,8 +130,8 @@ git push upstream v0.2.0
 cargo publish --workspace
 
 # Or publish individual crates
-cargo publish -p forge-core
-cargo publish -p forge-cli
+cargo publish -p fish-core
+cargo publish -p fish-cli
 # ... continue for all crates
 ```
 
@@ -193,25 +193,25 @@ cargo build --release
 
 # Package binaries
 # Linux
-target/release/forge -> forge-linux-x86_64
+target/release/Fish -> fish-linux-x86_64
 
 # macOS
-target/release/forge -> forge-macos-x86_64
-target/release/forge -> forge-macos-arm64
+target/release/Fish -> fish-macos-x86_64
+target/release/Fish -> fish-macos-arm64
 
 # Windows
-target/release/forge.exe -> forge-windows-x86_64.exe
+target/release/Fish.exe -> fish-windows-x86_64.exe
 ```
 
 ### Docker Images
 
 ```bash
 # Build Docker image
-docker build -t foursavage/forge:0.2.0 .
+docker build -t foursavage/Fish:0.2.0 .
 
 # Push to registry
-docker push foursavage/forge:0.2.0
-docker push foursavage/forge:latest
+docker push foursavage/Fish:0.2.0
+docker push foursavage/Fish:latest
 ```
 
 ## Verification
@@ -220,7 +220,7 @@ After release, verify:
 
 - [ ] Download artifacts from GitHub release
 - [ ] Test installation from artifacts
-- [ ] Verify version: `forge --version`
+- [ ] Verify version: `Fish --version`
 - [ ] Run basic build test
 - [ ] Check documentation links
 - [ ] Verify crates.io publication
@@ -240,7 +240,7 @@ If a release has critical issues:
 ### Release Notes Template
 
 ```markdown
-## Forge v0.2.0 Release
+## Fish v0.2.0 Release
 
 ### Highlights
 - Major feature 1

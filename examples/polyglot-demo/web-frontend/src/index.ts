@@ -30,7 +30,7 @@ class PolyglotClient {
 }
 
 async function main() {
-    console.log('🌐 TypeScript Frontend starting...');
+    console.log('ðŸŒ TypeScript Frontend starting...');
     
     const client = new PolyglotClient();
     const responses = await client.callAllServices();

@@ -1,34 +1,34 @@
 # Polyglot Demo Project
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
 
-This is a sample monorepo demonstrating Forge's multi-language build capabilities.
+This is a sample monorepo demonstrating fish's multi-language build capabilities.
 
 ## Project Structure
 
 ```
 polyglot-demo/
-├── rust-service/    # Rust backend service
-├── go-service/      # Go microservice
-├── web-frontend/    # TypeScript frontend
-├── docker-compose/  # Docker configuration
-└── forge.toml       # Forge configuration
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ rust-service/    # Rust backend service
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ go-service/      # Go microservice
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ web-frontend/    # TypeScript frontend
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ docker-compose/  # Docker configuration
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ fish.toml       # fish configuration
 ```
 
-## Build with Forge
+## Build with fish
 
 ```bash
 # Build all services
-forge build
+fish build
 
 # View build graph
-forge graph
+fish graph
 
 # Run tests
-forge test
+fish test
 
 # Clean build artifacts
-forge clean
+fish clean
 ```
 
 ## Language Support

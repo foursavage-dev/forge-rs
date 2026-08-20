@@ -1,14 +1,14 @@
-# Forge Configuration Guide
+# Fish Configuration Guide
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
 
-This guide describes how to configure Forge workspaces using `forge.toml`.
+This guide describes how to configure Fish workspaces using `fish.toml`.
 
 ---
 
 ## Configuration File Overview
 
-Forge reads project configuration from a `forge.toml` file located in the root of your workspace. If no `forge.toml` is present, Forge applies sensible defaults automatically.
+Fish reads project configuration from a `fish.toml` file located in the root of your workspace. If no `fish.toml` is present, Fish applies sensible defaults automatically.
 
 ```toml
 [build]
@@ -21,7 +21,7 @@ critical_path = true
 ram_limit = 85
 
 [cache]
-dir = "~/.forge/cache"
+dir = "~/.Fish/cache"
 reflink = true
 
 [remote]
@@ -45,7 +45,7 @@ inputs = ["tests/**/*", "src/**/*"]
 
 ## Top-Level Sections
 
-### `[build]` — Execution Settings
+### `[build]` Ã¢â‚¬â€ Execution Settings
 
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -60,16 +60,16 @@ inputs = ["tests/**/*", "src/**/*"]
 
 ---
 
-### `[cache]` — Local Storage Settings
+### `[cache]` Ã¢â‚¬â€ Local Storage Settings
 
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `dir` | string | `~/.forge/cache` | Path to the local Content-Addressable Storage (CAS) directory. |
+| `dir` | string | `~/.Fish/cache` | Path to the local Content-Addressable Storage (CAS) directory. |
 | `reflink` | boolean | `true` | Use Copy-on-Write (CoW) extents or hardlinks to materialize artifacts without I/O copy. |
 
 ---
 
-### `[remote]` — Distributed Cache & Execution
+### `[remote]` Ã¢â‚¬â€ Distributed Cache & Execution
 
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -80,15 +80,15 @@ inputs = ["tests/**/*", "src/**/*"]
 
 ---
 
-### `[daemon]` — Background IPC Service
+### `[daemon]` Ã¢â‚¬â€ Background IPC Service
 
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `port` | integer | `9527` | Loopback TCP port for the Forge background daemon. |
+| `port` | integer | `9527` | Loopback TCP port for the Fish background daemon. |
 
 ---
 
-### `[pipelines.<task>]` — Task Pipeline Topology
+### `[pipelines.<task>]` Ã¢â‚¬â€ Task Pipeline Topology
 
 Configure dependencies and caching boundaries between tasks across packages:
 
@@ -115,9 +115,9 @@ Configuration settings can be overridden via environment variables:
 
 | Variable | Overrides |
 | :--- | :--- |
-| `FORGE_CACHE_DIR` | `cache.dir` |
-| `FORGE_JOBS` | `build.jobs` |
-| `FORGE_REMOTE_CACHE` | `remote.cache_url` |
-| `FORGE_REMOTE_TOKEN` | `remote.token` |
-| `FORGE_RAM_LIMIT` | `build.ram_limit` |
-| `FORGE_DAEMON_PORT` | `daemon.port` |
+| `fish_CACHE_DIR` | `cache.dir` |
+| `fish_JOBS` | `build.jobs` |
+| `fish_REMOTE_CACHE` | `remote.cache_url` |
+| `fish_REMOTE_TOKEN` | `remote.token` |
+| `fish_RAM_LIMIT` | `build.ram_limit` |
+| `fish_DAEMON_PORT` | `daemon.port` |

@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for Forge
+about: Suggest an idea for Fish
 title: '[FEATURE] '
 labels: enhancement
 assignees: ''

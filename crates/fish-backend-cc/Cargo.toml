@@ -1,0 +1,21 @@
+[package]
+name = "fish-backend-cc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "C/C++ build backend for the Fish build system"
+
+[dependencies]
+blake3 = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = { workspace = true }
+fish-core = { workspace = true }
+fish-executor = { workspace = true }
+fish-graph = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+fish-cache = { workspace = true }
+fish-scheduler = { workspace = true }
+tempfile = { workspace = true }

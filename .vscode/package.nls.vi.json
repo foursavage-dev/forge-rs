@@ -1,14 +1,14 @@
 {
-  "forge.command.build": "Forge: Biên dịch Dự án",
-  "forge.command.test": "Forge: Chạy Kiểm thử",
-  "forge.command.graph": "Forge: Xem Đồ thị Phụ thuộc",
-  "forge.command.ui": "Forge: Mở Bảng điều khiển Web & Đồ thị DAG",
-  "forge.command.explain": "Forge: Giải thích Lý do Biên dịch lại",
-  "forge.command.exportCompileCommands": "Forge: Xuất compile_commands.json cho Clangd & LSP",
-  "forge.command.clean": "Forge: Dọn dẹp Thư mục Build",
-  "forge.command.doctor": "Forge: Kiểm tra Chẩn đoán Môi trường",
-  "forge.command.affected": "Forge: Hiển thị các Gói bị ảnh hưởng",
-  "forge.command.refreshPackages": "Forge: Làm mới Danh sách Gói",
-  "forge.command.buildPackage": "Forge: Biên dịch Gói đã chọn",
-  "forge.command.testPackage": "Forge: Chạy Kiểm thử cho Gói đã chọn"
+  "fish.command.build": "fish: BiÃªn dá»‹ch Dá»± Ã¡n",
+  "fish.command.test": "fish: Cháº¡y Kiá»ƒm thá»­",
+  "fish.command.graph": "fish: Xem Äá»“ thá»‹ Phá»¥ thuá»™c",
+  "fish.command.ui": "fish: Má»Ÿ Báº£ng Ä‘iá»u khiá»ƒn Web & Äá»“ thá»‹ DAG",
+  "fish.command.explain": "fish: Giáº£i thÃ­ch LÃ½ do BiÃªn dá»‹ch láº¡i",
+  "fish.command.exportCompileCommands": "fish: Xuáº¥t compile_commands.json cho Clangd & LSP",
+  "fish.command.clean": "fish: Dá»n dáº¹p ThÆ° má»¥c Build",
+  "fish.command.doctor": "fish: Kiá»ƒm tra Cháº©n Ä‘oÃ¡n MÃ´i trÆ°á»ng",
+  "fish.command.affected": "fish: Hiá»ƒn thá»‹ cÃ¡c GÃ³i bá»‹ áº£nh hÆ°á»Ÿng",
+  "fish.command.refreshPackages": "fish: LÃ m má»›i Danh sÃ¡ch GÃ³i",
+  "fish.command.buildPackage": "fish: BiÃªn dá»‹ch GÃ³i Ä‘Ã£ chá»n",
+  "fish.command.testPackage": "fish: Cháº¡y Kiá»ƒm thá»­ cho GÃ³i Ä‘Ã£ chá»n"
 }

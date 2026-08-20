@@ -1,0 +1,55 @@
+[package]
+name = "fish-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Fish command-line interface"
+
+[[bin]]
+name = "fish"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+fish-core = { workspace = true }
+fish-graph = { workspace = true }
+fish-executor = { workspace = true }
+fish-scheduler = { workspace = true }
+fish-cache = { workspace = true }
+fish-cas = { workspace = true }
+fish-ci-generator = { workspace = true }
+fish-backend-rust = { workspace = true }
+fish-backend-cc = { workspace = true }
+fish-backend-go = { workspace = true }
+fish-backend-ts = { workspace = true }
+fish-backend-py = { workspace = true }
+fish-backend-java = { workspace = true }
+fish-backend-dotnet = { workspace = true }
+fish-backend-swift = { workspace = true }
+fish-backend-dart = { workspace = true }
+fish-backend-zig = { workspace = true }
+fish-backend-docker = { workspace = true }
+fish-worker = { workspace = true }
+fish-remote-cache = { workspace = true }
+fish-plugin = { workspace = true }
+fish-sandbox = { workspace = true }
+fish-incremental = { workspace = true }
+cargo_metadata = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+spin = { workspace = true }
+tokio = { version = "1", features = ["rt-multi-thread"] }
+wait-timeout = "0.2"
+
+clap = { workspace = true }
+anstream = { workspace = true }
+anstyle = { workspace = true }
+notify = { workspace = true }
+crossterm = { workspace = true }
+ratatui = { workspace = true }
+blake3 = "1"
+
+[dev-dependencies]
+tempfile = { workspace = true }

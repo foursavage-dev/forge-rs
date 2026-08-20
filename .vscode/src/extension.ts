@@ -10,64 +10,64 @@ let packageTreeProvider: PackageTreeProvider;
 
 export function activate(context: vscode.ExtensionContext) {
     buildStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    buildStatusBarItem.command = 'forge.build';
-    buildStatusBarItem.text = '$(package) Forge: Ready';
+    buildStatusBarItem.command = 'fish.build';
+    buildStatusBarItem.text = '$(package) fish: Ready';
     buildStatusBarItem.show();
 
     cacheHitRateItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 90);
-    cacheHitRateItem.command = 'forge.ui';
-    cacheHitRateItem.text = '$(dashboard) Forge UI';
+    cacheHitRateItem.command = 'fish.ui';
+    cacheHitRateItem.text = '$(dashboard) fish UI';
     cacheHitRateItem.show();
 
     packageTreeProvider = new PackageTreeProvider();
-    vscode.window.registerTreeDataProvider('forgePackages', packageTreeProvider);
+    vscode.window.registerTreeDataProvider('fishPackages', packageTreeProvider);
 
-    const buildCommand = vscode.commands.registerCommand('forge.build', async () => {
-        await runForgeCommand('build');
+    const buildCommand = vscode.commands.registerCommand('fish.build', async () => {
+        await runfishCommand('build');
     });
 
-    const testCommand = vscode.commands.registerCommand('forge.test', async () => {
-        await runForgeCommand('test');
+    const testCommand = vscode.commands.registerCommand('fish.test', async () => {
+        await runfishCommand('test');
     });
 
-    const graphCommand = vscode.commands.registerCommand('forge.graph', async () => {
-        await runForgeCommand('graph');
+    const graphCommand = vscode.commands.registerCommand('fish.graph', async () => {
+        await runfishCommand('graph');
     });
 
-    const uiCommand = vscode.commands.registerCommand('forge.ui', async () => {
-        await runForgeCommand('ui --port 3000 --open');
+    const uiCommand = vscode.commands.registerCommand('fish.ui', async () => {
+        await runfishCommand('ui --port 3000 --open');
     });
 
-    const explainCommand = vscode.commands.registerCommand('forge.explain', async () => {
-        await runForgeCommand('build --explain');
+    const explainCommand = vscode.commands.registerCommand('fish.explain', async () => {
+        await runfishCommand('build --explain');
     });
 
-    const exportCompileCommands = vscode.commands.registerCommand('forge.exportCompileCommands', async () => {
-        await runForgeCommand('build');
-        vscode.window.showInformationMessage('Forge: compile_commands.json exported successfully for Clangd & LSP.');
+    const exportCompileCommands = vscode.commands.registerCommand('fish.exportCompileCommands', async () => {
+        await runfishCommand('build');
+        vscode.window.showInformationMessage('fish: compile_commands.json exported successfully for Clangd & LSP.');
     });
 
-    const doctorCommand = vscode.commands.registerCommand('forge.doctor', async () => {
-        await runForgeCommand('doctor');
+    const doctorCommand = vscode.commands.registerCommand('fish.doctor', async () => {
+        await runfishCommand('doctor');
     });
 
-    const affectedCommand = vscode.commands.registerCommand('forge.affected', async () => {
-        await runForgeCommand('affected');
+    const affectedCommand = vscode.commands.registerCommand('fish.affected', async () => {
+        await runfishCommand('affected');
     });
 
-    const refreshCommand = vscode.commands.registerCommand('forge.refreshPackages', async () => {
+    const refreshCommand = vscode.commands.registerCommand('fish.refreshPackages', async () => {
         await packageTreeProvider.refresh();
     });
 
-    const buildPackageCommand = vscode.commands.registerCommand('forge.buildPackage', async (node: PackageNode) => {
+    const buildPackageCommand = vscode.commands.registerCommand('fish.buildPackage', async (node: PackageNode) => {
         if (node) {
-            await runForgeCommand(`build -p ${node.label}`);
+            await runfishCommand(`build -p ${node.label}`);
         }
     });
 
-    const testPackageCommand = vscode.commands.registerCommand('forge.testPackage', async (node: PackageNode) => {
+    const testPackageCommand = vscode.commands.registerCommand('fish.testPackage', async (node: PackageNode) => {
         if (node) {
-            await runForgeCommand(`test -p ${node.label}`);
+            await runfishCommand(`test -p ${node.label}`);
         }
     });
 
@@ -90,28 +90,28 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() {}
 
-async function runForgeCommand(command: string) {
-    const config = vscode.workspace.getConfiguration('forge');
-    const forgePath = config.get<string>('path', 'forge');
+async function runfishCommand(command: string) {
+    const config = vscode.workspace.getConfiguration('fish');
+    const fishPath = config.get<string>('path', 'fish');
     const rootPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '.';
 
-    buildStatusBarItem.text = '$(sync~spin) Forge: Running...';
+    buildStatusBarItem.text = '$(sync~spin) fish: Running...';
 
-    const outputChannel = vscode.window.createOutputChannel('Forge');
+    const outputChannel = vscode.window.createOutputChannel('fish');
     outputChannel.show();
-    outputChannel.appendLine(`> ${forgePath} ${command}`);
+    outputChannel.appendLine(`> ${fishPath} ${command}`);
 
     try {
-        const { stdout, stderr } = await execAsync(`${forgePath} ${command}`, { cwd: rootPath });
+        const { stdout, stderr } = await execAsync(`${fishPath} ${command}`, { cwd: rootPath });
         if (stdout) outputChannel.append(stdout);
         if (stderr) outputChannel.append(stderr);
-        buildStatusBarItem.text = '$(check) Forge: Succeeded';
-        vscode.window.showInformationMessage(`Forge: Command completed successfully.`);
+        buildStatusBarItem.text = '$(check) fish: Succeeded';
+        vscode.window.showInformationMessage(`fish: Command completed successfully.`);
     } catch (err: any) {
         if (err.stdout) outputChannel.append(err.stdout);
         if (err.stderr) outputChannel.append(err.stderr);
-        buildStatusBarItem.text = '$(error) Forge: Failed';
-        vscode.window.showErrorMessage(`Forge: Command failed. Check Forge output panel.`);
+        buildStatusBarItem.text = '$(error) fish: Failed';
+        vscode.window.showErrorMessage(`fish: Command failed. Check fish output panel.`);
     }
 }
 
@@ -122,7 +122,7 @@ class PackageNode extends vscode.TreeItem {
         public readonly dependencies: string[] = []
     ) {
         super(label, collapsibleState);
-        this.contextValue = 'forgePackage';
+        this.contextValue = 'fishPackage';
         this.iconPath = new vscode.ThemeIcon('package');
         this.tooltip = `${label} (${dependencies.length} direct dependencies)`;
     }
@@ -147,12 +147,12 @@ class PackageTreeProvider implements vscode.TreeDataProvider<PackageNode> {
             );
         }
 
-        const config = vscode.workspace.getConfiguration('forge');
-        const forgePath = config.get<string>('path', 'forge');
+        const config = vscode.workspace.getConfiguration('fish');
+        const fishPath = config.get<string>('path', 'fish');
         const rootPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '.';
 
         try {
-            const { stdout } = await execAsync(`${forgePath} graph --format json`, { cwd: rootPath });
+            const { stdout } = await execAsync(`${fishPath} graph --format json`, { cwd: rootPath });
             const data = JSON.parse(stdout);
             const packages = data.packages || data.nodes || [];
             return packages.map((pkg: any) => {
@@ -164,7 +164,7 @@ class PackageTreeProvider implements vscode.TreeDataProvider<PackageNode> {
                 return new PackageNode(name, state, deps);
             });
         } catch {
-            return [new PackageNode('Workspace Packages (Run Forge: Refresh)', vscode.TreeItemCollapsibleState.None)];
+            return [new PackageNode('Workspace Packages (Run fish: Refresh)', vscode.TreeItemCollapsibleState.None)];
         }
     }
 }

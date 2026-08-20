@@ -1,10 +1,10 @@
 # Security Policy
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> ðŸŒ **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 ## Supported Versions
 
-Forge currently provides security updates for the latest supported release series.
+Fish currently provides security updates for the latest supported release series.
 
 | Version | Supported |
 | ------- | --------- |
@@ -14,7 +14,7 @@ Older release series may no longer receive security updates. Users are encourage
 
 ## Reporting a Vulnerability
 
-If you discover a potential security vulnerability in Forge, please **do not open a public issue** or publicly disclose the vulnerability before a fix or coordinated disclosure has been arranged.
+If you discover a potential security vulnerability in Fish, please **do not open a public issue** or publicly disclose the vulnerability before a fix or coordinated disclosure has been arranged.
 
 Instead, report the vulnerability privately by email:
 
@@ -24,7 +24,7 @@ Please include as much of the following information as possible:
 
 - A description of the vulnerability
 - Steps to reproduce the issue
-- Affected Forge versions or components
+- Affected Fish versions or components
 - Potential security impact
 - Relevant logs, proof-of-concept code, or other technical details
 - Any proposed mitigation or fix
@@ -33,7 +33,7 @@ Please do not include unnecessary personal or sensitive information in your repo
 
 ### Response Process
 
-Forge Maintainers will:
+Fish Maintainers will:
 
 1. Acknowledge receipt of the report as soon as reasonably possible, with a target of 48 hours.
 2. Review and validate the reported vulnerability.
@@ -48,7 +48,7 @@ Response times may vary depending on the severity, complexity, and availability 
 
 Security vulnerabilities should be handled privately until a fix or appropriate mitigation is available.
 
-Forge Maintainers may coordinate disclosure with the reporter, including:
+Fish Maintainers may coordinate disclosure with the reporter, including:
 
 - The affected versions
 - The fixed version
@@ -56,11 +56,11 @@ Forge Maintainers may coordinate disclosure with the reporter, including:
 - Available mitigations
 - Appropriate credit for the reporter, if requested
 
-The security of Forge users and contributors will be prioritized when determining the disclosure timeline.
+The security of Fish users and contributors will be prioritized when determining the disclosure timeline.
 
 ## Security Features
 
-Forge includes security-related capabilities designed to improve the integrity and security of builds and execution environments.
+Fish includes security-related capabilities designed to improve the integrity and security of builds and execution environments.
 
 ### Artifact Signing & Verification
 
@@ -78,7 +78,7 @@ Forge includes security-related capabilities designed to improve the integrity a
 
 ### Secret Management
 
-Forge supports integration with external secret-management systems where configured, including:
+Fish supports integration with external secret-management systems where configured, including:
 
 - HashiCorp Vault
 - AWS Secrets Manager
@@ -86,17 +86,17 @@ Forge supports integration with external secret-management systems where configu
 
 ### VFS Security
 
-Forge provides security controls for filesystem access and isolated execution environments, including:
+Fish provides security controls for filesystem access and isolated execution environments, including:
 
 - Capability-based filesystem permissions
 - Isolated worker environments
 - Sandboxed execution for supported plugins
 
-Security capabilities may vary between Forge components and configurations. Users should consult the relevant documentation before relying on a specific security feature.
+Security capabilities may vary between Fish components and configurations. Users should consult the relevant documentation before relying on a specific security feature.
 
 ## Secure Development Practices
 
-Forge aims to follow secure development practices, including:
+Fish aims to follow secure development practices, including:
 
 - **Memory safety:** Prefer safe Rust abstractions and prohibit `unsafe` code in crates where `#![forbid(unsafe_code)]` is applicable.
 - **Security review:** Security-sensitive changes should receive appropriate review.
@@ -110,9 +110,9 @@ Forge aims to follow secure development practices, including:
 
 ### Production Deployment
 
-Users deploying Forge in production should:
+Users deploying Fish in production should:
 
-1. Keep Forge updated to the latest supported release.
+1. Keep Fish updated to the latest supported release.
 2. Verify artifact signatures where artifact signing is available.
 3. Run dependency and security checks as part of the build pipeline.
 4. Use a dedicated secret-management solution for sensitive credentials.
@@ -145,7 +145,7 @@ When using distributed workers:
 
 Security advisories may be published through the GitHub Security Advisories system:
 
-https://github.com/foursavage-dev/forge-rs/security/advisories
+https://github.com/foursavage-dev/fish-rs/security/advisories
 
 Security advisories may include information about:
 
@@ -157,7 +157,7 @@ Security advisories may include information about:
 
 ## Acknowledgments
 
-We thank all security researchers and contributors who responsibly report vulnerabilities and help improve the security of Forge.
+We thank all security researchers and contributors who responsibly report vulnerabilities and help improve the security of Fish.
 
 Security researchers may receive credit for valid vulnerability reports unless they prefer to remain anonymous.
 

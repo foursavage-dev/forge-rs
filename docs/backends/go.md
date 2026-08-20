@@ -1,14 +1,14 @@
 # Go Backend Guide
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+> Ã°Å¸Å’Â **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
 
-Forge integrates with Go workspaces and modules (`go.mod`).
+Fish integrates with Go workspaces and modules (`go.mod`).
 
 ---
 
 ## Detection & Discovery
 
-Forge automatically detects Go projects when a `go.mod` file is present in the package directory.
+Fish automatically detects Go projects when a `go.mod` file is present in the package directory.
 
 ### Supported Tasks:
 - `build`: Invokes `go build` for binary packages or compiles libraries.
@@ -19,11 +19,11 @@ Forge automatically detects Go projects when a `go.mod` file is present in the p
 
 ## AST Dependency Inference
 
-Forge scans Go source files for `import (...)` statements, automatically resolving module boundaries and linking them into the unified polyglot DAG without manual configuration.
+Fish scans Go source files for `import (...)` statements, automatically resolving module boundaries and linking them into the unified polyglot DAG without manual configuration.
 
 ---
 
-## Example `forge.toml`
+## Example `fish.toml`
 
 ```toml
 [build]

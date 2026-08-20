@@ -1,0 +1,27 @@
+[package]
+name = "fish-installer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Fish setup and installation assistant"
+
+[[bin]]
+name = "fish-setup"
+path = "src/main.rs"
+
+[dependencies]
+fish-core = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+crossterm = { workspace = true }
+anstream = { workspace = true }
+anstyle = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", default-features = false, features = [
+    "Win32_Foundation",
+    "Win32_System_Registry",
+    "Win32_UI_WindowsAndMessaging",
+] }

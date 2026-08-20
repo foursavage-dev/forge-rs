@@ -30,7 +30,7 @@ jobs:
           RUSTDOCFLAGS: "-Z sanitizer=address"
           ASAN_OPTIONS: "detect_leaks=1"
         run: |
-          cargo test -p forge-core -p forge-cache -p forge-cas --target x86_64-unknown-linux-gnu
+          cargo test -p fish-core -p fish-cache -p fish-cas --target x86_64-unknown-linux-gnu
 
   thread-sanitizer:
     name: Thread Sanitizer (TSan)
@@ -48,4 +48,4 @@ jobs:
           RUSTFLAGS: "-Z sanitizer=thread"
           RUSTDOCFLAGS: "-Z sanitizer=thread"
         run: |
-          cargo test -p forge-executor -p forge-scheduler --target x86_64-unknown-linux-gnu
+          cargo test -p fish-executor -p fish-scheduler --target x86_64-unknown-linux-gnu
