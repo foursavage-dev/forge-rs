@@ -349,7 +349,7 @@ pub(crate) fn run_plugin_build(start_dir: &Path, args: &CommonArgs) -> ExitCode 
     execute_task_graph(&mut task_graph, args)
 }
 
-/// Detects and loads script plugins from a .forge/plugins directory
+/// Detects and loads script plugins from a .fish/plugins directory
 pub(crate) fn detect_and_load_plugins(start_dir: &Path) -> Result<PluginManager, PluginError> {
     let plugin_dir = start_dir.join(".fish").join("plugins");
     let mut manager = PluginManager::new(plugin_dir);

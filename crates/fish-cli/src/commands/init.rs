@@ -144,7 +144,7 @@ pub fn run_init(path: Option<PathBuf>, force: bool) -> ExitCode {
 
     if fish_file.exists() && !force {
         eprintln!(
-            "error: forge.yaml already exists in {}. Use --force to overwrite.",
+            "error: fish.yaml already exists in {}. Use --force to overwrite.",
             target_dir.display()
         );
         return ExitCode::FAILURE;
@@ -166,15 +166,15 @@ pub fn run_init(path: Option<PathBuf>, force: bool) -> ExitCode {
 
     let config_content = generate_fish_yaml(&detected);
     if let Err(e) = std::fs::write(&fish_file, config_content) {
-        eprintln!("error: failed to write forge.yaml: {e}");
+        eprintln!("error: failed to write fish.yaml: {e}");
         return ExitCode::FAILURE;
     }
 
     println!("  [ok] Successfully generated {}", fish_file.display());
     println!("\nYou can now run:");
-    println!("  forge build    # to build all targets");
-    println!("  forge test     # to execute test suites");
-    println!("  forge graph    # to visualize task dependency graph");
+    println!("  fish build    # to build all targets");
+    println!("  fish test     # to execute test suites");
+    println!("  fish graph    # to visualize task dependency graph");
 
     ExitCode::SUCCESS
 }

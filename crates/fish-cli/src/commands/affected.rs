@@ -29,7 +29,7 @@ pub fn run_affected(args: AffectedArgs) -> ExitCode {
     };
     if !matches!(config.backend, BackendChoice::Auto | BackendChoice::Rust) {
         eprintln!(
-            "error: `forge affected` only supports Rust workspaces (backend `{:?}` configured)",
+            "error: `fish affected` only supports Rust workspaces (backend `{:?}` configured)",
             config.backend
         );
         return ExitCode::FAILURE;

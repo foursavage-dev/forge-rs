@@ -38,7 +38,7 @@ ENV PATH="/usr/local/cargo/bin:${PATH}"
 RUN cargo install cargo-watch cargo-edit cargo-expand
 
 # Set working directory
-WORKDIR /forge-rs
+WORKDIR /fish-rs
 
 # Copy project files
 COPY Cargo.toml Cargo.lock ./

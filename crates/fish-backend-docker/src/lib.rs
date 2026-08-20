@@ -178,7 +178,7 @@ impl DockerBackend {
 
         if stages.is_empty() {
             let docker_cmd = format!(
-                "build -t forge:latest {}",
+                "build -t fish:latest {}",
                 self.config.context_path.display()
             );
             let mut cmd =

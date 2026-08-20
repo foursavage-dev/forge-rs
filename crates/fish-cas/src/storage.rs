@@ -71,7 +71,7 @@ impl CasStorageConfig {
 
 impl Default for CasStorageConfig {
     fn default() -> Self {
-        Self::local(".forge/cas")
+        Self::local(".fish/cas")
     }
 }
 

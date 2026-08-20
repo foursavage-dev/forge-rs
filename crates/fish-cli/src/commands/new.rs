@@ -83,7 +83,7 @@ pub fn create_polyglot_monorepo(dir: &Path, name: &str) -> std::io::Result<()> {
     fs::create_dir_all(dir.join("services/worker"))?;
     fs::create_dir_all(dir.join("apps/web/src"))?;
 
-    let root_forge = r#"version: "1"
+    let root_fish = r#"version: "1"
 
 tasks:
   api-build:
@@ -116,7 +116,13 @@ tasks:
     cache:
       enabled: true
 
-  build:
+  web-test:
+    cwd: apps/web
+    command: npm test
+    depends_on:
+      - web-build
+
+  all:
     depends_on:
       - api-build
       - worker-build
@@ -127,7 +133,7 @@ tasks:
       - api-test
       - worker-test
 "#;
-    fs::write(dir.join("fish.yaml"), root_forge)?;
+    fs::write(dir.join("fish.yaml"), root_fish)?;
 
     let api_cargo = r#"[package]
 name = "api-service"
@@ -199,8 +205,8 @@ pub fn run_new(name: &str, template: Option<&str>, path: Option<PathBuf>) -> Exi
             println!("  [ok] Project scaffolding complete!");
             println!("\nNext steps:");
             println!("  cd {}", target_dir.display());
-            println!("  forge build");
-            println!("  forge test");
+            println!("  fish build");
+            println!("  fish test");
             ExitCode::SUCCESS
         }
         Err(err) => {

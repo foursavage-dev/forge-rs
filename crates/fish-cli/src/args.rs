@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 
-//! Command-line argument definitions for forge CLI
+//! Command-line argument definitions for fish CLI
 //!
 //! This module contains all argument structures and enums for CLI subcommands.
 
@@ -140,7 +140,7 @@ impl AffectedMode {
 /// Arguments for cache command
 #[derive(Debug, Args)]
 pub struct CacheArgs {
-    /// Cache directory; defaults to `FISH_CACHE_DIR` or `~/.forge/cache`.
+    /// Cache directory; defaults to `FISH_CACHE_DIR` or `~/.fish/cache`.
     #[arg(long)]
     pub dir: Option<PathBuf>,
     #[command(subcommand)]
@@ -303,7 +303,7 @@ pub struct CommonArgs {
     pub remote_workers: Option<Vec<String>>,
     #[arg(long = "remote-workers-token")]
     pub remote_workers_token: Option<String>,
-    /// Local cache directory; defaults to `FISH_CACHE_DIR` or `~/.forge/cache`.
+    /// Local cache directory; defaults to `FISH_CACHE_DIR` or `~/.fish/cache`.
     #[arg(long = "cache-dir")]
     pub cache_dir: Option<PathBuf>,
     /// Ship a compressed snapshot of the working tree to remote workers so

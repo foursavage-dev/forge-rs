@@ -16,7 +16,7 @@ jobs:
         package: {{#each packages}}[{{this}}]{{#unless @last}}, {{/unless}}{{/each}}
     steps:
       - uses: actions/checkout@v3
-      - name: Install Forge
+      - name: Install Fish
         run: curl -fsSL https://raw.githubusercontent.com/foursavage-dev/forge-rs/main/install.sh | bash
       - name: Build {{this}}
-        run: forge build -p {{this}}
+        run: fish build -p {{this}}

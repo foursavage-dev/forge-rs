@@ -120,7 +120,7 @@ impl AttestationEngine {
             subject: subjects,
             predicate: SlsaPredicate {
                 builder: builder_info,
-                build_type: "https://forge.build/slsa/v1".to_string(),
+                build_type: "https://fish.build/slsa/v1".to_string(),
                 invocation: SlsaInvocation {
                     config_source,
                     parameters,
