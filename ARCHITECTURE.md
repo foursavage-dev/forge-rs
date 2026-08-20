@@ -15,6 +15,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 **Responsibilities**:
 - Scan workspace for packages/projects
 - Detect project types based on manifest files
+- Filter input files by micro-globs (`MicroInputFilter`)
 - Build dependency graph between packages
 - Manage package metadata
 
@@ -22,6 +23,7 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - `Package`: Represents a single package/project
 - `Workspace`: Collection of packages with dependencies
 - `Manifest`: Project configuration (Cargo.toml, package.json, etc.)
+- `MicroInputFilter`: Fine-grained glob matcher and file filter
 
 ### 2. Build Graph (`forge-graph`)
 
@@ -31,32 +33,38 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 - Create directed acyclic graph (DAG) of build tasks
 - Compute topological sort for execution order
 - Subgraph merging for polyglot monorepos (`merge_subgraph`)
+- Dynamic node expansion during runtime execution (`DynamicGraphExpander`)
 - Track task states (pending, running, completed, failed)
-- Bazel-style algebraic query evaluation (`GraphQueryEngine` supporting `deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`)
+- Algebraic query evaluation (`GraphQueryEngine` supporting `deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`)
 - Detect circular dependencies
 
 **Key Types**:
 - `BuildGraph`: Directed acyclic graph of tasks
 - `Node`: Individual build task
 - `NodeId`: Type-safe index into graph structures
+- `DynamicGraphExpander`: Dynamic sub-task generator
 - `GraphQueryEngine`: Evaluator for graph query expressions
 - `QueryExpr`: Algebraic query AST
 
 ### 3. Executor (`forge-executor`)
 
-**Purpose**: Execute build commands, manage processes, and chain execution middleware
+**Purpose**: Execute build commands, manage processes, and handle file system cloning
 
 **Responsibilities**:
 - Spawn and manage build processes
 - Capture stdout/stderr
 - Handle process timeouts and cancellation
-- Automatic response file synthesis (`@forge_args.rsp`) when arguments exceed OS limits (4KB on Windows, 32KB on POSIX)
+- Fast file system cloning using copy-on-write extents and hardlinks (`KernelCowCloner`)
+- Fast linker auto-detection and flag synthesis (`LinkerDispatcher` supporting `mold`, `lld`, and `msvc`)
+- Automatic response file synthesis (`@forge_args.rsp`) when arguments exceed OS limits
 - Extensible task middleware pipeline (`TaskMiddleware`, `TurboLinker`, `SuperOptimizer`)
 - Return execution results
 
 **Key Types**:
 - `CommandSpec`: Command specification with environment
 - `AsyncExecutor`: Non-blocking process execution engine
+- `KernelCowCloner`: Copy-on-write and fast cloner
+- `LinkerDispatcher`: Modern linker detector
 - `ResponseFileWriter`: Argument file synthesizer
 - `TaskMiddleware`: Middleware trait for task interception
 - `ExecutionResult`: Result of command execution
@@ -68,14 +76,18 @@ Forge is a cache-first, polyglot build orchestration system designed for monorep
 **Responsibilities**:
 - Maintain ready queue of available tasks
 - Distribute tasks across available workers
+- Kernel resource governor (`KernelResourceGovernor`) monitoring system memory pressure and throttling concurrency
+- Compiler pipelining coordination (`PipelinedCompilationCoordinator`) unblocking downstream compilation upon metadata readiness
 - GNU Jobserver pool integration (`JobserverPool`) for global thread token management across compilers
-- Dynamic remote racing (`DynamicRacingExecutor`): concurrent local vs remote execution with instant cancellation of the slower runner
+- Dynamic remote racing (`DynamicRacingExecutor`): concurrent local vs remote execution
 - Distributed Task Execution (DTE) bin-packing (`DteBinPacker`) using Longest Processing Time (LPT) scheduling
 - Respect task dependencies
 - Handle task completion and failure
 
 **Key Types**:
 - `Scheduler`: Task scheduling engine
+- `KernelResourceGovernor`: Memory pressure monitor
+- `PipelinedCompilationCoordinator`: Pipelined stage manager
 - `JobserverPool`: Global token-based concurrency pool
 - `DynamicRacingExecutor`: Local vs remote racer
 - `DteBinPacker`: Balanced multi-agent CI partitioner

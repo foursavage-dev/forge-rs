@@ -6,6 +6,7 @@ pub mod config;
 pub mod diagnostics;
 pub mod environment;
 pub mod error;
+pub mod input_filter;
 pub mod profiling;
 pub mod project;
 pub mod security;
@@ -31,6 +32,7 @@ pub use error::{
     DiagnosticInfo, ErrorContext, ErrorSeverity, ForgeError, HealthCheck, HealthCheckResult,
     HealthStatus, RecoveryStrategy, Result,
 };
+pub use input_filter::MicroInputFilter;
 pub use profiling::{
     MemoryTracker, PerformanceMetrics, Profiler, ResourceMonitor, ResourceUsage, TaskProfile,
 };

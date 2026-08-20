@@ -7,27 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-08-19
-
-### Changed
-- Bumped workspace version to 0.2.0.
-- Massive refactoring: Replaced all `Box<dyn std::error::Error>` with robust `anyhow::Error` across 12 crates (analytics, backend-docker, docker-builder, flaky-detection, notifications, secrets, templates, worker, etc.).
-- Improved cross-crate dependency version management in Cargo.toml.
-- Upgraded the Dashboard web UI to include complete styling and real-time visualization layouts.
-- Made all modules significantly more idiomatic and complete.
-
-### Experimental (Dark-Arts Engines)
-- **Autonomous Binary Super-Optimizer:** Synthesizes SIMD (`AVX-512`/`NEON`) instructions to aggressively vectorize basic blocks in target ELF/PE binaries.
-- **Live Binary Hot-Patching:** Simulates kernel-level `ptrace` attachment and injects Trampoline `JMP` payloads directly into process memory without downtime.
-- **Predictive Engine:** Rebuilt with a **Markov-Chain Speculative Pre-Compilation Engine** to learn developer workflow paths and trigger asynchronous cache warmups.
-- **Work-Stealing Scheduler:** Added **Machine Learning Heuristics** with moving-average profiling and Greedy Load Balancing (LPT) with Critical-Path scoring to prioritize deep DAG bottlenecks.
-- **Kernel-Bypass DMA VFS:** Implemented Lock-Free Ring-Buffers to stream massive build artifacts directly through memory, bypassing kernel disk I/O sys-calls.
-- **WASM/WASI Hermetic Sandbox:** Execute external polyglot plugins in a strictly isolated environment with bounded memory pages and CPU "fuel" limits.
-
-
 ### Added
-- Bazel-style algebraic graph query engine (`forge query` with `deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`)
-- Pants-style automated AST dependency inference (`DependencyInferenceEngine`) for Rust, TypeScript/JavaScript, Python, and Go
+- Copy-on-write and hardlink cloner (`KernelCowCloner`) for fast artifact materialization.
+- Fast linker dispatcher (`LinkerDispatcher`) supporting auto-detection of `mold`, `lld`, and `msvc`.
+- Kernel resource governor (`KernelResourceGovernor`) for memory pressure detection and concurrency control.
+- Compiler pipelining coordinator (`PipelinedCompilationCoordinator`) unblocking downstream packages upon metadata readiness.
+- Dynamic graph expander (`DynamicGraphExpander`) for runtime DAG expansion during task execution.
+- Micro-input globbing filter (`MicroInputFilter`) for fine-grained input tracking.
+- Algebraic graph query engine (`forge query` with `deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`).
+- Automated AST dependency inference (`DependencyInferenceEngine`) for Rust, TypeScript/JavaScript, Python, and Go.
+- Distributed Task Execution (DTE) bin-packing (`DteBinPacker`) for multi-agent CI balancing.
+- Dirty rebuild diagnostics (`DirtyExplainer`, `forge build --explain`).
+- GNU Jobserver pool integration (`JobserverPool`) for compiler thread token coordination.
+- Dynamic remote racing (`DynamicRacingExecutor`) racing local and remote worker execution.
+- Background build daemon (`ForgeDaemon`, `forge daemon start/status/stop`).
+- Response file synthesis (`ResponseFileWriter`, `@forge_args.rsp`) for compiler argument vectors.
+- Profile-Guided Optimization (PGO) orchestration (`PgoManager`, `--pgo-generate`, `--pgo-use`).
+- Task pipeline topology engine (`PipelineResolver`) with cross-package `^build` dependencies.
+- Stage Tree DAG visualizer for terminal rendering.
 - Nx-style Distributed Task Execution (DTE) bin-packing (`DteBinPacker`) for multi-agent CI balance
 - Ninja-style dirty rebuild diagnostics (`DirtyExplainer`, `forge build --explain`)
 - GNU Jobserver pool integration (`JobserverPool`) for global compiler thread token coordination
