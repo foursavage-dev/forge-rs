@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust 1.88 (MSRV)
-        uses: dtolnay/rust-toolchain@1.88
+        uses: dtolnay/rust-toolchain@1.100
       - name: Check MSRV compilation
         run: cargo check -p fish-core -p fish-scheduler -p fish-cache -p fish-cas -p fish-executor
 
