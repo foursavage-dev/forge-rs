@@ -2,6 +2,7 @@
 
 pub mod backend;
 pub mod backend_utils;
+pub mod compile_commands;
 pub mod config;
 pub mod diagnostics;
 pub mod environment;
@@ -11,6 +12,7 @@ pub mod profiling;
 pub mod project;
 pub mod security;
 pub mod testing;
+pub mod toolchain;
 
 #[cfg(windows)]
 pub mod windows_compat;
@@ -19,6 +21,7 @@ pub use backend::BuildBackend;
 pub use backend_utils::{
     BinaryUtils, DEFAULT_EXCLUDED_DIRS, FingerprintUtils, TaskDagBuilder, ToolchainUtils,
 };
+pub use compile_commands::{CompilationDatabase, CompileCommand};
 pub use config::{
     BuildConfig, CIConfig, CacheConfig, ConfigError, ExperimentalConfig, ForgeConfig,
     GeneralConfig, SecurityConfig,
@@ -43,6 +46,7 @@ pub use testing::{
     Benchmark, BenchmarkResult, IntegrationTestEnvironment, ParallelTestRunner, PropertyTestResult,
     PropertyTestRunner, TestCase, TestResult, TestRunner, TestSuite, TestSummary,
 };
+pub use toolchain::{ToolchainKind, ToolchainRegistry, ToolchainSpec};
 
 #[cfg(windows)]
 pub use windows_compat::{

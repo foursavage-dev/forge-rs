@@ -2,7 +2,9 @@
 
 [![CI](https://github.com/foursavage-dev/forge-rs/actions/workflows/dogfood.yml/badge.svg)](https://github.com/foursavage-dev/forge-rs/actions/workflows/dogfood.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust-1.88%2B-orange.svg)](https://www.rust-lang.org)
+
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 Forge is a Rust build-orchestration experiment for projects that use more than
 one toolchain. It discovers supported projects, constructs a dependency graph,
@@ -14,16 +16,6 @@ as Cargo, Go, Node.js, Python, C/C++, Docker, and other supported backends.
 > Status: pre-1.0. The CLI and configuration may change. Treat distributed,
 > remote-cache, and experimental features as opt-in and validate them in your
 > own environment before relying on them in CI.
-
-
-### 🧪 "Dark-Arts" Experimental Engines
-Forge ships with experimental, highly-optimized performance engines for specific extreme use-cases:
-- **Predictive Engine (Markov-Chain):** Learns developer patterns to pre-compile and warm up cache hits before files are even saved.
-- **ML-Aware Work-Stealing:** Uses historical tracing and dependency tail length scoring to schedule threads with zero starvation.
-- **Autonomous Binary Super-Optimizer:** Synthesizes `AVX-512`/`NEON` instructions directly into compiled ELF binaries via basic-block vectorization.
-- **Live Binary Hot-Patching:** Injects trampoline payloads and live-patches C/Rust code in running processes via simulated memory injection.
-- **Kernel-Bypass DMA Ring-Buffer VFS:** Streams artifacts directly through zero-copy memory ring-buffers, entirely bypassing disk OS sys-calls.
-- **WASM/WASI Hermetic Sandbox:** Runs polyglot plugins securely via strict memory/CPU instruction bounds ("fuel limits").
 
 ## What works today
 
@@ -86,7 +78,7 @@ cd forge-rs
 cargo build -p forge-cli
 ```
 
-The project requires Rust 1.85 or later.
+The project requires Rust 1.88 or later (MSRV 1.88).
 
 ## Quick start
 
@@ -110,6 +102,9 @@ forge graph --format tree
 # Rebuild when source files change.
 forge watch --mode test
 
+# Launch the interactive Web Dashboard & DAG visualizer.
+forge ui --port 3000 --open
+
 # See the local cache's size and record count.
 forge cache stats
 ```
@@ -125,7 +120,9 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for local development and
 
 | Command | Purpose |
 | --- | --- |
+| `forge init` | Initialize Forge configuration and generate task definitions for detected project languages. |
 | `forge build`, `check`, `test` | Execute work discovered from the project graph (supports `--explain`, `--pgo-generate`, `--pgo-use`). |
+| `forge ui` | Start the interactive Web Dashboard & DAG visualizer with 5-language telemetry. |
 | `forge query <EXPR>` | Query graph algebra: `deps(...)`, `rdeps(...)`, `allpaths(...)`, `somepath(...)`, `filter(...)`. |
 | `forge daemon` | Manage background build daemon (`start`, `status`, `stop`) for sub-millisecond warm builds. |
 | `forge run` | Build and run a selected Rust package or binary. |
@@ -133,8 +130,8 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for local development and
 | `forge watch` | Re-run build, check, or test after relevant file changes. |
 | `forge affected --since REV` | Limit work to projects changed since a revision. |
 | `forge cache` | Inspect, prune, and manage the local cache and CAS. |
-| `forge ci init` / `export` | Generate a CI configuration. |
-| `forge doctor` | Check local toolchain readiness. |
+| `forge ci init` / `export` | Generate CI configurations for GitHub, GitLab, CircleCI, Bitbucket. |
+| `forge doctor` | Check local toolchain readiness and diagnose system environment. |
 | `forge worker` / `cache-server` | Start optional remote-execution services. |
 
 Some commands require a corresponding toolchain on `PATH`. `forge doctor` is a
@@ -142,6 +139,10 @@ good first check when setting up a machine.
 
 ## High-Performance Capabilities
 
+- **Interactive SVG DAG Web Visualizer**: Real-time dependency graph canvas with pan/zoom, node focus, critical path highlights, and 5-language UI.
+- **Compilation Database Generator**: Generates standard `compile_commands.json` for Clangd, LSP, and IDEs across C/C++, Rust, and Go.
+- **Hermetic Toolchain Registry**: Isolated toolchain management and environment isolation with system toolchain auto-detection.
+- **Real-Time Filesystem Watcher**: Background daemon with dirty node tracking and hot graph cache pre-warming.
 - **Hermetic CAS & ZSTD Deduplication**: Blake3 content-addressable storage with tiered L1/L2 composite caching.
 - **GNU Jobserver Pool**: Token-based concurrency control across sub-processes preventing CPU thrashing.
 - **Dynamic Remote Racing**: Races local execution against remote cluster workers, cancelling the slower one.

@@ -1,5 +1,7 @@
 # Python Backend
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+
 The Python backend provides build orchestration for Python projects.
 
 ## Detection
@@ -8,23 +10,21 @@ The Python backend is detected when a `pyproject.toml` or `setup.py` file is pre
 
 ## Configuration
 
-### forge.py.json
+Configure the Python backend via `forge.toml` in your project or workspace root:
 
-```json
-{
-  "pythonVersion": "3.11",
-  "packageManager": "uv",
-  "environment": "venv",
-  "includeTests": true
-}
+```toml
+[build]
+backend = "py"
+jobs = 4
+
+[pipelines.build]
+inputs = ["**/*.py", "pyproject.toml", "requirements.txt"]
+outputs = ["dist/*"]
+
+[pipelines.test]
+depends_on = ["build"]
+inputs = ["tests/**/*.py", "**/*.py"]
 ```
-
-### Configuration Options
-
-- `pythonVersion`: Python version to use
-- `packageManager`: Package manager (uv, poetry, pip)
-- `environment`: Virtual environment (venv, conda, none)
-- `includeTests`: Whether to include tests in build
 
 ## Supported Package Managers
 

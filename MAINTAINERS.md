@@ -1,5 +1,7 @@
 # Maintainers
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+
 This document lists the maintainers of the Forge project and their responsibilities.
 
 ## Core Maintainers

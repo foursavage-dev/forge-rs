@@ -5,6 +5,7 @@ pub mod jobserver_pool;
 pub mod pipelining;
 pub mod racing;
 pub mod resource_governor;
+pub mod watcher;
 pub mod work_stealing;
 
 pub use bin_packing::{AgentBucket, DteBinPacker, TaskTimingEstimate};
@@ -12,6 +13,7 @@ pub use jobserver_pool::JobserverPool;
 pub use pipelining::{PipelineStage, PipelinedCompilationCoordinator};
 pub use racing::DynamicRacingExecutor;
 pub use resource_governor::{KernelResourceGovernor, MemoryPressureLevel};
+pub use watcher::FsWatcherDaemon;
 
 use std::cmp::Reverse;
 use std::collections::HashMap;

@@ -1,5 +1,7 @@
 # Production Deployment Guide
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+
 This guide provides comprehensive instructions for deploying Forge-rs in production environments.
 
 ## Table of Contents
@@ -19,7 +21,7 @@ This guide provides comprehensive instructions for deploying Forge-rs in product
 ### System Requirements
 
 - **Operating System**: Linux (Ubuntu 20.04+, Debian 11+, RHEL 8+), macOS 12+, Windows 10+
-- **Rust**: 1.85 or later
+- **Rust**: 1.88 or later (MSRV 1.88)
 - **Memory**: Minimum 4GB RAM, 8GB+ recommended for large projects
 - **Disk Space**: 10GB+ for cache storage (configurable)
 - **CPU**: Multi-core CPU recommended for parallel builds

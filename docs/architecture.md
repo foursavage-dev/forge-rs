@@ -1,527 +1,107 @@
-# Forge Architecture
+# Forge Architecture Guide
 
-This document provides an in-depth technical overview of Forge's architecture.
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+
+This document provides a comprehensive technical overview of Forge's system architecture, core engine modules, and execution pipeline.
+
+---
 
 ## System Overview
 
-Forge is a distributed, cache-first build orchestration system designed for polyglot monorepos. It uses a dependency graph, parallel scheduler, executor, and CAS artifact cache to optimize build performance.
+Forge is a high-performance, cache-first build orchestration system designed for polyglot monorepos and distributed development. Rather than replacing native compilers, Forge acts as an intelligent coordination layer across language toolchains, managing dependency DAGs, content-addressable caching (CAS), hermetic isolation, and parallel work-stealing execution.
 
-## Core Components
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                    forge-cli / Web UI                       │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│       forge-core (Discovery, Toolchains, compile_commands)  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│           forge-graph (DAG & Algebraic Query Engine)        │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│   forge-scheduler (Governor, Jobserver, Racing, Watcher)    │
+└──────────────┬──────────────────────────────┬───────────────┘
+               │                              │
+┌──────────────▼──────────────┐┌──────────────▼──────────────┐
+│ forge-executor & Middleware ││  forge-cache & forge-cas    │
+└──────────────┬──────────────┘└─────────────────────────────┘
+               │
+┌──────────────▼──────────────────────────────────────────────┐
+│      11+ Language Backends & Distributed Worker Network     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Core Crates and Responsibilities
 
 ### 1. Workspace Discovery (`forge-core`)
-
-**Purpose**: Automatically discover and model project structure
-
-**Architecture**:
-```
-WorkspaceDiscovery
-    ├── Scanner (traverses filesystem)
-    ├── ManifestParser (reads config files)
-    ├── DependencyResolver (builds dependency graph)
-    └── PackageBuilder (creates Package models)
-```
-
-**Key Components**:
-- `Workspace`: Root container for all packages
-- `Package`: Individual project/unit with metadata
-- `Manifest`: Project configuration (Cargo.toml, package.json, etc.)
-- `Dependency`: Relationship between packages
+- **Manifest Discovery**: Scans and parses `Cargo.toml`, `package.json`, `go.mod`, `pyproject.toml`, `CMakeLists.txt`, `pom.xml`, `*.csproj`, `Package.swift`, `pubspec.yaml`, `build.zig`, `Dockerfile`.
+- **Compilation Database**: Generates standard `compile_commands.json` for Clangd and IDEs (`CompilationDatabase`).
+- **Hermetic Toolchains**: Manages and isolates toolchain paths and environments (`ToolchainRegistry`, `ToolchainSpec`).
+- **Micro-Input Filtering**: Glob-based file filtering reducing cache invalidation churn (`MicroInputFilter`).
 
 ### 2. Build Graph (`forge-graph`)
+- **Topological Task Graph**: Constructs a Directed Acyclic Graph (DAG) of build tasks with cycle detection.
+- **Algebraic Graph Queries**: Evaluates Bazel-style graph expressions (`deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`).
+- **Dynamic Node Expansion**: Generates sub-task graphs on the fly during execution (`DynamicGraphExpander`).
 
-**Purpose**: Model build dependencies and execution order
+### 3. Execution & Fast Materialization (`forge-executor`)
+- **Process Orchestration**: Non-blocking asynchronous task execution with timeouts and output stream capture.
+- **Fast Extents Cloning**: Copy-on-Write (CoW) extents and hardlink materialization (`KernelCowCloner`).
+- **Linker Dispatcher**: Auto-detects and synthesizes flags for `mold`, `lld`, `lld-link`, and `msvc` (`LinkerDispatcher`).
+- **Compiler Response Files**: Generates `@forge_args.rsp` files when command arguments exceed operating system limits.
 
-**Architecture**:
-```
-BuildGraph
-    ├── Graph (DAG structure)
-    ├── TopologicalSorter (execution order)
-    ├── LevelCalculator (parallel execution groups)
-    └── CycleDetector (circular dependency detection)
-```
+### 4. Scheduler & Resource Control (`forge-scheduler`)
+- **Parallel Work-Stealing**: Lock-free task scheduling across available hardware cores.
+- **Kernel Resource Governor**: Monitors memory pressure and dynamically throttles concurrency to prevent out-of-memory thrashing (`KernelResourceGovernor`).
+- **Compiler Pipelining**: Coordinates multi-stage compilation to unblock downstream targets upon metadata readiness (`PipelinedCompilationCoordinator`).
+- **GNU Jobserver Pool**: Global token pool coordinating thread allocation across nested compiler invocations (`JobserverPool`).
+- **Dynamic Remote Racing**: Races local execution against distributed cluster workers (`DynamicRacingExecutor`).
+- **Distributed Task Execution (DTE)**: Longest Processing Time (LPT) bin-packing for multi-agent CI balancing (`DteBinPacker`).
+- **Real-Time Filesystem Watcher**: Background daemon monitoring file events and pre-warming cache graphs (`FsWatcherDaemon`).
 
-**Data Flow**:
-1. Packages → Nodes in graph
-2. Dependencies → Edges in graph
-3. Topological sort → Execution order
-4. Level calculation → Parallel groups
+### 5. Content-Addressable Storage (`forge-cache` & `forge-cas`)
+- **Fingerprinting**: Blake3 content hashing over source files, environment variables, and compiler flags.
+- **CAS Storage**: Deduplicated artifact storage with Zstandard compression.
+- **Tiered Composite Caching**: L1 local in-memory/disk cache and L2 remote S3/HTTP cache integration.
 
-### 3. Executor (`forge-executor`)
+### 6. User Interface & Telemetry (`forge-cli`)
+- **Command-Line Interface**: Ergonomic subcommands for build, test, check, graph, doctor, query, affected, and daemon management.
+- **Interactive SVG DAG Visualizer**: Web-based real-time dependency graph canvas with pan/zoom, search, node focus, and critical path highlighting.
+- **5-Language UI Localization**: Built-in dictionary supporting English, Vietnamese, Simplified Chinese, Traditional Chinese, and Japanese.
+- **Background Daemon IPC**: Loopback TCP daemon on `127.0.0.1:9527` for instant warm graph resolutions.
 
-**Purpose**: Execute build commands and manage processes
-
-**Architecture**:
-```
-Executor
-    ├── ProcessManager (spawns processes)
-    ├── OutputCollector (captures stdout/stderr)
-    ├── TimeoutHandler (manages timeouts)
-    └── SignalHandler (handles cancellation)
-```
-
-**Execution Flow**:
-```
-CommandSpec → Process Spawn → Output Capture → Result Collection
-```
-
-### 4. Scheduler (`forge-scheduler`)
-
-**Purpose**: Schedule tasks for parallel execution
-
-**Architecture**:
-```
-Scheduler
-    ├── ReadyQueue (available tasks)
-    ├── WorkerPool (execution workers)
-    ├── TaskDispatcher (assigns tasks to workers)
-    └── ResultHandler (processes completions)
-```
-
-**Scheduling Algorithm**:
-1. Identify ready tasks (dependencies satisfied)
-2. Distribute across available workers
-3. Respect task priorities
-4. Handle failures and retries
-
-### 5. Cache (`forge-cache`)
-
-**Purpose**: Fingerprint-based caching for incremental builds
-
-**Architecture**:
-```
-CacheSystem
-    ├── FingerprintComputer (Blake3 hashing)
-    ├── CacheStore (artifact storage)
-    ├── CacheValidator (validity checking)
-    └── CacheEviction (LRU policy)
-```
-
-**Cache Strategy**:
-- **File-level**: Cache individual file fingerprints
-- **Package-level**: Cache entire package outputs
-- **Hybrid**: Combine both strategies
-
-### 6. CAS Engine (`forge-cas`)
-
-**Purpose**: Content-Addressable Storage for artifact caching
-
-**Architecture**:
-```
-CASEngine
-    ├── ArtifactStore (storage interface)
-    ├── CompressionEngine (Zstandard)
-    ├── DeduplicationEngine (hash-based)
-    └── StorageBackend (local/remote)
-```
-
-**Storage Backends**:
-- **Local**: File system storage
-- **Remote**: S3, GCS, MinIO
-- **Composite**: Tiered L1/L2 caching
-
-### 7. Remote Cache (`forge-remote-cache`)
-
-**Purpose**: Tiered L1/L2 composite caching
-
-**Architecture**:
-```
-RemoteCache
-    ├── L1Cache (local fast cache)
-    ├── L2Cache (remote shared cache)
-    ├── CacheCoordinator (population/eviction)
-    └── CacheMetrics (hit/miss tracking)
-```
-
-**Cache Policies**:
-- **Write-through**: Write to both L1 and L2
-- **Write-back**: Write to L1, async to L2
-- **Read-through**: Check L1, fallback to L2
-
-### 8. Worker (`forge-worker`)
-
-**Purpose**: Distributed build execution
-
-**Architecture**:
-```
-WorkerSystem
-    ├── WorkerServer (worker daemon)
-    ├── WorkerClient (client library)
-    ├── ClusterExecutor (cluster management)
-    └── VirtualFileSystem (on-demand file access)
-```
-
-**Worker Protocol**:
-```
-Client                    Worker
-  |                          |
-  |-- Register ------------->|
-  |<-- WorkerInfo ---------|
-  |                          |
-  |-- SubmitTask ---------->|
-  |<-- TaskResult ---------|
-  |                          |
-  |-- VFSRequest ---------->|
-  |<-- VFSResponse --------|
-```
-
-### 9. Sandboxing (`forge-sandbox`)
-
-**Purpose**: Hermetic environment isolation
-
-**Architecture**:
-```
-SandboxSystem
-    ├── Namespace (process isolation)
-    ├── Filesystem (path isolation)
-    ├── Network (network isolation)
-    └── ResourceLimiter (CPU/memory limits)
-```
-
-**Isolation Levels**:
-- **None**: No isolation (development)
-- **Basic**: Filesystem isolation
-- **Full**: Full isolation (production)
-
-### 10. Plugin System (`forge-plugin`)
-
-**Purpose**: Extensible rule system
-
-**Architecture**:
-```
-PluginSystem
-    ├── PluginManager (load/manage plugins)
-    ├── ScriptPlugin (script-based plugins)
-    ├── NativePlugin (Rust-based plugins)
-    └── PluginExecutor (execution engine)
-```
-
-**Plugin Types**:
-- **Shell**: Bash/sh scripts
-- **Python**: Python scripts
-- **Node**: Node.js scripts
-- **WASM**: WebAssembly modules
-- **Lua**: Lua scripts
+---
 
 ## Language Backends
 
-### Backend Architecture
-
-All backends implement a common interface:
-
-```rust
-pub trait Backend {
-    fn detect(&self, path: &Path) -> bool;
-    fn extract_dependencies(&self, path: &Path) -> Result<Vec<Dependency>>;
-    fn generate_tasks(&self, package: &Package) -> Result<Vec<Task>>;
-}
-```
-
-### Backend Implementation Pattern
-
-```
-Backend
-    ├── ManifestParser (read backend-specific config)
-    ├── DependencyExtractor (extract dependencies)
-    ├── TaskGenerator (create build tasks)
-    └── Fingerprinter (backend-specific fingerprinting)
-```
-
-## Security Architecture
-
-### 1. Artifact Signing (`forge-signing`)
-
-**Architecture**:
-```
-SigningSystem
-    ├── KeyManager (Ed25519 key pairs)
-    ├── SignatureEngine (cryptographic signing)
-    ├── SBOMGenerator (SPDX/CycloneDX)
-    └── Verifier (signature verification)
-```
-
-**Signing Flow**:
-```
-Artifact → Hash → Sign → Signature + SBOM
-```
-
-### 2. Security Scanner (`forge-security`)
-
-**Architecture**:
-```
-SecurityScanner
-    ├── BackendScanners (Rust, NPM, Maven)
-    ├── VulnerabilityDatabase (NVD, GitHub Advisory)
-    ├── SeverityAnalyzer (CVSS scoring)
-    └── PolicyEngine (blocking rules)
-```
-
-**Scanning Flow**:
-```
-Dependencies → Query Database → Match Vulnerabilities → Apply Policy
-```
-
-### 3. Secret Management (`forge-secrets`)
-
-**Architecture**:
-```
-SecretSystem
-    ├── SecretProviders (Vault, AWS, K8s)
-    ├── SecretInjector (environment injection)
-    ├── AuditLogger (usage tracking)
-    └── AccessControl (policy enforcement)
-```
-
-## CI/CD Architecture
-
-### 1. CI Generator (`forge-ci-generator`)
-
-**Architecture**:
-```
-CIGenerator
-    ├── PlatformGenerators (GitHub, GitLab, CircleCI, Bitbucket)
-    ├── MatrixGenerator (test matrices)
-    ├── TemplateEngine (Handlebars)
-    └── ConfigValidator (validation)
-```
-
-### 2. Multi-Platform (`forge-multiplatform`)
-
-**Architecture**:
-```
-MultiPlatformSystem
-    ├── PlatformDetector (OS detection)
-    ├── ArchitectureDetector (CPU architecture)
-    ├── TargetGenerator (Rust target triples)
-    └── MatrixBuilder (combination builder)
-```
-
-## Data Flow Diagrams
-
-### Build Execution Flow
-
-```
-┌─────────────┐
-│   Workspace │
-│  Discovery  │
-└──────┬──────┘
-       │
-       v
-┌─────────────┐
-│ Build Graph │
-│ Construction│
-└──────┬──────┘
-       │
-       v
-┌─────────────┐
-│   Fingerprint│
-│  Computation │
-└──────┬──────┘
-       │
-       v
-┌─────────────┐
-│   Scheduler  │
-│   Distribution│
-└──────┬──────┘
-       │
-       v
-┌─────────────┐
-│   Executor  │
-│   Execution │
-└──────┬──────┘
-       │
-       v
-┌─────────────┐
-│     Cache    │
-│   Population │
-└─────────────┘
-```
-
-### Distributed Build Flow
-
-```
-┌─────────┐    ┌─────────┐    ┌─────────┐
-│ Client  │───▶│ Scheduler│───▶│  Worker1│
-└─────────┘    └─────────┘    └─────────┘
-                    │
-                    v
-              ┌─────────┐
-              │  Worker2│
-              └─────────┘
-                    │
-                    v
-              ┌─────────┐
-              │  WorkerN│
-              └─────────┘
-```
-
-## Performance Optimizations
-
-### 1. Level Partitioning
-
-Groups independent packages per build level into single toolchain calls.
-
-**Example**:
-```
-Level 1: [pkg-a, pkg-b, pkg-c] → single cargo build
-Level 2: [pkg-d, pkg-e] → single cargo build
-```
-
-### 2. Cache-First Execution
-
-Fingerprint-based caching enables instant rebuilds.
-
-**Cache Key**: `hash(inputs + environment + toolchain)`
-
-### 3. Parallel Execution
-
-Tasks executed in parallel respecting dependencies.
-
-**Parallelism**: Limited by CPU cores and available workers
-
-### 4. Incremental Builds
-
-Only rebuild affected packages based on dependency graph changes.
-
-**Change Detection**: File content hashing + dependency analysis
-
-## Security Considerations
-
-### Code Safety
-
-- `#![forbid(unsafe_code)]` in security-sensitive crates
-- Input validation across all backends
-- No use of unwrap() in production code
-
-### Authentication
-
-- Worker authentication with tokens
-- Secret management with Vault/AWS/K8s
-- Artifact signing verification
-
-### Audit Logging
-
-- Build execution logs
-- Secret access logs
-- Cache access logs
-
-## Extension Points
-
-### Custom Backends
-
-Implement the `Backend` trait:
-
-```rust
-impl Backend for MyBackend {
-    fn detect(&self, path: &Path) -> bool { /* ... */ }
-    fn extract_dependencies(&self, path: &Path) -> Result<Vec<Dependency>> { /* ... */ }
-    fn generate_tasks(&self, package: &Package) -> Result<Vec<Task>> { /* ... */ }
-}
-```
-
-### Custom Plugins
-
-Create plugins in `.forge/plugins/`:
-
-```json
-{
-  "name": "my-plugin",
-  "type": "shell",
-  "main": "plugin.sh",
-  "commands": {
-    "build": "plugin.sh build"
-  }
-}
-```
-
-### Custom CI Platforms
-
-Implement the `CIGenerator` trait:
-
-```rust
-impl CIGenerator for MyCIGenerator {
-    fn generate(&self, config: &CIConfig) -> Result<String> { /* ... */ }
-}
-```
-
-## Deployment Architecture
-
-### Single Machine
-
-```
-┌─────────────────────────────────┐
-│         Forge CLI               │
-│  ┌─────────────────────────┐   │
-│  │   Build Graph & Cache   │   │
-│  └─────────────────────────┘   │
-└─────────────────────────────────┘
-```
-
-### Distributed Cluster
-
-```
-┌─────────────┐    ┌─────────────┐
-│  Coordinator│───▶│   Worker 1  │
-└─────────────┘    └─────────────┘
-       │
-       ├───▶│   Worker 2  │
-       │   └─────────────┘
-       │
-       ├───▶│   Worker 3  │
-       │   └─────────────┘
-       │
-       └───▶│   Worker N  │
-           └─────────────┘
-```
-
-### Multi-Region
-
-```
-┌─────────────┐    ┌─────────────┐
-│  Coordinator│───▶│  Region 1   │
-└─────────────┘    └─────────────┘
-       │
-       └───▶│  Region 2   │
-           └─────────────┘
-```
-
-## Monitoring and Observability
-
-### Metrics
-
-- Build duration
-- Cache hit rate
-- Worker utilization
-- Task queue length
-- Error rates
-
-### Logging
-
-- Structured JSON logging
-- Log levels: error, warn, info, debug, trace
-- Per-component logging
-
-### Tracing
-
-- Distributed tracing for distributed builds
-- Request/response tracking
-- Performance profiling
-
-## Future Enhancements
-
-### Machine Learning Integration
-
-- Predictive caching
-- Build time estimation
-- Resource optimization
-
-### Advanced Visualization
-
-- Real-time build graph visualization
-- Performance heatmaps
-- Dependency analysis
-
-### Cloud-Native Features
-
-- Kubernetes operator
-- Auto-scaling workers
-- Managed service offering
+Forge includes 11 dedicated language adapters:
+
+| Backend | Identifier | Primary Manifest | Default Compiler / Tool |
+| :--- | :--- | :--- | :--- |
+| **Rust** | `rust` | `Cargo.toml` | `cargo`, `rustc` |
+| **C / C++** | `cc` | `CMakeLists.txt`, `Makefile` | `cmake`, `clang`, `gcc`, `msvc` |
+| **Go** | `go` | `go.mod` | `go build`, `go test` |
+| **TypeScript / Node** | `ts` | `package.json` | `npm`, `pnpm`, `yarn`, `bun` |
+| **Python** | `py` | `pyproject.toml`, `requirements.txt` | `python -m build`, `pytest`, `uv` |
+| **Java / Kotlin** | `java` | `pom.xml`, `build.gradle` | `mvn`, `gradle` |
+| **.NET** | `dotnet` | `*.csproj`, `*.sln` | `dotnet build`, `dotnet test` |
+| **Swift** | `swift` | `Package.swift` | `swift build`, `swift test` |
+| **Dart / Flutter** | `dart` | `pubspec.yaml` | `dart compile`, `flutter build` |
+| **Zig** | `zig` | `build.zig` | `zig build` |
+| **Docker** | `docker` | `Dockerfile` | `docker build` |
+
+---
+
+## Security & Verification
+
+- **Artifact Cryptographic Signing (`forge-signing`)**: Ed25519 digital signature generation and verification.
+- **SBOM Generation**: SPDX and CycloneDX Software Bill of Materials export.
+- **Vulnerability Scanner (`forge-security`)**: Automated dependency scanning with CVSS scoring and severity blocking.
+- **Secrets Management (`forge-secrets`)**: HashiCorp Vault, AWS Secrets Manager, and Kubernetes Secret integration with automatic console redaction.

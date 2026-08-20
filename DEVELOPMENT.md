@@ -1,12 +1,14 @@
 # Development Guide
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+
 This guide provides detailed information for developers working on Forge.
 
 ## Development Environment
 
 ### Prerequisites
 
-- Rust 1.85 or later
+- Rust 1.88 or later (MSRV 1.88)
 - Git
 - A text editor or IDE (VS Code recommended)
 - Docker (for testing Docker backend)

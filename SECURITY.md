@@ -1,5 +1,7 @@
 # Security Policy
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+
 ## Supported Versions
 
 Forge currently provides security updates for the latest supported release series.

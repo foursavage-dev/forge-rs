@@ -1,5 +1,7 @@
 # Forge API Documentation
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../../TRANSLATION.md).
+
 This document provides API documentation for Forge's main components.
 
 ## Table of Contents

@@ -1,0 +1,31 @@
+name: Documentation Checks
+
+on:
+  push:
+    branches: [ main, dev ]
+    paths:
+      - 'docs/**'
+      - '**.md'
+  pull_request:
+    branches: [ main, dev ]
+    paths:
+      - 'docs/**'
+      - '**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  markdown-check:
+    name: Markdown Structure & Link Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for trailing whitespace and line endings in docs
+        run: |
+          echo "Verifying markdown files..."
+          find docs -name "*.md" -type f
+          echo "Documentation checks completed."

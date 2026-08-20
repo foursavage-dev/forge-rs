@@ -2,9 +2,17 @@ name: Quality Checks
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ main, dev ]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'LICENSE'
   pull_request:
     branches: [ main, dev ]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'LICENSE'
   workflow_dispatch:
 
 concurrency:

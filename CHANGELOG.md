@@ -1,5 +1,7 @@
 # Changelog
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
@@ -8,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Compilation database generator (`CompilationDatabase`, `compile_commands.json`) for Clangd and IDE integration.
+- Hermetic toolchain manager (`ToolchainRegistry`, `ToolchainSpec`) for isolated toolchain environments.
+- Real-time filesystem watcher daemon (`FsWatcherDaemon`) with hot node cache pre-warming.
+- Interactive SVG DAG visualizer and 5-language localized Web UI (English, Vietnamese, Simplified Chinese, Traditional Chinese, Japanese).
 - Copy-on-write and hardlink cloner (`KernelCowCloner`) for fast artifact materialization.
 - Fast linker dispatcher (`LinkerDispatcher`) supporting auto-detection of `mold`, `lld`, and `msvc`.
 - Kernel resource governor (`KernelResourceGovernor`) for memory pressure detection and concurrency control.

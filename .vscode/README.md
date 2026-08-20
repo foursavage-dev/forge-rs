@@ -1,5 +1,7 @@
 # Forge VS Code Extension
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
+
 Basic VS Code extension for Forge build system integration.
 
 ## Features
