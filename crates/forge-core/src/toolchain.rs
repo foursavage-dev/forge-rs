@@ -12,6 +12,9 @@ pub enum ToolchainKind {
     Python,
     Java,
     Dotnet,
+    Swift,
+    Dart,
+    Zig,
     Docker,
     Custom(String),
 }

@@ -47,6 +47,18 @@
         "title": "Forge: Show Affected Packages"
       },
       {
+        "command": "forge.ui",
+        "title": "Forge: Open Web Dashboard & DAG Canvas"
+      },
+      {
+        "command": "forge.explain",
+        "title": "Forge: Explain Rebuild Reasons"
+      },
+      {
+        "command": "forge.exportCompileCommands",
+        "title": "Forge: Export compile_commands.json for Clangd & LSP"
+      },
+      {
         "command": "forge.refreshPackages",
         "title": "Forge: Refresh Package Tree",
         "icon": "$(refresh)"
@@ -54,6 +66,10 @@
       {
         "command": "forge.buildPackage",
         "title": "Forge: Build Selected Package"
+      },
+      {
+        "command": "forge.testPackage",
+        "title": "Forge: Run Tests for Selected Package"
       }
     ],
     "viewsContainers": {

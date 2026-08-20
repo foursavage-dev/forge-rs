@@ -1,0 +1,14 @@
+{
+  "forge.command.build": "Forge: プロジェクトをビルド",
+  "forge.command.test": "Forge: テストを実行",
+  "forge.command.graph": "Forge: 依存関係グラフを表示",
+  "forge.command.ui": "Forge: Web ダッシュボードと DAG キャンバスを開く",
+  "forge.command.explain": "Forge: 再ビルドの理由を説明",
+  "forge.command.exportCompileCommands": "Forge: Clangd および LSP 用に compile_commands.json をエクスポート",
+  "forge.command.clean": "Forge: ビルド成果物をクリーンアップ",
+  "forge.command.doctor": "Forge: システム環境診断を実行",
+  "forge.command.affected": "Forge: 影響を受けるパッケージを表示",
+  "forge.command.refreshPackages": "Forge: パッケージツリーを更新",
+  "forge.command.buildPackage": "Forge: 選択したパッケージをビルド",
+  "forge.command.testPackage": "Forge: 選択したパッケージをテスト"
+}

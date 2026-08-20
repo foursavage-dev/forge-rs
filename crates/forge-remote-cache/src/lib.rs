@@ -3,6 +3,7 @@
 pub mod artifact;
 pub mod client;
 pub mod protocol;
+pub mod reapi;
 pub mod server;
 
 use std::collections::HashMap;
@@ -16,6 +17,9 @@ use forge_executor::{CacheEntry, ExecutorError, Task, TaskExecutor, TaskOutcome,
 
 pub use client::TcpRemoteCacheClient;
 pub use protocol::{CacheRequest, CacheResponse};
+pub use reapi::{
+    ReapiAction, ReapiActionResult, ReapiClient, ReapiCommand, ReapiDigest, ReapiOutputFile,
+};
 pub use server::RemoteCacheServer;
 
 #[derive(Debug, Error)]

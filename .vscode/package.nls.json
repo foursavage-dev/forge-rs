@@ -1,0 +1,14 @@
+{
+  "forge.command.build": "Forge: Build Project",
+  "forge.command.test": "Forge: Run Tests",
+  "forge.command.graph": "Forge: Show Build Graph",
+  "forge.command.ui": "Forge: Open Web Dashboard & DAG Canvas",
+  "forge.command.explain": "Forge: Explain Rebuild Reasons",
+  "forge.command.exportCompileCommands": "Forge: Export compile_commands.json for Clangd & LSP",
+  "forge.command.clean": "Forge: Clean Build Artifacts",
+  "forge.command.doctor": "Forge: Run Diagnostics",
+  "forge.command.affected": "Forge: Show Affected Packages",
+  "forge.command.refreshPackages": "Forge: Refresh Package Tree",
+  "forge.command.buildPackage": "Forge: Build Selected Package",
+  "forge.command.testPackage": "Forge: Run Tests for Selected Package"
+}

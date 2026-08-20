@@ -13,6 +13,7 @@ pub mod project;
 pub mod security;
 pub mod testing;
 pub mod toolchain;
+pub mod toolchain_downloader;
 
 #[cfg(windows)]
 pub mod windows_compat;
@@ -44,9 +45,9 @@ pub use security::{
 };
 pub use testing::{
     Benchmark, BenchmarkResult, IntegrationTestEnvironment, ParallelTestRunner, PropertyTestResult,
-    PropertyTestRunner, TestCase, TestResult, TestRunner, TestSuite, TestSummary,
 };
 pub use toolchain::{ToolchainKind, ToolchainRegistry, ToolchainSpec};
+pub use toolchain_downloader::{RemoteToolchainSource, ToolchainDownloader};
 
 #[cfg(windows)]
 pub use windows_compat::{

@@ -1,0 +1,14 @@
+{
+  "forge.command.build": "Forge: Biên dịch Dự án",
+  "forge.command.test": "Forge: Chạy Kiểm thử",
+  "forge.command.graph": "Forge: Xem Đồ thị Phụ thuộc",
+  "forge.command.ui": "Forge: Mở Bảng điều khiển Web & Đồ thị DAG",
+  "forge.command.explain": "Forge: Giải thích Lý do Biên dịch lại",
+  "forge.command.exportCompileCommands": "Forge: Xuất compile_commands.json cho Clangd & LSP",
+  "forge.command.clean": "Forge: Dọn dẹp Thư mục Build",
+  "forge.command.doctor": "Forge: Kiểm tra Chẩn đoán Môi trường",
+  "forge.command.affected": "Forge: Hiển thị các Gói bị ảnh hưởng",
+  "forge.command.refreshPackages": "Forge: Làm mới Danh sách Gói",
+  "forge.command.buildPackage": "Forge: Biên dịch Gói đã chọn",
+  "forge.command.testPackage": "Forge: Chạy Kiểm thử cho Gói đã chọn"
+}

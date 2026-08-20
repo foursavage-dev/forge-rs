@@ -12,8 +12,10 @@ use forge_graph::BuildGraph;
 pub mod manifest;
 pub mod rule;
 pub mod scripting;
+pub mod starlark_parser;
 
 pub use rule::{PluginRulesManifest, RuleSpec};
+pub use starlark_parser::StarlarkRulesParser;
 
 #[derive(Debug, Error)]
 pub enum PluginError {
