@@ -1,14 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
   <defs>
-    <linearGradient id="fishGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8" />
-      <stop offset="50%" stop-color="#3b82f6" />
-      <stop offset="100%" stop-color="#1d4ed8" />
+    <linearGradient id="monoDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a2a2a" />
+      <stop offset="100%" stop-color="#000000" />
+    </linearGradient>
+    <linearGradient id="monoLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#d4d4d4" />
     </linearGradient>
   </defs>
-  <circle cx="50" cy="50" r="46" fill="url(#fishGrad)" />
-  <path d="M72 50 C65 38 48 34 32 40 C26 42 22 46 18 50 C22 54 26 58 32 60 C48 66 65 62 72 50 Z" fill="#ffffff" opacity="0.95" />
-  <circle cx="34" cy="46" r="3" fill="#1e3a8a" />
-  <path d="M70 50 L84 38 L80 50 L84 62 Z" fill="#ffffff" opacity="0.9" />
-  <path d="M48 41 C52 35 58 33 62 34 C58 38 56 42 54 44 Z" fill="#ffffff" opacity="0.8" />
+  <rect width="92" height="92" x="4" y="4" rx="24" fill="url(#monoDark)" stroke="#404040" stroke-width="2" />
+  <path d="M68 50 C62 38 46 34 32 40 C26 42 22 46 18 50 C22 54 26 58 32 60 C46 66 62 62 68 50 Z" fill="url(#monoLight)" />
+  <circle cx="34" cy="46" r="3.2" fill="#000000" />
+  <path d="M66 50 L80 38 L76 50 L80 62 Z" fill="url(#monoLight)" />
+  <path d="M46 41 C50 35 56 33 60 34 C56 38 54 42 52 44 Z" fill="#ffffff" opacity="0.6" />
 </svg>
