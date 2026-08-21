@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EvictionPolicy {
@@ -69,10 +69,7 @@ impl BackgroundCacheGc {
         let mut removed_count = 0;
         let mut freed_bytes = 0;
 
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs();
+        let now = SystemTime::now();
 
         if let Ok(entries) = std::fs::read_dir(&self.cache_root) {
             let mut file_entries = Vec::new();
@@ -83,14 +80,10 @@ impl BackgroundCacheGc {
                     && meta.is_file()
                 {
                     let size = meta.len();
-                    let mtime = meta
-                        .modified()
-                        .ok()
-                        .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-                        .map(|d| d.as_secs())
-                        .unwrap_or(now);
+                    let mtime = meta.modified().unwrap_or(now);
+                    let age = now.duration_since(mtime).unwrap_or_default();
 
-                    if now.saturating_sub(mtime) > self.config.ttl.as_secs() {
+                    if age >= self.config.ttl {
                         if std::fs::remove_file(&path).is_ok() {
                             removed_count += 1;
                             freed_bytes += size;
