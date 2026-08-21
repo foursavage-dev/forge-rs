@@ -36,3 +36,15 @@ func TestAutoscaler(t *testing.T) {
 		t.Fatalf("expected out of bounds error")
 	}
 }
+
+func TestAutoscalerLittleLaw(t *testing.T) {
+	// 10 queued tasks, 2s each, drained within 1s -> 10 tasks/s throughput
+	// -> 20 workers. The old formula divided by 60 and returned 1.
+	spec := WorkerPoolSpec{Name: "precise", MinReplicas: 1, MaxReplicas: 100}
+	scaler := NewAutoscaler(spec)
+
+	got := scaler.CalculateDesiredReplicas(10, 2.0, 1.0)
+	if got != 20 {
+		t.Fatalf("expected 20 workers, got %d", got)
+	}
+}

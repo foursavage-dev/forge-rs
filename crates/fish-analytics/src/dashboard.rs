@@ -2,7 +2,6 @@
 
 #[derive(Clone)]
 pub struct AnalyticsDashboard {
-    #[allow(dead_code)]
     config: DashboardConfig,
 }
 
@@ -26,8 +25,14 @@ impl AnalyticsDashboard {
         Self { config }
     }
 
+    /// The web analytics dashboard is implemented by the `fish-dashboard`
+    /// crate (`DashboardServer`). This standalone stub used to return `Ok(())`
+    /// without starting anything; it now fails loudly so callers do not
+    /// believe a dashboard is serving on `port` when nothing is listening.
     pub async fn start(&self) -> Result<(), anyhow::Error> {
-        // Would start web server here
-        Ok(())
+        Err(anyhow::anyhow!(
+            "the analytics web dashboard is not implemented here; use `fish-dashboard::DashboardServer` (port {}) instead",
+            self.config.port
+        ))
     }
 }
