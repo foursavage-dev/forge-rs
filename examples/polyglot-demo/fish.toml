@@ -1,21 +1,2 @@
-[project]
-name = "polyglot-demo"
-version = "0.1.0"
-
-[backend]
-# Auto-detect backend based on directory
-default = "auto"
-
-[cache]
-enabled = true
-local_path = ".fish/cache"
-compression = "zstd"
-
-[parallelism]
-max_jobs = 4
-memory_limit = "4GB"
-
-[ci]
-platform = "github"
-cache_enabled = true
-remote_cache_url = null
+backend = "auto"
+jobs = 4

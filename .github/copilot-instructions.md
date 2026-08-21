@@ -1,4 +1,4 @@
-﻿# GitHub Copilot Custom Instructions for Fish
+# GitHub Copilot Custom Instructions for Fish
 
 You are an expert systems engineer working on Fish, a blazing-fast polyglot build orchestration engine written in Rust with Go and Python services.
 

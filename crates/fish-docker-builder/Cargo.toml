@@ -1,4 +1,4 @@
-﻿[package]
+[package]
 name = "fish-docker-builder"
 version = "0.3.0"
 edition = "2024"

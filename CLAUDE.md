@@ -1,4 +1,4 @@
-﻿# Claude Code Guidelines for Fish
+# Claude Code Guidelines for Fish
 
 ## Build & Test Commands
 - Build CLI: `cargo build -p fish-cli`

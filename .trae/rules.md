@@ -1,4 +1,4 @@
-﻿# Trae AI Rules for Fish Project
+# Trae AI Rules for Fish Project
 
 ## Engineering Standards:
 - Build engine: Fish polyglot build orchestrator.

@@ -1,4 +1,4 @@
-﻿# Google Gemini & Antigravity Guide for Fish
+# Google Gemini & Antigravity Guide for Fish
 
 ## 🎯 Architecture & Invariants
 - **Engine Core**: Rust 2024 Edition (MSRV 1.88+) across 36+ crates.

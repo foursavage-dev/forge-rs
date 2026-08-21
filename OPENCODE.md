@@ -1,4 +1,4 @@
-﻿# OpenCode Rules for Fish Build Engine
+# OpenCode Rules for Fish Build Engine
 
 ## Overview
 Fish is a next-generation polyglot build orchestration engine for projects utilizing multiple compilers and toolchains simultaneously.

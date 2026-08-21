@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
 
 $FISH_VERSION = "0.3.0"
 $FISH_REPO = "requla11/fish"

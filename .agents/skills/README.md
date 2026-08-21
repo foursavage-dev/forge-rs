@@ -1,4 +1,4 @@
-﻿# Agent Skills Suite for Fish
+# Agent Skills Suite for Fish
 
 This directory contains specialized AI Agent Skills tailored for developing, debugging, optimizing, and maintaining the Fish build orchestration engine across all supported language ecosystems.
 

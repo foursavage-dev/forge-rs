@@ -1,4 +1,4 @@
-﻿package com.fish.plugin
+package com.fish.plugin
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
