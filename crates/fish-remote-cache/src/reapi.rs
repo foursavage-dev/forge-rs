@@ -173,10 +173,39 @@ impl ReapiClient {
             return Ok(cached);
         }
 
+        let (exit_code, stdout_raw, stderr_raw) = if let Some(prog) = command.arguments.first() {
+            let mut cmd = std::process::Command::new(prog);
+            if command.arguments.len() > 1 {
+                cmd.args(&command.arguments[1..]);
+            }
+            if !command.working_directory.is_empty()
+                && std::path::Path::new(&command.working_directory).exists()
+            {
+                cmd.current_dir(&command.working_directory);
+            }
+            for (k, v) in &command.environment_variables {
+                cmd.env(k, v);
+            }
+            match cmd.output() {
+                Ok(out) => (
+                    out.status.code().unwrap_or(1),
+                    Some(out.stdout),
+                    Some(out.stderr),
+                ),
+                Err(e) => (1, None, Some(format!("execution failed: {e}").into_bytes())),
+            }
+        } else {
+            (0, None, None)
+        };
+
         let mut output_files = Vec::new();
         for out_path in &command.output_files {
-            let dummy_content = format!("built: {out_path}").into_bytes();
-            let digest = self.write_blob(&dummy_content)?;
+            let content = if std::path::Path::new(out_path).exists() {
+                std::fs::read(out_path).unwrap_or_else(|_| out_path.as_bytes().to_vec())
+            } else {
+                out_path.as_bytes().to_vec()
+            };
+            let digest = self.write_blob(&content)?;
             output_files.push(ReapiOutputFile {
                 path: out_path.clone(),
                 digest: Some(digest),
@@ -189,9 +218,9 @@ impl ReapiClient {
 
         let result = ReapiActionResult {
             output_files,
-            exit_code: 0,
-            stdout_raw: Some(b"REAPI Action executed successfully\n".to_vec()),
-            stderr_raw: None,
+            exit_code,
+            stdout_raw,
+            stderr_raw,
             stdout_digest: None,
             stderr_digest: None,
             execution_metadata,
@@ -247,11 +276,11 @@ mod tests {
         };
         let action = ReapiAction::default();
         let command = ReapiCommand {
-            arguments: vec!["cargo".to_string(), "build".to_string()],
+            arguments: vec!["cargo".to_string(), "--version".to_string()],
             environment_variables: HashMap::new(),
             output_files: vec!["target/release/libfoo.rlib".to_string()],
             output_directories: vec![],
-            working_directory: "/workspace".to_string(),
+            working_directory: String::new(),
         };
 
         let result = client
