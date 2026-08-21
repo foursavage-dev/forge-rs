@@ -59,44 +59,50 @@ impl LocklessDependencyGraph {
     }
 
     pub fn compute_critical_path(&self) -> Vec<String> {
-        let mut longest_paths: HashMap<String, (u64, Vec<String>)> = HashMap::new();
+        let mut memo: HashMap<String, (u64, Vec<String>)> = HashMap::new();
 
-        for (id, node) in &self.nodes {
-            if node.dependencies.is_empty() {
-                longest_paths.insert(id.clone(), (node.execution_weight, vec![id.clone()]));
+        fn longest_path(
+            id: &str,
+            nodes: &HashMap<String, LocklessGraphNode>,
+            memo: &mut HashMap<String, (u64, Vec<String>)>,
+        ) -> (u64, Vec<String>) {
+            if let Some(cached) = memo.get(id) {
+                return cached.clone();
             }
-        }
 
-        let mut sorted_nodes: Vec<_> = self.nodes.keys().cloned().collect();
-        sorted_nodes.sort();
+            let mut max_dep_weight = 0;
+            let mut best_prefix = Vec::new();
 
-        for id in sorted_nodes {
-            if let Some(node) = self.nodes.get(&id) {
-                let mut max_dep_weight = 0;
-                let mut best_prefix = Vec::new();
-
+            if let Some(node) = nodes.get(id) {
                 for dep in &node.dependencies {
-                    if let Some((w, path)) = longest_paths.get(dep)
-                        && *w > max_dep_weight
-                    {
-                        max_dep_weight = *w;
-                        best_prefix = path.clone();
+                    let (w, path) = longest_path(dep, nodes, memo);
+                    if w > max_dep_weight {
+                        max_dep_weight = w;
+                        best_prefix = path;
                     }
                 }
-
-                best_prefix.push(id.clone());
-                longest_paths.insert(
-                    id.clone(),
-                    (max_dep_weight + node.execution_weight, best_prefix),
-                );
+                best_prefix.push(id.to_string());
+                let total_weight = max_dep_weight + node.execution_weight;
+                let res = (total_weight, best_prefix);
+                memo.insert(id.to_string(), res.clone());
+                res
+            } else {
+                (0, vec![id.to_string()])
             }
         }
 
-        longest_paths
-            .into_values()
-            .max_by_key(|(weight, _)| *weight)
-            .map(|(_, path)| path)
-            .unwrap_or_default()
+        let mut best_path = Vec::new();
+        let mut max_weight = 0;
+
+        for id in self.nodes.keys() {
+            let (w, path) = longest_path(id, &self.nodes, &mut memo);
+            if w > max_weight {
+                max_weight = w;
+                best_path = path;
+            }
+        }
+
+        best_path
     }
 }
 
