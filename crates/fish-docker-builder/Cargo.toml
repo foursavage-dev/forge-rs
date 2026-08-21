@@ -1,6 +1,6 @@
-[package]
+﻿[package]
 name = "fish-docker-builder"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 authors = ["Foursavage Dev <foursavage@proton.me>"]
 license = "MIT"
@@ -19,3 +19,4 @@ serde_json = "1.0"
 tokio = { version = "1.40", features = ["full"] }
 bollard = "0.21"
 blake3 = { workspace = true }
+
