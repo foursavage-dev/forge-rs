@@ -51,8 +51,10 @@ impl AstCacheIndex {
         // Symbols present in the old index but absent from the new subtree
         // list were removed; dependents referencing them must also be
         // invalidated. A one-sided diff would silently miss deletions.
-        let new_names: std::collections::HashSet<&str> =
-            new_subtrees.iter().map(|s| s.symbol_name.as_str()).collect();
+        let new_names: std::collections::HashSet<&str> = new_subtrees
+            .iter()
+            .map(|s| s.symbol_name.as_str())
+            .collect();
         for s in old_trees {
             if !new_names.contains(s.symbol_name.as_str()) {
                 changed.push(s.symbol_name.clone());
