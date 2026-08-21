@@ -24,6 +24,8 @@ export default defineConfig({
           { text: 'Benchmarks', link: '/benchmarks' },
           { text: 'Backends', link: '/backends/' },
           { text: 'IDE & Tools', link: '/ide-integration' },
+          { text: 'AI Agents', link: '/ai-agents' },
+          { text: 'Examples', link: '/examples-guide' },
           { text: 'CLI', link: '/cli-reference' },
           { text: 'Roadmap', link: '/ROADMAP' },
           { text: 'API', link: '/api/overview' }
@@ -40,6 +42,7 @@ export default defineConfig({
               { text: 'Configuration Reference', link: '/configuration' },
               { text: 'IDE Integration & LSP', link: '/ide-integration' },
               { text: 'Remote Execution & CAS', link: '/remote-execution' },
+              { text: 'Starter Examples', link: '/examples-guide' },
               { text: 'CLI Reference', link: '/cli-reference' }
             ]
           },
@@ -61,15 +64,18 @@ export default defineConfig({
             ]
           },
           {
-            text: 'Development & Community',
+            text: 'Development & Ecosystem',
             items: [
               { text: 'API Overview', link: '/api/overview' },
+              { text: 'AI Coding Agents & Rules', link: '/ai-agents' },
+              { text: 'AI Agent Workflow', link: '/AI_AGENT_WORKFLOW' },
               { text: 'Development Guide', link: '/development' },
               { text: 'Contributing Guidelines', link: '/contributing' },
+              { text: 'Release Guide', link: '/releasing' },
+              { text: 'Changelog & History', link: '/changelog' },
               { text: 'Support & Community', link: '/support' },
               { text: 'Security Policy', link: '/security' },
               { text: 'Translation Guide', link: '/TRANSLATION' },
-              { text: 'AI Agent Workflow', link: '/AI_AGENT_WORKFLOW' },
               { text: 'Roadmap', link: '/ROADMAP' },
               { text: 'FAQ & Troubleshooting', link: '/faq-troubleshooting' }
             ]
@@ -89,6 +95,8 @@ export default defineConfig({
           { text: 'Benchmark', link: '/vi/benchmarks' },
           { text: 'Backend', link: '/vi/backends/' },
           { text: 'IDE & Tools', link: '/vi/ide-integration' },
+          { text: 'AI Agent', link: '/vi/ai-agents' },
+          { text: 'Ví dụ', link: '/vi/examples-guide' },
           { text: 'CLI', link: '/vi/cli-reference' },
           { text: 'Lộ trình', link: '/vi/ROADMAP' }
         ],
@@ -104,6 +112,7 @@ export default defineConfig({
               { text: 'Cấu hình fish.toml', link: '/vi/configuration' },
               { text: 'Tích hợp IDE & LSP', link: '/vi/ide-integration' },
               { text: 'Thực thi từ xa & CAS', link: '/vi/remote-execution' },
+              { text: 'Dự án mẫu Polyglot', link: '/vi/examples-guide' },
               { text: 'Tra cứu lệnh CLI', link: '/vi/cli-reference' }
             ]
           },
@@ -125,15 +134,18 @@ export default defineConfig({
             ]
           },
           {
-            text: 'Phát triển & Cộng đồng',
+            text: 'Phát triển & Hệ sinh thái',
             items: [
               { text: 'Tổng quan API', link: '/vi/api/overview' },
+              { text: 'Quy tắc AI Coding Agents', link: '/vi/ai-agents' },
+              { text: 'Quy trình AI Agent', link: '/vi/AI_AGENT_WORKFLOW' },
               { text: 'Hướng dẫn phát triển', link: '/vi/development' },
               { text: 'Đóng góp dự án', link: '/vi/contributing' },
+              { text: 'Quy trình phát hành Release', link: '/vi/releasing' },
+              { text: 'Nhật ký thay đổi Changelog', link: '/vi/changelog' },
               { text: 'Kênh hỗ trợ', link: '/vi/support' },
               { text: 'Chính sách bảo mật', link: '/vi/security' },
               { text: 'Hướng dẫn dịch thuật', link: '/vi/TRANSLATION' },
-              { text: 'Quy trình AI Agent', link: '/vi/AI_AGENT_WORKFLOW' },
               { text: 'Lộ trình phát triển', link: '/vi/ROADMAP' },
               { text: 'FAQ & Xử lý sự cố', link: '/vi/faq-troubleshooting' }
             ]
@@ -153,6 +165,8 @@ export default defineConfig({
           { text: '基准测试', link: '/zh-hans/benchmarks' },
           { text: '语言后端', link: '/zh-hans/backends/' },
           { text: 'IDE 集成', link: '/zh-hans/ide-integration' },
+          { text: 'AI 规则', link: '/zh-hans/ai-agents' },
+          { text: '示例', link: '/zh-hans/examples-guide' },
           { text: 'CLI 参考', link: '/zh-hans/cli-reference' }
         ],
         sidebar: [
@@ -167,6 +181,7 @@ export default defineConfig({
               { text: '配置文件参考', link: '/zh-hans/configuration' },
               { text: 'IDE 集成与 LSP', link: '/zh-hans/ide-integration' },
               { text: '远程执行与 CAS', link: '/zh-hans/remote-execution' },
+              { text: '多语言示例项目', link: '/zh-hans/examples-guide' },
               { text: 'CLI 命令参考', link: '/zh-hans/cli-reference' }
             ]
           },
@@ -188,15 +203,18 @@ export default defineConfig({
             ]
           },
           {
-            text: '开发与社区',
+            text: '开发与生态',
             items: [
               { text: 'API 概览', link: '/zh-hans/api/overview' },
+              { text: 'AI 编码智能体规则', link: '/zh-hans/ai-agents' },
+              { text: 'AI Agent 工作流', link: '/zh-hans/AI_AGENT_WORKFLOW' },
               { text: '开发指南', link: '/zh-hans/development' },
               { text: '贡献指南', link: '/zh-hans/contributing' },
+              { text: '版本发布指南', link: '/zh-hans/releasing' },
+              { text: '更新日志 Changelog', link: '/zh-hans/changelog' },
               { text: '支持与社区', link: '/zh-hans/support' },
               { text: '安全策略', link: '/zh-hans/security' },
               { text: '多语言翻译指南', link: '/zh-hans/TRANSLATION' },
-              { text: 'AI Agent 工作流', link: '/zh-hans/AI_AGENT_WORKFLOW' },
               { text: '项目路线图', link: '/zh-hans/ROADMAP' },
               { text: '常见问题排查', link: '/zh-hans/faq-troubleshooting' }
             ]
@@ -216,6 +234,8 @@ export default defineConfig({
           { text: '基準測試', link: '/zh-hant/benchmarks' },
           { text: '語言後端', link: '/zh-hant/backends/' },
           { text: 'IDE 整合', link: '/zh-hant/ide-integration' },
+          { text: 'AI 規則', link: '/zh-hant/ai-agents' },
+          { text: '範例', link: '/zh-hant/examples-guide' },
           { text: 'CLI 參考', link: '/zh-hant/cli-reference' }
         ],
         sidebar: [
@@ -230,6 +250,7 @@ export default defineConfig({
               { text: '設定檔案參考', link: '/zh-hant/configuration' },
               { text: 'IDE 整合與 LSP', link: '/zh-hant/ide-integration' },
               { text: '遠端執行與 CAS', link: '/zh-hant/remote-execution' },
+              { text: '多語言範例專案', link: '/zh-hant/examples-guide' },
               { text: 'CLI 命令參考', link: '/zh-hant/cli-reference' }
             ]
           },
@@ -251,15 +272,18 @@ export default defineConfig({
             ]
           },
           {
-            text: '開發與社群',
+            text: '開發與生態',
             items: [
               { text: 'API 概覽', link: '/zh-hant/api/overview' },
+              { text: 'AI 編碼智能體規則', link: '/zh-hant/ai-agents' },
+              { text: 'AI Agent 工作流程', link: '/zh-hant/AI_AGENT_WORKFLOW' },
               { text: '開發指南', link: '/zh-hant/development' },
               { text: '貢獻指南', link: '/zh-hant/contributing' },
+              { text: '版本發布指南', link: '/zh-hant/releasing' },
+              { text: '更新日誌 Changelog', link: '/zh-hant/changelog' },
               { text: '支援與社群', link: '/zh-hant/support' },
               { text: '安全政策', link: '/zh-hant/security' },
               { text: '多語言翻譯指南', link: '/zh-hant/TRANSLATION' },
-              { text: 'AI Agent 工作流程', link: '/zh-hant/AI_AGENT_WORKFLOW' },
               { text: '項目路線圖', link: '/zh-hant/ROADMAP' },
               { text: '常見問題排查', link: '/zh-hant/faq-troubleshooting' }
             ]
@@ -279,6 +303,8 @@ export default defineConfig({
           { text: 'ベンチマーク', link: '/ja/benchmarks' },
           { text: 'バックエンド', link: '/ja/backends/' },
           { text: 'IDE 統合', link: '/ja/ide-integration' },
+          { text: 'AI 規則', link: '/ja/ai-agents' },
+          { text: 'サンプル', link: '/ja/examples-guide' },
           { text: 'CLI', link: '/ja/cli-reference' }
         ],
         sidebar: [
@@ -293,6 +319,7 @@ export default defineConfig({
               { text: '設定ファイルリファレンス', link: '/ja/configuration' },
               { text: 'IDE 統合 & LSP', link: '/ja/ide-integration' },
               { text: 'リモート実行 & CAS', link: '/ja/remote-execution' },
+              { text: 'ポリグロットサンプル', link: '/ja/examples-guide' },
               { text: 'CLI コマンドリファレンス', link: '/ja/cli-reference' }
             ]
           },
@@ -314,15 +341,18 @@ export default defineConfig({
             ]
           },
           {
-            text: '開発 & コミュニティ',
+            text: '開発 & エコシステム',
             items: [
               { text: 'API 概要', link: '/ja/api/overview' },
+              { text: 'AI エージェントルール', link: '/ja/ai-agents' },
+              { text: 'AI Agent 開発ワークフロー', link: '/ja/AI_AGENT_WORKFLOW' },
               { text: '開発ガイド', link: '/ja/development' },
               { text: 'コントリビューションガイド', link: '/ja/contributing' },
+              { text: 'リリースガイド', link: '/ja/releasing' },
+              { text: '変更履歴 Changelog', link: '/ja/changelog' },
               { text: 'サポート & コミュニティ', link: '/ja/support' },
               { text: 'セキュリティポリシー', link: '/ja/security' },
               { text: '翻訳ガイドライン', link: '/ja/TRANSLATION' },
-              { text: 'AI Agent 開発ワークフロー', link: '/ja/AI_AGENT_WORKFLOW' },
               { text: 'ロードマップ', link: '/ja/ROADMAP' },
               { text: 'FAQ & トラブルシューティング', link: '/ja/faq-troubleshooting' }
             ]
