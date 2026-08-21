@@ -1,135 +1,98 @@
-# Fish Roadmap
+# Fish Project Roadmap
 
 > 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
-This document outlines the planned development roadmap for Fish.
-
-## Vision
-
-Fish aims to be the most efficient, secure, and developer-friendly build orchestration system for polyglot monorepos and distributed development.
-
-## Current Version (v0.2.x)
-
-### Phase 1: Core Engine & Multi-Language Backends
-- [x] Complete core build orchestration engine
-- [x] Implement all 11 language backends (Rust, C/C++, Go, TS, Py, Java, .NET, Swift, Dart, Zig, Docker)
-- [x] Add distributed worker support and cluster execution
-- [x] Implement Blake3 Content-Addressable Storage (CAS) with Zstandard compression
-- [x] Add CI/CD generation for GitHub, GitLab, CircleCI, Bitbucket
-- [x] Implement extensible plugin system
-- [x] Add security features (Ed25519 signing, SPDX SBOM, vulnerability scanning)
-- [x] Create comprehensive documentation and translation framework
-
-### Phase 2: Performance, Visualization & Developer Experience
-- [x] Web-based interactive telemetry dashboard & DAG visualizer (`fish ui`) with 5-language UI
-- [x] Standard compilation database generator (`CompilationDatabase`, `compile_commands.json`)
-- [x] Hermetic toolchain registry and system auto-detection (`ToolchainRegistry`)
-- [x] Real-time filesystem watcher daemon with dirty target tracking (`FsWatcherDaemon`)
-- [x] Algebraic graph query engine (`Fish query` with `deps()`, `rdeps()`, `allpaths()`, `somepath()`, `filter()`)
-- [x] Copy-on-Write extents cloner (`KernelCowCloner`) and modern linker dispatcher (`mold`, `lld`, `msvc`)
-- [x] Kernel resource governor (`KernelResourceGovernor`) for memory pressure protection
-- [x] GNU Jobserver pool integration (`JobserverPool`) for global compiler thread token coordination
-- [x] Dynamic remote racing (`DynamicRacingExecutor`) and DTE bin-packing (`DteBinPacker`)
-- [x] Profile-Guided Optimization (PGO) automated 2-phase workflow
-- [x] Comprehensive test coverage across all 34 crates (100% tests passed)
+This document outlines the strategic development roadmap for Fish, structured across current milestones, short-term targets, medium-term capabilities, and long-term vision.
 
 ---
 
-## Short-term Goals (v0.3.x)
+## 🎯 Vision
 
-### IDE & Editor Integration
-- [ ] Dedicated VS Code extension with interactive DAG preview and task runner
-- [ ] JetBrains plugin (CLion, IntelliJ, Rider) integration
-- [ ] Language Server Protocol (LSP) workspace diagnostics bridge
+Fish aims to be the most efficient, resilient, and developer-friendly build orchestration system for polyglot monorepos and distributed development environments, powered by a specialized **Tri-Engine Architecture (Rust 75% + Python 15% + Go 10%)**.
 
-### Distributed Infrastructure & Cloud
-- [ ] Kubernetes operator for elastic worker auto-scaling
-- [ ] gRPC Remote Execution API (REAPI) server compatibility
-- [ ] Automated PEX virtual environment packaging for hermetic Python execution
+---
 
-## Medium-term Goals (v0.4.x - v0.5.x)
+## 🚀 Current Milestone (v0.2.x) — Completed
 
-### Advanced Features
-- [ ] Machine learning-based optimization
-- [ ] Predictive caching
-- [ ] Automated refactoring suggestions
-- [ ] Dependency management integration
-- [ ] Package manager integration
+### Phase 1: Core Engine & Polyglot Foundations
+- [x] **Tri-Engine Architecture**: Rust high-performance core (75%), Python AI layer (15%), and Go cloud networking (10%).
+- [x] **11 Language Backends**: Rust, Go, TypeScript/Node.js, Python, C/C++, Docker, Java, .NET, Swift, Dart, Zig.
+- [x] **Shared Protobuf Contracts**: Defined `build.proto`, `ai.proto`, and `coordinator.proto` for cross-language RPC.
+- [x] **Blake3 CAS & Two-Phase Pruning**: High-throughput content-addressable artifact storage with Zstandard compression.
+- [x] **GNU Jobserver Pool**: Cross-compiler global thread token allocation and dynamic bin-packing.
+- [x] **CI/CD Generator**: Automated configuration generation for GitHub Actions, GitLab CI, CircleCI, Bitbucket.
+- [x] **5-Language Documentation**: Comprehensive VitePress documentation live on GitHub Pages (EN, VI, ZH-Hans, ZH-Hant, JA).
 
-### Cloud Integration
-- [ ] Native cloud deployment
-- [ ] Kubernetes operator
-- [ ] Auto-scaling workers
-- [ ] Managed service offering
+---
 
-### Collaboration
-- [ ] Real-time collaboration
-- [ ] Build sharing
-- [ ] Team analytics
-- [ ] Cost tracking
+## ⚡ Short-term Goals (v0.3.x) — Focus: Developer Experience & Protocols
 
-### Ecosystem
-- [ ] Plugin marketplace
-- [ ] Template marketplace
-- [ ] Integration marketplace
-- [ ] Community plugins
+### 1. IDE & Editor Integration
+- [ ] **VS Code Extension**: Interactive DAG dependency graph viewer, one-click task execution, and inline failure diagnostics.
+- [ ] **JetBrains Plugin Suite**: Native integration for CLion, IntelliJ IDEA, and Rider.
+- [ ] **Language Server Protocol (LSP) Bridge**: Live workspace diagnostics and `fish.toml` autocompletion.
 
-## Long-term Vision (v1.0+)
+### 2. High-Performance IPC & Service Bridges
+- [ ] **Daemon IPC Stream**: Sub-millisecond JSON-RPC and Unix domain socket / named-pipe IPC between Rust CLI and Python AI services.
+- [ ] **gRPC Remote Execution API (REAPI)**: Native protocol compatibility for distributed worker clusters.
+- [ ] **eBPF File Tracing**: Kernel-level accurate input/output file capture on Linux.
 
-### Enterprise Features
-- [ ] Multi-tenant support
-- [ ] SSO integration
-- [ ] Advanced RBAC
-- [ ] Compliance certifications
-- [ ] Enterprise support
+### 3. Smart Diagnostics & CLI Polish
+- [ ] **AI-Powered Interactive Doctor**: Proactive diagnosis with automated fix command suggestions (`fish doctor --fix`).
+- [ ] **Terminal UI (TUI) Enhancements**: Live CPU/RAM utilization graphs and multi-task waterfall view in ratatui.
 
-### Advanced Analytics
-- [ ] Build intelligence
-- [ ] Resource optimization
-- [ ] Cost optimization
-- [ ] Performance insights
+---
 
-### Ecosystem Expansion
-- [ ] Additional language backends
-- [ ] Custom toolchain support
-- [ ] Universal build adapter
-- [ ] Legacy system integration
+## 🌟 Medium-term Goals (v0.4.x - v0.5.x) — Focus: Distributed Infrastructure & AI
 
-## Experimental Features
+### 1. Cloud-Native Distributed Infrastructure
+- [ ] **Kubernetes Operator (Go)**: Custom Resource Definitions (CRDs) for auto-scaling elastic worker fleets.
+- [ ] **Spot Instance Optimization**: Fault-tolerant task migration upon cloud node preemption.
+- [ ] **Cross-Region Cache Replication**: Peer-to-peer CAS artifact synchronization with geo-distributed L2 caches.
 
-### "Dark-Arts" Engines
-These are experimental high-performance engines for extreme use cases:
+### 2. Machine Learning & Predictive Optimization
+- [ ] **Deep Learning Build Time Predictor**: Pre-execution duration forecasting based on AST complexity and historical telemetry.
+- [ ] **Automated Flaky Test Quarantine**: AI-driven detection and statistical isolation of non-deterministic tests.
+- [ ] **Speculative Pre-Warming**: Predicting likely changed packages and pre-compiling on background idle cores.
 
-- [x] Live Binary Hot-Patching
-- [ ] Linker Turbo-Hijack
-- [x] Speculative Markov Pre-Compilation
-- [x] WASM/WASI Hermetic Sandbox
-- [ ] Pre-Warmed Compiler Daemon Pool
-- [x] In-Process Micro-JIT Synthesis
-- [x] Autonomous Binary Super-Optimizer
-- [x] Kernel-Bypass DMA Ring-Buffer VFS
+### 3. Telemetry, Observability & Team Collaboration
+- [ ] **OpenTelemetry Integration**: End-to-end distributed tracing across all build steps and network nodes.
+- [ ] **Web Team Analytics Dashboard**: Aggregated build speedups, cache hit efficiency, and team velocity metrics.
+- [ ] **Cloud Cost Calculator**: Real-time cloud compute and storage savings estimates.
 
-## Community Goals
+### 4. Plugin Ecosystem
+- [ ] **WebAssembly Plugin Engine**: Sandboxed Wasm plugins using Extism/WASI for custom toolchain adapters.
+- [ ] **Plugin Marketplace Registry**: Decentralized plugin discovery and signed artifact distribution.
 
-- [ ] Active community of contributors
-- [ ] Comprehensive documentation
-- [ ] Tutorial and guide ecosystem
-- [ ] Integration examples
-- [ ] Conference talks and presentations
+---
 
-## Feedback and Contributions
+## 🏰 Long-term Vision (v1.0+) — Focus: Enterprise & Zero-Trust
 
-We welcome feedback on our roadmap. Please:
-- Open an issue for feature requests
-- Join our Discord community
-- Participate in discussions
-- Contribute to the project
+### 1. Enterprise Security & Zero-Trust Execution
+- [ ] **MicroVM Hardware Isolation**: Hermetic build execution inside ultra-lightweight Firecracker / Cloud-Hypervisor microVMs.
+- [ ] **Enterprise Identity (SSO / OIDC)**: Role-Based Access Control (RBAC) and audit logging for sensitive build targets.
+- [ ] **Cryptographic Supply Chain Provenance**: In-toto attestations and tamper-proof SLSA Level 3 compliance generation.
 
-## Timeline Estimates
+### 2. Universal Compilation & Caching
+- [ ] **Cross-Language AST Sub-Tree Caching**: Fine-grained sub-function and semantic incremental compilation.
+- [ ] **Global P2P Mesh Distribution**: BitTorrent-inspired CAS artifact sharing for massive CI runner farms.
+- [ ] **Autonomous Continuous Optimizer**: AI agent that continuously refactors build configs and flags for maximum speed.
 
-- **v0.1.x**: Q3 2026 (Current)
-- **v0.2.x**: Q4 2026
-- **v0.3.x**: Q1 2027
-- **v1.0**: Q2 2027
+---
 
-*Note: Timelines are estimates and may change based on community feedback and priorities.*
+## 📅 Timeline Estimates
+
+| Release | Focus Area | Target Horizon | Status |
+| :--- | :--- | :--- | :--- |
+| **v0.2.x** | Tri-Engine Core, 11 Backends, CAS, 5-Language Docs | Current | ✅ Completed |
+| **v0.3.x** | IDE Plugins, IPC Bridges, eBPF Tracing, LSP | Q4 2026 | 🟡 In Progress |
+| **v0.4.x - v0.5.x** | K8s Operator, Predictive ML, OpenTelemetry, Wasm | Q1 - Q2 2027 | ⚪ Planned |
+| **v1.0** | MicroVM Sandboxing, Enterprise SSO, P2P Mesh, SLSA L3 | Q3 2027+ | ⚪ Vision |
+
+---
+
+## 💬 Feedback & Community Contributions
+
+We welcome feedback, suggestions, and contributions from developers worldwide!
+- Join discussions and feature requests via [GitHub Issues](https://github.com/requla11/fish/issues).
+- Review our [Contributing Guide](CONTRIBUTING.md) and [Translation Guidelines](TRANSLATION.md).

@@ -50,6 +50,9 @@ pub fn mode_verb(mode: BuildMode) -> &'static str {
         BuildMode::Build => "Building",
         BuildMode::Check => "Checking",
         BuildMode::Test => "Testing",
+        BuildMode::Clippy => "Checking (clippy)",
+        BuildMode::Doc => "Documenting",
+        BuildMode::Bench => "Benchmarking",
     }
 }
 

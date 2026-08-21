@@ -1,6 +1,6 @@
 # Docker Backend Guide
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
 
 Fish treats Docker images as first-class build artifacts within your workspace DAG.
 

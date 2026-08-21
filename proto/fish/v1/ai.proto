@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package fish.v1;
+
+option go_package = "github.com/requla11/fish/go/pkg/proto/v1;fishv1";
+
+import "fish/v1/build.proto";
+
+message FailureAnalysisRequest {
+  string task_id = 1;
+  string toolchain = 2;
+  string command = 3;
+  string stderr = 4;
+  string stdout = 5;
+  int32 exit_code = 6;
+}
+
+message FailureAnalysisResponse {
+  string error_category = 1;
+  string root_cause = 2;
+  double confidence = 3;
+  repeated string suggested_fixes = 4;
+  repeated string affected_files = 5;
+}
+
+message OptimizationRequest {
+  BuildGraph graph = 1;
+  map<string, int64> historical_durations_ms = 2;
+  int32 available_workers = 3;
+}
+
+message OptimizationResponse {
+  repeated string recommended_critical_path = 1;
+  repeated string optimized_schedule_order = 2;
+  double estimated_speedup_ratio = 3;
+}
+
+message RecommendationRequest {
+  string workspace_root = 1;
+  repeated string changed_files = 2;
+  DiagnosticReport last_run_report = 3;
+}
+
+message RecommendationResponse {
+  repeated string suggested_tasks_to_run = 1;
+  repeated string potential_flaky_tests = 2;
+  repeated string cache_warming_targets = 3;
+}

@@ -1,5 +1,8 @@
 #![forbid(unsafe_code)]
 
+pub mod p2p_lan;
+pub use p2p_lan::{LanPeerNode, LanPeerRegistry};
+
 pub mod artifact;
 pub mod client;
 pub mod protocol;

@@ -1,6 +1,6 @@
 # C/C++ Backend Guide
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](../TRANSLATION.md).
 
 Fish coordinates C and C++ projects using modern compilers (GCC, Clang, MSVC) and CMake.
 

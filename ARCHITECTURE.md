@@ -384,6 +384,36 @@ Only rebuild affected packages based on dependency graph changes.
 
 Remote workers enable horizontal scaling for large projects.
 
+## Tri-Engine Polyglot Architecture (Rust + Python + Go)
+
+Fish adopts a specialized tri-engine architecture where each layer is built using the language best suited for its operational requirements:
+
+### 1. Rust Core Engine (75%) — High-Performance Execution & Local Builds
+- **`fish-core`**: Workspace discovery, manifest models, fine-grained input filtering.
+- **`fish-graph`**: Dependency graph, topological sort, algebraic query evaluation (`deps`, `rdeps`, `somepath`).
+- **`fish-executor`**: Process execution, middleware chain, response file generation.
+- **`fish-scheduler`**: GNU Jobserver pool, work-stealing, parallel execution.
+- **`fish-cache`**: Multi-tier fingerprinting with Blake3 and two-phase pruning.
+- **`fish-cas`**: Content-addressable artifact storage with ZSTD compression.
+- **`fish-cli`**: Terminal user interface powered by ratatui and clap.
+
+### 2. Python AI Services (15%) — Intelligence & Telemetry Layer
+- **`fish_ai_analyzer`**: Machine learning build failure analysis, error classification, and root-cause suggestions.
+- **`fish_optimizer`**: AI-driven DAG scheduling optimization and duration prediction.
+- **`fish_analytics`**: Build run metrics aggregation, cache efficiency tracking, and bottleneck identification.
+- **`fish_recommender`**: Smart build target prediction and flaky test candidate detection.
+
+### 3. Go Services (10%) — Cloud-Native Networking & Coordination
+- **`fish-coordinator`**: Distributed worker node registry, heartbeat monitoring, and optimal task dispatching.
+- **`fish-worker-gateway`**: High-performance reverse proxy and streaming multiplexer for worker nodes.
+- **`fish-db-migrator`**: Schema versioning and migration tooling for build telemetry databases.
+- **`fish-network`**: Connection pooling, mTLS transport configuration, and high-throughput TCP streaming.
+
+### 4. Shared Protobuf Contracts (`proto/`)
+- **`proto/fish/v1/build.proto`**: Core task definitions, task results, and build graph schemas.
+- **`proto/fish/v1/ai.proto`**: Failure analysis requests, scheduling optimization plans, and recommendation queries.
+- **`proto/fish/v1/coordinator.proto`**: Worker registration, heartbeat protocol, and distributed task dispatching.
+
 ## Security Considerations
 
 - No unsafe code in security-sensitive crates
@@ -391,11 +421,4 @@ Remote workers enable horizontal scaling for large projects.
 - Least privilege for all operations
 - Audit logging for security operations
 - Secure secret management
-
-## Future Enhancements
-
-- Real-time collaboration features
-- Advanced visualizations
-- Machine learning-based optimization
-- Cloud-native deployment options
-- Enhanced plugin ecosystem
+- Ed25519 artifact signing and cryptographic SBOM generation

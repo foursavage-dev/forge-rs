@@ -1,13 +1,21 @@
 #![forbid(unsafe_code)]
 
+pub mod ebpf;
+pub mod snapshot;
+
 pub mod env;
 pub mod executor;
+pub mod hermetic;
 pub mod isolation;
+pub mod microvm;
 pub mod tracer;
 
+pub use ebpf::{EbpfSyscallTracer, EbpfTraceSummary, FileAccessType};
 pub use env::{EnvPolicy, sanitize_env};
 pub use executor::{SandboxConfig, SandboxedExecutor};
+pub use hermetic::{HermeticProcessSandbox, SandboxPlatform};
 pub use isolation::{FsPolicy, SandboxWorkspace};
+pub use snapshot::{SandboxSnapshot, SnapshotBackend, SnapshotManager};
 pub use tracer::{HermeticTraceResult, SyscallTracer};
 
 #[cfg(test)]

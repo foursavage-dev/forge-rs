@@ -46,8 +46,35 @@ impl GoToolchain {
         args
     }
 
-    pub fn test_args(&self, package_path: &str, tags: &[String]) -> Vec<String> {
+    pub fn test_args(
+        &self,
+        package_path: &str,
+        tags: &[String],
+        race: bool,
+        coverage: bool,
+    ) -> Vec<String> {
         let mut args = vec!["test".to_string()];
+        if race {
+            args.push("-race".to_string());
+        }
+        if coverage {
+            args.push("-cover".to_string());
+        }
+        if !tags.is_empty() {
+            args.push("-tags".to_string());
+            args.push(tags.join(","));
+        }
+        args.push(package_path.to_string());
+        args
+    }
+
+    pub fn bench_args(&self, package_path: &str, tags: &[String]) -> Vec<String> {
+        let mut args = vec![
+            "test".to_string(),
+            "-bench=.".to_string(),
+            "-run=^$".to_string(),
+            "-benchmem".to_string(),
+        ];
         if !tags.is_empty() {
             args.push("-tags".to_string());
             args.push(tags.join(","));

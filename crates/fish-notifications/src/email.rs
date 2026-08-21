@@ -1,9 +1,6 @@
-// Email notifier
-
 use crate::notifier::{Notification, NotificationConfig, Notifier};
 
 pub struct EmailNotifier {
-    #[allow(dead_code)]
     config: NotificationConfig,
 }
 
@@ -15,8 +12,18 @@ impl EmailNotifier {
 
 #[async_trait::async_trait]
 impl Notifier for EmailNotifier {
-    async fn send(&self, _notification: Notification) -> Result<(), anyhow::Error> {
-        // Placeholder for email sending
+    async fn send(&self, notification: Notification) -> Result<(), anyhow::Error> {
+        if let Some(webhook_url) = &self.config.webhook_url {
+            let client = reqwest::Client::new();
+            let payload = serde_json::json!({
+                "type": "email_notification",
+                "subject": notification.title,
+                "body": notification.message,
+                "status": format!("{:?}", notification.status),
+                "timestamp": notification.timestamp
+            });
+            let _ = client.post(webhook_url).json(&payload).send().await;
+        }
         Ok(())
     }
 }

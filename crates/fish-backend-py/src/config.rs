@@ -37,6 +37,32 @@ impl PythonRunner {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum PackagingType {
+    #[default]
+    Standard,
+    Pex,
+    Wheel,
+    Sdist,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct PexConfig {
+    #[serde(default)]
+    pub entry_point: Option<String>,
+    #[serde(default)]
+    pub output_pex: Option<String>,
+    #[serde(default)]
+    pub interpreter_constraint: Option<String>,
+    #[serde(default)]
+    pub platforms: Vec<String>,
+    #[serde(default)]
+    pub inherit_path: Option<String>,
+    #[serde(default)]
+    pub include_tools: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PyTaskSpec {
     pub name: String,
@@ -50,6 +76,10 @@ pub struct PyProjectConfig {
     pub name: String,
     #[serde(default)]
     pub runner: Option<PythonRunner>,
+    #[serde(default)]
+    pub packaging: Option<PackagingType>,
+    #[serde(default)]
+    pub pex: Option<PexConfig>,
     #[serde(default)]
     pub tasks: Vec<PyTaskSpec>,
     #[serde(default)]
@@ -136,6 +166,8 @@ impl PyProjectConfig {
         Ok(Self {
             name,
             runner: Some(runner),
+            packaging: Some(PackagingType::Standard),
+            pex: None,
             tasks,
             source_dirs: vec!["src".to_string()],
         })

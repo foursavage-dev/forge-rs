@@ -12,7 +12,7 @@ pub mod config;
 pub mod fingerprint;
 pub mod toolchain;
 
-pub use config::{PyProjectConfig, PyTaskSpec, PythonRunner};
+pub use config::{PackagingType, PexConfig, PyProjectConfig, PyTaskSpec, PythonRunner};
 pub use toolchain::PyToolchain;
 
 #[derive(Debug, Error)]
@@ -118,6 +118,34 @@ impl PyBackend {
             }
         }
 
+        if let Some(PackagingType::Pex) = config.packaging {
+            let pex_cfg = config.pex.clone().unwrap_or_default();
+            let default_pex_name = format!("{}.pex", config.name);
+            let out_file = project_dir
+                .join("dist")
+                .join(pex_cfg.output_pex.as_deref().unwrap_or(&default_pex_name));
+            let pex_spec = self
+                .toolchain
+                .build_pex_command(&pex_cfg, project_dir, &out_file);
+            let pex_fp = FingerprintUtils::combine_fingerprints(
+                &format!("py:pex:{base_fp}"),
+                &dep_fps.values().cloned().collect::<Vec<_>>(),
+            );
+            let pex_task = Task::new(
+                format!("{}:pex", config.name),
+                pex_spec.command_line(),
+                pex_spec,
+            )
+            .with_cache(CacheEntry {
+                key: FingerprintUtils::format_cache_key("py", &namespace, "pex", &config.name),
+                fingerprint: pex_fp,
+            });
+            let pex_node = graph.add_node(pex_task);
+            if let Some(last_node) = node_map.get("build").or_else(|| node_map.get("test")) {
+                graph.add_dependency(*last_node, pex_node)?;
+            }
+        }
+
         Ok(graph)
     }
 }
@@ -146,5 +174,35 @@ version = "0.1.0"
         assert_eq!(graph.len(), 4);
         let topo = graph.topological_order();
         assert_eq!(topo.len(), 4);
+    }
+
+    #[test]
+    fn test_py_backend_pex_packaging() {
+        let dir = tempdir().unwrap();
+        let mut config =
+            PyProjectConfig::discover_or_default(dir.path()).unwrap_or_else(|_| PyProjectConfig {
+                name: "analytics-worker".to_string(),
+                runner: Some(PythonRunner::Uv),
+                packaging: Some(PackagingType::Pex),
+                pex: Some(PexConfig {
+                    entry_point: Some("analytics.main:app".to_string()),
+                    output_pex: Some("analytics.pex".to_string()),
+                    interpreter_constraint: Some(">=3.11".to_string()),
+                    platforms: vec!["manylinux2014_x86_64".to_string()],
+                    inherit_path: Some("prefer".to_string()),
+                    include_tools: true,
+                }),
+                tasks: vec![PyTaskSpec {
+                    name: "build".to_string(),
+                    command: Some("uv".to_string()),
+                    args: vec!["build".to_string()],
+                    depends_on: vec![],
+                }],
+                source_dirs: vec![],
+            });
+        config.packaging = Some(PackagingType::Pex);
+        let backend = PyBackend::new();
+        let graph = backend.build_task_graph(&config, dir.path()).unwrap();
+        assert!(graph.len() >= 2);
     }
 }

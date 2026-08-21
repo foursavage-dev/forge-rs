@@ -52,6 +52,9 @@ fn main() -> ExitCode {
             println!("fish {}", env!("CARGO_PKG_VERSION"));
             ExitCode::SUCCESS
         }
+        Command::Ai(args) => commands::run_ai(args),
+        Command::Why(args) => commands::run_why(args),
+        Command::Lsp(_args) => commands::run_lsp(),
         Command::Init(args) => commands::run_init(args.path, args.force),
         Command::New(args) => commands::run_new(&args.name, args.template.as_deref(), args.path),
         Command::Build(args) => run_build_mode(args.common, BuildMode::Build),
@@ -92,13 +95,7 @@ fn main() -> ExitCode {
         Command::Jit(args) => commands::run_jit(args),
         Command::SuperOpt(args) => commands::run_super_opt(args),
         Command::Plugin(args) => commands::run_plugin(args),
-        Command::Fix(args) => match commands::run_fix(args.path, args.apply, args.ai) {
-            Ok(_) => ExitCode::SUCCESS,
-            Err(err) => {
-                eprintln!("error: fix diagnostic failed: {err}");
-                ExitCode::FAILURE
-            }
-        },
+        Command::Fix(args) => commands::run_fix(args),
         Command::Ui(args) => match commands::run_ui(args.port, args.open, args.path) {
             Ok(_) => ExitCode::SUCCESS,
             Err(err) => {

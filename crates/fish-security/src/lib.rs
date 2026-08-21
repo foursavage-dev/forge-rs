@@ -1,13 +1,12 @@
-// Fish Security - Dependency Vulnerability Scanner
-// Scans dependencies for vulnerabilities across all backends
-
 #![forbid(unsafe_code)]
 #![allow(missing_docs)]
 #![warn(clippy::all)]
 
 pub mod backend;
 pub mod error;
+pub mod rbac;
 pub mod scanner;
+pub mod slsa;
 pub mod vulnerability;
 
 pub use backend::{BackendScanner, MavenScanner, NpmScanner, RustScanner};

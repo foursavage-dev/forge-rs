@@ -150,7 +150,12 @@ impl PolyglotGraphBuilder {
                         ldflags: None,
                         gcflags: None,
                         run_tests: true,
+                        race: false,
+                        coverage: false,
+                        run_benchmarks: false,
+                        run_linter: false,
                         output_binary: None,
+                        env: std::collections::HashMap::new(),
                     }
                 };
                 let backend = GoBackend::new()?;

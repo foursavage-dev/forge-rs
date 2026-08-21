@@ -280,13 +280,13 @@ If workers can't connect:
 ## Next Steps
 
 - Read the [Architecture Guide](architecture.md)
-- Check the [Development Guide](../DEVELOPMENT.md)
+- Check the [Development Guide](development.md)
 - Explore [CLI Reference](cli-reference.md)
 - Explore [Backend Documentation](backends/)
 
 ## Getting Help
 
-- [Documentation](../README.md)
-- [Support](../SUPPORT.md)
+- [Documentation](getting-started.md)
+- [Support](support.md)
 - [GitHub Issues](https://github.com/requla11/fish/issues)
-- [Email](foursavage@proton.me)
+- [Email](mailto:foursavage@proton.me)

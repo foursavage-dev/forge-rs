@@ -3,11 +3,13 @@
 pub mod async_io;
 pub mod file_level;
 pub mod file_level_adapter;
+pub mod gc;
 pub mod pool;
 pub mod strategies;
 
 pub use async_io::{AsyncCache, AsyncFileReader, AsyncFileWriter, AsyncIoError};
 pub use file_level_adapter::{FileLevelCacheAdapter, HybridCachingExecutor};
+pub use gc::{BackgroundCacheGc, EvictionPolicy, GcConfig};
 pub use pool::{BufferPool, PoolStats, ScopedBuffer};
 pub use strategies::{LruCache, PredictiveCache, SpinLockLruCache, TieredCache};
 
@@ -257,7 +259,7 @@ impl LocalCache {
             key: key.to_string(),
             source,
         })?;
-        fs::rename(&tmp, &path).map_err(|source| CacheError::Write {
+        atomic_rename(&tmp, &path).map_err(|source| CacheError::Write {
             key: key.to_string(),
             source,
         })
@@ -290,7 +292,7 @@ impl LocalCache {
             key: hash.to_string(),
             source,
         })?;
-        fs::rename(&tmp, &path).map_err(|source| CacheError::Write {
+        atomic_rename(&tmp, &path).map_err(|source| CacheError::Write {
             key: hash.to_string(),
             source,
         })
@@ -759,6 +761,27 @@ pub(crate) fn unique_tmp_path(path: &Path) -> PathBuf {
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_else(|| "file".to_string());
     path.with_file_name(format!("{name}.{}.{seq}.tmp", std::process::id()))
+}
+
+fn atomic_rename(src: &Path, dst: &Path) -> io::Result<()> {
+    for i in 0..20 {
+        match fs::rename(src, dst) {
+            Ok(()) => return Ok(()),
+            Err(e)
+                if i < 19
+                    && (e.kind() == io::ErrorKind::PermissionDenied
+                        || e.raw_os_error() == Some(5)
+                        || e.raw_os_error() == Some(32)) =>
+            {
+                std::thread::sleep(std::time::Duration::from_millis(1 + i * 2));
+            }
+            Err(e) => {
+                let _ = fs::remove_file(src);
+                return Err(e);
+            }
+        }
+    }
+    Ok(())
 }
 
 #[derive(Debug)]

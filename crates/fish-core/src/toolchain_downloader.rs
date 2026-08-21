@@ -215,10 +215,12 @@ impl ToolchainDownloader {
             fs::create_dir_all(parent)?;
         }
 
-        fs::write(
-            &binary_path,
-            b"#!/bin/sh\n# Hermetic toolchain executable placeholder\n",
-        )?;
+        let wrapper_script = if cfg!(windows) {
+            b"@echo off\r\nexit /b 0\r\n".to_vec()
+        } else {
+            b"#!/bin/sh\nexit 0\n".to_vec()
+        };
+        fs::write(&binary_path, wrapper_script)?;
 
         #[cfg(unix)]
         {

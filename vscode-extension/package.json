@@ -1,0 +1,158 @@
+{
+  "name": "fish-build-orchestration",
+  "displayName": "Fish Build Orchestration",
+  "description": "IDE integration for Fish build orchestration system with DAG visualization and task runner",
+  "version": "0.1.0",
+  "publisher": "requla11",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:fishDAGView",
+    "onCommand:fish.runBuild",
+    "onCommand:fish.runTest",
+    "onCommand:fish.refreshGraph",
+    "onCommand:fish.showDiagnostics"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "fish.runBuild",
+        "title": "Fish: Run Build",
+        "icon": "$(play)"
+      },
+      {
+        "command": "fish.runTest",
+        "title": "Fish: Run Tests",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "fish.clean",
+        "title": "Fish: Clean Build",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "fish.refreshGraph",
+        "title": "Fish: Refresh DAG Graph",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fish.showDiagnostics",
+        "title": "Fish: Show Build Diagnostics",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "fish.watch",
+        "title": "Fish: Toggle Watch Mode",
+        "icon": "$(eye)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "fish-sidebar",
+          "title": "Fish",
+          "icon": "fish-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "fish-sidebar": [
+        {
+          "id": "fishDAGView",
+          "name": "Dependency Graph"
+        },
+        {
+          "id": "fishTasksView",
+          "name": "Build Tasks"
+        }
+      ]
+    },
+    "viewsWelcome": {
+      "fish-sidebar": [
+        {
+          "contents": "Fish Build Orchestration\n\n[Run Build](command:fish.runBuild)\n[Run Tests](command:fish.runTest)\n[Refresh Graph](command:fish.refreshGraph)\n\nGet started by running Fish commands in your workspace."
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "fish.runBuild",
+          "when": "view == fishDAGView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fish.runTest",
+          "when": "view == fishDAGView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fish.refreshGraph",
+          "when": "view == fishDAGView",
+          "group": "navigation@3"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "fish.runBuild",
+          "when": "workspaceHasFishProject"
+        },
+        {
+          "command": "fish.runTest",
+          "when": "workspaceHasFishProject"
+        },
+        {
+          "command": "fish.clean",
+          "when": "workspaceHasFishProject"
+        },
+        {
+          "command": "fish.watch",
+          "when": "workspaceHasFishProject"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Fish",
+      "properties": {
+        "fish.executablePath": {
+          "type": "string",
+          "default": "fish",
+          "description": "Path to Fish executable"
+        },
+        "fish.autoRefresh": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-refresh DAG graph on file changes"
+        },
+        "fish.showBuildNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show build notifications"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.75.0",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+  }
+}

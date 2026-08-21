@@ -62,9 +62,12 @@ impl GoBackend {
                 .unwrap_or_else(|_| "no_fp".to_string());
 
         let vet_args = self.toolchain.vet_args(&config.package_path);
-        let vet_spec = CommandSpec::new(&self.toolchain.executable)
+        let mut vet_spec = CommandSpec::new(&self.toolchain.executable)
             .args(vet_args)
             .cwd(project_dir);
+        for (k, v) in &config.env {
+            vet_spec = vet_spec.env(k, v);
+        }
         let vet_task = Task::new(
             format!("go vet {}", config.name),
             vet_spec.command_line(),
@@ -90,9 +93,12 @@ impl GoBackend {
             config.gcflags.as_deref(),
         );
 
-        let build_spec = CommandSpec::new(&self.toolchain.executable)
+        let mut build_spec = CommandSpec::new(&self.toolchain.executable)
             .args(build_args)
             .cwd(project_dir);
+        for (k, v) in &config.env {
+            build_spec = build_spec.env(k, v);
+        }
 
         let build_cache = CacheEntry {
             key: FingerprintUtils::format_cache_key("go", &namespace, "build", &config.name),
@@ -110,14 +116,22 @@ impl GoBackend {
         graph.add_dependency(vet_node_id, build_node_id)?;
 
         if config.run_tests {
-            let test_args = self.toolchain.test_args(&config.package_path, &config.tags);
-            let test_spec = CommandSpec::new(&self.toolchain.executable)
+            let test_args = self.toolchain.test_args(
+                &config.package_path,
+                &config.tags,
+                config.race,
+                config.coverage,
+            );
+            let mut test_spec = CommandSpec::new(&self.toolchain.executable)
                 .args(test_args)
                 .cwd(project_dir);
+            for (k, v) in &config.env {
+                test_spec = test_spec.env(k, v);
+            }
 
             let test_cache = CacheEntry {
                 key: FingerprintUtils::format_cache_key("go", &namespace, "test", &config.name),
-                fingerprint: fp,
+                fingerprint: fp.clone(),
             };
 
             let test_task = Task::new(
@@ -131,6 +145,33 @@ impl GoBackend {
             graph.add_dependency(build_node_id, test_node_id)?;
         }
 
+        if config.run_benchmarks {
+            let bench_args = self
+                .toolchain
+                .bench_args(&config.package_path, &config.tags);
+            let mut bench_spec = CommandSpec::new(&self.toolchain.executable)
+                .args(bench_args)
+                .cwd(project_dir);
+            for (k, v) in &config.env {
+                bench_spec = bench_spec.env(k, v);
+            }
+
+            let bench_cache = CacheEntry {
+                key: FingerprintUtils::format_cache_key("go", &namespace, "bench", &config.name),
+                fingerprint: fp,
+            };
+
+            let bench_task = Task::new(
+                format!("go bench {}", config.name),
+                bench_spec.command_line(),
+                bench_spec,
+            )
+            .with_cache(bench_cache);
+
+            let bench_node_id = graph.add_node(bench_task);
+            graph.add_dependency(build_node_id, bench_node_id)?;
+        }
+
         Ok(graph)
     }
 }
@@ -138,6 +179,7 @@ impl GoBackend {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
     use tempfile::tempdir;
 
     #[test]
@@ -156,7 +198,12 @@ mod tests {
             ldflags: None,
             gcflags: None,
             run_tests: true,
+            race: true,
+            coverage: true,
+            run_benchmarks: true,
+            run_linter: false,
             output_binary: None,
+            env: HashMap::new(),
         };
 
         let temp = tempdir().unwrap();
@@ -164,15 +211,13 @@ mod tests {
             .create_tasks_from_config(&config, temp.path(), &temp.path().join("build"))
             .unwrap();
 
-        assert_eq!(graph.len(), 3);
+        assert_eq!(graph.len(), 4);
         assert_eq!(backend.name(), "go");
 
         let topo = graph.topological_order();
-        assert_eq!(topo.len(), 3);
+        assert_eq!(topo.len(), 4);
 
         let first = graph.node(topo[0]).unwrap();
-        let last = graph.node(topo[2]).unwrap();
         assert!(first.payload.label.starts_with("go vet"));
-        assert!(last.payload.label.starts_with("go test"));
     }
 }

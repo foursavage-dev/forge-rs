@@ -2,14 +2,21 @@
 #![allow(missing_docs)]
 #![warn(clippy::all)]
 
+pub mod semantic_impact;
+pub use semantic_impact::SemanticImpactGraph;
+
+pub mod abi_extractor;
 pub mod analyzer;
+pub mod ast_cache;
 pub mod change_detector;
 pub mod ecosystem;
 pub mod explain;
 pub mod inference;
 pub mod patterns;
 pub mod suggestions;
+pub mod vfs;
 
+pub use abi_extractor::SemanticAbiExtractor;
 pub use analyzer::{BuildAnalysis, IncrementalAnalyzer};
 pub use change_detector::{ChangeImpact, IncrementalChangeDetector};
 pub use ecosystem::{EcosystemInfo, EcosystemType, detect_ecosystems, is_build_relevant_file};
@@ -17,6 +24,7 @@ pub use explain::{DirtyExplainer, DirtyReason};
 pub use inference::DependencyInferenceEngine;
 pub use patterns::{BuildPattern, PatternSeverity, PatternType};
 pub use suggestions::{OptimizationSuggestion, SuggestionPriority};
+pub use vfs::{VfsFileEntry, VfsNodeState, VfsSnapshotTree};
 
 use std::path::PathBuf;
 

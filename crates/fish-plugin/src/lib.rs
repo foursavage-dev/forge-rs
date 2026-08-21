@@ -13,6 +13,7 @@ pub mod manifest;
 pub mod rule;
 pub mod scripting;
 pub mod starlark_parser;
+pub mod wasm_sandbox;
 
 pub use rule::{PluginRulesManifest, RuleSpec};
 pub use starlark_parser::StarlarkRulesParser;

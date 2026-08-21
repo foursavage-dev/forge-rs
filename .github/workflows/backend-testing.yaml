@@ -42,3 +42,29 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Test Java, Dotnet, Swift, Dart, Zig, Docker backends
         run: cargo test -p fish-backend-java -p fish-backend-dotnet -p fish-backend-swift -p fish-backend-dart -p fish-backend-zig -p fish-backend-docker --lib
+
+  go-services:
+    name: Go Networking Services Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Run Go tests
+        working-directory: go
+        run: go test -v ./...
+
+  python-ai-services:
+    name: Python AI Services Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run Python unit tests
+        working-directory: py
+        run: python -m unittest discover tests

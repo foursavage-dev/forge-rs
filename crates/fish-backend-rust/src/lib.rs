@@ -11,15 +11,28 @@ use fish_executor::{CacheEntry, CommandSpec, Task};
 use fish_graph::{BuildGraph, NodeId};
 
 pub mod fingerprint;
+pub mod linker;
+pub mod nextest;
+pub mod pipelining;
 pub mod rustc;
+pub mod unification;
+pub mod wrapper;
 
+pub use linker::{FastLinker, RustLinkerOptimizer};
+pub use nextest::{NextestRunner, SingleTestResult, TestStatus};
+pub use pipelining::PipelinedCrateCoordinator;
 pub use rustc::RustcCompiler;
+pub use unification::WorkspaceFeatureUnification;
+pub use wrapper::RustcInvocation;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BuildMode {
     Build,
     Check,
     Test,
+    Clippy,
+    Doc,
+    Bench,
 }
 
 impl BuildMode {
@@ -28,6 +41,9 @@ impl BuildMode {
             Self::Build => "build",
             Self::Check => "check",
             Self::Test => "test",
+            Self::Clippy => "clippy",
+            Self::Doc => "doc",
+            Self::Bench => "bench",
         }
     }
 
@@ -36,6 +52,9 @@ impl BuildMode {
             Self::Build => "build",
             Self::Check => "check",
             Self::Test => "test",
+            Self::Clippy => "clippy",
+            Self::Doc => "doc",
+            Self::Bench => "bench",
         }
     }
 }
@@ -272,5 +291,12 @@ mod tests {
     fn test_rust_backend_name() {
         let backend = RustBackend::new().expect("backend created");
         assert_eq!(backend.name(), "rust");
+    }
+
+    #[test]
+    fn test_rust_build_modes() {
+        assert_eq!(BuildMode::Clippy.as_str(), "clippy");
+        assert_eq!(BuildMode::Doc.as_str(), "doc");
+        assert_eq!(BuildMode::Bench.as_str(), "bench");
     }
 }

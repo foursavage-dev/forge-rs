@@ -1,5 +1,7 @@
 # AI Agent Guide for Fish
 
+> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+
 This document provides guidance for AI coding agents working with the fish build orchestration system.
 
 ## 🎯 Purpose

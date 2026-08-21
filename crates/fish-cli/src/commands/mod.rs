@@ -1,4 +1,5 @@
 pub mod affected;
+pub mod ai;
 pub mod attestation;
 pub mod cache;
 pub mod ci;
@@ -8,6 +9,7 @@ pub mod experimental;
 pub mod fix;
 pub mod graph;
 pub mod init;
+pub mod lsp;
 pub mod new;
 pub mod plugin;
 pub mod run;
@@ -25,9 +27,15 @@ pub use experimental::{run_jit, run_live_patch, run_super_opt};
 pub use fix::run_fix;
 pub use graph::run_graph;
 pub use init::run_init;
+pub use lsp::run_lsp;
 pub use new::run_new;
 pub use plugin::run_plugin;
 pub use run::run_run;
 pub use timemachine::{run_history, run_rewind};
 pub use ui::run_ui;
 pub use worker::run_worker;
+
+pub use ai::run_ai;
+
+pub mod why;
+pub use why::run_why;

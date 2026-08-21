@@ -79,7 +79,12 @@ pub(crate) fn run_go_build(start_dir: &Path, args: &CommonArgs) -> ExitCode {
             ldflags: None,
             gcflags: None,
             run_tests: true,
+            race: false,
+            coverage: false,
+            run_benchmarks: false,
+            run_linter: false,
             output_binary: None,
+            env: std::collections::HashMap::new(),
         }
     };
 
