@@ -65,6 +65,30 @@ pub fn detect_workspace_languages(dir: &Path) -> Vec<DetectedLanguage> {
         });
     }
 
+    let has_dotnet = if let Ok(entries) = std::fs::read_dir(dir) {
+        entries.filter_map(Result::ok).any(|e| {
+            let path = e.path();
+            if let Some(ext) = path.extension() {
+                ext == "csproj" || ext == "sln" || ext == "fsproj"
+            } else {
+                path.file_name()
+                    .map(|n| n == "Directory.Build.props")
+                    .unwrap_or(false)
+            }
+        })
+    } else {
+        false
+    };
+
+    if has_dotnet {
+        detected.push(DetectedLanguage {
+            name: "Dotnet (.NET)",
+            backend: "dotnet",
+            build_cmd: "dotnet build",
+            test_cmd: "dotnet test",
+        });
+    }
+
     if dir.join("Package.swift").exists() {
         detected.push(DetectedLanguage {
             name: "Swift",
@@ -150,7 +174,7 @@ pub fn run_init(path: Option<PathBuf>, force: bool) -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    println!("🦀 Initializing Fish in {}", target_dir.display());
+    println!("🐟 Initializing Fish in {}", target_dir.display());
     let detected = detect_workspace_languages(&target_dir);
 
     if detected.is_empty() {
@@ -177,4 +201,31 @@ pub fn run_init(path: Option<PathBuf>, force: bool) -> ExitCode {
     println!("  fish graph    # to visualize task dependency graph");
 
     ExitCode::SUCCESS
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_detect_workspace_languages() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path();
+
+        std::fs::write(path.join("Cargo.toml"), "").unwrap();
+        std::fs::write(path.join("package.json"), "").unwrap();
+        std::fs::write(path.join("App.csproj"), "").unwrap();
+
+        let detected = detect_workspace_languages(path);
+        let names: Vec<&str> = detected.iter().map(|d| d.name).collect();
+
+        assert!(names.contains(&"Rust"));
+        assert!(names.contains(&"TypeScript / Node"));
+        assert!(names.contains(&"Dotnet (.NET)"));
+
+        let yaml_content = generate_fish_yaml(&detected);
+        assert!(yaml_content.contains("rust-build:"));
+        assert!(yaml_content.contains("ts-build:"));
+        assert!(yaml_content.contains("dotnet-build:"));
+    }
 }
