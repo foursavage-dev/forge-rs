@@ -35,7 +35,7 @@ pub struct FingerprintUtils;
 impl FingerprintUtils {
     pub fn compute_namespace(path: &Path) -> String {
         let mut hasher = blake3::Hasher::new();
-        hasher.update(path.to_string_lossy().as_bytes());
+        hasher.update(path.to_string_lossy().replace('\\', "/").as_bytes());
         hasher.finalize().to_hex().to_string()[..12].to_string()
     }
 
@@ -131,7 +131,7 @@ impl FingerprintUtils {
                     walk(&path, base, is_excluded_dir, is_allowed_file, hasher)?;
                 } else if path.is_file() && is_allowed_file(&path) {
                     let rel = path.strip_prefix(base).unwrap_or(&path);
-                    hasher.update(rel.to_string_lossy().as_bytes());
+                    hasher.update(rel.to_string_lossy().replace('\\', "/").as_bytes());
                     hasher.update(b":");
                     FingerprintUtils::hash_file_into(&path, hasher)?;
                 }

@@ -251,4 +251,30 @@ mod tests {
         let graph = LocklessDependencyGraph::new();
         assert_eq!(graph.compute_critical_path().unwrap(), Vec::<String>::new());
     }
+
+    #[test]
+    fn test_massive_dag_stress_1000_nodes() {
+        let mut graph = LocklessDependencyGraph::new();
+        for i in 0..1000 {
+            let id = format!("node_{i}");
+            let dependencies = if i == 0 {
+                vec![]
+            } else if i % 10 == 0 {
+                vec![format!("node_{}", i - 1), format!("node_{}", i / 2)]
+            } else {
+                vec![format!("node_{}", i - 1)]
+            };
+            graph.insert_node(&id, &dependencies, 1);
+        }
+
+        assert_eq!(graph.node_count(), 1000);
+
+        let path = graph.compute_critical_path().unwrap();
+        assert!(!path.is_empty());
+        assert_eq!(path[0], "node_0");
+        assert_eq!(path.last().unwrap(), "node_999");
+
+        let trans = graph.transitive_dependencies("node_50");
+        assert_eq!(trans.len(), 50);
+    }
 }

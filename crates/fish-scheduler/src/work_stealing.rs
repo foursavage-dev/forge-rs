@@ -319,4 +319,44 @@ mod tests {
         assert_eq!(summary.cancelled, 1, "`c` is cancelled");
         assert_eq!(summary.failures.len(), 1);
     }
+
+    #[test]
+    fn test_work_stealing_diamond_fanout_stress() {
+        let mut graph = BuildGraph::new();
+        let root = graph.add_node(Task::new(
+            "root".to_string(),
+            "echo root".to_string(),
+            CommandSpec::new("echo").arg("root"),
+        ));
+
+        let mut mid_nodes = Vec::new();
+        for i in 0..64 {
+            let mid = graph.add_node(Task::new(
+                format!("mid_{i}"),
+                format!("echo mid_{i}"),
+                CommandSpec::new("echo").arg(format!("mid_{i}")),
+            ));
+            graph.add_dependency(root, mid).unwrap();
+            mid_nodes.push(mid);
+        }
+
+        let sink = graph.add_node(Task::new(
+            "sink".to_string(),
+            "echo sink".to_string(),
+            CommandSpec::new("echo").arg("sink"),
+        ));
+        for mid in mid_nodes {
+            graph.add_dependency(mid, sink).unwrap();
+        }
+
+        let executor = Arc::new(SelectiveExecutor {
+            fail: HashSet::new(),
+        });
+        let mut scheduler = WorkStealingScheduler::new(8, graph, executor);
+
+        let summary = scheduler.run().unwrap();
+        assert_eq!(summary.total, 66);
+        assert_eq!(summary.executed, 66);
+        assert_eq!(summary.failed, 0);
+    }
 }
