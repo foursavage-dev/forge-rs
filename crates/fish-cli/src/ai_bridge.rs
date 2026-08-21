@@ -86,8 +86,8 @@ impl AiBridge {
             .map_err(|e| format!("failed to read AI response: {e}"))?;
         let _ = child.wait();
 
-        let value: serde_json::Value = serde_json::from_str(line.trim())
-            .map_err(|e| format!("invalid AI response: {e}"))?;
+        let value: serde_json::Value =
+            serde_json::from_str(line.trim()).map_err(|e| format!("invalid AI response: {e}"))?;
 
         if let Some(error) = value.get("error") {
             let message = error
@@ -134,12 +134,14 @@ mod tests {
 
     #[test]
     fn split_command_handles_plain_and_quoted_arguments() {
-        assert_eq!(split_command("python3 -m fish_ai.server"), vec![
-            "python3",
-            "-m",
-            "fish_ai.server"
-        ]);
-        assert_eq!(split_command("\"python 3\" -m mod"), vec!["python 3", "-m", "mod"]);
+        assert_eq!(
+            split_command("python3 -m fish_ai.server"),
+            vec!["python3", "-m", "fish_ai.server"]
+        );
+        assert_eq!(
+            split_command("\"python 3\" -m mod"),
+            vec!["python 3", "-m", "mod"]
+        );
         assert_eq!(split_command("   "), Vec::<String>::new());
     }
 

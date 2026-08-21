@@ -130,11 +130,11 @@ mod tests {
             &policy,
             &["--minify".to_string()],
         );
-        assert!(result.is_err(), "unimplemented WASM execution must fail loudly");
         assert!(
-            !out_file.exists(),
-            "no fake output artifact may be written"
+            result.is_err(),
+            "unimplemented WASM execution must fail loudly"
         );
+        assert!(!out_file.exists(), "no fake output artifact may be written");
         assert!(
             !wasm_file.exists(),
             "a missing plugin must not be replaced with a fabricated stub"

@@ -1,7 +1,7 @@
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 /// Background build daemon exposing a JSON-RPC 2.0 interface over
@@ -291,8 +291,16 @@ mod tests {
     fn dispatch_handles_known_and_unknown_methods() {
         assert_eq!(FishDaemon::dispatch_method("ping").1, "PONG");
         assert_eq!(FishDaemon::dispatch_method("PING").1, "PONG");
-        assert!(FishDaemon::dispatch_method("STATUS").1.contains("FISH_DAEMON_OK"));
+        assert!(
+            FishDaemon::dispatch_method("STATUS")
+                .1
+                .contains("FISH_DAEMON_OK")
+        );
         assert!(FishDaemon::dispatch_method("shutdown").0);
-        assert!(FishDaemon::dispatch_method("nope").1.contains("unknown method"));
+        assert!(
+            FishDaemon::dispatch_method("nope")
+                .1
+                .contains("unknown method")
+        );
     }
 }

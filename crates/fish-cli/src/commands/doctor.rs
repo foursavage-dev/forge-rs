@@ -222,10 +222,8 @@ pub fn run_doctor_with_ai(ai_enabled: bool, fix: bool) -> ExitCode {
             #[cfg(unix)]
             {
                 use std::os::unix::fs::PermissionsExt;
-                let _ = std::fs::set_permissions(
-                    cache.root(),
-                    std::fs::Permissions::from_mode(0o700),
-                );
+                let _ =
+                    std::fs::set_permissions(cache.root(), std::fs::Permissions::from_mode(0o700));
             }
 
             // Sweep stale temporary files left by interrupted writers.
@@ -255,7 +253,10 @@ pub fn run_doctor_with_ai(ai_enabled: bool, fix: bool) -> ExitCode {
     if ai_enabled {
         println!("🤖 AI Diagnostic Advice (Fish AI service):");
         let bridge = crate::ai_bridge::AiBridge::from_env();
-        let missing_names: Vec<String> = missing_tools.iter().map(|(name, _)| name.to_string()).collect();
+        let missing_names: Vec<String> = missing_tools
+            .iter()
+            .map(|(name, _)| name.to_string())
+            .collect();
         match bridge.request(
             "doctor_advice",
             serde_json::json!({

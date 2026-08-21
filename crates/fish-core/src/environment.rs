@@ -8,7 +8,7 @@
 use std::collections::HashMap;
 use std::process::Command;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EnvironmentFingerprint {
     pub os: String,
     pub os_version: String,
@@ -16,6 +16,25 @@ pub struct EnvironmentFingerprint {
     pub libc_version: Option<String>,
     pub compiler_versions: HashMap<String, String>,
     pub toolchain_hash: String,
+}
+
+impl std::hash::Hash for EnvironmentFingerprint {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.os.hash(state);
+        self.os_version.hash(state);
+        self.architecture.hash(state);
+        self.libc_version.hash(state);
+        self.toolchain_hash.hash(state);
+        // `HashMap` itself does not implement `Hash`, and its iteration order
+        // is unspecified, so hash the compiler entries in a stable sorted
+        // order to keep the fingerprint deterministic.
+        let mut compilers: Vec<(&String, &String)> = self.compiler_versions.iter().collect();
+        compilers.sort_by_key(|(compiler, _)| compiler.as_str());
+        for (compiler, version) in compilers {
+            compiler.hash(state);
+            version.hash(state);
+        }
+    }
 }
 
 impl EnvironmentFingerprint {

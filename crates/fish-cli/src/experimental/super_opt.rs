@@ -106,7 +106,10 @@ mod tests {
         fs::write(&input_bin, b"ORIGINAL_PAYLOAD").unwrap();
 
         let result = SuperOptimizer::optimize_binary_simd(&input_bin, &output_bin);
-        assert!(result.is_err(), "unimplemented optimization must fail loudly");
+        assert!(
+            result.is_err(),
+            "unimplemented optimization must fail loudly"
+        );
         assert!(
             !output_bin.exists(),
             "the output artifact must never be written when optimization is unimplemented"

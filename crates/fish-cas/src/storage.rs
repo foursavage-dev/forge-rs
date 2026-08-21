@@ -199,11 +199,7 @@ impl CasStorage {
         // Check quota
         if self.config.max_size_bytes > 0 {
             let stats = self.backend.stats().await?;
-            if stats
-                .total_bytes
-                .saturating_add(artifact.size())
-                > self.config.max_size_bytes
-            {
+            if stats.total_bytes.saturating_add(artifact.size()) > self.config.max_size_bytes {
                 return Err(CasError::QuotaExceeded(format!(
                     "Storage quota exceeded: {} + {} > {}",
                     stats.total_bytes,
@@ -415,11 +411,15 @@ mod tests {
 
         // NotAccessedIn is driven by last_accessed when present, falling back
         // to the store timestamp for legacy records.
-        let not_accessed = CleanupPolicy::NotAccessedIn(std::time::Duration::from_secs(60 * 60 * 24 * 7));
+        let not_accessed =
+            CleanupPolicy::NotAccessedIn(std::time::Duration::from_secs(60 * 60 * 24 * 7));
 
         let mut untouched = artifact.clone();
         untouched.metadata.last_accessed = None;
-        assert!(!not_accessed.should_remove(&untouched), "fresh record must survive");
+        assert!(
+            !not_accessed.should_remove(&untouched),
+            "fresh record must survive"
+        );
 
         let mut stale = artifact.clone();
         stale.metadata.last_accessed = Some(
@@ -429,7 +429,10 @@ mod tests {
                 .as_secs() as i64
                 - 10 * 24 * 60 * 60,
         );
-        assert!(not_accessed.should_remove(&stale), "long-untouched record must be removed");
+        assert!(
+            not_accessed.should_remove(&stale),
+            "long-untouched record must be removed"
+        );
 
         let mut legacy = artifact.clone();
         legacy.metadata.last_accessed = None;

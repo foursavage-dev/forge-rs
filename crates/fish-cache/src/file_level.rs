@@ -247,12 +247,8 @@ mod tests {
         let inside = PathBuf::from("/tmp/foo/a.rs");
         let sibling = PathBuf::from("/tmp/foobar/b.rs");
 
-        let artifact = Artifact::from_bytes(
-            b"data".to_vec(),
-            "text".to_string(),
-            "test".to_string(),
-        )
-        .unwrap();
+        let artifact =
+            Artifact::from_bytes(b"data".to_vec(), "text".to_string(), "test".to_string()).unwrap();
         cache.cache_file(&inside, artifact.clone()).unwrap();
         cache.cache_file(&sibling, artifact).unwrap();
 
@@ -304,12 +300,8 @@ mod tests {
         graph.add_dependency(a.clone(), b.clone());
         graph.add_dependency(b.clone(), c.clone());
 
-        let artifact = Artifact::from_bytes(
-            b"data".to_vec(),
-            "text".to_string(),
-            "test".to_string(),
-        )
-        .unwrap();
+        let artifact =
+            Artifact::from_bytes(b"data".to_vec(), "text".to_string(), "test".to_string()).unwrap();
         cache.cache_file(&a, artifact.clone()).unwrap();
         cache.cache_file(&b, artifact.clone()).unwrap();
         cache.cache_file(&c, artifact).unwrap();

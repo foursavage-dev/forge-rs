@@ -14,14 +14,14 @@ fn is_safe_segment(segment: &str) -> bool {
     !segment.is_empty()
         && segment != "."
         && segment != ".."
-        && !segment.bytes().any(|byte| matches!(byte, b'/' | b'\\' | b'\0' | b':'))
+        && !segment
+            .bytes()
+            .any(|byte| matches!(byte, b'/' | b'\\' | b'\0' | b':'))
 }
 
 /// A relative path made only of safe segments, with no absolute prefix.
 fn is_safe_relative_path(path: &str) -> bool {
-    !path.is_empty()
-        && !path.starts_with('/')
-        && path.split(['/', '\\']).all(is_safe_segment)
+    !path.is_empty() && !path.starts_with('/') && path.split(['/', '\\']).all(is_safe_segment)
 }
 
 /// Directory name for a toolchain kind. `Custom` names are attacker-controlled
@@ -248,10 +248,7 @@ impl ToolchainDownloader {
         // the previous behaviour of installing a no-op stub (`exit 0`) that
         // silently turned every build into an empty success. The declared
         // `url` and `sha256` fields are reserved for the future downloader.
-        let install_dir = self
-            .base_dir
-            .join(toolchain_kind_name(kind))
-            .join(version);
+        let install_dir = self.base_dir.join(toolchain_kind_name(kind)).join(version);
         Err(anyhow!(
             "automatic download of toolchain {:?} {} (from {}) is not implemented; \
              install it manually under {:?}",
@@ -289,7 +286,10 @@ mod tests {
         let downloader = ToolchainDownloader::new().with_base_dir(temp.path());
 
         let err = downloader.ensure_toolchain(&ToolchainKind::Zig, "0.13.0");
-        assert!(err.is_err(), "uninstalled toolchains must error, not fake success");
+        assert!(
+            err.is_err(),
+            "uninstalled toolchains must error, not fake success"
+        );
         assert!(
             !downloader.is_installed(&ToolchainKind::Zig, "0.13.0"),
             "no stub may be left behind"
@@ -316,12 +316,16 @@ mod tests {
         );
 
         // A traversal version is rejected at lookup time.
-        assert!(downloader
-            .get_installed_path(&ToolchainKind::Zig, "../../outside")
-            .is_none());
-        assert!(downloader
-            .ensure_toolchain(&ToolchainKind::Zig, "../../outside")
-            .is_err());
+        assert!(
+            downloader
+                .get_installed_path(&ToolchainKind::Zig, "../../outside")
+                .is_none()
+        );
+        assert!(
+            downloader
+                .ensure_toolchain(&ToolchainKind::Zig, "../../outside")
+                .is_err()
+        );
     }
 
     #[test]

@@ -249,9 +249,6 @@ mod tests {
     #[test]
     fn empty_graph_has_empty_critical_path() {
         let graph = LocklessDependencyGraph::new();
-        assert_eq!(
-            graph.compute_critical_path().unwrap(),
-            Vec::<String>::new()
-        );
+        assert_eq!(graph.compute_critical_path().unwrap(), Vec::<String>::new());
     }
 }

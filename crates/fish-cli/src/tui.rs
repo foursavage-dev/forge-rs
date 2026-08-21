@@ -160,7 +160,9 @@ impl TuiDashboard {
                     Line::from(vec![
                         Span::styled(
                             "CPU ",
-                            Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+                            Style::default()
+                                .fg(Color::Cyan)
+                                .add_modifier(Modifier::BOLD),
                         ),
                         Span::raw(format!("{cpu_last:>3}% ")),
                         Span::styled(
@@ -171,7 +173,9 @@ impl TuiDashboard {
                     Line::from(vec![
                         Span::styled(
                             "MEM ",
-                            Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD),
+                            Style::default()
+                                .fg(Color::Magenta)
+                                .add_modifier(Modifier::BOLD),
                         ),
                         Span::raw(format!("{mem_last:>3}% ")),
                         Span::styled(
@@ -256,8 +260,11 @@ impl TuiDashboard {
             let _ = terminal.draw(|f| {
                 let area = f.area();
                 let lines = waterfall_lines(&rows, area.width as usize);
-                let waterfall = Paragraph::new(lines)
-                    .block(Block::default().borders(Borders::ALL).title("Task Waterfall (start → end)"));
+                let waterfall = Paragraph::new(lines).block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .title("Task Waterfall (start → end)"),
+                );
                 f.render_widget(waterfall, area);
             });
         }

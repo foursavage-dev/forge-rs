@@ -112,9 +112,11 @@ impl fish_executor::TaskMiddleware for SuperOptMiddleware {
                     crate::experimental::super_opt::SuperOptimizer::optimize_binary_simd(
                         artifact, artifact,
                     )
-                    .map_err(|source| fish_executor::ExecutorError::Record {
-                        command: artifact.display().to_string(),
-                        source,
+                    .map_err(|source| {
+                        fish_executor::ExecutorError::Record {
+                            command: artifact.display().to_string(),
+                            source,
+                        }
                     })?;
                 }
             }

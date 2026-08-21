@@ -6,32 +6,124 @@ use std::process::ExitCode;
 /// table mirrors the actual `FishConfig` schema (`crates/fish-cli/src/config.rs`)
 /// and is the single source of truth for hover and completion.
 const CONFIG_KEYS: &[(&str, &str, &str)] = &[
-    ("backend", "string", "Primary toolchain adapter for the workspace (e.g. `rust`, `go`, `ts`, `py`, `cc`, `docker`, `java`, `dotnet`, `swift`, `dart`, `zig`, `plugin`)."),
-    ("jobs", "integer", "Maximum concurrent worker tasks (0 = auto, based on logical CPU count)."),
-    ("no_cache", "boolean", "When true, bypasses both local and remote Content-Addressable Storage (CAS) caches."),
-    ("sandbox", "boolean", "Enables process isolation using Linux Bubblewrap, macOS sandbox-exec, or Windows Job Objects."),
+    (
+        "backend",
+        "string",
+        "Primary toolchain adapter for the workspace (e.g. `rust`, `go`, `ts`, `py`, `cc`, `docker`, `java`, `dotnet`, `swift`, `dart`, `zig`, `plugin`).",
+    ),
+    (
+        "jobs",
+        "integer",
+        "Maximum concurrent worker tasks (0 = auto, based on logical CPU count).",
+    ),
+    (
+        "no_cache",
+        "boolean",
+        "When true, bypasses both local and remote Content-Addressable Storage (CAS) caches.",
+    ),
+    (
+        "sandbox",
+        "boolean",
+        "Enables process isolation using Linux Bubblewrap, macOS sandbox-exec, or Windows Job Objects.",
+    ),
     ("timeout", "integer", "Per-task timeout in seconds."),
     ("profile", "string", "Named configuration profile to apply."),
-    ("tui", "boolean", "Render the interactive terminal UI during builds."),
-    ("remote_cache", "string", "HTTP/gRPC endpoint for the remote artifact cache server."),
-    ("remote_cache_token", "string", "Bearer authentication token for the remote cache."),
-    ("remote_workers", "array", "Remote cluster worker node endpoints (e.g. `[\"worker1:9000\", \"worker2:9000\"]`)."),
-    ("remote_workers_token", "string", "Bearer authentication token for remote workers."),
-    ("cache_dir", "string", "Path to the local Content-Addressable Storage (CAS) directory (default `~/.fish/cache`)."),
-    ("send_source", "boolean", "Upload source snapshots to remote workers."),
-    ("ram_limit", "integer", "Memory usage threshold percentage to dynamically throttle concurrency and prevent OOM."),
-    ("semantic", "boolean", "Enables AST-level semantic change detection to avoid rebuilding downstream packages when the public interface is unchanged."),
-    ("ramdisk", "boolean", "Materialize the local cache on a RAM disk for faster I/O."),
-    ("swarm", "boolean", "Enable LAN peer discovery for distributed caching."),
-    ("reflink", "boolean", "Enables Copy-on-Write (CoW) materialization of cached artifacts."),
-    ("hermetic_trace", "boolean", "Trace file access to detect undeclared inputs/outputs."),
-    ("swarm_compute", "boolean", "Advertise this machine as a swarm compute worker."),
-    ("critical_path", "boolean", "Prioritizes tasks along the longest dependency chain in the DAG."),
-    ("turbo_link", "boolean", "Use a fast linker (mold/lld) when available."),
-    ("speculative", "boolean", "Enable speculative pre-compilation on idle cores."),
+    (
+        "tui",
+        "boolean",
+        "Render the interactive terminal UI during builds.",
+    ),
+    (
+        "remote_cache",
+        "string",
+        "HTTP/gRPC endpoint for the remote artifact cache server.",
+    ),
+    (
+        "remote_cache_token",
+        "string",
+        "Bearer authentication token for the remote cache.",
+    ),
+    (
+        "remote_workers",
+        "array",
+        "Remote cluster worker node endpoints (e.g. `[\"worker1:9000\", \"worker2:9000\"]`).",
+    ),
+    (
+        "remote_workers_token",
+        "string",
+        "Bearer authentication token for remote workers.",
+    ),
+    (
+        "cache_dir",
+        "string",
+        "Path to the local Content-Addressable Storage (CAS) directory (default `~/.fish/cache`).",
+    ),
+    (
+        "send_source",
+        "boolean",
+        "Upload source snapshots to remote workers.",
+    ),
+    (
+        "ram_limit",
+        "integer",
+        "Memory usage threshold percentage to dynamically throttle concurrency and prevent OOM.",
+    ),
+    (
+        "semantic",
+        "boolean",
+        "Enables AST-level semantic change detection to avoid rebuilding downstream packages when the public interface is unchanged.",
+    ),
+    (
+        "ramdisk",
+        "boolean",
+        "Materialize the local cache on a RAM disk for faster I/O.",
+    ),
+    (
+        "swarm",
+        "boolean",
+        "Enable LAN peer discovery for distributed caching.",
+    ),
+    (
+        "reflink",
+        "boolean",
+        "Enables Copy-on-Write (CoW) materialization of cached artifacts.",
+    ),
+    (
+        "hermetic_trace",
+        "boolean",
+        "Trace file access to detect undeclared inputs/outputs.",
+    ),
+    (
+        "swarm_compute",
+        "boolean",
+        "Advertise this machine as a swarm compute worker.",
+    ),
+    (
+        "critical_path",
+        "boolean",
+        "Prioritizes tasks along the longest dependency chain in the DAG.",
+    ),
+    (
+        "turbo_link",
+        "boolean",
+        "Use a fast linker (mold/lld) when available.",
+    ),
+    (
+        "speculative",
+        "boolean",
+        "Enable speculative pre-compilation on idle cores.",
+    ),
     ("daemon_pool", "boolean", "Use the compiler daemon pool."),
-    ("kernel_bypass", "boolean", "Enable kernel-bypass experimental I/O."),
-    ("wasm_sandbox", "boolean", "Run plugins inside a Wasm sandbox."),
+    (
+        "kernel_bypass",
+        "boolean",
+        "Enable kernel-bypass experimental I/O.",
+    ),
+    (
+        "wasm_sandbox",
+        "boolean",
+        "Run plugins inside a Wasm sandbox.",
+    ),
     ("super_opt", "boolean", "Enable binary super-optimization."),
 ];
 
@@ -119,20 +211,14 @@ fn key_at_line(text: &str, line: usize) -> Option<String> {
         .chars()
         .take_while(|c| c.is_ascii_alphanumeric() || *c == '_')
         .collect();
-    if key.is_empty() {
-        None
-    } else {
-        Some(key)
-    }
+    if key.is_empty() { None } else { Some(key) }
 }
 
 /// Find the 0-based line number where `key = ...` appears.
 fn find_key_line(text: &str, key: &str) -> u64 {
     for (index, line) in text.lines().enumerate() {
         let trimmed = line.trim_start();
-        if trimmed.starts_with(key)
-            && trimmed[key.len()..].trim_start().starts_with('=')
-        {
+        if trimmed.starts_with(key) && trimmed[key.len()..].trim_start().starts_with('=') {
             return index as u64;
         }
     }

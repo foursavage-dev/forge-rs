@@ -44,10 +44,7 @@ mod tests {
         let service = SecretsService::new(Box::new(mgr));
 
         let err = service.get_secret("api_key").await.unwrap_err();
-        assert!(
-            err.to_string().contains("not implemented"),
-            "error: {err}"
-        );
+        assert!(err.to_string().contains("not implemented"), "error: {err}");
         let err = service.inject_secrets("echo $KEY").await.unwrap_err();
         assert!(err.to_string().contains("not implemented"));
     }
@@ -61,10 +58,7 @@ mod tests {
         let service = SecretsService::new(Box::new(mgr));
 
         let err = service.get_secret("db_pass").await.unwrap_err();
-        assert!(
-            err.to_string().contains("not implemented"),
-            "error: {err}"
-        );
+        assert!(err.to_string().contains("not implemented"), "error: {err}");
         let err = service.inject_secrets("forge build").await.unwrap_err();
         assert!(err.to_string().contains("not implemented"));
     }
@@ -75,10 +69,7 @@ mod tests {
         let service = SecretsService::new(Box::new(mgr));
 
         let err = service.get_secret("tls_cert").await.unwrap_err();
-        assert!(
-            err.to_string().contains("not implemented"),
-            "error: {err}"
-        );
+        assert!(err.to_string().contains("not implemented"), "error: {err}");
         let err = service.inject_secrets("cargo test").await.unwrap_err();
         assert!(err.to_string().contains("not implemented"));
     }

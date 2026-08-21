@@ -785,9 +785,8 @@ fn atomic_rename(src: &Path, dst: &Path) -> io::Result<()> {
     }
     // The rename never succeeded after exhausting the retry budget; report the
     // last observed error instead of pretending the file was moved.
-    Err(last_err.unwrap_or_else(|| {
-        io::Error::new(io::ErrorKind::Other, "atomic rename exhausted retries")
-    }))
+    Err(last_err
+        .unwrap_or_else(|| io::Error::new(io::ErrorKind::Other, "atomic rename exhausted retries")))
 }
 
 #[derive(Debug)]

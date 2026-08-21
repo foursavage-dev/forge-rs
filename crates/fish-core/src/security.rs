@@ -351,8 +351,9 @@ impl InputValidator {
         // components, and resolve `..` by popping the previous component.
         // This is a normalization helper, not a security boundary by itself;
         // combine it with `validate_path` for actual enforcement.
+        let normalized = path.replace('\\', "/");
         let mut parts: Vec<&str> = Vec::new();
-        for component in path.replace('\\', "/").split('/') {
+        for component in normalized.split('/') {
             match component {
                 "" | "." => {}
                 ".." => {

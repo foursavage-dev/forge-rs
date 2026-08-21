@@ -162,9 +162,7 @@ impl WorkStealingScheduler {
 
             // Wait for at least one completion, then drain any that arrived
             // concurrently before dispatching the newly unblocked tasks.
-            let (id, outcome) = done_rx
-                .recv()
-                .map_err(|_| SchedulerError::Stalled)?;
+            let (id, outcome) = done_rx.recv().map_err(|_| SchedulerError::Stalled)?;
             in_flight -= 1;
             self.apply_outcome(id, outcome, &mut failures, &mut timings)?;
             while let Ok((id, outcome)) = done_rx.try_recv() {

@@ -74,7 +74,10 @@ fn kill_process_tree(child: &mut std::process::Child) {
     fn kill_descendants(pid: u32) {
         let children_path = format!("/proc/{pid}/task/{pid}/children");
         if let Ok(contents) = std::fs::read_to_string(&children_path) {
-            for child_pid in contents.split_whitespace().filter_map(|s| s.parse::<u32>().ok()) {
+            for child_pid in contents
+                .split_whitespace()
+                .filter_map(|s| s.parse::<u32>().ok())
+            {
                 kill_descendants(child_pid);
                 let _ = std::process::Command::new("kill")
                     .args(["-KILL", &child_pid.to_string()])
