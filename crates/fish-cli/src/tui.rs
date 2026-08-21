@@ -260,7 +260,7 @@ impl TuiDashboard {
             let _ = terminal.draw(|f| {
                 let area = f.area();
                 let lines = waterfall_lines(&rows, area.width as usize);
-                let waterfall = Paragraph::new(lines).block(
+                let waterfall = Paragraph::new(lines.join("\n")).block(
                     Block::default()
                         .borders(Borders::ALL)
                         .title("Task Waterfall (start → end)"),

@@ -179,14 +179,15 @@ impl FishDaemon {
 }
 
 /// Serve a single client connection until the client disconnects or requests
-/// shutdown. Both `TcpStream` and `UnixStream` implement `Clone`, which lets
-/// the reader borrow a separate handle from the writer.
+/// shutdown. Reads are buffered by a `BufReader`; responses are written back
+/// through the reader's underlying stream, so a single handle supports both
+/// directions for both `TcpStream` and `UnixStream` (neither implements
+/// `Clone`, but `BufReader::get_mut` hands back the writer).
 fn serve_connection<S>(stream: S, running: &AtomicBool)
 where
-    S: std::io::Read + std::io::Write + Clone,
+    S: std::io::Read + std::io::Write,
 {
-    let mut reader = BufReader::new(stream.clone());
-    let mut writer = stream;
+    let mut reader = BufReader::new(stream);
 
     loop {
         let mut line = String::new();
@@ -203,6 +204,7 @@ where
         let (shutdown, result) = FishDaemon::dispatch_method(&method);
         let response = FishDaemon::jsonrpc_result(id, &result);
 
+        let writer = reader.get_mut();
         if writer.write_all(response.as_bytes()).is_err()
             || writer.write_all(b"\n").is_err()
             || writer.flush().is_err()
