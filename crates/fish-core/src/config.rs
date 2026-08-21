@@ -153,43 +153,15 @@ impl FishConfig {
         Ok(())
     }
 
+    /// Overlay `other` on top of `self`.
+    ///
+    /// `other` is expected to be a complete configuration (for example, one
+    /// parsed from a file), so every field it carries wins. This replaces the
+    /// previous sentinel-default logic, which (a) silently ignored fields that
+    /// were explicitly set to their default value (e.g. `log_level = "info"`)
+    /// and (b) never applied a large number of fields at all.
     pub fn merge(&mut self, other: FishConfig) {
-        // General config
-        if other.general.log_level != "info" {
-            self.general.log_level = other.general.log_level;
-        }
-        if other.general.max_parallel_jobs != 4 {
-            self.general.max_parallel_jobs = other.general.max_parallel_jobs;
-        }
-
-        // Cache config
-        if other.cache.local_path.is_some() {
-            self.cache.local_path = other.cache.local_path;
-        }
-        if other.cache.remote_url.is_some() {
-            self.cache.remote_url = other.cache.remote_url;
-        }
-
-        // Build config
-        self.build.level_batching = other.build.level_batching;
-        self.build.incremental = other.build.incremental;
-
-        // CI config
-        if other.ci.platform != "github" {
-            self.ci.platform = other.ci.platform;
-        }
-
-        // Security config
-        if other.security.level != "strict" {
-            self.security.level = other.security.level;
-        }
-        if !other.security.allowed_executables.is_empty() {
-            self.security.allowed_executables = other.security.allowed_executables;
-        }
-
-        // Experimental config
-        self.experimental.hotpatch_enabled = other.experimental.hotpatch_enabled;
-        self.experimental.kernel_bypass_enabled = other.experimental.kernel_bypass_enabled;
+        *self = other;
     }
 
     pub fn validate(&self) -> Result<(), ConfigError> {
@@ -310,6 +282,52 @@ mod tests {
 
         config1.merge(config2);
         assert_eq!(config1.general.max_parallel_jobs, 8);
+    }
+
+    #[test]
+    fn merge_applies_explicit_defaults_and_previously_missed_fields() {
+        let mut base = FishConfig::default();
+        base.general.log_level = "debug".to_string();
+        base.build.hermetic = false;
+        base.ci.timeout_minutes = 10;
+        base.general.timeout_seconds = None;
+
+        let mut overlay = FishConfig::default();
+        // Explicitly set to the *default* value: must still win.
+        overlay.general.log_level = "info".to_string();
+        // Fields the old sentinel logic silently dropped:
+        overlay.general.timeout_seconds = Some(90);
+        overlay.build.hermetic = true;
+        overlay.build.sandbox_enabled = true;
+        overlay.build.watch_mode = true;
+        overlay.cache.compression_enabled = false;
+        overlay.cache.max_size_gb = Some(5.0);
+        overlay.cache.ttl_hours = Some(48);
+        overlay.ci.cache_enabled = false;
+        overlay.ci.matrix_enabled = false;
+        overlay.ci.timeout_minutes = 45;
+        overlay.security.max_file_size_mb = Some(200);
+        overlay.security.network_access = false;
+        overlay.experimental.turbolink_enabled = true;
+        overlay.experimental.speculative_compilation = true;
+
+        base.merge(overlay);
+
+        assert_eq!(base.general.log_level, "info");
+        assert_eq!(base.general.timeout_seconds, Some(90));
+        assert!(base.build.hermetic);
+        assert!(base.build.sandbox_enabled);
+        assert!(base.build.watch_mode);
+        assert!(!base.cache.compression_enabled);
+        assert_eq!(base.cache.max_size_gb, Some(5.0));
+        assert_eq!(base.cache.ttl_hours, Some(48));
+        assert!(!base.ci.cache_enabled);
+        assert!(!base.ci.matrix_enabled);
+        assert_eq!(base.ci.timeout_minutes, 45);
+        assert_eq!(base.security.max_file_size_mb, Some(200));
+        assert!(!base.security.network_access);
+        assert!(base.experimental.turbolink_enabled);
+        assert!(base.experimental.speculative_compilation);
     }
 
     #[test]

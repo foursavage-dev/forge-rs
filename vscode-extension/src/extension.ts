@@ -37,14 +37,15 @@ export function activate(context: vscode.ExtensionContext) {
         showCollapseAll: true
     });
 
-
-
     // Register commands
     context.subscriptions.push(
         vscode.commands.registerCommand('fish.runBuild', () => runFishCommand('build')),
         vscode.commands.registerCommand('fish.runTest', () => runFishCommand('test')),
         vscode.commands.registerCommand('fish.clean', () => runFishCommand('clean')),
-        vscode.commands.registerCommand('fish.refreshGraph', () => dagProvider.refresh()),
+        vscode.commands.registerCommand('fish.refreshGraph', () => {
+            dagProvider.refresh();
+            dagVisualizer.show();
+        }),
         vscode.commands.registerCommand('fish.showDiagnostics', () => diagnosticsProvider?.showDiagnostics()),
         vscode.commands.registerCommand('fish.watch', () => toggleWatchMode())
     );
@@ -66,7 +67,7 @@ export function activate(context: vscode.ExtensionContext) {
     if (config.get<boolean>('autoRefresh', true)) {
         const watcher = vscode.workspace.createFileSystemWatcher('**/*.{toml,json,rs,go,ts,py,java,cs,swift,dart,zig,dockerfile}');
         context.subscriptions.push(watcher);
-        
+
         watcher.onDidChange(() => {
             dagProvider.refresh();
             taskProvider.refresh();
@@ -74,30 +75,37 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     // Start LSP client
-    lspClient.start();
+    void lspClient.start();
 }
 
 function updateWorkspaceContext() {
+    // A workspace "has a Fish project" when it contains either a `fish.toml`
+    // manifest or a Cargo workspace (the Rust backend works without a manifest).
     const hasFishProject = vscode.workspace.workspaceFolders?.some(folder => {
-        const manifestPath = path.join(folder.uri.fsPath, 'Cargo.toml');
-        return vscode.workspace.fs.stat(vscode.Uri.file(manifestPath)).then(() => true, () => false);
+        const fishManifest = path.join(folder.uri.fsPath, 'fish.toml');
+        const cargoManifest = path.join(folder.uri.fsPath, 'Cargo.toml');
+        return vscode.workspace.fs.stat(vscode.Uri.file(fishManifest))
+            .then(() => true, () =>
+                vscode.workspace.fs.stat(vscode.Uri.file(cargoManifest)).then(() => true, () => false)
+            );
     }) || false;
-    
-    vscode.commands.executeCommand('setContext', 'workspaceHasFishProject', hasFishProject);
+
+    void vscode.commands.executeCommand('setContext', 'workspaceHasFishProject', hasFishProject);
 }
 
 async function runFishCommand(command: string) {
     const config = vscode.workspace.getConfiguration('fish');
+    const fishExecutable = config.get<string>('executablePath', 'fish');
     const showNotifications = config.get<boolean>('showBuildNotifications', true);
 
     if (showNotifications) {
-        vscode.window.withProgress({
+        await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: `Fish: Running ${command}...`,
             cancellable: false
-        }, async (progress) => {
+        }, async () => {
             try {
-                await executeFishCommand(command, progress);
+                await executeFishCommand(fishExecutable, command);
                 vscode.window.showInformationMessage(`Fish ${command} completed successfully`);
             } catch (error) {
                 vscode.window.showErrorMessage(`Fish ${command} failed: ${error}`);
@@ -105,36 +113,72 @@ async function runFishCommand(command: string) {
         });
     } else {
         try {
-            await executeFishCommand(command, undefined);
+            await executeFishCommand(fishExecutable, command);
         } catch (error) {
             vscode.window.showErrorMessage(`Fish ${command} failed: ${error}`);
         }
     }
 }
 
-async function executeFishCommand(command: string, progress?: vscode.Progress<{ message?: string }>) {
-    const terminal = vscode.window.createTerminal('Fish Build');
-    terminal.sendText(`fish ${command}`);
-    
+/**
+ * Run `<fishExecutable> <args...>` as a task and resolve/reject when the
+ * spawned process exits. Uses a `ShellExecution` task so completion is
+ * detected from the process exit code rather than waiting for the user to
+ * close a terminal.
+ */
+function executeFishCommand(fishExecutable: string, ...args: string[]): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-        const disposable = vscode.window.onDidCloseTerminal(event => {
-            if (event === terminal) {
+        const commandLine = [fishExecutable, ...args].join(' ');
+        const task = new vscode.Task(
+            { type: 'fish' },
+            vscode.TaskScope.Workspace,
+            `fish ${args[0] ?? ''}`.trim(),
+            'fish',
+            new vscode.ShellExecution(commandLine)
+        );
+        // Compare against the task identity (`event.execution.task === task`)
+        // rather than the `TaskExecution` returned by `executeTask`, which is
+        // a `Thenable` and would race with the first process-exit event.
+        const disposable = vscode.tasks.onDidEndTaskProcess((event) => {
+            if (event.execution.task === task) {
                 disposable.dispose();
-                resolve();
+                if (event.exitCode === 0) {
+                    resolve();
+                } else {
+                    reject(new Error(`exit code ${event.exitCode}`));
+                }
             }
         });
+        void vscode.tasks.executeTask(task);
     });
 }
 
 async function runPackageCommand(item: any, command: string) {
-    const packageName = item.label;
-    vscode.window.showInformationMessage(`Running ${command} for ${packageName}...`);
-    // Implementation for package-specific commands
+    const config = vscode.workspace.getConfiguration('fish');
+    const fishExecutable = config.get<string>('executablePath', 'fish');
+    const packageDir = item?.path ?? item?.label;
+
+    if (!packageDir) {
+        vscode.window.showErrorMessage('Could not determine the package directory.');
+        return;
+    }
+
+    // `fish build/check/test` accept a positional start directory, so passing
+    // the package directory builds the graph rooted there.
+    try {
+        await executeFishCommand(fishExecutable, command, packageDir);
+        vscode.window.showInformationMessage(`Fish ${command} completed for ${item.label}`);
+    } catch (error) {
+        vscode.window.showErrorMessage(`Fish ${command} failed for ${item.label}: ${error}`);
+    }
 }
 
 async function toggleWatchMode() {
+    const config = vscode.workspace.getConfiguration('fish');
+    const fishExecutable = config.get<string>('executablePath', 'fish');
     const terminal = vscode.window.createTerminal('Fish Watch');
-    terminal.sendText('fish watch');
+    terminal.sendText(`${fishExecutable} watch`);
+    terminal.show();
 }
 
 export function deactivate() {

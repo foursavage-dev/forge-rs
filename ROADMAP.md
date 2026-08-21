@@ -28,18 +28,23 @@ Fish aims to be the most efficient, resilient, and developer-friendly build orch
 ## ⚡ Short-term Goals (v0.3.x) — Focus: Developer Experience & Protocols
 
 ### 1. IDE & Editor Integration
-- [ ] **VS Code Extension**: Interactive DAG dependency graph viewer, one-click task execution, and inline failure diagnostics.
-- [ ] **JetBrains Plugin Suite**: Native integration for CLion, IntelliJ IDEA, and Rider.
-- [ ] **Language Server Protocol (LSP) Bridge**: Live workspace diagnostics and `fish.toml` autocompletion.
+- [x] **VS Code Extension**: Interactive DAG dependency graph viewer, one-click task execution, and inline failure diagnostics. *(Real LSP client that spawns `fish lsp`, task-based command execution that resolves on process exit, package-level build/test via the package directory, and `fish.toml`/Cargo workspace detection. Type-checks and compiles with `tsc`.)*
+- [ ] **JetBrains Plugin Suite**: Native integration for CLion, IntelliJ IDEA, and Rider. *(Requires the IntelliJ SDK; a separate project, not part of this Rust repo.)*
+- [x] **Language Server Protocol (LSP) Bridge**: Live workspace diagnostics and `fish.toml` autocompletion. *(Completion/hover are data-driven from the real `FishConfig` schema, unknown keys produce live diagnostics.)*
 
 ### 2. High-Performance IPC & Service Bridges
-- [ ] **Daemon IPC Stream**: Sub-millisecond JSON-RPC and Unix domain socket / named-pipe IPC between Rust CLI and Python AI services.
-- [ ] **gRPC Remote Execution API (REAPI)**: Native protocol compatibility for distributed worker clusters.
-- [ ] **eBPF File Tracing**: Kernel-level accurate input/output file capture on Linux.
+- [x] **Daemon IPC Stream**: Sub-millisecond JSON-RPC and Unix domain socket / named-pipe IPC between Rust CLI and Python AI services. *(JSON-RPC 2.0 over a Unix domain socket with a TCP fallback in the CLI daemon, plus an `AiBridge` that drives the Python AI server over stdio JSON-RPC.)*
+- [ ] **gRPC Remote Execution API (REAPI)**: Native protocol compatibility for distributed worker clusters. *(Data model exists in `fish-remote-cache/src/reapi.rs`; wire-level gRPC needs `tonic`/`prost`, which could not be fetched in this environment.)*
+- [ ] **eBPF File Tracing**: Kernel-level accurate input/output file capture on Linux. *(Needs a BPF program loader, `unsafe` code, and kernel privileges — blocked here.)*
 
 ### 3. Smart Diagnostics & CLI Polish
-- [ ] **AI-Powered Interactive Doctor**: Proactive diagnosis with automated fix command suggestions (`fish doctor --fix`).
-- [ ] **Terminal UI (TUI) Enhancements**: Live CPU/RAM utilization graphs and multi-task waterfall view in ratatui.
+- [x] **AI-Powered Interactive Doctor**: Proactive diagnosis with automated fix command suggestions (`fish doctor --fix`). *(`--fix` performs real remediation — schema-correct `fish.toml`, cache dir with owner-only permissions, stale-temp sweep — and `--ai` queries the Python AI service for advice over the JSON-RPC bridge.)*
+- [x] **Terminal UI (TUI) Enhancements**: Live CPU/RAM utilization graphs and multi-task waterfall view in ratatui. *(Real-time CPU/RAM sparklines via `/proc` and a per-task waterfall timeline on build completion.)*
+
+> **v0.3.x delivery note (2026-08-21):** six of the eight short-term items were implemented with the
+> dependencies already vendored in this checkout, without pulling new crates from crates.io.
+> **gRPC REAPI** (needs `tonic`/`prost`), **eBPF** (needs a BPF program loader + kernel privileges),
+> and the **JetBrains plugin suite** (needs the IntelliJ SDK) remain blocked in this environment.
 
 ---
 

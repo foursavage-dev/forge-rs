@@ -21,33 +21,12 @@ impl KernelCowCloner {
             let _ = fs::remove_file(dst);
         }
 
-        #[cfg(target_os = "windows")]
-        {
-            if let Ok(()) = Self::try_hardlink(src, dst) {
-                return Ok(CloneStrategy::HardLink);
-            }
-        }
-
-        #[cfg(target_os = "linux")]
-        {
-            if let Ok(()) = Self::try_hardlink(src, dst) {
-                return Ok(CloneStrategy::HardLink);
-            }
-        }
-
-        #[cfg(target_os = "macos")]
-        {
-            if let Ok(()) = Self::try_hardlink(src, dst) {
-                return Ok(CloneStrategy::HardLink);
-            }
-        }
-
+        // A hard link aliases the source inode: writing to the "clone" would
+        // silently corrupt the original artifact. True copy-on-write clones
+        // (FICLONE reflinks) require unsafe ioctls that this crate forbids, so
+        // fall back to a real byte-for-byte copy, which is always independent.
         Self::fast_copy(src, dst)?;
         Ok(CloneStrategy::FastCopy)
-    }
-
-    fn try_hardlink(src: &Path, dst: &Path) -> io::Result<()> {
-        fs::hard_link(src, dst)
     }
 
     fn fast_copy(src: &Path, dst: &Path) -> io::Result<()> {
@@ -90,5 +69,20 @@ mod tests {
 
         let _ = KernelCowCloner::try_clone_file(&src, &dst).unwrap();
         assert_eq!(fs::read(&dst).unwrap(), b"new_data");
+    }
+
+    #[test]
+    fn clone_is_independent_of_the_source() {
+        let dir = tempdir().unwrap();
+        let src = dir.path().join("src.bin");
+        let dst = dir.path().join("dst.bin");
+        fs::write(&src, b"original").unwrap();
+
+        KernelCowCloner::try_clone_file(&src, &dst).unwrap();
+
+        // Mutating the clone must not corrupt the source artifact.
+        fs::write(&dst, b"modified").unwrap();
+        assert_eq!(fs::read(&src).unwrap(), b"original");
+        assert_eq!(fs::read(&dst).unwrap(), b"modified");
     }
 }

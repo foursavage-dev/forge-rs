@@ -10,6 +10,6 @@ pub mod state;
 pub use dynamic::{DynamicGraphExpander, DynamicTaskSpec};
 pub use error::GraphError;
 pub use graph::{BuildGraph, Node, NodeId};
-pub use lockless::{LocklessDependencyGraph, LocklessGraphNode};
+pub use lockless::{LocklessDependencyGraph, LocklessError, LocklessGraphNode};
 pub use query::{GraphQueryEngine, QueryExpr, parse_query};
 pub use state::TaskState;

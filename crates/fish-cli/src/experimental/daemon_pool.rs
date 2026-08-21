@@ -3,7 +3,6 @@
 use std::collections::HashMap;
 use std::io;
 use std::sync::{Arc, Mutex};
-use std::time::Instant;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WorkerState {
@@ -69,41 +68,16 @@ impl CompilerDaemonPool {
         &self,
         payload: DaemonTaskPayload,
     ) -> io::Result<DaemonExecutionSummary> {
-        let start = Instant::now();
-        let mut workers = self.workers.lock().unwrap();
-
-        let worker = workers
-            .iter_mut()
-            .find(|w| w.state == WorkerState::Idle)
-            .ok_or_else(|| io::Error::new(io::ErrorKind::WouldBlock, "All daemon workers busy"))?;
-
-        let worker_id = worker.worker_id;
-        worker.state = WorkerState::Compiling;
-
-        let cache_hit = worker.ast_cache.contains_key(&payload.task_id);
-        if !cache_hit {
-            if worker.ast_cache.len() >= self.max_cached_entries_per_worker {
-                worker.ast_cache.clear();
-            }
-            let ast_tokens = payload.source_content.as_bytes().to_vec();
-            worker.ast_cache.insert(payload.task_id.clone(), ast_tokens);
-        }
-
-        worker.state = WorkerState::RollingBack;
-        worker.generation += 1;
-        worker.total_tasks_processed += 1;
-        worker.state = WorkerState::Idle;
-
-        let latency_micros = start.elapsed().as_micros();
-
-        Ok(DaemonExecutionSummary {
-            task_id: payload.task_id,
-            latency_micros,
-            exit_code: 0,
-            memory_reset_ok: true,
-            assigned_worker_id: worker_id,
-            cache_hit,
-        })
+        // There is no compiler daemon here; the previous implementation
+        // returned a fabricated `exit_code: 0` summary without compiling
+        // anything. Fail loudly instead of reporting a successful build.
+        Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            format!(
+                "daemon fast-compile is not implemented (task `{}`)",
+                payload.task_id
+            ),
+        ))
     }
 
     pub fn respawn_dead_workers(&self) -> usize {
@@ -126,7 +100,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_compiler_daemon_pool_submillisecond_dispatch() {
+    fn test_compiler_daemon_pool_refuses_fake_compile() {
         let pool = CompilerDaemonPool::new(4);
         let payload = DaemonTaskPayload {
             task_id: "module_core_1".to_string(),
@@ -134,13 +108,11 @@ mod tests {
             compiler_flags: vec!["-O3".to_string()],
         };
 
-        let summary = pool.dispatch_fast_compile(payload.clone()).unwrap();
-        assert_eq!(summary.exit_code, 0);
-        assert!(summary.memory_reset_ok);
-
-        let summary2 = pool.dispatch_fast_compile(payload).unwrap();
-        assert_eq!(summary2.exit_code, 0);
-        assert!(summary2.cache_hit);
+        let result = pool.dispatch_fast_compile(payload);
+        assert!(
+            result.is_err(),
+            "unimplemented daemon compilation must fail loudly"
+        );
     }
 
     #[test]

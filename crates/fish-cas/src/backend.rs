@@ -175,6 +175,18 @@ impl CasBackend for LocalCasBackend {
             )));
         }
 
+        // Record the access so `CleanupPolicy::NotAccessedIn` can act on real
+        // usage. A failed write must not fail the retrieve itself.
+        metadata.last_accessed = Some(
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs() as i64,
+        );
+        if let Ok(json) = serde_json::to_string(&metadata) {
+            let _ = tokio::fs::write(&metadata_path, json).await;
+        }
+
         Ok(Artifact {
             metadata,
             data: decompressed_data,

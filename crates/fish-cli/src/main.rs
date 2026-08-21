@@ -2,6 +2,7 @@
 
 mod args;
 mod attestation;
+mod ai_bridge;
 mod backends;
 mod build;
 mod commands;

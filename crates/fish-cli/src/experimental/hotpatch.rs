@@ -133,44 +133,22 @@ impl HotPatchEngine {
         delta: &PatchDelta,
         process_id: u32,
     ) -> io::Result<LivePatchReport> {
-        if delta.trampoline_payload.is_empty() {
-            return Ok(LivePatchReport {
-                process_id,
-                relocated_symbols: 0,
-                bytes_injected: 0,
-                latency_micros: 12,
-                verified: true,
-            });
-        }
-
-        // --- LIVE BINARY HOT-PATCHING LOGIC ---
-        // 1. Attach to process via ptrace (simulated)
-        // 2. Find memory maps and locate executable segment
-        // 3. mprotect(PROT_READ | PROT_WRITE | PROT_EXEC)
-        // 4. Inject trampoline JMP instructions overwriting old functions
-        // 5. Write new payload into code cave / allocated memory
-        // 6. Resume execution without killing the process
-
-        let relocated_symbols = delta.relocations.len();
-        let bytes_injected = delta.trampoline_payload.len();
-
-        // Simulating the kernel-level bypass and thread pausing
-        let simulated_latency = 45 + (relocated_symbols as u64 * 12); // ~57 microseconds
-
-        Ok(LivePatchReport {
-            process_id,
-            relocated_symbols,
-            bytes_injected,
-            latency_micros: simulated_latency,
-            verified: true,
-        })
+        // Live patching a running process requires ptrace/mprotect plus
+        // unsafe code, none of which is implemented (`fish-cli` forbids
+        // unsafe). Report failure instead of claiming a patch was injected.
+        let _ = delta;
+        Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            format!("live patching is not implemented; cannot inject into PID {process_id}"),
+        ))
     }
 
-    pub fn rollback_patch(delta: &PatchDelta, _process_id: u32) -> io::Result<bool> {
-        if delta.rollback_image.is_empty() {
-            return Ok(false);
-        }
-        Ok(true)
+    pub fn rollback_patch(delta: &PatchDelta, process_id: u32) -> io::Result<bool> {
+        let _ = delta;
+        Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            format!("live patch rollback is not implemented for PID {process_id}"),
+        ))
     }
 }
 
@@ -211,12 +189,9 @@ mod tests {
         assert!(!delta.trampoline_payload.is_empty());
         assert!(!delta.rollback_image.is_empty());
 
-        let report = HotPatchEngine::apply_live_patch_detailed(&delta, 1337).unwrap();
-        assert_eq!(report.relocated_symbols, 1);
-        assert!(report.bytes_injected > 0);
-        assert!(report.verified);
-
-        let rolled_back = HotPatchEngine::rollback_patch(&delta, 1337).unwrap();
-        assert!(rolled_back);
+        // Applying and rolling back must fail loudly instead of pretending a
+        // patch was injected into a real process.
+        assert!(HotPatchEngine::apply_live_patch_detailed(&delta, 1337).is_err());
+        assert!(HotPatchEngine::rollback_patch(&delta, 1337).is_err());
     }
 }

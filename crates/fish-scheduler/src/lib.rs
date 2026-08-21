@@ -211,10 +211,20 @@ impl BuildSummary {
             predecessor.insert(id, best_pred);
         }
 
-        let (&end, &total) = longest_to
-            .iter()
-            .max_by_key(|(_, cost)| *cost)
-            .unwrap_or((&NodeId::from(0), &Duration::ZERO));
+        // Selecting the maximum over a `HashMap` is nondeterministic when
+        // several nodes share the same total cost. Iterate in a stable order
+        // (ascending `NodeId`) so ties resolve to the lowest-index node and
+        // the reported path is reproducible across runs.
+        let mut entries: Vec<(&NodeId, &Duration)> = longest_to.iter().collect();
+        entries.sort_by_key(|(id, _)| id.index());
+        let mut end = NodeId::from(0);
+        let mut total = Duration::ZERO;
+        for (&id, &cost) in entries {
+            if cost > total {
+                total = cost;
+                end = id;
+            }
+        }
 
         let mut path = Vec::new();
         let mut current = Some(end);
@@ -566,6 +576,34 @@ mod tests {
             "a + b + c dominates the diamond"
         );
         assert_eq!(path, vec!["a", "b", "c"]);
+    }
+
+    #[test]
+    fn critical_path_is_deterministic_on_ties() {
+        let mut graph = BuildGraph::new();
+        let a = graph.add_node(Task::new(
+            "a".to_string(),
+            "a".to_string(),
+            CommandSpec::new("echo").arg("a"),
+        ));
+        let b = graph.add_node(Task::new(
+            "b".to_string(),
+            "b".to_string(),
+            CommandSpec::new("echo").arg("b"),
+        ));
+        let timings = vec![
+            TaskTiming::new("a", Duration::from_secs(1), a),
+            TaskTiming::new("b", Duration::from_secs(1), b),
+        ];
+        let summary = BuildSummary::from_graph(&graph, Duration::ZERO, 2, vec![], timings);
+
+        let expected = summary.critical_path(&graph).1;
+        // Equal-cost leaves must resolve to a stable, reproducible path.
+        for _ in 0..20 {
+            assert_eq!(summary.critical_path(&graph).1, expected);
+        }
+        // With ties broken by ascending NodeId, the earliest node wins.
+        assert_eq!(expected, vec!["a"]);
     }
 
     #[derive(Default)]

@@ -8,7 +8,7 @@
 use std::collections::HashMap;
 use std::process::Command;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct EnvironmentFingerprint {
     pub os: String,
     pub os_version: String,
@@ -16,16 +16,6 @@ pub struct EnvironmentFingerprint {
     pub libc_version: Option<String>,
     pub compiler_versions: HashMap<String, String>,
     pub toolchain_hash: String,
-}
-
-impl std::hash::Hash for EnvironmentFingerprint {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.os.hash(state);
-        self.os_version.hash(state);
-        self.architecture.hash(state);
-        self.toolchain_hash.hash(state);
-        self.libc_version.hash(state);
-    }
 }
 
 impl EnvironmentFingerprint {
@@ -142,26 +132,29 @@ impl EnvironmentFingerprint {
         compiler_versions: &HashMap<String, String>,
         libc_version: &Option<String>,
     ) -> String {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
+        // Use a stable, content-addressed hash. `DefaultHasher` is explicitly
+        // documented as unstable across Rust releases, so relying on it here
+        // would silently change every cache key after a toolchain upgrade.
+        let mut hasher = blake3::Hasher::new();
 
-        let mut hasher = DefaultHasher::new();
-
-        // Hash all compiler versions
+        // Hash all compiler versions in sorted order, with a NUL separator
+        // between fields so `("a", "bc")` and `("ab", "c")` cannot collide.
         let mut compilers: Vec<_> = compiler_versions.iter().collect();
         compilers.sort_by_key(|(k, _)| *k);
 
         for (compiler, version) in compilers {
-            compiler.hash(&mut hasher);
-            version.hash(&mut hasher);
+            hasher.update(compiler.as_bytes());
+            hasher.update(&[0]);
+            hasher.update(version.as_bytes());
+            hasher.update(&[0]);
         }
 
         // Hash libc version if available
         if let Some(libc) = libc_version {
-            libc.hash(&mut hasher);
+            hasher.update(libc.as_bytes());
         }
 
-        format!("{:x}", hasher.finish())
+        hasher.finalize().to_hex().to_string()
     }
 
     pub fn is_compatible_with(&self, other: &EnvironmentFingerprint) -> bool {

@@ -109,6 +109,34 @@ class FishAIServer:
             res = self.prewarmer.on_keystroke_activity(active_file, symbol)
             return {"jsonrpc": "2.0", "id": req_id, "result": res}
 
+        elif method == "doctor_advice":
+            # Rule-based workstation advice for `fish doctor --ai`. Deliberately
+            # deterministic and clearly heuristic rather than pretending to call
+            # a hosted model.
+            missing = params.get("missing_toolchains", [])
+            installed = params.get("installed_count", 0)
+            total = params.get("total_count", 0)
+            tips = []
+            if missing:
+                tips.append(
+                    "Install missing toolchains to unlock polyglot builds: "
+                    + ", ".join(missing[:6])
+                )
+            if installed < total:
+                tips.append(
+                    f"Only {installed}/{total} toolchains detected; "
+                    "install the rest via your OS package manager."
+                )
+            tips.append(
+                "Keep the local CAS on a fast disk (SSD) and enable `critical_path = true` "
+                "to prioritize the longest dependency chain."
+            )
+            tips.append(
+                "Use `fish doctor --fix` to auto-create fish.toml, set cache permissions, "
+                "and sweep stale temporary files."
+            )
+            return {"jsonrpc": "2.0", "id": req_id, "result": {"tips": tips}}
+
         else:
             return {
                 "jsonrpc": "2.0",

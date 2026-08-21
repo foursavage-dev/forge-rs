@@ -30,15 +30,25 @@ pub struct FileMetadata {
     pub is_executable: bool,
 }
 
+/// In-memory read cache with byte accounting.
+#[derive(Default)]
+struct FileCache {
+    entries: HashMap<PathBuf, Vec<u8>>,
+    total_bytes: usize,
+}
+
 /// Virtual file system for distributed workers
 pub struct VirtualFileSystem {
     root: Arc<RwLock<VfsNode>>,
-    cache: Arc<RwLock<HashMap<PathBuf, Vec<u8>>>>,
-    max_cache_size: usize,
+    cache: Arc<RwLock<FileCache>>,
+    /// Maximum total bytes of file contents kept in the in-memory cache.
+    /// Beyond this budget reads stop populating the cache, bounding memory
+    /// usage regardless of how many files are read.
+    max_cache_bytes: usize,
 }
 
 impl VirtualFileSystem {
-    pub fn new(max_cache_size: usize) -> Self {
+    pub fn new(max_cache_bytes: usize) -> Self {
         Self {
             root: Arc::new(RwLock::new(VfsNode::Directory {
                 children: HashMap::new(),
@@ -48,8 +58,8 @@ impl VirtualFileSystem {
                     is_executable: false,
                 },
             })),
-            cache: Arc::new(RwLock::new(HashMap::new())),
-            max_cache_size,
+            cache: Arc::new(RwLock::new(FileCache::default())),
+            max_cache_bytes,
         }
     }
 
@@ -100,7 +110,7 @@ impl VirtualFileSystem {
     /// Read a file from the virtual file system
     pub fn read_file(&self, path: &Path) -> Result<Vec<u8>, VfsError> {
         let cache = self.cache.read().unwrap();
-        if let Some(cached) = cache.get(path) {
+        if let Some(cached) = cache.entries.get(path) {
             return Ok(cached.clone());
         }
         drop(cache);
@@ -109,10 +119,16 @@ impl VirtualFileSystem {
         let content = self.read_from_node(&root, path)?;
         drop(root);
 
-        // Cache the result
+        // Best-effort memoization bounded by total bytes, so a flood of large
+        // files cannot grow the in-memory cache without bound.
         let mut cache = self.cache.write().unwrap();
-        if cache.len() < self.max_cache_size {
-            cache.insert(path.to_path_buf(), content.clone());
+        if cache.entries.contains_key(path) {
+            // A concurrent reader cached this path first.
+            return Ok(content);
+        }
+        if cache.total_bytes.saturating_add(content.len()) <= self.max_cache_bytes {
+            cache.entries.insert(path.to_path_buf(), content.clone());
+            cache.total_bytes += content.len();
         }
 
         Ok(content)
@@ -353,16 +369,17 @@ impl VirtualFileSystem {
     /// Clear the cache
     pub fn clear_cache(&self) {
         let mut cache = self.cache.write().unwrap();
-        cache.clear();
+        cache.entries.clear();
+        cache.total_bytes = 0;
     }
 
     /// Get cache statistics
     pub fn cache_stats(&self) -> CacheStats {
         let cache = self.cache.read().unwrap();
         CacheStats {
-            entries: cache.len(),
-            total_size: cache.values().map(|v| v.len()).sum(),
-            max_size: self.max_cache_size,
+            entries: cache.entries.len(),
+            total_size: cache.total_bytes,
+            max_size: self.max_cache_bytes,
         }
     }
 }
@@ -476,7 +493,7 @@ mod tests {
 
     #[test]
     fn test_cache_operations() {
-        let vfs = VirtualFileSystem::new(10);
+        let vfs = VirtualFileSystem::new(100);
         let path = Path::new("/cached.txt");
         let content = b"cached content".to_vec();
         let metadata = FileMetadata {
@@ -493,5 +510,30 @@ mod tests {
         let stats = vfs.cache_stats();
         assert_eq!(stats.entries, 1);
         assert!(stats.total_size > 0);
+    }
+
+    #[test]
+    fn cache_is_bounded_by_bytes_not_just_entry_count() {
+        let vfs = VirtualFileSystem::new(20);
+        let small = Path::new("/small.txt");
+        let big = Path::new("/big.txt");
+        let metadata = FileMetadata {
+            size: 0,
+            modified: 0,
+            is_executable: false,
+        };
+
+        vfs.write_file(small, b"1234567890".to_vec(), metadata.clone())
+            .unwrap(); // 10 bytes
+        vfs.write_file(big, b"123456789012345678901234567890".to_vec(), metadata)
+            .unwrap(); // 30 bytes
+
+        let _ = vfs.read_file(small).unwrap(); // 10 <= 20 -> cached
+        let _ = vfs.read_file(big).unwrap(); // 30 > 20 -> not cached
+
+        let stats = vfs.cache_stats();
+        assert_eq!(stats.entries, 1, "only the small file fits the byte budget");
+        assert_eq!(stats.total_size, 10);
+        assert_eq!(stats.max_size, 20);
     }
 }
