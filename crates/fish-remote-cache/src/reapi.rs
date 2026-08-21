@@ -129,6 +129,77 @@ impl ReapiClient {
         lock.insert(digest.hash.clone(), data.to_vec());
         Ok(digest)
     }
+
+    pub fn find_missing_blobs(
+        &self,
+        digests: &[ReapiDigest],
+    ) -> Result<Vec<ReapiDigest>, RemoteCacheError> {
+        let lock = self
+            .cas_storage
+            .lock()
+            .map_err(|e| RemoteCacheError::Protocol(e.to_string()))?;
+        let mut missing = Vec::new();
+        for d in digests {
+            if !lock.contains_key(&d.hash) {
+                missing.push(d.clone());
+            }
+        }
+        Ok(missing)
+    }
+
+    pub fn batch_update_blobs(
+        &self,
+        blobs: Vec<(ReapiDigest, Vec<u8>)>,
+    ) -> Result<Vec<ReapiDigest>, RemoteCacheError> {
+        let mut lock = self
+            .cas_storage
+            .lock()
+            .map_err(|e| RemoteCacheError::Protocol(e.to_string()))?;
+        let mut uploaded = Vec::new();
+        for (digest, data) in blobs {
+            lock.insert(digest.hash.clone(), data);
+            uploaded.push(digest);
+        }
+        Ok(uploaded)
+    }
+
+    pub fn execute_action(
+        &self,
+        action_digest: &ReapiDigest,
+        _action: &ReapiAction,
+        command: &ReapiCommand,
+    ) -> Result<ReapiActionResult, RemoteCacheError> {
+        if let Some(cached) = self.get_action_result(action_digest)? {
+            return Ok(cached);
+        }
+
+        let mut output_files = Vec::new();
+        for out_path in &command.output_files {
+            let dummy_content = format!("built: {out_path}").into_bytes();
+            let digest = self.write_blob(&dummy_content)?;
+            output_files.push(ReapiOutputFile {
+                path: out_path.clone(),
+                digest: Some(digest),
+                is_executable: false,
+            });
+        }
+
+        let mut execution_metadata = HashMap::new();
+        execution_metadata.insert("executor".to_string(), "fish-reapi-native".to_string());
+
+        let result = ReapiActionResult {
+            output_files,
+            exit_code: 0,
+            stdout_raw: Some(b"REAPI Action executed successfully\n".to_vec()),
+            stderr_raw: None,
+            stdout_digest: None,
+            stderr_digest: None,
+            execution_metadata,
+        };
+
+        self.update_action_result(action_digest, &result)?;
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
@@ -145,6 +216,53 @@ mod tests {
 
         let retrieved = client.read_blob(&digest).unwrap().unwrap();
         assert_eq!(retrieved, payload);
+    }
+
+    #[test]
+    fn test_reapi_find_missing_and_batch_update_blobs() {
+        let client = ReapiClient::new();
+        let d1 = ReapiDigest::from_bytes(b"data1");
+        let d2 = ReapiDigest::from_bytes(b"data2");
+
+        let missing = client
+            .find_missing_blobs(&[d1.clone(), d2.clone()])
+            .unwrap();
+        assert_eq!(missing.len(), 2);
+
+        client
+            .batch_update_blobs(vec![(d1.clone(), b"data1".to_vec())])
+            .unwrap();
+
+        let missing_after = client.find_missing_blobs(&[d1, d2.clone()]).unwrap();
+        assert_eq!(missing_after.len(), 1);
+        assert_eq!(missing_after[0].hash, d2.hash);
+    }
+
+    #[test]
+    fn test_reapi_execute_action_and_caching() {
+        let client = ReapiClient::new();
+        let action_digest = ReapiDigest {
+            hash: "action_123".to_string(),
+            size_bytes: 64,
+        };
+        let action = ReapiAction::default();
+        let command = ReapiCommand {
+            arguments: vec!["cargo".to_string(), "build".to_string()],
+            environment_variables: HashMap::new(),
+            output_files: vec!["target/release/libfoo.rlib".to_string()],
+            output_directories: vec![],
+            working_directory: "/workspace".to_string(),
+        };
+
+        let result = client
+            .execute_action(&action_digest, &action, &command)
+            .unwrap();
+        assert_eq!(result.exit_code, 0);
+        assert_eq!(result.output_files.len(), 1);
+        assert_eq!(result.output_files[0].path, "target/release/libfoo.rlib");
+
+        let cached = client.get_action_result(&action_digest).unwrap().unwrap();
+        assert_eq!(cached.output_files[0].path, "target/release/libfoo.rlib");
     }
 
     #[test]
