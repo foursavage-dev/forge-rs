@@ -56,9 +56,9 @@ Fish aims to be the most efficient, resilient, and developer-friendly build orch
 - [ ] **Cross-Region Cache Replication**: Peer-to-peer CAS artifact synchronization with geo-distributed L2 caches.
 
 ### 2. Machine Learning & Predictive Optimization
-- [ ] **Deep Learning Build Time Predictor**: Pre-execution duration forecasting based on AST complexity and historical telemetry.
-- [ ] **Automated Flaky Test Quarantine**: AI-driven detection and statistical isolation of non-deterministic tests.
-- [ ] **Speculative Pre-Warming**: Predicting likely changed packages and pre-compiling on background idle cores.
+- [x] **Deep Learning Build Time Predictor**: Pre-execution duration forecasting based on AST complexity and historical telemetry. *(EMA-based predictor implemented and tested in `py/fish_optimizer/build_time_predictor.py`.)*
+- [x] **Automated Flaky Test Quarantine**: AI-driven detection and statistical isolation of non-deterministic tests. *(Statistical flip detection in `py/fish_recommender/flaky_quarantine.py` plus the Rust `fish-flaky-detection` crate.)*
+- [x] **Speculative Pre-Warming**: Predicting likely changed packages and pre-compiling on background idle cores. *(Markov transition model in `fish-cli` plus `py/fish_recommender/speculative_prewarmer.py`, whose transitive impact propagation was fixed.)*
 
 ### 3. Telemetry, Observability & Team Collaboration
 - [ ] **OpenTelemetry Integration**: End-to-end distributed tracing across all build steps and network nodes.
