@@ -150,7 +150,7 @@ impl CasBackend for LocalCasBackend {
             .await
             .map_err(CasError::Io)?;
 
-        let metadata: crate::artifact::ArtifactMetadata = serde_json::from_str(&metadata_json)
+        let mut metadata: crate::artifact::ArtifactMetadata = serde_json::from_str(&metadata_json)
             .map_err(|e| CasError::Serialization(e.to_string()))?;
 
         // Read and decompress data
