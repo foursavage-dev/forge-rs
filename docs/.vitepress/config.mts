@@ -20,12 +20,12 @@ export default defineConfig({
         nav: [
           { text: 'Guide', link: '/getting-started' },
           { text: 'Architecture', link: '/architecture' },
+          { text: 'Crates', link: '/crates-architecture' },
           { text: 'Comparison', link: '/comparison' },
           { text: 'Benchmarks', link: '/benchmarks' },
           { text: 'Backends', link: '/backends/' },
           { text: 'IDE & Tools', link: '/ide-integration' },
           { text: 'AI Agents', link: '/ai-agents' },
-          { text: 'Examples', link: '/examples-guide' },
           { text: 'CLI', link: '/cli-reference' },
           { text: 'Roadmap', link: '/ROADMAP' },
           { text: 'API', link: '/api/overview' }
@@ -36,6 +36,9 @@ export default defineConfig({
             items: [
               { text: 'Overview & Quick Start', link: '/getting-started' },
               { text: 'System Architecture', link: '/architecture' },
+              { text: '36 Crates Workspace Architecture', link: '/crates-architecture' },
+              { text: 'Distributed Go Services', link: '/go-services' },
+              { text: 'Python AI Engine', link: '/python-ai-engine' },
               { text: 'Comparison Matrix', link: '/comparison' },
               { text: 'Performance Benchmarks', link: '/benchmarks' },
               { text: 'Migration Guides', link: '/migration' },
@@ -91,12 +94,12 @@ export default defineConfig({
         nav: [
           { text: 'Hướng dẫn', link: '/vi/getting-started' },
           { text: 'Kiến trúc', link: '/vi/architecture' },
+          { text: 'Crates', link: '/vi/crates-architecture' },
           { text: 'So sánh', link: '/vi/comparison' },
           { text: 'Benchmark', link: '/vi/benchmarks' },
           { text: 'Backend', link: '/vi/backends/' },
           { text: 'IDE & Tools', link: '/vi/ide-integration' },
           { text: 'AI Agent', link: '/vi/ai-agents' },
-          { text: 'Ví dụ', link: '/vi/examples-guide' },
           { text: 'CLI', link: '/vi/cli-reference' },
           { text: 'Lộ trình', link: '/vi/ROADMAP' }
         ],
@@ -106,6 +109,9 @@ export default defineConfig({
             items: [
               { text: 'Tổng quan & Bắt đầu nhanh', link: '/vi/getting-started' },
               { text: 'Kiến trúc hệ thống', link: '/vi/architecture' },
+              { text: 'Kiến trúc 36 Crates Rust', link: '/vi/crates-architecture' },
+              { text: 'Dịch vụ phân tán Go', link: '/vi/go-services' },
+              { text: 'Bộ máy AI Python', link: '/vi/python-ai-engine' },
               { text: 'Bảng so sánh trực diện', link: '/vi/comparison' },
               { text: 'Đo lường hiệu năng Benchmark', link: '/vi/benchmarks' },
               { text: 'Hướng dẫn chuyển đổi', link: '/vi/migration' },
@@ -161,12 +167,12 @@ export default defineConfig({
         nav: [
           { text: '指南', link: '/zh-hans/getting-started' },
           { text: '架构', link: '/zh-hans/architecture' },
+          { text: 'Crates', link: '/zh-hans/crates-architecture' },
           { text: '特性对比', link: '/zh-hans/comparison' },
           { text: '基准测试', link: '/zh-hans/benchmarks' },
           { text: '语言后端', link: '/zh-hans/backends/' },
           { text: 'IDE 集成', link: '/zh-hans/ide-integration' },
           { text: 'AI 规则', link: '/zh-hans/ai-agents' },
-          { text: '示例', link: '/zh-hans/examples-guide' },
           { text: 'CLI 参考', link: '/zh-hans/cli-reference' }
         ],
         sidebar: [
@@ -175,6 +181,9 @@ export default defineConfig({
             items: [
               { text: '快速开始与概览', link: '/zh-hans/getting-started' },
               { text: '系统架构设计', link: '/zh-hans/architecture' },
+              { text: '36 Crates 核心工作区架构', link: '/zh-hans/crates-architecture' },
+              { text: 'Go 分布式服务系统', link: '/zh-hans/go-services' },
+              { text: 'Python AI 预测引擎', link: '/zh-hans/python-ai-engine' },
               { text: '对比矩阵', link: '/zh-hans/comparison' },
               { text: '性能基准测试', link: '/zh-hans/benchmarks' },
               { text: '迁移指南', link: '/zh-hans/migration' },
@@ -230,12 +239,12 @@ export default defineConfig({
         nav: [
           { text: '指南', link: '/zh-hant/getting-started' },
           { text: '架構', link: '/zh-hant/architecture' },
+          { text: 'Crates', link: '/zh-hant/crates-architecture' },
           { text: '特性對比', link: '/zh-hant/comparison' },
           { text: '基準測試', link: '/zh-hant/benchmarks' },
           { text: '語言後端', link: '/zh-hant/backends/' },
           { text: 'IDE 整合', link: '/zh-hant/ide-integration' },
           { text: 'AI 規則', link: '/zh-hant/ai-agents' },
-          { text: '範例', link: '/zh-hant/examples-guide' },
           { text: 'CLI 參考', link: '/zh-hant/cli-reference' }
         ],
         sidebar: [
@@ -244,6 +253,9 @@ export default defineConfig({
             items: [
               { text: '快速開始與概覽', link: '/zh-hant/getting-started' },
               { text: '系統架構設計', link: '/zh-hant/architecture' },
+              { text: '36 Crates 核心工作區架構', link: '/zh-hant/crates-architecture' },
+              { text: 'Go 分散式服務系統', link: '/zh-hant/go-services' },
+              { text: 'Python AI 預測引擎', link: '/zh-hant/python-ai-engine' },
               { text: '對比矩陣', link: '/zh-hant/comparison' },
               { text: '效能基準測試', link: '/zh-hant/benchmarks' },
               { text: '遷移指南', link: '/zh-hant/migration' },
@@ -299,12 +311,12 @@ export default defineConfig({
         nav: [
           { text: 'ガイド', link: '/ja/getting-started' },
           { text: 'アーキテクチャ', link: '/ja/architecture' },
+          { text: 'Crates', link: '/ja/crates-architecture' },
           { text: '機能比較', link: '/ja/comparison' },
           { text: 'ベンチマーク', link: '/ja/benchmarks' },
           { text: 'バックエンド', link: '/ja/backends/' },
           { text: 'IDE 統合', link: '/ja/ide-integration' },
           { text: 'AI 規則', link: '/ja/ai-agents' },
-          { text: 'サンプル', link: '/ja/examples-guide' },
           { text: 'CLI', link: '/ja/cli-reference' }
         ],
         sidebar: [
@@ -313,6 +325,9 @@ export default defineConfig({
             items: [
               { text: '概要 & クイックスタート', link: '/ja/getting-started' },
               { text: 'システムアーキテクチャ', link: '/ja/architecture' },
+              { text: '36 Crates ワークスペースアーキテクチャ', link: '/ja/crates-architecture' },
+              { text: '分散 Go サービス群', link: '/ja/go-services' },
+              { text: 'Python AI 予測エンジン', link: '/ja/python-ai-engine' },
               { text: '比較マトリックス', link: '/ja/comparison' },
               { text: 'パフォーマンスベンチマーク', link: '/ja/benchmarks' },
               { text: '移行ガイド', link: '/ja/migration' },
