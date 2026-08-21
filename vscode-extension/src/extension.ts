@@ -37,6 +37,8 @@ export function activate(context: vscode.ExtensionContext) {
         showCollapseAll: true
     });
 
+    context.subscriptions.push(dagTreeView, tasksTreeView);
+
     // Register commands
     context.subscriptions.push(
         vscode.commands.registerCommand('fish.runBuild', () => runFishCommand('build')),

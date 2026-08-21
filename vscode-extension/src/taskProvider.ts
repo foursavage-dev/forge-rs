@@ -1,6 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import * as fs from 'fs/promises';
 
 export class FishTaskProvider implements vscode.TreeDataProvider<TaskNode> {
     private _onDidChangeTreeData = new vscode.EventEmitter<TaskNode | undefined | null | void>();

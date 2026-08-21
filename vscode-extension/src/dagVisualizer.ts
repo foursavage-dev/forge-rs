@@ -48,8 +48,6 @@ export class FishDAGVisualizer {
     }
 
     private getWebviewContent(): string {
-        const extensionUri = this.context.extensionUri;
-        
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
