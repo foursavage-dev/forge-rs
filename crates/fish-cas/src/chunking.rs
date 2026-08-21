@@ -86,12 +86,12 @@ impl FastCdcChunker {
                     // spreads boundaries at the intended `1 / avg_size` rate.
                     let mut hash_val: u64 = 0;
                     let window_end = (offset + cut + 8).min(len);
-                    for i in (offset + cut)..window_end {
+                    for byte in data.iter().take(window_end).skip(offset + cut) {
                         hash_val = hash_val
                             .wrapping_mul(0x5bd1e995)
-                            .wrapping_add(data[i] as u64);
+                            .wrapping_add(*byte as u64);
                     }
-                    if hash_val % divisor == 0 {
+                    if hash_val.is_multiple_of(divisor) {
                         break;
                     }
                     cut += 1;
