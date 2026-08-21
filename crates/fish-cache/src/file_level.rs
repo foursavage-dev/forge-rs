@@ -79,12 +79,13 @@ impl FileLevelCache {
 
     /// Invalidate cache for all files in a directory (concurrent-safe iteration)
     pub fn invalidate_directory(&self, dir_path: &Path) {
-        // Ensure a trailing separator so the prefix match is a component
-        // boundary: invalidating `/tmp/foo` must not also invalidate
-        // `/tmp/foobar/...`.
-        let mut dir_key = dir_path.to_string_lossy().to_string();
-        if !dir_key.ends_with(std::path::MAIN_SEPARATOR) {
-            dir_key.push(std::path::MAIN_SEPARATOR);
+        // Keys are normalized to forward slashes (see `file_key`), and the
+        // directory prefix carries a trailing slash so the match is a
+        // component boundary: invalidating `/tmp/foo` must not also
+        // invalidate `/tmp/foobar/...`.
+        let mut dir_key = normalize_path_key(dir_path);
+        if !dir_key.ends_with('/') {
+            dir_key.push('/');
         }
 
         // Use retain for efficient concurrent filtering
@@ -94,7 +95,7 @@ impl FileLevelCache {
 
     /// Generate a cache key for a file
     fn file_key(&self, file_path: &Path) -> String {
-        file_path.to_string_lossy().to_string()
+        normalize_path_key(file_path)
     }
 
     /// Get statistics about file-level cache (lock-free read)
@@ -110,6 +111,13 @@ impl FileLevelCache {
 pub struct FileCacheStats {
     pub total_files: usize,
     pub total_artifacts: usize,
+}
+
+/// Normalize a path to a stable cache-key form with forward-slash separators,
+/// so directory invalidation behaves identically on Windows (backslash) and
+/// Unix (forward-slash) inputs.
+fn normalize_path_key(path: &Path) -> String {
+    path.to_string_lossy().replace('\\', "/")
 }
 
 /// File-level dependency tracking with lock-free concurrent access

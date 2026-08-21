@@ -166,13 +166,13 @@ fn test_experimental_jit_command() {
         .arg("jit")
         .arg("fast_compute_kernel")
         .arg("100"));
-    let out = stdout(&output);
+    let err = stderr(&output);
     assert!(
-        output.status.success(),
-        "stdout: {out}, stderr: {}",
-        stderr(&output)
+        !output.status.success(),
+        "jit must fail loudly while it is unimplemented; stdout: {}, stderr: {err}",
+        stdout(&output)
     );
-    assert!(out.contains("In-Process Micro-JIT compiled `fast_compute_kernel`"));
+    assert!(err.contains("not implemented"), "stderr: {err}");
 }
 
 #[test]
@@ -186,14 +186,14 @@ fn test_experimental_super_opt_command() {
         .arg("super-opt")
         .arg(&input)
         .arg(&output_file));
-    let out = stdout(&output);
+    let err = stderr(&output);
     assert!(
-        output.status.success(),
-        "stdout: {out}, stderr: {}",
-        stderr(&output)
+        !output.status.success(),
+        "super-opt must fail loudly while it is unimplemented; stdout: {}, stderr: {err}",
+        stdout(&output)
     );
-    assert!(out.contains("Binary Super-Optimizer applied"));
-    assert!(output_file.exists());
+    assert!(err.contains("not implemented"), "stderr: {err}");
+    assert!(!output_file.exists(), "no output must be written");
 }
 
 #[test]
@@ -208,13 +208,13 @@ fn test_experimental_live_patch_command() {
         .arg(&target)
         .arg(dir.path()));
 
-    let out = stdout(&output);
+    let err = stderr(&output);
     assert!(
-        output.status.success(),
-        "stdout: {out}, stderr: {}",
-        stderr(&output)
+        !output.status.success(),
+        "live-patch must fail loudly while it is unimplemented; stdout: {}, stderr: {err}",
+        stdout(&output)
     );
-    assert!(out.contains("Live Patch injected to PID 4321"));
+    assert!(err.contains("not implemented"), "stderr: {err}");
 }
 
 #[test]
