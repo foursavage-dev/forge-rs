@@ -45,6 +45,7 @@ export default defineConfig({
               { text: 'Configuration Reference', link: '/configuration' },
               { text: 'IDE Integration & LSP', link: '/ide-integration' },
               { text: 'Remote Execution & CAS', link: '/remote-execution' },
+              { text: 'Production Deployment', link: '/deployment' },
               { text: 'Starter Examples', link: '/examples-guide' },
               { text: 'CLI Reference', link: '/cli-reference' }
             ]
@@ -74,6 +75,8 @@ export default defineConfig({
               { text: 'AI Agent Workflow', link: '/AI_AGENT_WORKFLOW' },
               { text: 'Development Guide', link: '/development' },
               { text: 'Contributing Guidelines', link: '/contributing' },
+              { text: 'Code of Conduct', link: '/code-of-conduct' },
+              { text: 'Maintainers & Governance', link: '/maintainers' },
               { text: 'Release Guide', link: '/releasing' },
               { text: 'Changelog & History', link: '/changelog' },
               { text: 'Support & Community', link: '/support' },
@@ -118,6 +121,7 @@ export default defineConfig({
               { text: 'Cấu hình fish.toml', link: '/vi/configuration' },
               { text: 'Tích hợp IDE & LSP', link: '/vi/ide-integration' },
               { text: 'Thực thi từ xa & CAS', link: '/vi/remote-execution' },
+              { text: 'Triển khai sản xuất', link: '/vi/deployment' },
               { text: 'Dự án mẫu Polyglot', link: '/vi/examples-guide' },
               { text: 'Tra cứu lệnh CLI', link: '/vi/cli-reference' }
             ]
@@ -147,6 +151,8 @@ export default defineConfig({
               { text: 'Quy trình AI Agent', link: '/vi/AI_AGENT_WORKFLOW' },
               { text: 'Hướng dẫn phát triển', link: '/vi/development' },
               { text: 'Đóng góp dự án', link: '/vi/contributing' },
+              { text: 'Quy tắc ứng xử Code of Conduct', link: '/vi/code-of-conduct' },
+              { text: 'Ban quản trị Maintainers', link: '/vi/maintainers' },
               { text: 'Quy trình phát hành Release', link: '/vi/releasing' },
               { text: 'Nhật ký thay đổi Changelog', link: '/vi/changelog' },
               { text: 'Kênh hỗ trợ', link: '/vi/support' },
@@ -190,6 +196,7 @@ export default defineConfig({
               { text: '配置文件参考', link: '/zh-hans/configuration' },
               { text: 'IDE 集成与 LSP', link: '/zh-hans/ide-integration' },
               { text: '远程执行与 CAS', link: '/zh-hans/remote-execution' },
+              { text: '生产环境部署', link: '/zh-hans/deployment' },
               { text: '多语言示例项目', link: '/zh-hans/examples-guide' },
               { text: 'CLI 命令参考', link: '/zh-hans/cli-reference' }
             ]
@@ -219,6 +226,8 @@ export default defineConfig({
               { text: 'AI Agent 工作流', link: '/zh-hans/AI_AGENT_WORKFLOW' },
               { text: '开发指南', link: '/zh-hans/development' },
               { text: '贡献指南', link: '/zh-hans/contributing' },
+              { text: '行为准则 Code of Conduct', link: '/zh-hans/code-of-conduct' },
+              { text: '维护者与治理结构', link: '/zh-hans/maintainers' },
               { text: '版本发布指南', link: '/zh-hans/releasing' },
               { text: '更新日志 Changelog', link: '/zh-hans/changelog' },
               { text: '支持与社区', link: '/zh-hans/support' },
@@ -262,6 +271,7 @@ export default defineConfig({
               { text: '設定檔案參考', link: '/zh-hant/configuration' },
               { text: 'IDE 整合與 LSP', link: '/zh-hant/ide-integration' },
               { text: '遠端執行與 CAS', link: '/zh-hant/remote-execution' },
+              { text: '生產環境部署', link: '/zh-hant/deployment' },
               { text: '多語言範例專案', link: '/zh-hant/examples-guide' },
               { text: 'CLI 命令參考', link: '/zh-hant/cli-reference' }
             ]
@@ -291,6 +301,8 @@ export default defineConfig({
               { text: 'AI Agent 工作流程', link: '/zh-hant/AI_AGENT_WORKFLOW' },
               { text: '開發指南', link: '/zh-hant/development' },
               { text: '貢獻指南', link: '/zh-hant/contributing' },
+              { text: '行為準則 Code of Conduct', link: '/zh-hant/code-of-conduct' },
+              { text: '維護者與治理架構', link: '/zh-hant/maintainers' },
               { text: '版本發布指南', link: '/zh-hant/releasing' },
               { text: '更新日誌 Changelog', link: '/zh-hant/changelog' },
               { text: '支援與社群', link: '/zh-hant/support' },
@@ -334,6 +346,7 @@ export default defineConfig({
               { text: '設定ファイルリファレンス', link: '/ja/configuration' },
               { text: 'IDE 統合 & LSP', link: '/ja/ide-integration' },
               { text: 'リモート実行 & CAS', link: '/ja/remote-execution' },
+              { text: '本番環境デプロイ', link: '/ja/deployment' },
               { text: 'ポリグロットサンプル', link: '/ja/examples-guide' },
               { text: 'CLI コマンドリファレンス', link: '/ja/cli-reference' }
             ]
@@ -363,6 +376,8 @@ export default defineConfig({
               { text: 'AI Agent 開発ワークフロー', link: '/ja/AI_AGENT_WORKFLOW' },
               { text: '開発ガイド', link: '/ja/development' },
               { text: 'コントリビューションガイド', link: '/ja/contributing' },
+              { text: '行動規範 Code of Conduct', link: '/ja/code-of-conduct' },
+              { text: 'メンテナーとガバナンス', link: '/ja/maintainers' },
               { text: 'リリースガイド', link: '/ja/releasing' },
               { text: '変更履歴 Changelog', link: '/ja/changelog' },
               { text: 'サポート & コミュニティ', link: '/ja/support' },
