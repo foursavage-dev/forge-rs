@@ -234,7 +234,7 @@ impl WorkStealingScheduler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fish_executor::{CommandSpec, ExecutorError, ProcessExecutor};
+    use fish_executor::{CommandSpec, ExecutorError};
     use std::collections::HashSet;
     use std::sync::Arc;
 
@@ -277,7 +277,9 @@ mod tests {
             graph.add_node(task);
         }
 
-        let executor = Arc::new(ProcessExecutor::new(false));
+        let executor = Arc::new(SelectiveExecutor {
+            fail: HashSet::new(),
+        });
         let mut scheduler = WorkStealingScheduler::new(4, graph, executor);
 
         let result = scheduler.run();
@@ -290,15 +292,15 @@ mod tests {
 
     #[test]
     fn work_stealing_runs_transitive_dependencies() {
-        // a -> b -> c: the scheduler must keep dispatching newly unblocked
-        // tasks until the whole chain has run, not just the initial ready set.
         let graph = chain_graph(&["a", "b", "c"]);
-        let executor = Arc::new(ProcessExecutor::new(false));
+        let executor = Arc::new(SelectiveExecutor {
+            fail: HashSet::new(),
+        });
         let mut scheduler = WorkStealingScheduler::new(2, graph, executor);
 
         let summary = scheduler.run().unwrap();
         assert_eq!(summary.total, 3);
-        assert_eq!(summary.executed, 3, "every task in the chain must execute");
+        assert_eq!(summary.executed, 3);
         assert_eq!(summary.failed, 0);
     }
 
