@@ -8,7 +8,7 @@ Fish currently provides security updates for the latest supported release series
 
 | Version | Supported |
 | ------- | --------- |
-| 0.2.x   | :white_check_mark: |
+| 0.3.x   | :white_check_mark: |
 
 Older release series may no longer receive security updates. Users are encouraged to upgrade to the latest supported version whenever possible.
 
