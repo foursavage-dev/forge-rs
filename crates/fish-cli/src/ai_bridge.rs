@@ -34,16 +34,6 @@ impl AiBridge {
         Self { server_command }
     }
 
-    pub fn with_command(command: Vec<String>) -> Self {
-        Self {
-            server_command: command,
-        }
-    }
-
-    pub fn command(&self) -> &[String] {
-        &self.server_command
-    }
-
     /// Issue a single JSON-RPC request. Returns the `result` field on success
     /// or a human-readable error message.
     pub fn request(
@@ -143,13 +133,5 @@ mod tests {
             vec!["python 3", "-m", "mod"]
         );
         assert_eq!(split_command("   "), Vec::<String>::new());
-    }
-
-    #[test]
-    fn default_command_is_python_module() {
-        let bridge = AiBridge::from_env();
-        // When FISH_AI_SERVER is unset this is the default; when set, the
-        // command is still a non-empty argv.
-        assert!(!bridge.command().is_empty());
     }
 }

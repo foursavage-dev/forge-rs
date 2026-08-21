@@ -351,11 +351,10 @@ fn parse_kib(field: &str) -> u64 {
 fn cpu_percent(prev: &SysSnapshot, cur: &SysSnapshot) -> u64 {
     let total_delta = cur.cpu_total.saturating_sub(prev.cpu_total);
     let idle_delta = cur.cpu_idle.saturating_sub(prev.cpu_idle);
-    if total_delta == 0 {
-        0
-    } else {
-        (100 * (total_delta - idle_delta) / total_delta).min(100)
-    }
+    (100 * (total_delta - idle_delta))
+        .checked_div(total_delta)
+        .unwrap_or(0)
+        .min(100)
 }
 
 /// Render a sparkline of the most recent `width` samples using Unicode block
