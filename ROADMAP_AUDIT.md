@@ -48,8 +48,8 @@
 | Spot Instance Optimization | 🟡 | `go/pkg/k8s/spot.go` — basic logic |
 | Cross-Region Cache Replication | 🟡 | `go/pkg/mesh/peer.go` + `fish-remote-cache/src/p2p_lan.rs` — LAN broadcast only, no geo L2 |
 | DL Build Time Predictor | ✅ | `py/fish_optimizer/build_time_predictor.py` — real EMA model |
-| Automated Flaky Test Quarantine | 🟡 | `fish-flaky-detection` (detector is real; `retry` was a stub → now fails loudly) + `py/fish_recommender/flaky_quarantine.py` |
-| Speculative Pre-Warming | 🟡 | `fish-cli/src/predictive.rs` (real Markov model) + `py/.../speculative_prewarmer.py` |
+| Automated Flaky Test Quarantine | ✅ | `fish-flaky-detection` (detector is real; `retry` fails loudly) + `py/fish_recommender/flaky_quarantine.py` — statistical flip detection, tested |
+| Speculative Pre-Warming | ✅ | `fish-cli/src/predictive.rs` (real Markov model) + `py/.../speculative_prewarmer.py` — transitive impact propagation fixed and tested |
 | OpenTelemetry Integration | ❌ | No `opentelemetry`/`tracing` dependency anywhere in the workspace |
 | Web Team Analytics Dashboard | 🟡 | `fish-dashboard` crate + `py/fish_analytics` — end-to-end wiring unverified |
 | Cloud Cost Calculator | ❌ | Does not exist |
@@ -75,8 +75,8 @@
 
 | Category | Count |
 | :--- | :---: |
-| ✅ Real | 13 |
-| 🟡 Partial | 11 |
+| ✅ Real | 15 |
+| 🟡 Partial | 9 |
 | ⚠️ Stub / fake | 3 |
 | ❌ Missing | 5 |
 
