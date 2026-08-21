@@ -8,7 +8,6 @@ pub struct RegistryConfig {
 }
 
 pub struct Registry {
-    #[allow(dead_code)]
     config: RegistryConfig,
 }
 
@@ -17,8 +16,13 @@ impl Registry {
         Self { config }
     }
 
-    pub async fn push(&self, _image: &crate::image::DockerImage) -> Result<(), anyhow::Error> {
-        // Push logic would go here
-        Ok(())
+    pub async fn push(&self, image: &crate::image::DockerImage) -> Result<(), anyhow::Error> {
+        // The registry push is not implemented yet. Failing loudly prevents a
+        // caller from believing an image was published when it was not.
+        Err(anyhow::anyhow!(
+            "Docker registry push is not implemented yet (image `{}` -> `{}`)",
+            image.id,
+            self.config.url
+        ))
     }
 }

@@ -150,7 +150,7 @@ impl CasBackend for LocalCasBackend {
             .await
             .map_err(CasError::Io)?;
 
-        let metadata: crate::artifact::ArtifactMetadata = serde_json::from_str(&metadata_json)
+        let mut metadata: crate::artifact::ArtifactMetadata = serde_json::from_str(&metadata_json)
             .map_err(|e| CasError::Serialization(e.to_string()))?;
 
         // Read and decompress data
@@ -173,6 +173,18 @@ impl CasBackend for LocalCasBackend {
             return Err(CasError::Hash(format!(
                 "stored artifact failed integrity verification for `{hash}`"
             )));
+        }
+
+        // Record the access so `CleanupPolicy::NotAccessedIn` can act on real
+        // usage. A failed write must not fail the retrieve itself.
+        metadata.last_accessed = Some(
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs() as i64,
+        );
+        if let Ok(json) = serde_json::to_string(&metadata) {
+            let _ = tokio::fs::write(&metadata_path, json).await;
         }
 
         Ok(Artifact {

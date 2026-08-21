@@ -79,7 +79,14 @@ impl FileLevelCache {
 
     /// Invalidate cache for all files in a directory (concurrent-safe iteration)
     pub fn invalidate_directory(&self, dir_path: &Path) {
-        let dir_key = dir_path.to_string_lossy().to_string();
+        // Keys are normalized to forward slashes (see `file_key`), and the
+        // directory prefix carries a trailing slash so the match is a
+        // component boundary: invalidating `/tmp/foo` must not also
+        // invalidate `/tmp/foobar/...`.
+        let mut dir_key = normalize_path_key(dir_path);
+        if !dir_key.ends_with('/') {
+            dir_key.push('/');
+        }
 
         // Use retain for efficient concurrent filtering
         self.file_artifacts
@@ -88,7 +95,7 @@ impl FileLevelCache {
 
     /// Generate a cache key for a file
     fn file_key(&self, file_path: &Path) -> String {
-        file_path.to_string_lossy().to_string()
+        normalize_path_key(file_path)
     }
 
     /// Get statistics about file-level cache (lock-free read)
@@ -104,6 +111,13 @@ impl FileLevelCache {
 pub struct FileCacheStats {
     pub total_files: usize,
     pub total_artifacts: usize,
+}
+
+/// Normalize a path to a stable cache-key form with forward-slash separators,
+/// so directory invalidation behaves identically on Windows (backslash) and
+/// Unix (forward-slash) inputs.
+fn normalize_path_key(path: &Path) -> String {
+    path.to_string_lossy().replace('\\', "/")
 }
 
 /// File-level dependency tracking with lock-free concurrent access
@@ -150,34 +164,53 @@ impl FileDependencyGraph {
             .unwrap_or_default()
     }
 
-    /// Invalidate file and all its dependents (concurrent-safe)
+    /// Invalidate file and all its transitive dependents (concurrent-safe)
     pub fn invalidate_with_dependents(&self, file: &Path, cache: &FileLevelCache) {
-        let dependents = self.get_dependents(file);
+        let mut queue = vec![file.to_path_buf()];
+        let mut visited = std::collections::HashSet::new();
 
-        // Invalidate the file itself
-        cache.invalidate_file(file);
-
-        // Invalidate all dependents
-        for dependent in dependents {
-            cache.invalidate_file(&dependent);
+        while let Some(current) = queue.pop() {
+            if !visited.insert(current.clone()) {
+                continue;
+            }
+            cache.invalidate_file(&current);
+            for dependent in self.get_dependents(&current) {
+                if !visited.contains(&dependent) {
+                    queue.push(dependent);
+                }
+            }
         }
     }
 
-    /// Parse dependency file (e.g., .d files from GCC)
+    /// Parse dependency file (e.g., `.d` files from GCC).
+    ///
+    /// Handles backslash-newline continuations, `#` comments, and multiple
+    /// targets per file. Filenames containing spaces or escaped spaces are
+    /// not supported (dependency lists are split on whitespace).
     pub fn parse_dep_file(&self, dep_file: &Path) -> Result<(), anyhow::Error> {
         let content = std::fs::read_to_string(dep_file)?;
 
-        // Parse .d file format: target: dependencies
-        if let Some(colon_pos) = content.find(':') {
-            let target = content[..colon_pos].trim();
-            let deps_str = content[colon_pos + 1..].trim();
+        // Join continuation lines before splitting so a dependency list that
+        // wraps across lines is parsed as a single target/deps group.
+        let joined = content.replace("\\\r\n", " ").replace("\\\n", " ");
 
-            let target_path = PathBuf::from(target);
-            let dependencies: Vec<PathBuf> =
-                deps_str.split_whitespace().map(PathBuf::from).collect();
+        for line in joined.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
 
-            for dep in dependencies {
-                self.add_dependency(target_path.clone(), dep);
+            if let Some(colon_pos) = line.find(':') {
+                let target = line[..colon_pos].trim();
+                let deps_str = line[colon_pos + 1..].trim();
+                if target.is_empty() {
+                    continue;
+                }
+
+                let target_path = PathBuf::from(target);
+                for dep in deps_str.split_whitespace() {
+                    self.add_dependency(target_path.clone(), PathBuf::from(dep));
+                }
             }
         }
 
@@ -214,5 +247,77 @@ mod tests {
         let dependents = graph.get_dependents(&file2);
         assert_eq!(dependents.len(), 1);
         assert_eq!(dependents[0], file1);
+    }
+
+    #[test]
+    fn invalidate_directory_respects_component_boundaries() {
+        let cache = FileLevelCache::new();
+        let inside = PathBuf::from("/tmp/foo/a.rs");
+        let sibling = PathBuf::from("/tmp/foobar/b.rs");
+
+        let artifact =
+            Artifact::from_bytes(b"data".to_vec(), "text".to_string(), "test".to_string()).unwrap();
+        cache.cache_file(&inside, artifact.clone()).unwrap();
+        cache.cache_file(&sibling, artifact).unwrap();
+
+        cache.invalidate_directory(Path::new("/tmp/foo"));
+
+        assert!(!cache.is_file_cached(&inside));
+        assert!(
+            cache.is_file_cached(&sibling),
+            "a sibling directory sharing the same prefix must survive"
+        );
+    }
+
+    #[test]
+    fn parse_dep_file_handles_continuations_comments_and_multiple_targets() {
+        let graph = FileDependencyGraph::new();
+        let dir = TempDir::new().unwrap();
+        let dep_file = dir.path().join("out.d");
+        std::fs::write(
+            &dep_file,
+            "out.o: src/a.c src/b.c \\\n src/c.c\n# a comment line\nutil.o: util.c\n",
+        )
+        .unwrap();
+
+        graph.parse_dep_file(&dep_file).unwrap();
+
+        assert_eq!(
+            graph.get_dependents(&PathBuf::from("src/a.c")),
+            vec![PathBuf::from("out.o")]
+        );
+        assert_eq!(
+            graph.get_dependents(&PathBuf::from("src/c.c")),
+            vec![PathBuf::from("out.o")]
+        );
+        assert_eq!(
+            graph.get_dependents(&PathBuf::from("util.c")),
+            vec![PathBuf::from("util.o")]
+        );
+    }
+
+    #[test]
+    fn invalidate_with_dependents_is_transitive() {
+        let graph = FileDependencyGraph::new();
+        let cache = FileLevelCache::new();
+
+        let a = PathBuf::from("/proj/a.rs");
+        let b = PathBuf::from("/proj/b.rs");
+        let c = PathBuf::from("/proj/c.rs");
+        // a -> b -> c (a depends on b depends on c)
+        graph.add_dependency(a.clone(), b.clone());
+        graph.add_dependency(b.clone(), c.clone());
+
+        let artifact =
+            Artifact::from_bytes(b"data".to_vec(), "text".to_string(), "test".to_string()).unwrap();
+        cache.cache_file(&a, artifact.clone()).unwrap();
+        cache.cache_file(&b, artifact.clone()).unwrap();
+        cache.cache_file(&c, artifact).unwrap();
+
+        graph.invalidate_with_dependents(&c, &cache);
+
+        assert!(!cache.is_file_cached(&a));
+        assert!(!cache.is_file_cached(&b));
+        assert!(!cache.is_file_cached(&c));
     }
 }

@@ -46,30 +46,34 @@ impl DockerBuilder {
             .unwrap_or_else(|| std::path::Path::new("."));
         cmd.arg(context_dir);
 
-        let output = cmd.output();
-        let (image_id, size_bytes) = match output {
-            Ok(out) if out.status.success() => {
-                let stdout = String::from_utf8_lossy(&out.stdout);
-                let id = stdout
-                    .lines()
-                    .rev()
-                    .find(|l| l.contains("writing image") || l.contains("Successfully built"))
-                    .map(|l| l.to_string())
-                    .unwrap_or_else(|| blake3::hash(stdout.as_bytes()).to_hex().to_string());
-                (id, stdout.len() as u64)
-            }
-            _ => {
-                let synthetic_id = blake3::hash(dockerfile_path.as_bytes())
-                    .to_hex()
-                    .to_string();
-                (synthetic_id, 0)
-            }
-        };
+        let output = cmd
+            .output()
+            .map_err(|e| anyhow::anyhow!("failed to run `docker build`: {e}"))?;
 
+        if !output.status.success() {
+            // A failed build must not masquerade as a successful DockerImage.
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(anyhow::anyhow!(
+                "docker build failed with {}: {}",
+                output.status,
+                stderr.trim()
+            ));
+        }
+
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let image_id = stdout
+            .lines()
+            .rev()
+            .find(|l| l.contains("writing image") || l.contains("Successfully built"))
+            .map(|l| l.to_string())
+            .unwrap_or_else(|| blake3::hash(stdout.as_bytes()).to_hex().to_string());
+
+        // `docker build` does not report the final image size; keep it at zero
+        // rather than fabricating a value from the length of the log output.
         Ok(DockerImage {
             id: image_id,
             tags: options.tags,
-            size_bytes,
+            size_bytes: 0,
         })
     }
 }

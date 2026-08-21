@@ -58,6 +58,11 @@ pub struct ArtifactMetadata {
     pub compression: Option<String>,
     /// Timestamp when artifact was stored (Unix timestamp in seconds)
     pub timestamp: i64,
+    /// Timestamp of the last successful retrieve (Unix timestamp in seconds),
+    /// when access tracking is available. Records written by older versions
+    /// omit this field.
+    #[serde(default)]
+    pub last_accessed: Option<i64>,
     /// Artifact type/category
     pub artifact_type: String,
     /// Source information (e.g., package name, target)
@@ -77,6 +82,7 @@ impl ArtifactMetadata {
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_secs() as i64,
+            last_accessed: None,
             artifact_type,
             source,
             tags: Vec::new(),
@@ -95,8 +101,13 @@ impl ArtifactMetadata {
     }
 
     pub fn compression_ratio(&self) -> Option<f64> {
-        self.compressed_size
-            .map(|compressed| compressed as f64 / self.size as f64)
+        self.compressed_size.and_then(|compressed| {
+            if self.size == 0 {
+                None
+            } else {
+                Some(compressed as f64 / self.size as f64)
+            }
+        })
     }
 }
 

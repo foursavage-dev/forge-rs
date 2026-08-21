@@ -105,16 +105,13 @@ impl<I: TaskExecutor> HybridCachingExecutor<I> {
 
 impl<I: TaskExecutor> TaskExecutor for HybridCachingExecutor<I> {
     fn execute(&self, task: &Task) -> Result<TaskOutcome, ExecutorError> {
-        // Check file-level cache first (if task has registered files)
-        if let Some(CacheEntry { key, .. }) = &task.cache
-            && self.file_adapter.is_task_files_cached(key)
-        {
-            // All files are cached at file level - can potentially skip execution
-            // For now, we still check task-level cache to maintain compatibility
-            return Ok(TaskOutcome::cached(task));
-        }
-
-        // Check task-level cache
+        // The file-level cache cannot currently prove a hit: `FileLevelCache`
+        // is an in-memory path→hash map, and membership alone says nothing
+        // about whether the on-disk content still matches the cached artifact.
+        // Treating membership as a hit (the previous behaviour) would skip
+        // execution forever after a single registration, even when the source
+        // files change. Fall through to the task-level fingerprint check,
+        // which performs an actual content comparison.
         if let Some(CacheEntry { key, fingerprint }) = &task.cache
             && self.local_cache.matches(key, fingerprint)
         {

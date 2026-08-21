@@ -1,12 +1,39 @@
 use std::collections::HashMap;
 use std::env;
-use std::fs;
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Result, anyhow};
 use serde::{Deserialize, Serialize};
 
 use crate::toolchain::{ToolchainKind, ToolchainSpec};
+
+/// A single path segment is safe when it cannot escape the directory it is
+/// joined into. This guards `version`, `kind`, and `binary_rel_path` — all of
+/// which are used to build filesystem paths below the toolchain base dir.
+fn is_safe_segment(segment: &str) -> bool {
+    !segment.is_empty()
+        && segment != "."
+        && segment != ".."
+        && !segment
+            .bytes()
+            .any(|byte| matches!(byte, b'/' | b'\\' | b'\0' | b':'))
+}
+
+/// A relative path made only of safe segments, with no absolute prefix.
+fn is_safe_relative_path(path: &str) -> bool {
+    !path.is_empty() && !path.starts_with('/') && path.split(['/', '\\']).all(is_safe_segment)
+}
+
+/// Directory name for a toolchain kind. `Custom` names are attacker-controlled
+/// (they come from configuration), so they are validated and folded into a
+/// fixed prefix instead of being interpolated verbatim.
+fn toolchain_kind_name(kind: &ToolchainKind) -> String {
+    match kind {
+        ToolchainKind::Custom(name) if is_safe_segment(name) => format!("custom-{name}"),
+        ToolchainKind::Custom(_) => "custom".to_string(),
+        other => format!("{other:?}").to_lowercase(),
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RemoteToolchainSource {
@@ -66,6 +93,11 @@ impl ToolchainDownloader {
     }
 
     pub fn register_source(&mut self, source: RemoteToolchainSource) {
+        // Refuse sources whose binary path or version could escape the
+        // toolchain base directory when joined into a filesystem path.
+        if !is_safe_segment(&source.version) || !is_safe_relative_path(&source.binary_rel_path) {
+            return;
+        }
         self.sources
             .insert((source.kind.clone(), source.version.clone()), source);
     }
@@ -148,7 +180,10 @@ impl ToolchainDownloader {
     }
 
     pub fn get_installed_path(&self, kind: &ToolchainKind, version: &str) -> Option<PathBuf> {
-        let kind_str = format!("{:?}", kind).to_lowercase();
+        if !is_safe_segment(version) {
+            return None;
+        }
+        let kind_str = toolchain_kind_name(kind);
         let target_dir = self.base_dir.join(&kind_str).join(version);
         if target_dir.exists() {
             if let Some(src) = self.sources.get(&(kind.clone(), version.to_string())) {
@@ -186,6 +221,10 @@ impl ToolchainDownloader {
             });
         }
 
+        if !is_safe_segment(version) {
+            return Err(anyhow!("invalid toolchain version `{version}`"));
+        }
+
         if self.offline {
             return Err(anyhow!(
                 "Toolchain {:?} {} is not installed locally and offline mode is enabled",
@@ -205,39 +244,19 @@ impl ToolchainDownloader {
                 )
             })?;
 
-        let kind_str = format!("{:?}", kind).to_lowercase();
-        let install_dir = self.base_dir.join(&kind_str).join(version);
-        fs::create_dir_all(&install_dir)
-            .with_context(|| format!("Failed to create toolchain directory {:?}", install_dir))?;
-
-        let binary_path = install_dir.join(&source.binary_rel_path);
-        if let Some(parent) = binary_path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-
-        let wrapper_script = if cfg!(windows) {
-            b"@echo off\r\nexit /b 0\r\n".to_vec()
-        } else {
-            b"#!/bin/sh\nexit 0\n".to_vec()
-        };
-        fs::write(&binary_path, wrapper_script)?;
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mut perms = fs::metadata(&binary_path)?.permissions();
-            perms.set_mode(0o755);
-            fs::set_permissions(&binary_path, perms)?;
-        }
-
-        Ok(ToolchainSpec {
-            kind: kind.clone(),
-            version: version.to_string(),
-            path: binary_path,
-            envs: HashMap::new(),
-            checksum: None,
-            is_hermetic: true,
-        })
+        // Automatic download is not implemented. Failing loudly here prevents
+        // the previous behaviour of installing a no-op stub (`exit 0`) that
+        // silently turned every build into an empty success. The declared
+        // `url` and `sha256` fields are reserved for the future downloader.
+        let install_dir = self.base_dir.join(toolchain_kind_name(kind)).join(version);
+        Err(anyhow!(
+            "automatic download of toolchain {:?} {} (from {}) is not implemented; \
+             install it manually under {:?}",
+            kind,
+            version,
+            source.url,
+            install_dir
+        ))
     }
 }
 
@@ -262,18 +281,51 @@ mod tests {
     }
 
     #[test]
-    fn test_ensure_toolchain_simulation() {
+    fn ensure_toolchain_fails_loudly_instead_of_installing_a_stub() {
         let temp = TempDir::new().unwrap();
         let downloader = ToolchainDownloader::new().with_base_dir(temp.path());
 
-        let spec = downloader
-            .ensure_toolchain(&ToolchainKind::Zig, "0.13.0")
-            .unwrap();
-        assert_eq!(spec.kind, ToolchainKind::Zig);
-        assert_eq!(spec.version, "0.13.0");
-        assert!(spec.is_hermetic);
-        assert!(spec.path.exists());
-        assert!(downloader.is_installed(&ToolchainKind::Zig, "0.13.0"));
+        let err = downloader.ensure_toolchain(&ToolchainKind::Zig, "0.13.0");
+        assert!(
+            err.is_err(),
+            "uninstalled toolchains must error, not fake success"
+        );
+        assert!(
+            !downloader.is_installed(&ToolchainKind::Zig, "0.13.0"),
+            "no stub may be left behind"
+        );
+    }
+
+    #[test]
+    fn rejects_traversal_in_version_and_binary_rel_path() {
+        let mut downloader = ToolchainDownloader::new();
+
+        // A source whose binary path escapes the install dir is dropped.
+        downloader.register_source(RemoteToolchainSource {
+            kind: ToolchainKind::Python,
+            version: "1.0".to_string(),
+            url: "https://example.com/py.tgz".to_string(),
+            sha256: None,
+            binary_rel_path: "../../etc/passwd".to_string(),
+        });
+        assert!(
+            !downloader
+                .sources
+                .contains_key(&(ToolchainKind::Python, "1.0".to_string())),
+            "a source with a traversal binary path must not be registered"
+        );
+
+        // A traversal version is rejected at lookup time.
+        assert!(
+            downloader
+                .get_installed_path(&ToolchainKind::Zig, "../../outside")
+                .is_none()
+        );
+        assert!(
+            downloader
+                .ensure_toolchain(&ToolchainKind::Zig, "../../outside")
+                .is_err()
+        );
     }
 
     #[test]

@@ -86,13 +86,23 @@ impl AsyncProcessExecutor {
         let mut command = TokioCommand::new(&spec.program);
         command.args(&spec.args);
 
+        // `env_clear` was previously ignored on the async path, silently
+        // inheriting the full environment even when the caller asked for an
+        // empty one. Mirror the synchronous executor's behaviour.
+        if spec.env_clear {
+            command.env_clear();
+        }
+        for (key, value) in &spec.env {
+            command.env(key, value);
+        }
+
         if let Some(cwd) = &spec.cwd {
             command.current_dir(cwd);
         }
 
-        for (key, value) in &spec.env {
-            command.env(key, value);
-        }
+        // If this command is dropped (e.g. a timeout cancels the run), kill
+        // the child instead of orphaning a long-lived build process.
+        command.kill_on_drop(true);
 
         command
     }

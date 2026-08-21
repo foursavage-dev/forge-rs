@@ -88,23 +88,14 @@ impl KernelBypassVfs {
     }
 
     pub fn dma_write(&self, key: &str, data: &[u8]) -> io::Result<DmaBufferBlock> {
-        let mut pool = self.virtual_memory_pool.write().unwrap();
-
-        // --- KERNEL-BYPASS DMA SHM LOGIC ---
-        // Instead of writing to disk via VFS/sys-calls, we map memory directly
-        // into the ring-buffer and bypass context switches entirely.
-
-        pool.insert(key.to_string(), data.to_vec());
-        let push_success = self.ring_buffer.push(data);
-
-        let synthetic_throughput = if push_success { 128.4 } else { 12.5 };
-
-        Ok(DmaBufferBlock {
-            offset: 0x8000_0000,
-            length: data.len(),
-            memory_tag: format!("DMA_SHM_ZERO_COPY:{}", key),
-            throughput_gbps: synthetic_throughput,
-        })
+        // Kernel-bypass DMA is not implemented. Reporting a synthetic buffer
+        // block with fabricated offsets and throughput would mislead callers
+        // into believing zero-copy I/O occurred.
+        let _ = data;
+        Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            format!("kernel-bypass DMA is not implemented (cannot map `{key}`)"),
+        ))
     }
 
     pub fn dma_read(&self, key: &str) -> io::Result<Vec<u8>> {
@@ -128,15 +119,14 @@ mod tests {
     }
 
     #[test]
-    fn test_kernel_bypass_dma_zero_copy_io() {
+    fn test_kernel_bypass_dma_refuses_fake_io() {
         let vfs = KernelBypassVfs::new();
         let payload = b"ULTRA_HIGH_THROUGHPUT_ARTIFACT_STREAM";
 
-        let block = vfs.dma_write("target/app.bin", payload).unwrap();
-        assert_eq!(block.length, payload.len());
-        assert!(block.throughput_gbps > 100.0);
+        let result = vfs.dma_write("target/app.bin", payload);
+        assert!(result.is_err(), "unimplemented DMA must fail loudly");
 
-        let read_back = vfs.dma_read("target/app.bin").unwrap();
-        assert_eq!(read_back, payload);
+        // Nothing was stored, so reading the key reports it as absent.
+        assert!(vfs.dma_read("target/app.bin").is_err());
     }
 }

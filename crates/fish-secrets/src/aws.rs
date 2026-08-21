@@ -3,7 +3,6 @@
 use crate::manager::SecretManager;
 
 pub struct AwsSecretsManager {
-    #[allow(dead_code)]
     region: String,
 }
 
@@ -16,11 +15,17 @@ impl AwsSecretsManager {
 #[async_trait::async_trait]
 impl SecretManager for AwsSecretsManager {
     async fn get_secret(&self, key: &str) -> Result<String, anyhow::Error> {
-        // AWS SDK call would go here
-        Ok(format!("aws_secret_for_{}", key))
+        // The AWS SDK integration is not implemented yet. Failing loudly
+        // prevents callers from silently receiving a fabricated value.
+        Err(anyhow::anyhow!(
+            "AWS Secrets Manager integration is not implemented yet (requested `{key}` in region `{}`)",
+            self.region
+        ))
     }
 
     async fn inject_secrets(&self, command: &str) -> Result<String, anyhow::Error> {
-        Ok(command.to_string())
+        Err(anyhow::anyhow!(
+            "AWS Secrets Manager secret injection is not implemented yet (command `{command}`)"
+        ))
     }
 }

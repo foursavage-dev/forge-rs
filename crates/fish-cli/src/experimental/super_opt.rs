@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-use std::fs;
 use std::io;
 use std::path::Path;
 
@@ -75,103 +74,46 @@ impl SuperOptimizer {
     pub fn optimize_binary_with_level(
         binary_path: &Path,
         output_path: &Path,
-        target_level: SimdVectorizationLevel,
+        _target_level: SimdVectorizationLevel,
     ) -> io::Result<OptimizationMetric> {
-        let original_bytes = if binary_path.exists() {
-            fs::read(binary_path)?
-        } else {
-            b"SIMD_TARGET_PAYLOAD_BLOCK".to_vec()
-        };
-
-        let original_size = original_bytes.len() as u64;
-        let mut cfg = Self::build_cfg_from_binary(&original_bytes);
-
-        // --- AUTONOMOUS BINARY SUPER-OPTIMIZATION LOGIC ---
-        // 1. Analyze CFG for hot loops
-        // 2. Identify scalar instructions that can be vectorized
-        // 3. Inject AVX-512 / NEON machine code directly
-
-        let mut optimized = Vec::with_capacity(original_bytes.len() + 1024);
-
-        // Copy ELF/PE header (simulated by copying first chunk)
-        let header_size = std::cmp::min(1024, original_bytes.len());
-        optimized.extend_from_slice(&original_bytes[..header_size]);
-
-        let mut vectorized_loops = 0;
-        for block in &mut cfg.blocks {
-            if block.is_vectorizable {
-                // Synthesize SIMD instructions block
-                let simd_payload: &[u8] = match target_level {
-                    SimdVectorizationLevel::Scalar => b"_SCALAR_SLOW_",
-                    SimdVectorizationLevel::Sse128 => b"_SSE128_VEC4_",
-                    SimdVectorizationLevel::Avx256 => b"_AVX256_VEC8_",
-                    SimdVectorizationLevel::Avx512 => b"_AVX512_ZMM_SUPER_OPT_VEC16_",
-                    SimdVectorizationLevel::ArmNeon128 => b"_NEON128_VEC4_",
-                };
-                optimized.extend_from_slice(simd_payload);
-                vectorized_loops += 1;
-            } else {
-                // Copy scalar payload
-                let start = block.start_offset;
-                let end = std::cmp::min(start + 64, original_bytes.len());
-                if start < end {
-                    optimized.extend_from_slice(&original_bytes[start..end]);
-                }
-            }
-        }
-        cfg.hot_loop_count = vectorized_loops;
-
-        let simd_tag = match target_level {
-            SimdVectorizationLevel::Scalar => b"_SCALAR".as_slice(),
-            SimdVectorizationLevel::Sse128 => b"_SSE128".as_slice(),
-            SimdVectorizationLevel::Avx256 => b"_AVX256".as_slice(),
-            SimdVectorizationLevel::Avx512 => b"_AVX512_SUPER_OPT".as_slice(),
-            SimdVectorizationLevel::ArmNeon128 => b"_NEON128".as_slice(),
-        };
-        optimized.extend_from_slice(simd_tag);
-
-        if let Some(parent) = output_path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        fs::write(output_path, &optimized)?;
-
-        let speedup = match target_level {
-            SimdVectorizationLevel::Scalar => 10.0,
-            SimdVectorizationLevel::Sse128 => 85.0,
-            SimdVectorizationLevel::Avx256 => 165.0,
-            SimdVectorizationLevel::Avx512 => 450.5, // Aggressive speedup
-            SimdVectorizationLevel::ArmNeon128 => 140.0,
-        };
-
-        Ok(OptimizationMetric {
-            loops_vectorized: cfg.hot_loop_count.max(1),
-            simd_extension: format!("{:?}", target_level),
-            speedup_percentage: speedup,
-            original_size_bytes: original_size,
-            optimized_size_bytes: optimized.len() as u64,
-            analyzed_basic_blocks: cfg.blocks.len(),
-        })
+        // Real binary rewriting is not implemented. Failing loudly prevents
+        // the previous behaviour of overwriting a freshly built artifact with
+        // placeholder bytes (corrupting it) while reporting a fabricated
+        // speedup.
+        Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            format!(
+                "binary super-optimization is not implemented; refusing to rewrite `{}` to `{}`",
+                binary_path.display(),
+                output_path.display()
+            ),
+        ))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     use tempfile::tempdir;
 
     #[test]
-    fn test_super_optimizer_simd_vectorization() {
+    fn test_super_optimizer_refuses_to_rewrite_binaries() {
         let temp = tempdir().unwrap();
         let input_bin = temp.path().join("input.bin");
         let output_bin = temp.path().join("optimized.bin");
 
         fs::write(&input_bin, b"ORIGINAL_PAYLOAD").unwrap();
 
-        let metric = SuperOptimizer::optimize_binary_simd(&input_bin, &output_bin).unwrap();
-        assert!(metric.loops_vectorized >= 1);
-        assert!(metric.speedup_percentage > 200.0);
-        assert!(metric.analyzed_basic_blocks >= 1);
-        assert!(output_bin.exists());
+        let result = SuperOptimizer::optimize_binary_simd(&input_bin, &output_bin);
+        assert!(
+            result.is_err(),
+            "unimplemented optimization must fail loudly"
+        );
+        assert!(
+            !output_bin.exists(),
+            "the output artifact must never be written when optimization is unimplemented"
+        );
     }
 
     #[test]

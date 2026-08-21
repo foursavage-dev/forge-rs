@@ -1,10 +1,12 @@
 #![forbid(unsafe_code)]
 
 use fish_executor::{Task, TaskExecutor, TaskOutcome, TaskStatus};
-use fish_graph::{BuildGraph, NodeId};
+use fish_graph::{BuildGraph, NodeId, TaskState};
+use std::panic::AssertUnwindSafe;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
+
+use super::{BuildSummary, FailureRecord, SchedulerError, TaskTiming};
 
 #[derive(Default, Clone)]
 pub struct ExecutionHeuristics {
@@ -33,10 +35,8 @@ impl ExecutionHeuristics {
 
 pub struct WorkStealingScheduler {
     worker_count: usize,
-    graph: Arc<BuildGraph<Task>>,
+    graph: BuildGraph<Task>,
     executor: Arc<dyn TaskExecutor>,
-    completed_tasks: Arc<dashmap::DashMap<NodeId, TaskOutcome>>,
-    active_tasks: Arc<AtomicUsize>,
     heuristics: Arc<ExecutionHeuristics>,
 }
 
@@ -47,14 +47,11 @@ impl WorkStealingScheduler {
         executor: Arc<dyn TaskExecutor>,
     ) -> Self {
         let worker_count = worker_count.max(1);
-        let graph = Arc::new(graph);
 
         Self {
             worker_count,
             graph,
             executor,
-            completed_tasks: Arc::new(dashmap::DashMap::new()),
-            active_tasks: Arc::new(AtomicUsize::new(0)),
             heuristics: Arc::new(ExecutionHeuristics::default()),
         }
     }
@@ -64,36 +61,13 @@ impl WorkStealingScheduler {
         self
     }
 
-    fn distribute_tasks_work_stealing(&self, ready_nodes: Vec<NodeId>) -> Vec<Vec<NodeId>> {
-        let mut worker_assignments: Vec<Vec<NodeId>> = vec![Vec::new(); self.worker_count];
-        let mut worker_loads: Vec<u64> = vec![0; self.worker_count];
-
-        let mut tasks_with_priority: Vec<_> = ready_nodes
-            .into_iter()
-            .map(|id| {
-                let tail_length = self.compute_tail_length(id);
-                let task = &self.graph.node(id).unwrap().payload;
-                let weight = self.heuristics.get_estimated_weight(task);
-                let priority_score = (tail_length as u64 * 1000) + weight;
-                (id, priority_score, weight)
-            })
-            .collect();
-
-        tasks_with_priority.sort_by_key(|(_, score, _)| std::cmp::Reverse(*score));
-
-        for (task_id, _, weight) in tasks_with_priority.into_iter() {
-            let min_worker = worker_loads
-                .iter()
-                .enumerate()
-                .min_by_key(|(_, load)| *load)
-                .map(|(index, _)| index)
-                .unwrap_or(0);
-
-            worker_assignments[min_worker].push(task_id);
-            worker_loads[min_worker] += weight;
-        }
-
-        worker_assignments
+    /// Priority score used to order ready tasks: longest tail first, then
+    /// estimated weight. Ties are resolved deterministically by `NodeId`.
+    fn priority_score(&self, id: NodeId) -> u64 {
+        let tail_length = self.compute_tail_length(id) as u64;
+        let task = &self.graph.node(id).expect("ready nodes exist").payload;
+        let weight = self.heuristics.get_estimated_weight(task);
+        tail_length * 1000 + weight
     }
 
     fn compute_tail_length(&self, node_id: NodeId) -> usize {
@@ -119,71 +93,179 @@ impl WorkStealingScheduler {
         max_depth
     }
 
-    pub fn run(&self) -> Result<BuildSummary, SchedulerError> {
+    pub fn run(&mut self) -> Result<BuildSummary, SchedulerError> {
         let start = Instant::now();
 
-        let ready_nodes = self.graph.ready_nodes();
-        let worker_assignments = self.distribute_tasks_work_stealing(ready_nodes);
+        self.graph.validate()?;
+        self.graph.reset_states();
 
-        for worker_tasks in worker_assignments {
-            for task_id in worker_tasks {
-                if let Some(node) = self.graph.node(task_id) {
-                    let task = node.payload.clone();
-                    self.active_tasks.fetch_add(1, Ordering::SeqCst);
+        let (task_tx, task_rx) = crossbeam_channel::unbounded::<(NodeId, Task)>();
+        let (done_tx, done_rx) = crossbeam_channel::unbounded::<(NodeId, TaskOutcome)>();
 
+        // Worker threads pull tasks off the shared queue and publish outcomes.
+        // The graph itself stays on the scheduler thread, so task payloads are
+        // cloned into the queue when they are dispatched.
+        let mut workers = Vec::with_capacity(self.worker_count);
+        for _ in 0..self.worker_count {
+            let task_rx = task_rx.clone();
+            let done_tx = done_tx.clone();
+            let executor = Arc::clone(&self.executor);
+            let heuristics = Arc::clone(&self.heuristics);
+            workers.push(std::thread::spawn(move || {
+                while let Ok((id, task)) = task_rx.recv() {
                     let task_start = Instant::now();
-                    let outcome = match self.executor.execute(&task) {
-                        Ok(outcome) => outcome,
-                        Err(e) => TaskOutcome::failed(&task, e.to_string()),
+                    let outcome = match std::panic::catch_unwind(AssertUnwindSafe(|| {
+                        executor.execute(&task)
+                    })) {
+                        Ok(Ok(outcome)) => outcome,
+                        Ok(Err(error)) => TaskOutcome::failed(&task, error.to_string()),
+                        Err(panic) => {
+                            let message = panic
+                                .downcast_ref::<&str>()
+                                .map(|s| s.to_string())
+                                .or_else(|| panic.downcast_ref::<String>().cloned())
+                                .unwrap_or_else(|| "unknown panic".to_string());
+                            TaskOutcome::failed(&task, format!("executor panicked: {message}"))
+                        }
                     };
-                    let task_duration = task_start.elapsed();
+                    heuristics.record_execution(&task, task_start.elapsed());
+                    let _ = done_tx.send((id, outcome));
+                }
+            }));
+        }
 
-                    self.heuristics.record_execution(&task, task_duration);
+        let mut in_flight: usize = 0;
+        let mut failures: Vec<FailureRecord> = Vec::new();
+        let mut timings: Vec<TaskTiming> = Vec::new();
 
-                    self.completed_tasks.insert(task_id, outcome);
-                    self.active_tasks.fetch_sub(1, Ordering::SeqCst);
+        loop {
+            // Dispatch every task whose dependencies have succeeded. `ready`
+            // only returns `Pending` nodes, so marking them `Running` prevents
+            // double dispatch.
+            let mut ready = self.graph.ready_nodes();
+            ready.sort_by_key(|id| (std::cmp::Reverse(self.priority_score(*id)), id.index()));
+            for id in ready {
+                let task = self
+                    .graph
+                    .node(id)
+                    .expect("ready nodes exist")
+                    .payload
+                    .clone();
+                self.graph.set_state(id, TaskState::Running)?;
+                task_tx.send((id, task)).expect("workers are alive");
+                in_flight += 1;
+            }
+
+            if in_flight == 0 {
+                break;
+            }
+
+            // Wait for at least one completion, then drain any that arrived
+            // concurrently before dispatching the newly unblocked tasks.
+            let (id, outcome) = done_rx.recv().map_err(|_| SchedulerError::Stalled)?;
+            in_flight -= 1;
+            self.apply_outcome(id, outcome, &mut failures, &mut timings)?;
+            while let Ok((id, outcome)) = done_rx.try_recv() {
+                in_flight -= 1;
+                self.apply_outcome(id, outcome, &mut failures, &mut timings)?;
+            }
+        }
+
+        // Close the queue so workers observe the channel shutdown and exit.
+        drop(task_tx);
+        for worker in workers {
+            let _ = worker.join();
+        }
+
+        Ok(BuildSummary::from_graph(
+            &self.graph,
+            start.elapsed(),
+            self.worker_count,
+            failures,
+            timings,
+        ))
+    }
+
+    fn apply_outcome(
+        &mut self,
+        id: NodeId,
+        outcome: TaskOutcome,
+        failures: &mut Vec<FailureRecord>,
+        timings: &mut Vec<TaskTiming>,
+    ) -> Result<(), SchedulerError> {
+        // A dependent that was already cancelled by a failure cascade must not
+        // be re-marked as Succeeded when its own worker finally reports back.
+        if self.graph.state(id)? == TaskState::Cancelled {
+            return Ok(());
+        }
+
+        let task = self.graph.node(id).map(|node| node.payload.clone());
+        if let Some(task) = &task {
+            timings.push(TaskTiming {
+                label: task.label.clone(),
+                description: task.description.clone(),
+                start_offset: Duration::ZERO,
+                duration: outcome.duration,
+                node_id: id,
+                worker_id: 0,
+                status: outcome.status,
+            });
+        }
+
+        match outcome.status {
+            TaskStatus::Executed => self.graph.set_state(id, TaskState::Succeeded)?,
+            TaskStatus::Cached => self.graph.set_state(id, TaskState::Cached)?,
+            TaskStatus::Failed => {
+                self.graph.mark_failed(id)?;
+                if let Some(task) = &task {
+                    failures.push(FailureRecord {
+                        label: task.label.clone(),
+                        description: task.description.clone(),
+                        stdout: outcome.stdout.clone(),
+                        stderr: outcome.stderr.clone(),
+                    });
                 }
             }
         }
-
-        let duration = start.elapsed();
-        self.build_summary(duration)
-    }
-
-    fn build_summary(&self, duration: Duration) -> Result<BuildSummary, SchedulerError> {
-        let mut executed = 0;
-        let mut cached = 0;
-        let mut failed = 0;
-
-        for entry in self.completed_tasks.iter() {
-            match entry.value().status {
-                TaskStatus::Executed => executed += 1,
-                TaskStatus::Cached => cached += 1,
-                TaskStatus::Failed => failed += 1,
-            }
-        }
-
-        Ok(BuildSummary {
-            total: self.graph.len(),
-            executed,
-            cached,
-            failed,
-            cancelled: 0,
-            duration,
-            workers: self.worker_count,
-            failures: Vec::new(),
-            timings: Vec::new(),
-        })
+        Ok(())
     }
 }
-
-use super::{BuildSummary, SchedulerError};
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fish_executor::{CommandSpec, ProcessExecutor};
+    use fish_executor::{CommandSpec, ExecutorError, ProcessExecutor};
+    use std::collections::HashSet;
     use std::sync::Arc;
+
+    fn chain_graph(labels: &[&str]) -> BuildGraph<Task> {
+        let mut graph = BuildGraph::new();
+        let mut ids = Vec::new();
+        for label in labels {
+            let spec = CommandSpec::new("echo").arg(*label);
+            ids.push(graph.add_node(Task::new(String::from(*label), spec.command_line(), spec)));
+        }
+        for window in ids.windows(2) {
+            graph
+                .add_dependency(window[0], window[1])
+                .expect("chain edges are acyclic");
+        }
+        graph
+    }
+
+    struct SelectiveExecutor {
+        fail: HashSet<String>,
+    }
+
+    impl TaskExecutor for SelectiveExecutor {
+        fn execute(&self, task: &Task) -> Result<TaskOutcome, ExecutorError> {
+            if self.fail.contains(&task.label) {
+                Ok(TaskOutcome::failed(task, "boom"))
+            } else {
+                Ok(TaskOutcome::executed(task))
+            }
+        }
+    }
 
     #[test]
     fn test_ml_work_stealing_distribution() {
@@ -196,12 +278,43 @@ mod tests {
         }
 
         let executor = Arc::new(ProcessExecutor::new(false));
-        let scheduler = WorkStealingScheduler::new(4, graph, executor);
+        let mut scheduler = WorkStealingScheduler::new(4, graph, executor);
 
         let result = scheduler.run();
         assert!(result.is_ok());
 
         let summary = result.unwrap();
         assert_eq!(summary.total, 10);
+        assert_eq!(summary.executed, 10);
+    }
+
+    #[test]
+    fn work_stealing_runs_transitive_dependencies() {
+        // a -> b -> c: the scheduler must keep dispatching newly unblocked
+        // tasks until the whole chain has run, not just the initial ready set.
+        let graph = chain_graph(&["a", "b", "c"]);
+        let executor = Arc::new(ProcessExecutor::new(false));
+        let mut scheduler = WorkStealingScheduler::new(2, graph, executor);
+
+        let summary = scheduler.run().unwrap();
+        assert_eq!(summary.total, 3);
+        assert_eq!(summary.executed, 3, "every task in the chain must execute");
+        assert_eq!(summary.failed, 0);
+    }
+
+    #[test]
+    fn work_stealing_propagates_failures() {
+        // a -> b -> c with b failing: b fails, c is cancelled, a succeeds.
+        let graph = chain_graph(&["a", "b", "c"]);
+        let executor = Arc::new(SelectiveExecutor {
+            fail: HashSet::from(["b".to_string()]),
+        });
+        let mut scheduler = WorkStealingScheduler::new(2, graph, executor);
+
+        let summary = scheduler.run().unwrap();
+        assert_eq!(summary.executed, 1, "only `a` completes");
+        assert_eq!(summary.failed, 1, "`b` fails");
+        assert_eq!(summary.cancelled, 1, "`c` is cancelled");
+        assert_eq!(summary.failures.len(), 1);
     }
 }

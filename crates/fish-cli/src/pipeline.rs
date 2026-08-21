@@ -48,14 +48,18 @@ impl PipelineResolver {
                                 if let Some(&dep_node_id) = node_registry
                                     .get(&(upstream_pkg.clone(), target_task.to_string()))
                                 {
-                                    let _ = graph.add_dependency(dep_node_id, current_node_id);
+                                    // A dependency cycle (or a missing node) in
+                                    // the pipeline configuration must surface
+                                    // as an error instead of silently dropping
+                                    // the edge and running tasks out of order.
+                                    graph.add_dependency(dep_node_id, current_node_id)?;
                                 }
                             }
                         }
                     } else if let Some(&same_pkg_dep_id) =
                         node_registry.get(&(pkg_name.clone(), dep_pattern.clone()))
                     {
-                        let _ = graph.add_dependency(same_pkg_dep_id, current_node_id);
+                        graph.add_dependency(same_pkg_dep_id, current_node_id)?;
                     }
                 }
             }

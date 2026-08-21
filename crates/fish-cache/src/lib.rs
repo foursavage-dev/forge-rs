@@ -764,6 +764,7 @@ pub(crate) fn unique_tmp_path(path: &Path) -> PathBuf {
 }
 
 fn atomic_rename(src: &Path, dst: &Path) -> io::Result<()> {
+    let mut last_err: Option<io::Error> = None;
     for i in 0..20 {
         match fs::rename(src, dst) {
             Ok(()) => return Ok(()),
@@ -773,6 +774,7 @@ fn atomic_rename(src: &Path, dst: &Path) -> io::Result<()> {
                         || e.raw_os_error() == Some(5)
                         || e.raw_os_error() == Some(32)) =>
             {
+                last_err = Some(e);
                 std::thread::sleep(std::time::Duration::from_millis(1 + i * 2));
             }
             Err(e) => {
@@ -781,7 +783,9 @@ fn atomic_rename(src: &Path, dst: &Path) -> io::Result<()> {
             }
         }
     }
-    Ok(())
+    // The rename never succeeded after exhausting the retry budget; report the
+    // last observed error instead of pretending the file was moved.
+    Err(last_err.unwrap_or_else(|| io::Error::other("atomic rename exhausted retries")))
 }
 
 #[derive(Debug)]

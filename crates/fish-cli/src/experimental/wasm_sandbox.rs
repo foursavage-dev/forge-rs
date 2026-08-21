@@ -2,7 +2,6 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -91,54 +90,18 @@ impl WasmPluginRunner {
         policy: &WasmIsolationPolicy,
         input_args: &[String],
     ) -> io::Result<WasmExecutionReport> {
-        if !plugin_wasm.exists() {
-            let parent = plugin_wasm.parent().unwrap_or_else(|| Path::new("."));
-            fs::create_dir_all(parent)?;
-            fs::write(
-                plugin_wasm,
-                [0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00],
-            )?;
-        }
-
-        let wasm_bytes = fs::read(plugin_wasm)?;
-        let header = Self::parse_and_validate_header(&wasm_bytes)?;
-        if !header.is_valid {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "Failed WASM validation check",
-            ));
-        }
-
-        // --- WASM/WASI HERMETIC SANDBOX LOGIC ---
-        // 1. Isolate the WASM Module using a restricted memory boundary
-        // 2. Map whitelisted directories into VFS for file operations
-        // 3. Inject allowed environment variables
-        // 4. Run to completion, tracking "fuel" (CPU instructions count) to prevent infinite loops
-
-        let mut outputs = Vec::new();
-        let mut actual_fuel_consumed = 0;
-
-        for write_path in &policy.write_paths {
-            if let Some(parent) = write_path.parent() {
-                fs::create_dir_all(parent)?;
-            }
-            fs::write(
-                write_path,
-                format!("WASM_EXECUTED_OUTPUT_SANDBOXED:{}", input_args.join(" ")),
-            )?;
-            outputs.push(write_path.clone());
-            actual_fuel_consumed += 450;
-        }
-
-        // Limit memory mapping to isolated pages
-        let pages = (policy.max_memory_mb * 1024 * 1024) / 65536;
-
-        Ok(WasmExecutionReport {
-            exit_code: 0,
-            generated_artifacts: outputs,
-            fuel_consumed: actual_fuel_consumed.max(1250).min(policy.fuel_limit),
-            memory_allocated_pages: pages.max(1),
-        })
+        // There is no WASM runtime embedded; actually running the module would
+        // require a wasmtime/wasmi dependency and a real sandbox. Failing
+        // loudly prevents fabricating output artifacts (and a fake exit code)
+        // for a plugin that never ran.
+        let _ = (policy, input_args);
+        Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            format!(
+                "WASM plugin execution is not implemented (`{}`)",
+                plugin_wasm.display()
+            ),
+        ))
     }
 }
 
@@ -148,7 +111,7 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    fn test_wasm_plugin_runner_isolated_sandbox() {
+    fn test_wasm_plugin_runner_refuses_fake_execution() {
         let temp = tempdir().unwrap();
         let wasm_file = temp.path().join("plugin.wasm");
         let out_file = temp.path().join("dist/bundle.js");
@@ -162,17 +125,20 @@ mod tests {
             fuel_limit: 50_000,
         };
 
-        let report = WasmPluginRunner::execute_sandboxed_plugin_with_report(
+        let result = WasmPluginRunner::execute_sandboxed_plugin_with_report(
             &wasm_file,
             &policy,
             &["--minify".to_string()],
-        )
-        .unwrap();
-
-        assert_eq!(report.exit_code, 0);
-        assert_eq!(report.generated_artifacts.len(), 1);
-        assert!(report.memory_allocated_pages >= 1);
-        assert!(out_file.exists());
+        );
+        assert!(
+            result.is_err(),
+            "unimplemented WASM execution must fail loudly"
+        );
+        assert!(!out_file.exists(), "no fake output artifact may be written");
+        assert!(
+            !wasm_file.exists(),
+            "a missing plugin must not be replaced with a fabricated stub"
+        );
     }
 
     #[test]

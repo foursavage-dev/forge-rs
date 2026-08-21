@@ -199,7 +199,7 @@ impl CasStorage {
         // Check quota
         if self.config.max_size_bytes > 0 {
             let stats = self.backend.stats().await?;
-            if stats.total_bytes + artifact.size() > self.config.max_size_bytes {
+            if stats.total_bytes.saturating_add(artifact.size()) > self.config.max_size_bytes {
                 return Err(CasError::QuotaExceeded(format!(
                     "Storage quota exceeded: {} + {} > {}",
                     stats.total_bytes,
@@ -309,7 +309,17 @@ impl CleanupPolicy {
                     .as_secs() as i64;
                 current_time - metadata.timestamp > duration.as_secs() as i64
             }
-            Self::NotAccessedIn(_duration) => false,
+            Self::NotAccessedIn(duration) => {
+                let current_time = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as i64;
+                let threshold = duration.as_secs() as i64;
+                // Prefer the last-access timestamp; fall back to the store
+                // time for records written before access tracking existed.
+                let last = metadata.last_accessed.unwrap_or(metadata.timestamp);
+                current_time - last > threshold
+            }
             Self::RemoveTags(tags) => tags.iter().any(|tag| metadata.tags.contains(tag)),
             Self::KeepMostRecent(_) => false,
         }
@@ -398,6 +408,43 @@ mod tests {
         let policy = CleanupPolicy::OlderThan(std::time::Duration::from_secs(60 * 60 * 24 * 7)); // 7 days
         assert!(!policy.should_remove(&artifact)); // Recent artifact
         assert!(policy.should_remove(&old_artifact)); // Old artifact
+
+        // NotAccessedIn is driven by last_accessed when present, falling back
+        // to the store timestamp for legacy records.
+        let not_accessed =
+            CleanupPolicy::NotAccessedIn(std::time::Duration::from_secs(60 * 60 * 24 * 7));
+
+        let mut untouched = artifact.clone();
+        untouched.metadata.last_accessed = None;
+        assert!(
+            !not_accessed.should_remove(&untouched),
+            "fresh record must survive"
+        );
+
+        let mut stale = artifact.clone();
+        stale.metadata.last_accessed = Some(
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64
+                - 10 * 24 * 60 * 60,
+        );
+        assert!(
+            not_accessed.should_remove(&stale),
+            "long-untouched record must be removed"
+        );
+
+        let mut legacy = artifact.clone();
+        legacy.metadata.last_accessed = None;
+        legacy.metadata.timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64
+            - 10 * 24 * 60 * 60;
+        assert!(
+            not_accessed.should_remove(&legacy),
+            "legacy records without last_accessed fall back to their store time"
+        );
 
         // Test RemoveTags policy
         let mut tagged_artifact = artifact.clone();

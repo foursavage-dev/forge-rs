@@ -59,10 +59,30 @@ impl SigningKeyPair {
         Ok(keypair)
     }
 
-    /// Save key pair to file
+    /// Save key pair to file.
+    ///
+    /// The file contains the secret key, so on Unix it is created with
+    /// owner-only permissions (0600) directly, without an intermediate
+    /// world-readable state that a permissive umask would otherwise allow.
     pub async fn save_to_file<P: AsRef<Path>>(&self, path: P) -> SigningResult<()> {
         let content = serde_json::to_string_pretty(self)?;
-        fs::write(path.as_ref(), content).await?;
+        let path = path.as_ref();
+
+        #[cfg(unix)]
+        {
+            use std::io::Write;
+            use std::os::unix::fs::OpenOptionsExt;
+            let mut options = std::fs::OpenOptions::new();
+            options.write(true).create(true).truncate(true).mode(0o600);
+            let mut file = options.open(path)?;
+            file.write_all(content.as_bytes())?;
+        }
+
+        #[cfg(not(unix))]
+        {
+            fs::write(path, content).await?;
+        }
+
         Ok(())
     }
 
@@ -117,5 +137,25 @@ mod tests {
         let loaded = SigningKeyPair::from_file(temp_file.path()).await.unwrap();
         assert_eq!(keypair.public_key_bytes(), loaded.public_key_bytes());
         assert_eq!(keypair.secret_key_bytes(), loaded.secret_key_bytes());
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn secret_key_file_is_written_owner_only() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let keypair = SigningKeyPair::generate(KeyGenerationOptions::default()).unwrap();
+        let temp_file = NamedTempFile::new().unwrap();
+        keypair.save_to_file(temp_file.path()).await.unwrap();
+
+        let mode = std::fs::metadata(temp_file.path())
+            .unwrap()
+            .permissions()
+            .mode();
+        assert_eq!(
+            mode & 0o777,
+            0o600,
+            "secret key file must be owner read/write only, got {mode:o}"
+        );
     }
 }

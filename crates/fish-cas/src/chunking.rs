@@ -71,12 +71,25 @@ impl FastCdcChunker {
             } else {
                 let limit = remaining.min(self.max_size);
                 let mut cut = self.min_size;
-                let mask = (self.avg_size - 1) as u32;
+                // `avg_size.max(1)` avoids an underflow/divide-by-zero when a
+                // caller constructs the chunker with `avg_size == 0`. A modulo
+                // (instead of `hash & (avg_size - 1)`) also stays correct for
+                // non-power-of-two averages, where the old bitmask was not
+                // equivalent to `hash % avg_size`.
+                let divisor = self.avg_size.max(1) as u64;
 
                 while cut < limit {
-                    let byte = data[offset + cut];
-                    let hash_val = (byte as u32).wrapping_mul(0x5bd1e995);
-                    if (hash_val & mask) == 0 {
+                    // Hash a small window (up to 8 bytes) rather than a single
+                    // byte: a one-byte hash has only 256 distinct values, so
+                    // for `avg_size > 256` boundaries essentially never fire
+                    // and every chunk collapses to `max_size`. A 64-bit hash
+                    // spreads boundaries at the intended `1 / avg_size` rate.
+                    let mut hash_val: u64 = 0;
+                    let window_end = (offset + cut + 8).min(len);
+                    for byte in data.iter().take(window_end).skip(offset + cut) {
+                        hash_val = hash_val.wrapping_mul(0x5bd1e995).wrapping_add(*byte as u64);
+                    }
+                    if hash_val.is_multiple_of(divisor) {
                         break;
                     }
                     cut += 1;
@@ -156,5 +169,70 @@ mod tests {
         let (chunks, manifest) = chunker.chunk_data(&[]);
         assert_eq!(chunks.len(), 1);
         assert_eq!(manifest.total_size, 0);
+    }
+
+    #[test]
+    fn zero_avg_size_does_not_panic_and_still_roundtrips() {
+        let chunker = FastCdcChunker::new(64, 0, 256);
+        let sample: Vec<u8> = (0..1024).map(|i| (i % 253) as u8).collect();
+
+        let (chunks, manifest) = chunker.chunk_data(&sample);
+        assert!(!chunks.is_empty());
+
+        let mut map = BTreeMap::new();
+        for c in chunks {
+            map.insert(c.hash, c.data);
+        }
+        let restored = FastCdcChunker::reconstruct_from_chunks(&manifest, &map).unwrap();
+        assert_eq!(restored, sample);
+    }
+
+    #[test]
+    fn non_power_of_two_avg_size_roundtrips() {
+        let chunker = FastCdcChunker::new(16, 100, 512);
+        let sample: Vec<u8> = (0..4096).map(|i| ((i * 37 + 11) % 256) as u8).collect();
+
+        let (chunks, manifest) = chunker.chunk_data(&sample);
+        assert!(!chunks.is_empty());
+        assert_eq!(manifest.total_size, sample.len());
+
+        let mut map = BTreeMap::new();
+        for c in chunks {
+            map.insert(c.hash, c.data);
+        }
+        let restored = FastCdcChunker::reconstruct_from_chunks(&manifest, &map).unwrap();
+        assert_eq!(restored, sample);
+    }
+
+    #[test]
+    fn large_average_size_produces_avg_sized_chunks_not_max_sized() {
+        // With avg_size = 1024 (> 256) and high-entropy input, a one-byte
+        // hash would collapse to chunks of ~min_size + 256 bytes; the
+        // multi-byte window hash must spread boundaries at ~1/1024, so the
+        // average chunk length tracks `avg_size` instead of `max_size`. The
+        // input is deterministic (xorshift64), so this cannot flake.
+        let chunker = FastCdcChunker::new(16, 1024, 4096);
+
+        let mut state: u64 = 0x1234_5678_9abc_def0;
+        let sample: Vec<u8> = (0..524288)
+            .map(|_| {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                (state >> 56) as u8
+            })
+            .collect();
+
+        let (chunks, manifest) = chunker.chunk_data(&sample);
+        assert_eq!(manifest.total_size, sample.len());
+        let count = chunks.len();
+
+        // ~524288 / (16 + 1024) ≈ 493 chunks expected; the old single-byte
+        // hash would yield ~1900. A generous window separates the two while
+        // tolerating hash-distribution variance.
+        assert!(
+            (200..=1500).contains(&count),
+            "expected avg-sized chunks, got {count}"
+        );
     }
 }
