@@ -65,7 +65,10 @@ mod tests {
 
         let dashboard = AnalyticsDashboard::new(config);
         let result = dashboard.start().await;
-        assert!(result.is_ok());
+        assert!(
+            result.is_err(),
+            "the stub dashboard must fail loudly while it is unimplemented"
+        );
     }
 
     #[test]
