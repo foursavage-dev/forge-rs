@@ -92,15 +92,23 @@ class ScheduleOptimizer:
     ) -> List[str]:
         memo: Dict[str, float] = {}
         next_hop: Dict[str, str] = {}
+        visiting: Set[str] = set()
 
         def get_longest(task: str) -> float:
             if task in memo:
                 return memo[task]
+            # Guard against back-edges: a dependency cycle would otherwise
+            # recurse forever and blow the stack with a RecursionError.
+            if task in visiting:
+                raise ValueError(f"dependency cycle detected at task `{task}`")
+            visiting.add(task)
+
             deps = dependencies.get(task, [])
             if not deps:
                 memo[task] = weights.get(task, 1.0)
+                visiting.discard(task)
                 return memo[task]
-            
+
             max_child_cost = 0.0
             best_child = ""
             for d in deps:
@@ -108,10 +116,11 @@ class ScheduleOptimizer:
                 if c > max_child_cost:
                     max_child_cost = c
                     best_child = d
-            
+
             memo[task] = weights.get(task, 1.0) + max_child_cost
             if best_child:
                 next_hop[task] = best_child
+            visiting.discard(task)
             return memo[task]
 
         all_roots = set(dependencies.keys())
