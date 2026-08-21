@@ -1,4 +1,4 @@
-﻿use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -96,4 +96,3 @@ mod tests {
         assert_eq!(doc.predicate.builder.id, "https://github.com/requla11/fish");
     }
 }
-
