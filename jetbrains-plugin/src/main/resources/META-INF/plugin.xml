@@ -1,0 +1,29 @@
+﻿<idea-plugin>
+    <id>com.fish.build.orchestration</id>
+    <name>Fish Build Orchestration</name>
+    <vendor email="support@fish-build.org" url="https://github.com/requla11/fish">Fish Team</vendor>
+
+    <description><![CDATA[
+    Interactive build orchestration, DAG dependency visualizer, and Language Server Protocol integration for Fish.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends optional="true" config-file="fish-lsp.xml">com.intellij.platform.lsp</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Fish"
+                    factoryClass="com.fish.plugin.FishToolWindowFactory"
+                    anchor="right"
+                    icon="com.fish.plugin.FishIcons.TOOL_WINDOW"/>
+    </extensions>
+
+    <actions>
+        <action id="Fish.RunBuild"
+                class="com.fish.plugin.FishRunTaskAction"
+                text="Fish: Run Build"
+                description="Run the Fish build pipeline"
+                icon="AllIcons.Actions.Execute">
+            <add-to-group group-id="ToolbarRunGroup" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>

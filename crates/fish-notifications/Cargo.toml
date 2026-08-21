@@ -1,6 +1,6 @@
-[package]
+﻿[package]
 name = "fish-notifications"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 authors = ["Foursavage Dev <foursavage@proton.me>"]
 license = "MIT"
@@ -20,3 +20,4 @@ tokio = { version = "1.40", features = ["full"] }
 reqwest = { version = "0.13", features = ["json"] }
 async-trait = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
+

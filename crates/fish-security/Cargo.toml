@@ -1,6 +1,6 @@
-[package]
+﻿[package]
 name = "fish-security"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 authors = ["Foursavage Dev <foursavage@proton.me>"]
 license = "MIT"
@@ -24,3 +24,4 @@ semver = "1.0"
 
 [dev-dependencies]
 tempfile = "3.10"
+

@@ -23,8 +23,35 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  changes:
+    name: Detect Changed Languages
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+      go: ${{ steps.filter.outputs.go }}
+      python: ${{ steps.filter.outputs.python }}
+      vscode: ${{ steps.filter.outputs.vscode }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rust:
+              - 'crates/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+            go:
+              - 'go/**'
+            python:
+              - 'py/**'
+            vscode:
+              - 'vscode-extension/**'
+
   core-backends:
     name: Core Language Backends Testing
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -35,6 +62,8 @@ jobs:
 
   extended-backends:
     name: Extended Language Backends Testing
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -45,6 +74,8 @@ jobs:
 
   go-services:
     name: Go Networking Services Testing
+    needs: changes
+    if: ${{ needs.changes.outputs.go == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -58,6 +89,8 @@ jobs:
 
   python-ai-services:
     name: Python AI Services Testing
+    needs: changes
+    if: ${{ needs.changes.outputs.python == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -68,3 +101,21 @@ jobs:
       - name: Run Python unit tests
         working-directory: py
         run: python -m unittest discover tests
+
+  vscode-extension:
+    name: VS Code Extension Testing
+    needs: changes
+    if: ${{ needs.changes.outputs.vscode == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+      - name: Install dependencies and test
+        working-directory: vscode-extension
+        run: |
+          npm ci
+          npm run compile
+          npm run lint

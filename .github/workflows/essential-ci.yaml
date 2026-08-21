@@ -23,8 +23,26 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  changes:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rust:
+              - 'crates/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+
   critical-crates:
     name: Critical Crates Testing
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -35,6 +53,8 @@ jobs:
 
   critical-quality:
     name: Critical Quality Checks
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -55,9 +75,9 @@ jobs:
     steps:
       - name: Check status
         run: |
-          if [ "${{ needs.critical-crates.result }}" != "success" ] || \
-             [ "${{ needs.critical-quality.result }}" != "success" ]; then
+          if [ "${{ needs.critical-crates.result }}" = "failure" ] || \
+             [ "${{ needs.critical-quality.result }}" = "failure" ]; then
             echo "Essential CI Failed"
             exit 1
           fi
-          echo "Essential CI Passed"
+          echo "Essential CI Passed or skipped"

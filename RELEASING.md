@@ -1,6 +1,6 @@
-# Release Process
+﻿# Release Process
 
-> 🌐 **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
+> ðŸŒ **Translations & Contributions:** Want to translate or improve this document in your language? See our [Translation Guidelines](TRANSLATION.md).
 
 This document describes the process for releasing new versions of Fish.
 
@@ -47,7 +47,7 @@ Update version in workspace `Cargo.toml`:
 
 ```toml
 [workspace.package]
-version = "0.2.0"  # Bump version
+version = "0.3.0"  # Bump version
 ```
 
 Update version in all crate `Cargo.toml` files if they have explicit versions.
@@ -57,7 +57,7 @@ Update version in all crate `Cargo.toml` files if they have explicit versions.
 Add new section to CHANGELOG.md:
 
 ```markdown
-## [0.2.0] - 2026-XX-XX
+## [0.3.0] - 2026-XX-XX
 
 ### Added
 - New feature descriptions
@@ -75,7 +75,7 @@ Add new section to CHANGELOG.md:
 ### 3. Create Release Branch
 
 ```bash
-git checkout -b release/v0.2.0
+git checkout -b release/v0.3.0
 ```
 
 ### 4. Final Testing
@@ -98,27 +98,27 @@ cargo build --release
 
 ```bash
 git add .
-git commit -m "chore: release v0.2.0"
+git commit -m "chore: release v0.3.0"
 ```
 
 ### 6. Tag Release
 
 ```bash
-git tag -a v0.2.0 -m "Release v0.2.0"
+git tag -a v0.3.0 -m "Release v0.3.0"
 ```
 
 ### 7. Push to GitHub
 
 ```bash
-git push upstream release/v0.2.0
-git push upstream v0.2.0
+git push upstream release/v0.3.0
+git push upstream v0.3.0
 ```
 
 ### 8. Create GitHub Release
 
 1. Go to GitHub releases page
 2. Click "Draft a new release"
-3. Select tag `v0.2.0`
+3. Select tag `v0.3.0`
 4. Add release title and description
 5. Attach binaries if applicable
 6. Publish release
@@ -139,7 +139,7 @@ cargo publish -p fish-cli
 
 ```bash
 git checkout main
-git merge release/v0.2.0
+git merge release/v0.3.0
 git push upstream main
 ```
 
@@ -207,10 +207,10 @@ target/release/Fish.exe -> fish-windows-x86_64.exe
 
 ```bash
 # Build Docker image
-docker build -t foursavage/Fish:0.2.0 .
+docker build -t foursavage/Fish:0.3.0 .
 
 # Push to registry
-docker push foursavage/Fish:0.2.0
+docker push foursavage/Fish:0.3.0
 docker push foursavage/Fish:latest
 ```
 
@@ -240,7 +240,7 @@ If a release has critical issues:
 ### Release Notes Template
 
 ```markdown
-## Fish v0.2.0 Release
+## Fish v0.3.0 Release
 
 ### Highlights
 - Major feature 1
@@ -270,3 +270,4 @@ Thanks to contributors for this release
 - **Older versions**: No support
 
 Typically support the last 2 minor versions.
+

@@ -23,8 +23,26 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  changes:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rust:
+              - 'crates/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+
   core-integration:
     name: Core & CLI Integration Tests
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -37,6 +55,8 @@ jobs:
 
   subsystems-integration:
     name: Subsystems Integration Tests
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -55,9 +75,9 @@ jobs:
     steps:
       - name: Check Status
         run: |
-          if [ "${{ needs.core-integration.result }}" != "success" ] || \
-             [ "${{ needs.subsystems-integration.result }}" != "success" ]; then
+          if [ "${{ needs.core-integration.result }}" = "failure" ] || \
+             [ "${{ needs.subsystems-integration.result }}" = "failure" ]; then
             echo "Integration Tests Failed"
             exit 1
           fi
-          echo "All Integration Tests Passed"
+          echo "All Integration Tests Passed or skipped"

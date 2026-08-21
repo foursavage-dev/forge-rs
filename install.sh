@@ -1,12 +1,12 @@
-#!/bin/bash
+﻿#!/bin/bash
 set -e
 
-FISH_VERSION="0.2.0"
+FISH_VERSION="0.3.0"
 FISH_REPO="requla11/fish"
 INSTALL_DIR="/usr/local/bin"
 TEMP_DIR=$(mktemp -d)
 
-echo "🐟 Installing Fish v${FISH_VERSION}..."
+echo "ðŸŸ Installing Fish v${FISH_VERSION}..."
 
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
@@ -19,7 +19,7 @@ case $ARCH in
         ARCH="arm64"
         ;;
     *)
-        echo "❌ Unsupported architecture: $ARCH"
+        echo "âŒ Unsupported architecture: $ARCH"
         exit 1
         ;;
 esac
@@ -27,16 +27,16 @@ esac
 BINARY_NAME="fish-${OS}-${ARCH}"
 DOWNLOAD_URL="https://github.com/${FISH_REPO}/releases/download/v${FISH_VERSION}/${BINARY_NAME}"
 
-echo "📥 Downloading Fish from ${DOWNLOAD_URL}..."
+echo "ðŸ“¥ Downloading Fish from ${DOWNLOAD_URL}..."
 
 if curl -fsSL -o "${TEMP_DIR}/fish" "${DOWNLOAD_URL}"; then
-    echo "✅ Download successful"
+    echo "âœ… Download successful"
 else
-    echo "⚠️  Pre-built binary not found, building from source..."
-    echo "📦 This requires Rust to be installed"
+    echo "âš ï¸  Pre-built binary not found, building from source..."
+    echo "ðŸ“¦ This requires Rust to be installed"
     
     if ! command -v cargo &> /dev/null; then
-        echo "❌ Rust/Cargo not found. Please install Rust first:"
+        echo "âŒ Rust/Cargo not found. Please install Rust first:"
         echo "   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
         exit 1
     fi
@@ -47,15 +47,15 @@ else
     cargo build --release -p fish-cli
     
     cp target/release/fish "${TEMP_DIR}/fish"
-    echo "✅ Build successful"
+    echo "âœ… Build successful"
 fi
 
-echo "📝 Installing to ${INSTALL_DIR}..."
+echo "ðŸ“ Installing to ${INSTALL_DIR}..."
 if [ -w "${INSTALL_DIR}" ]; then
     mv "${TEMP_DIR}/fish" "${INSTALL_DIR}/fish"
     chmod +x "${INSTALL_DIR}/fish"
 else
-    echo "⚠️  Sudo required for installation"
+    echo "âš ï¸  Sudo required for installation"
     sudo mv "${TEMP_DIR}/fish" "${INSTALL_DIR}/fish"
     sudo chmod +x "${INSTALL_DIR}/fish"
 fi
@@ -63,10 +63,11 @@ fi
 rm -rf "${TEMP_DIR}"
 
 if command -v fish &> /dev/null; then
-    echo "✅ Fish installed successfully!"
-    echo "🎉 Run 'fish --help' to get started"
+    echo "âœ… Fish installed successfully!"
+    echo "ðŸŽ‰ Run 'fish --help' to get started"
     fish --version
 else
-    echo "❌ Installation failed"
+    echo "âŒ Installation failed"
     exit 1
 fi
+

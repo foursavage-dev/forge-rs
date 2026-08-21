@@ -1,0 +1,22 @@
+﻿{
+  "assistant": {
+    "version": "2",
+    "default_model": {
+      "provider": "anthropic",
+      "model": "claude-3-7-sonnet-latest"
+    }
+  },
+  "languages": {
+    "Rust": {
+      "format_on_save": "on",
+      "formatter": "language_server"
+    },
+    "Go": {
+      "format_on_save": "on",
+      "formatter": "language_server"
+    },
+    "Python": {
+      "format_on_save": "on"
+    }
+  }
+}

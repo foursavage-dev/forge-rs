@@ -176,3 +176,4 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 - [Rust Book](https://doc.rust-lang.org/book/)
 - [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
 - [Cargo Book](https://doc.rust-lang.org/cargo/)
+- [Agentic Awesome Skills by @sickn33](https://github.com/sickn33/agentic-awesome-skills) - Special thanks and credit for the curated agent skills in `.agents/skills/`.

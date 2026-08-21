@@ -1,0 +1,19 @@
+﻿# Windsurf / Codeium Rules for Fish Engine
+
+## Architectural Context
+Fish is a polyglot build orchestration system designed for high concurrency, content-addressable artifact storage, and deterministic incremental compilation across 11+ language backends.
+
+## Developer Instructions
+- **Rust Development**:
+  - Always write idiomatic Rust 2024.
+  - Keep `cargo clippy --workspace --all-targets --all-features -- -D warnings` clean.
+  - Implement full, real logic. Never leave empty placeholder stubs returning `Ok(())`.
+- **Go Services (`go/`)**:
+  - Follow standard Go package layout with `cmd/` and `pkg/`.
+  - Maintain zero race conditions (`go test -race ./...`).
+- **Python AI Engine (`py/`)**:
+  - Ensure zero external heavy dependencies for core RPC server (`py/fish_ai/server.py`).
+  - Keep tests under `py/tests/` running fast (< 100ms).
+- **VS Code Extension (`vscode-extension/`)**:
+  - Integrate with `fish lsp` via `vscode-languageclient/node`.
+  - Strict TypeScript compliance without `any` overrides where possible.

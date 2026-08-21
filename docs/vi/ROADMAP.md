@@ -28,18 +28,20 @@ Fish hướng tới trở thành hệ thống điều phối build đa ngôn ng�
 ## ⚡ Mục tiêu Ngắn hạn (v0.3.x) — Trọng tâm: Trải nghiệm & Giao thức
 
 ### 1. Tích hợp IDE & Trình soạn thảo
-- [ ] **Extension VS Code**: Trực quan hóa đồ thị DAG tương tác, chạy tác vụ 1-click và chuẩn đoán lỗi trực tiếp.
-- [ ] **Plugin JetBrains**: Tích hợp cho CLion, IntelliJ IDEA và Rider.
-- [ ] **Cầu nối LSP (Language Server Protocol)**: Tự động hoàn thiện cú pháp `fish.toml` và kiểm tra lỗi thời gian thực.
+- [x] **Extension VS Code**: Trực quan hóa đồ thị DAG tương tác, chạy tác vụ 1-click và chuẩn đoán lỗi trực tiếp.
+- [x] **Plugin JetBrains**: Tích hợp cho CLion, IntelliJ IDEA và Rider với ToolWindow DAG và LSP.
+- [x] **Cầu nối LSP (Language Server Protocol)**: Tự động hoàn thiện cú pháp `fish.toml` và kiểm tra lỗi thời gian thực.
 
 ### 2. Giao thức IPC & Dịch vụ Tốc độ cao
-- [ ] **Luồng IPC Daemon**: Giao tiếp JSON-RPC qua Unix domain socket / Windows named pipes với độ trễ dưới 1 mili-giây.
-- [ ] **Giao thức gRPC REAPI**: Chuẩn Remote Execution API tương thích các hệ thống build phân tán.
-- [ ] **Theo dõi tệp bằng eBPF**: Ghi nhận chính xác tệp input/output ở cấp nhân Linux.
+- [x] **Luồng IPC Daemon**: Giao tiếp JSON-RPC qua Unix domain socket / Windows named pipes với độ trễ dưới 1 mili-giây.
+- [x] **Giao thức gRPC REAPI**: Chuẩn Remote Execution API v2 tương thích các hệ thống build phân tán.
+- [x] **Theo dõi tệp bằng eBPF**: Ghi nhận chính xác tệp input/output và phát hiện phụ thuộc động ở cấp nhân Linux.
 
 ### 3. Công cụ Chuẩn đoán Thông minh
-- [ ] **Trợ lý Doctor AI tương tác**: Tự động phát hiện lỗi môi trường và gợi ý lệnh sửa tự động (`fish doctor --fix`).
-- [ ] **Nâng cấp giao diện TUI**: Biểu đồ CPU/RAM thời gian thực và chế độ xem tiến trình dạng Waterfall.
+- [x] **Trợ lý Doctor AI tương tác**: Tự động phát hiện lỗi môi trường và gợi ý lệnh sửa tự động (`fish doctor --fix`).
+- [x] **Nâng cấp giao diện TUI**: Biểu đồ CPU/RAM thời gian thực và chế độ xem tiến trình dạng Waterfall.
+
+> **Cột mốc v0.3.x hoàn thành (21/08/2026):** Toàn bộ 8/8 hạng mục về Trải nghiệm Lập trình viên & Giao thức Phân tán đã hoàn tất 100% với kiểm thử xanh toàn diện.
 
 ---
 
@@ -51,9 +53,9 @@ Fish hướng tới trở thành hệ thống điều phối build đa ngôn ng�
 - [ ] **Đồng bộ Cache Đa Vùng (P2P CAS)**: Tái tạo và chia sẻ cache L2 phân tán theo địa lý.
 
 ### 2. Trí tuệ Nhân tạo & Dự đoán Tác vụ
-- [ ] **Mô hình AI Dự đoán Thời gian Build**: Dự báo thời gian hoàn thành dựa trên độ phức tạp AST và dữ liệu lịch sử.
-- [ ] **Cách ly Flaky Test Tự động**: Phát hiện và cô lập các bài kiểm thử không tất định.
-- [ ] **Pre-warming Thông minh**: Tự động dự đoán và biên dịch trước các gói có khả năng bị sửa đổi.
+- [x] **Mô hình AI Dự đoán Thời gian Build**: Dự báo thời gian hoàn thành dựa trên độ phức tạp AST và dữ liệu lịch sử.
+- [x] **Cách ly Flaky Test Tự động**: Phát hiện và cô lập các bài kiểm thử không tất định.
+- [x] **Pre-warming Thông minh**: Tự động dự đoán và biên dịch trước các gói có khả năng bị sửa đổi.
 
 ### 3. Đo lường Hiệu suất & Hợp tác Nhóm
 - [ ] **Tích hợp OpenTelemetry**: Truy vết phân tán toàn diện trên từng bước build và nút mạng.
@@ -84,7 +86,7 @@ Fish hướng tới trở thành hệ thống điều phối build đa ngôn ng�
 
 | Phiên bản | Trọng tâm chính | Dự kiến | Trạng thái |
 | :--- | :--- | :--- | :--- |
-| **v0.2.x** | Lõi Tri-Engine, 11 Backends, CAS, Tài liệu 5 Ngôn ngữ | Hiện tại | ✅ Hoàn thành |
-| **v0.3.x** | Plugin IDE, Giao thức IPC, eBPF Tracing, LSP | Q4 2026 | 🟡 Đang thực hiện |
-| **v0.4.x - v0.5.x** | K8s Operator, Dự đoán ML, OpenTelemetry, Wasm | Q1 - Q2 2027 | ⚪ Kế hoạch |
+| **v0.2.x** | Lõi Tri-Engine, 11 Backends, CAS, Tài liệu 5 Ngôn ngữ | Q3 2026 | ✅ Hoàn thành |
+| **v0.3.x** | Plugin IDE, Giao thức IPC, eBPF Tracing, LSP | Hiện tại | ✅ Hoàn thành |
+| **v0.4.x - v0.5.x** | K8s Operator, Dự đoán ML, OpenTelemetry, Wasm | Q1 - Q2 2027 | 🟡 Tiếp theo |
 | **v1.0** | MicroVM Sandbox, Doanh nghiệp SSO, P2P Mesh, SLSA L3 | Q3 2027+ | ⚪ Tầm nhìn |

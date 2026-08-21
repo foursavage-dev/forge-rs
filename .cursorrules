@@ -1,0 +1,29 @@
+﻿# Fish Build Engine - AI Engineering Guidelines for Cursor
+
+## System Overview
+Fish is a high-performance polyglot build orchestration engine written in Rust 2024, with Go distributed networking services, a Python AI optimization backend, and a TypeScript VS Code extension.
+
+## Core Rules & Invariants
+1. **Language Standards**:
+   - Rust: Edition 2024, MSRV 1.88+. Use `#![forbid(unsafe_code)]` wherever possible.
+   - Go: Go 1.22+, strict error handling, context propagation, buffered channels.
+   - Python: Python 3.11+, typed definitions, standard `unittest`.
+   - TypeScript: Strict typing, ESLint compliance, LSP integration.
+
+2. **No Fake Stubs / Fail-Loud Policy**:
+   - Never fabricate `Ok(())` or fake success in missing subsystems.
+   - Always return typed, descriptive errors (`thiserror` for library crates, `anyhow` for CLI/applications).
+
+3. **Cross-Platform Portability**:
+   - Always normalize cache keys and graph node paths with forward slashes (`/`).
+   - Process execution must support Windows and Unix natively.
+   - Clean up child processes with `kill_on_drop` / process group management.
+
+4. **Performance & Memory**:
+   - Use BLAKE3 for all cryptographic and content hashing.
+   - Use ZSTD for CAS artifact compression with chunked streaming.
+   - Use lock-free data structures (Chase-Lev deque, lockless graph) for the scheduler.
+
+5. **Testing & Quality**:
+   - Verify every change with `cargo fmt --all -- --check` and `cargo clippy --workspace --all-targets --all-features -- -D warnings`.
+   - Write comprehensive unit & integration tests covering edge cases.

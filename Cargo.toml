@@ -1,4 +1,4 @@
-[workspace]
+﻿[workspace]
 resolver = "2"
 members = [
     "crates/fish-core",
@@ -38,7 +38,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.88"
 license = "MIT"
@@ -47,38 +47,38 @@ description = "Fish is a fast, flexible, cache-first build orchestration system 
 
 [workspace.dependencies]
 anyhow = "1.0"
-fish-core = { path = "crates/fish-core", version = "0.2.0" }
-fish-graph = { path = "crates/fish-graph", version = "0.2.0" }
-fish-executor = { path = "crates/fish-executor", version = "0.2.0" }
-fish-scheduler = { path = "crates/fish-scheduler", version = "0.2.0" }
-fish-cache = { path = "crates/fish-cache", version = "0.2.0" }
-fish-cas = { path = "crates/fish-cas", version = "0.2.0" }
-fish-ci-generator = { path = "crates/fish-ci-generator", version = "0.2.0" }
-fish-backend-rust = { path = "crates/fish-backend-rust", version = "0.2.0" }
-fish-backend-cc = { path = "crates/fish-backend-cc", version = "0.2.0" }
-fish-backend-go = { path = "crates/fish-backend-go", version = "0.2.0" }
-fish-backend-ts = { path = "crates/fish-backend-ts", version = "0.2.0" }
-fish-backend-py = { path = "crates/fish-backend-py", version = "0.2.0" }
-fish-backend-java = { path = "crates/fish-backend-java", version = "0.2.0" }
-fish-backend-dotnet = { path = "crates/fish-backend-dotnet", version = "0.2.0" }
-fish-backend-swift = { path = "crates/fish-backend-swift", version = "0.2.0" }
-fish-backend-dart = { path = "crates/fish-backend-dart", version = "0.2.0" }
-fish-backend-zig = { path = "crates/fish-backend-zig", version = "0.2.0" }
-fish-backend-docker = { path = "crates/fish-backend-docker", version = "0.2.0" }
-fish-worker = { path = "crates/fish-worker", version = "0.2.0" }
-fish-plugin = { path = "crates/fish-plugin", version = "0.2.0" }
-fish-remote-cache = { path = "crates/fish-remote-cache", version = "0.2.0" }
-fish-sandbox = { path = "crates/fish-sandbox", version = "0.2.0" }
-fish-signing = { path = "crates/fish-signing", version = "0.2.0" }
-fish-security = { path = "crates/fish-security", version = "0.2.0" }
-fish-analytics = { path = "crates/fish-analytics", version = "0.2.0" }
-fish-multiplatform = { path = "crates/fish-multiplatform", version = "0.2.0" }
-fish-notifications = { path = "crates/fish-notifications", version = "0.2.0" }
-fish-flaky-detection = { path = "crates/fish-flaky-detection", version = "0.2.0" }
-fish-docker-builder = { path = "crates/fish-docker-builder", version = "0.2.0" }
-fish-secrets = { path = "crates/fish-secrets", version = "0.2.0" }
-fish-incremental = { path = "crates/fish-incremental", version = "0.2.0" }
-fish-templates = { path = "crates/fish-templates", version = "0.2.0" }
+fish-core = { path = "crates/fish-core", version = "0.3.0" }
+fish-graph = { path = "crates/fish-graph", version = "0.3.0" }
+fish-executor = { path = "crates/fish-executor", version = "0.3.0" }
+fish-scheduler = { path = "crates/fish-scheduler", version = "0.3.0" }
+fish-cache = { path = "crates/fish-cache", version = "0.3.0" }
+fish-cas = { path = "crates/fish-cas", version = "0.3.0" }
+fish-ci-generator = { path = "crates/fish-ci-generator", version = "0.3.0" }
+fish-backend-rust = { path = "crates/fish-backend-rust", version = "0.3.0" }
+fish-backend-cc = { path = "crates/fish-backend-cc", version = "0.3.0" }
+fish-backend-go = { path = "crates/fish-backend-go", version = "0.3.0" }
+fish-backend-ts = { path = "crates/fish-backend-ts", version = "0.3.0" }
+fish-backend-py = { path = "crates/fish-backend-py", version = "0.3.0" }
+fish-backend-java = { path = "crates/fish-backend-java", version = "0.3.0" }
+fish-backend-dotnet = { path = "crates/fish-backend-dotnet", version = "0.3.0" }
+fish-backend-swift = { path = "crates/fish-backend-swift", version = "0.3.0" }
+fish-backend-dart = { path = "crates/fish-backend-dart", version = "0.3.0" }
+fish-backend-zig = { path = "crates/fish-backend-zig", version = "0.3.0" }
+fish-backend-docker = { path = "crates/fish-backend-docker", version = "0.3.0" }
+fish-worker = { path = "crates/fish-worker", version = "0.3.0" }
+fish-plugin = { path = "crates/fish-plugin", version = "0.3.0" }
+fish-remote-cache = { path = "crates/fish-remote-cache", version = "0.3.0" }
+fish-sandbox = { path = "crates/fish-sandbox", version = "0.3.0" }
+fish-signing = { path = "crates/fish-signing", version = "0.3.0" }
+fish-security = { path = "crates/fish-security", version = "0.3.0" }
+fish-analytics = { path = "crates/fish-analytics", version = "0.3.0" }
+fish-multiplatform = { path = "crates/fish-multiplatform", version = "0.3.0" }
+fish-notifications = { path = "crates/fish-notifications", version = "0.3.0" }
+fish-flaky-detection = { path = "crates/fish-flaky-detection", version = "0.3.0" }
+fish-docker-builder = { path = "crates/fish-docker-builder", version = "0.3.0" }
+fish-secrets = { path = "crates/fish-secrets", version = "0.3.0" }
+fish-incremental = { path = "crates/fish-incremental", version = "0.3.0" }
+fish-templates = { path = "crates/fish-templates", version = "0.3.0" }
 
 cargo_metadata = "0.23"
 thiserror = "2"
