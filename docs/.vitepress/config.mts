@@ -21,8 +21,9 @@ export default defineConfig({
           { text: 'Guide', link: '/getting-started' },
           { text: 'Architecture', link: '/architecture' },
           { text: 'Comparison', link: '/comparison' },
-          { text: 'Migration', link: '/migration' },
+          { text: 'Benchmarks', link: '/benchmarks' },
           { text: 'Backends', link: '/backends/' },
+          { text: 'IDE & Tools', link: '/ide-integration' },
           { text: 'CLI', link: '/cli-reference' },
           { text: 'Roadmap', link: '/ROADMAP' },
           { text: 'API', link: '/api/overview' }
@@ -34,8 +35,11 @@ export default defineConfig({
               { text: 'Overview & Quick Start', link: '/getting-started' },
               { text: 'System Architecture', link: '/architecture' },
               { text: 'Comparison Matrix', link: '/comparison' },
+              { text: 'Performance Benchmarks', link: '/benchmarks' },
               { text: 'Migration Guides', link: '/migration' },
               { text: 'Configuration Reference', link: '/configuration' },
+              { text: 'IDE Integration & LSP', link: '/ide-integration' },
+              { text: 'Remote Execution & CAS', link: '/remote-execution' },
               { text: 'CLI Reference', link: '/cli-reference' }
             ]
           },
@@ -48,14 +52,18 @@ export default defineConfig({
               { text: 'TypeScript / Node', link: '/backends/typescript' },
               { text: 'Python', link: '/backends/python' },
               { text: 'C / C++', link: '/backends/cc' },
-              { text: 'Docker', link: '/backends/docker' },
+              { text: 'Docker / OCI', link: '/backends/docker' },
               { text: 'Java / Kotlin', link: '/backends/java' },
-              { text: 'Dotnet (.NET)', link: '/backends/dotnet' }
+              { text: 'Dotnet (.NET)', link: '/backends/dotnet' },
+              { text: 'Swift / ObjC', link: '/backends/swift' },
+              { text: 'Dart / Flutter', link: '/backends/dart' },
+              { text: 'Zig', link: '/backends/zig' }
             ]
           },
           {
             text: 'Development & Community',
             items: [
+              { text: 'API Overview', link: '/api/overview' },
               { text: 'Development Guide', link: '/development' },
               { text: 'Contributing Guidelines', link: '/contributing' },
               { text: 'Support & Community', link: '/support' },
@@ -78,8 +86,9 @@ export default defineConfig({
           { text: 'Hướng dẫn', link: '/vi/getting-started' },
           { text: 'Kiến trúc', link: '/vi/architecture' },
           { text: 'So sánh', link: '/vi/comparison' },
-          { text: 'Chuyển đổi', link: '/vi/migration' },
+          { text: 'Benchmark', link: '/vi/benchmarks' },
           { text: 'Backend', link: '/vi/backends/' },
+          { text: 'IDE & Tools', link: '/vi/ide-integration' },
           { text: 'CLI', link: '/vi/cli-reference' },
           { text: 'Lộ trình', link: '/vi/ROADMAP' }
         ],
@@ -90,8 +99,11 @@ export default defineConfig({
               { text: 'Tổng quan & Bắt đầu nhanh', link: '/vi/getting-started' },
               { text: 'Kiến trúc hệ thống', link: '/vi/architecture' },
               { text: 'Bảng so sánh trực diện', link: '/vi/comparison' },
+              { text: 'Đo lường hiệu năng Benchmark', link: '/vi/benchmarks' },
               { text: 'Hướng dẫn chuyển đổi', link: '/vi/migration' },
               { text: 'Cấu hình fish.toml', link: '/vi/configuration' },
+              { text: 'Tích hợp IDE & LSP', link: '/vi/ide-integration' },
+              { text: 'Thực thi từ xa & CAS', link: '/vi/remote-execution' },
               { text: 'Tra cứu lệnh CLI', link: '/vi/cli-reference' }
             ]
           },
@@ -104,14 +116,18 @@ export default defineConfig({
               { text: 'TypeScript / Node', link: '/vi/backends/typescript' },
               { text: 'Python', link: '/vi/backends/python' },
               { text: 'C / C++', link: '/vi/backends/cc' },
-              { text: 'Docker', link: '/vi/backends/docker' },
+              { text: 'Docker / OCI', link: '/vi/backends/docker' },
               { text: 'Java / Kotlin', link: '/vi/backends/java' },
-              { text: 'Dotnet (.NET)', link: '/vi/backends/dotnet' }
+              { text: 'Dotnet (.NET)', link: '/vi/backends/dotnet' },
+              { text: 'Swift / ObjC', link: '/vi/backends/swift' },
+              { text: 'Dart / Flutter', link: '/vi/backends/dart' },
+              { text: 'Zig', link: '/vi/backends/zig' }
             ]
           },
           {
             text: 'Phát triển & Cộng đồng',
             items: [
+              { text: 'Tổng quan API', link: '/vi/api/overview' },
               { text: 'Hướng dẫn phát triển', link: '/vi/development' },
               { text: 'Đóng góp dự án', link: '/vi/contributing' },
               { text: 'Kênh hỗ trợ', link: '/vi/support' },
@@ -134,8 +150,9 @@ export default defineConfig({
           { text: '指南', link: '/zh-hans/getting-started' },
           { text: '架构', link: '/zh-hans/architecture' },
           { text: '特性对比', link: '/zh-hans/comparison' },
-          { text: '平滑迁移', link: '/zh-hans/migration' },
+          { text: '基准测试', link: '/zh-hans/benchmarks' },
           { text: '语言后端', link: '/zh-hans/backends/' },
+          { text: 'IDE 集成', link: '/zh-hans/ide-integration' },
           { text: 'CLI 参考', link: '/zh-hans/cli-reference' }
         ],
         sidebar: [
@@ -145,8 +162,11 @@ export default defineConfig({
               { text: '快速开始与概览', link: '/zh-hans/getting-started' },
               { text: '系统架构设计', link: '/zh-hans/architecture' },
               { text: '对比矩阵', link: '/zh-hans/comparison' },
+              { text: '性能基准测试', link: '/zh-hans/benchmarks' },
               { text: '迁移指南', link: '/zh-hans/migration' },
               { text: '配置文件参考', link: '/zh-hans/configuration' },
+              { text: 'IDE 集成与 LSP', link: '/zh-hans/ide-integration' },
+              { text: '远程执行与 CAS', link: '/zh-hans/remote-execution' },
               { text: 'CLI 命令参考', link: '/zh-hans/cli-reference' }
             ]
           },
@@ -159,14 +179,18 @@ export default defineConfig({
               { text: 'TypeScript / Node', link: '/zh-hans/backends/typescript' },
               { text: 'Python', link: '/zh-hans/backends/python' },
               { text: 'C / C++', link: '/zh-hans/backends/cc' },
-              { text: 'Docker', link: '/zh-hans/backends/docker' },
+              { text: 'Docker / OCI', link: '/zh-hans/backends/docker' },
               { text: 'Java / Kotlin', link: '/zh-hans/backends/java' },
-              { text: 'Dotnet (.NET)', link: '/zh-hans/backends/dotnet' }
+              { text: 'Dotnet (.NET)', link: '/zh-hans/backends/dotnet' },
+              { text: 'Swift / ObjC', link: '/zh-hans/backends/swift' },
+              { text: 'Dart / Flutter', link: '/zh-hans/backends/dart' },
+              { text: 'Zig', link: '/zh-hans/backends/zig' }
             ]
           },
           {
             text: '开发与社区',
             items: [
+              { text: 'API 概览', link: '/zh-hans/api/overview' },
               { text: '开发指南', link: '/zh-hans/development' },
               { text: '贡献指南', link: '/zh-hans/contributing' },
               { text: '支持与社区', link: '/zh-hans/support' },
@@ -189,8 +213,9 @@ export default defineConfig({
           { text: '指南', link: '/zh-hant/getting-started' },
           { text: '架構', link: '/zh-hant/architecture' },
           { text: '特性對比', link: '/zh-hant/comparison' },
-          { text: '平滑遷移', link: '/zh-hant/migration' },
+          { text: '基準測試', link: '/zh-hant/benchmarks' },
           { text: '語言後端', link: '/zh-hant/backends/' },
+          { text: 'IDE 整合', link: '/zh-hant/ide-integration' },
           { text: 'CLI 參考', link: '/zh-hant/cli-reference' }
         ],
         sidebar: [
@@ -200,8 +225,11 @@ export default defineConfig({
               { text: '快速開始與概覽', link: '/zh-hant/getting-started' },
               { text: '系統架構設計', link: '/zh-hant/architecture' },
               { text: '對比矩陣', link: '/zh-hant/comparison' },
+              { text: '效能基準測試', link: '/zh-hant/benchmarks' },
               { text: '遷移指南', link: '/zh-hant/migration' },
               { text: '設定檔案參考', link: '/zh-hant/configuration' },
+              { text: 'IDE 整合與 LSP', link: '/zh-hant/ide-integration' },
+              { text: '遠端執行與 CAS', link: '/zh-hant/remote-execution' },
               { text: 'CLI 命令參考', link: '/zh-hant/cli-reference' }
             ]
           },
@@ -214,14 +242,18 @@ export default defineConfig({
               { text: 'TypeScript / Node', link: '/zh-hant/backends/typescript' },
               { text: 'Python', link: '/zh-hant/backends/python' },
               { text: 'C / C++', link: '/zh-hant/backends/cc' },
-              { text: 'Docker', link: '/zh-hant/backends/docker' },
+              { text: 'Docker / OCI', link: '/zh-hant/backends/docker' },
               { text: 'Java / Kotlin', link: '/zh-hant/backends/java' },
-              { text: 'Dotnet (.NET)', link: '/zh-hant/backends/dotnet' }
+              { text: 'Dotnet (.NET)', link: '/zh-hant/backends/dotnet' },
+              { text: 'Swift / ObjC', link: '/zh-hant/backends/swift' },
+              { text: 'Dart / Flutter', link: '/zh-hant/backends/dart' },
+              { text: 'Zig', link: '/zh-hant/backends/zig' }
             ]
           },
           {
             text: '開發與社群',
             items: [
+              { text: 'API 概覽', link: '/zh-hant/api/overview' },
               { text: '開發指南', link: '/zh-hant/development' },
               { text: '貢獻指南', link: '/zh-hant/contributing' },
               { text: '支援與社群', link: '/zh-hant/support' },
@@ -244,8 +276,9 @@ export default defineConfig({
           { text: 'ガイド', link: '/ja/getting-started' },
           { text: 'アーキテクチャ', link: '/ja/architecture' },
           { text: '機能比較', link: '/ja/comparison' },
-          { text: '移行ガイド', link: '/ja/migration' },
+          { text: 'ベンチマーク', link: '/ja/benchmarks' },
           { text: 'バックエンド', link: '/ja/backends/' },
+          { text: 'IDE 統合', link: '/ja/ide-integration' },
           { text: 'CLI', link: '/ja/cli-reference' }
         ],
         sidebar: [
@@ -255,8 +288,11 @@ export default defineConfig({
               { text: '概要 & クイックスタート', link: '/ja/getting-started' },
               { text: 'システムアーキテクチャ', link: '/ja/architecture' },
               { text: '比較マトリックス', link: '/ja/comparison' },
+              { text: 'パフォーマンスベンチマーク', link: '/ja/benchmarks' },
               { text: '移行ガイド', link: '/ja/migration' },
               { text: '設定ファイルリファレンス', link: '/ja/configuration' },
+              { text: 'IDE 統合 & LSP', link: '/ja/ide-integration' },
+              { text: 'リモート実行 & CAS', link: '/ja/remote-execution' },
               { text: 'CLI コマンドリファレンス', link: '/ja/cli-reference' }
             ]
           },
@@ -269,14 +305,18 @@ export default defineConfig({
               { text: 'TypeScript / Node', link: '/ja/backends/typescript' },
               { text: 'Python', link: '/ja/backends/python' },
               { text: 'C / C++', link: '/ja/backends/cc' },
-              { text: 'Docker', link: '/ja/backends/docker' },
+              { text: 'Docker / OCI', link: '/ja/backends/docker' },
               { text: 'Java / Kotlin', link: '/ja/backends/java' },
-              { text: 'Dotnet (.NET)', link: '/ja/backends/dotnet' }
+              { text: 'Dotnet (.NET)', link: '/ja/backends/dotnet' },
+              { text: 'Swift / ObjC', link: '/ja/backends/swift' },
+              { text: 'Dart / Flutter', link: '/ja/backends/dart' },
+              { text: 'Zig', link: '/ja/backends/zig' }
             ]
           },
           {
             text: '開発 & コミュニティ',
             items: [
+              { text: 'API 概要', link: '/ja/api/overview' },
               { text: '開発ガイド', link: '/ja/development' },
               { text: 'コントリビューションガイド', link: '/ja/contributing' },
               { text: 'サポート & コミュニティ', link: '/ja/support' },
