@@ -23,8 +23,26 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  changes:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rust:
+              - 'crates/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+
   workspace-test:
     name: Workspace Tests
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -43,6 +61,8 @@ jobs:
 
   quality-gate:
     name: Quality Checks
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -57,6 +77,8 @@ jobs:
 
   integration-gate:
     name: Integration Tests
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -67,6 +89,8 @@ jobs:
 
   build:
     name: build
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -88,11 +112,11 @@ jobs:
     steps:
       - name: Check status
         run: |
-          if [ "${{ needs.workspace-test.result }}" != "success" ] || \
-             [ "${{ needs.quality-gate.result }}" != "success" ] || \
-             [ "${{ needs.integration-gate.result }}" != "success" ] || \
-             [ "${{ needs.build.result }}" != "success" ]; then
+          if [ "${{ needs.workspace-test.result }}" = "failure" ] || \
+             [ "${{ needs.quality-gate.result }}" = "failure" ] || \
+             [ "${{ needs.integration-gate.result }}" = "failure" ] || \
+             [ "${{ needs.build.result }}" = "failure" ]; then
             echo "CI Failed"
             exit 1
           fi
-          echo "All Comprehensive CI checks passed"
+          echo "All Comprehensive CI checks passed or skipped"

@@ -23,8 +23,26 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  changes:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rust:
+              - 'crates/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+
   test-linux:
     name: Test Linux
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -34,6 +52,8 @@ jobs:
 
   test-macos:
     name: Test macOS
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
@@ -44,6 +64,8 @@ jobs:
 
   test-windows:
     name: Test Windows
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -60,10 +82,10 @@ jobs:
     steps:
       - name: Check Status
         run: |
-          if [ "${{ needs.test-linux.result }}" != "success" ] || \
-             [ "${{ needs.test-macos.result }}" != "success" ] || \
-             [ "${{ needs.test-windows.result }}" != "success" ]; then
+          if [ "${{ needs.test-linux.result }}" = "failure" ] || \
+             [ "${{ needs.test-macos.result }}" = "failure" ] || \
+             [ "${{ needs.test-windows.result }}" = "failure" ]; then
             echo "Platform Tests Failed"
             exit 1
           fi
-          echo "All Platform Tests Passed"
+          echo "All Platform Tests Passed or skipped"
