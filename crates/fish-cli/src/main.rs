@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+mod ai_bridge;
 mod args;
 mod attestation;
 mod backends;

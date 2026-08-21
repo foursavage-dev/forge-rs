@@ -12,6 +12,7 @@ use spin::Mutex as SpinMutex;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::sync::RwLock;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone)]
@@ -27,6 +28,8 @@ pub struct LruCache<K, V> {
     capacity: usize,
     current_size: u64,
     max_size: u64,
+    hits: AtomicU64,
+    misses: AtomicU64,
     entries: Arc<RwLock<HashMap<K, CacheEntry<K, V>>>>,
     access_order: Arc<RwLock<VecDeque<K>>>,
 }
@@ -37,6 +40,8 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> LruCache<K, V> {
             capacity,
             current_size: 0,
             max_size,
+            hits: AtomicU64::new(0),
+            misses: AtomicU64::new(0),
             entries: Arc::new(RwLock::new(HashMap::new())),
             access_order: Arc::new(RwLock::new(VecDeque::with_capacity(capacity))),
         }
@@ -54,6 +59,7 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> LruCache<K, V> {
         if let Some(entry) = entries.get_mut(key) {
             entry.access_count += 1;
             entry.last_access = Instant::now();
+            self.hits.fetch_add(1, Ordering::Relaxed);
 
             // Move to front of access order
             if let Some(pos) = access_order.iter().position(|k| k == key) {
@@ -63,6 +69,7 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> LruCache<K, V> {
 
             Some((entry.value.clone(), entry.size))
         } else {
+            self.misses.fetch_add(1, Ordering::Relaxed);
             None
         }
     }
@@ -163,12 +170,21 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> LruCache<K, V> {
             0.0
         };
 
+        let hits = self.hits.load(Ordering::Relaxed);
+        let misses = self.misses.load(Ordering::Relaxed);
+        let accesses = hits + misses;
+        let hit_rate = if accesses == 0 {
+            0.0
+        } else {
+            hits as f64 / accesses as f64
+        };
+
         LruCacheStats {
             entries: entries.len(),
             capacity: self.capacity,
             current_size: self.current_size as usize,
             max_size: self.max_size,
-            hit_rate: 0.0, // Would need tracking separately
+            hit_rate,
             avg_access_count,
         }
     }
@@ -532,6 +548,20 @@ mod tests {
         assert_eq!(cache.get(&"key1".to_string()), Some("value1".to_string()));
         assert_eq!(cache.get(&"key2".to_string()), None);
         assert_eq!(cache.get(&"key4".to_string()), Some("value4".to_string()));
+    }
+
+    #[test]
+    fn lru_cache_reports_accurate_hit_rate() {
+        let mut cache = LruCache::new(3, 1000);
+        cache.put("a".to_string(), "va".to_string(), 10);
+        cache.put("b".to_string(), "vb".to_string(), 10);
+
+        let _ = cache.get(&"a".to_string()); // hit
+        let _ = cache.get(&"c".to_string()); // miss
+
+        let stats = cache.stats();
+        assert_eq!(stats.entries, 2);
+        assert_eq!(stats.hit_rate, 0.5);
     }
 
     #[test]

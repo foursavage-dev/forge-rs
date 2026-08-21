@@ -11,8 +11,13 @@ class AutonomousOptimizer:
         duration_sec: float,
         binary_size_bytes: int
     ) -> float:
-        efficiency_score = 1000.0 / (duration_sec * max(1, binary_size_bytes / 1024 / 1024))
-        
+        # Guard against a zero/negative duration so an instant or unmeasured
+        # build cannot raise ZeroDivisionError; the score still favours fast
+        # and small profiles.
+        effective_duration = max(duration_sec, 1e-6)
+        size_mb = max(1, binary_size_bytes / 1024 / 1024)
+        efficiency_score = 1000.0 / (effective_duration * size_mb)
+
         current_best = self.best_configurations.get(target_name)
         if current_best is None or efficiency_score > current_best["score"]:
             self.best_configurations[target_name] = {

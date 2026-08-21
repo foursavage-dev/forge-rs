@@ -133,29 +133,26 @@ impl TurboLinker {
     pub fn strip_and_deduplicate_debug_sections(
         binary_path: &Path,
     ) -> io::Result<LinkerOptimizationStats> {
-        if !binary_path.exists() {
-            return Ok(LinkerOptimizationStats {
-                original_size_bytes: 0,
-                optimized_size_bytes: 0,
-                stripped_symbols_count: 0,
-                estimated_link_speedup_factor: 1.0,
-            });
-        }
-
-        let original_size = fs::metadata(binary_path)?.len();
-        let optimized_size = (original_size as f64 * 0.65) as u64;
-
-        Ok(LinkerOptimizationStats {
-            original_size_bytes: original_size,
-            optimized_size_bytes: optimized_size,
-            stripped_symbols_count: 320,
-            estimated_link_speedup_factor: 4.8,
-        })
+        // Debug-section stripping is not implemented. Reporting fabricated
+        // sizes and symbol counts would mislead users about what the build
+        // actually produced.
+        Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            format!(
+                "debug-section stripping is not implemented (`{}`)",
+                binary_path.display()
+            ),
+        ))
     }
 
     pub fn strip_duplicate_debug_symbols(binary_path: &Path) -> io::Result<usize> {
-        let stats = Self::strip_and_deduplicate_debug_sections(binary_path)?;
-        Ok(stats.original_size_bytes as usize)
+        Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            format!(
+                "debug-symbol deduplication is not implemented (`{}`)",
+                binary_path.display()
+            ),
+        ))
     }
 
     fn has_binary(bin_name: &str) -> bool {

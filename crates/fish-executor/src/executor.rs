@@ -13,7 +13,6 @@ pub enum ExecutorError {
         source: std::io::Error,
     },
 
-    #[allow(dead_code)]
     #[error("failed to record output of `{command}`: {source}")]
     Record {
         command: String,
@@ -52,21 +51,49 @@ impl Default for ProcessExecutor {
     }
 }
 
+#[cfg(windows)]
 fn kill_process_tree(child: &mut std::process::Child) {
-    #[cfg(windows)]
-    {
-        let pid = child.id();
-        let _ = std::process::Command::new("taskkill")
-            .arg("/PID")
-            .arg(pid.to_string())
-            .arg("/T")
-            .arg("/F")
-            .status();
+    let pid = child.id();
+    let _ = std::process::Command::new("taskkill")
+        .arg("/PID")
+        .arg(pid.to_string())
+        .arg("/T")
+        .arg("/F")
+        .status();
+    let _ = child.wait();
+}
+
+#[cfg(all(unix, not(target_os = "macos")))]
+fn kill_process_tree(child: &mut std::process::Child) {
+    let pid = child.id();
+
+    // Kill the whole descendant tree (not just the direct child), so a build
+    // command that spawned subprocesses (make -> gcc) cannot leave orphans
+    // behind after a timeout. `/proc/<pid>/task/<pid>/children` lists direct
+    // children; walk it depth-first and signal leaves first.
+    fn kill_descendants(pid: u32) {
+        let children_path = format!("/proc/{pid}/task/{pid}/children");
+        if let Ok(contents) = std::fs::read_to_string(&children_path) {
+            for child_pid in contents
+                .split_whitespace()
+                .filter_map(|s| s.parse::<u32>().ok())
+            {
+                kill_descendants(child_pid);
+                let _ = std::process::Command::new("kill")
+                    .args(["-KILL", &child_pid.to_string()])
+                    .status();
+            }
+        }
     }
-    #[cfg(not(windows))]
-    {
-        let _ = child.kill();
-    }
+
+    kill_descendants(pid);
+    let _ = child.kill();
+    let _ = child.wait();
+}
+
+#[cfg(all(unix, target_os = "macos"))]
+fn kill_process_tree(child: &mut std::process::Child) {
+    let _ = child.kill();
     let _ = child.wait();
 }
 
@@ -83,6 +110,20 @@ fn run_with_timeout(
     let mut stdout = child.stdout.take().expect("piped stdout is present");
     let mut stderr = child.stderr.take().expect("piped stderr is present");
 
+    // Drain both pipes on background threads. `wait_timeout` does not read the
+    // pipes, so a child that writes more than the pipe buffer (64 KiB) would
+    // otherwise block forever on `write`, triggering a spurious timeout.
+    let stdout_reader = std::thread::spawn(move || {
+        let mut buf = Vec::new();
+        let _ = stdout.read_to_end(&mut buf);
+        buf
+    });
+    let stderr_reader = std::thread::spawn(move || {
+        let mut buf = Vec::new();
+        let _ = stderr.read_to_end(&mut buf);
+        buf
+    });
+
     let status_code = match child.wait_timeout(timeout)? {
         Some(status) => status,
         None => {
@@ -94,10 +135,8 @@ fn run_with_timeout(
         }
     };
 
-    let mut out_buf = Vec::new();
-    let mut err_buf = Vec::new();
-    let _ = stdout.read_to_end(&mut out_buf);
-    let _ = stderr.read_to_end(&mut err_buf);
+    let out_buf = stdout_reader.join().unwrap_or_default();
+    let err_buf = stderr_reader.join().unwrap_or_default();
 
     Ok(std::process::Output {
         status: status_code,

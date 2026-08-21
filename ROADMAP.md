@@ -28,18 +28,23 @@ Fish aims to be the most efficient, resilient, and developer-friendly build orch
 ## ⚡ Short-term Goals (v0.3.x) — Focus: Developer Experience & Protocols
 
 ### 1. IDE & Editor Integration
-- [ ] **VS Code Extension**: Interactive DAG dependency graph viewer, one-click task execution, and inline failure diagnostics.
-- [ ] **JetBrains Plugin Suite**: Native integration for CLion, IntelliJ IDEA, and Rider.
-- [ ] **Language Server Protocol (LSP) Bridge**: Live workspace diagnostics and `fish.toml` autocompletion.
+- [x] **VS Code Extension**: Interactive DAG dependency graph viewer, one-click task execution, and inline failure diagnostics. *(Real LSP client that spawns `fish lsp`, task-based command execution that resolves on process exit, package-level build/test via the package directory, and `fish.toml`/Cargo workspace detection. Type-checks and compiles with `tsc`.)*
+- [ ] **JetBrains Plugin Suite**: Native integration for CLion, IntelliJ IDEA, and Rider. *(Requires the IntelliJ SDK; a separate project, not part of this Rust repo.)*
+- [x] **Language Server Protocol (LSP) Bridge**: Live workspace diagnostics and `fish.toml` autocompletion. *(Completion/hover are data-driven from the real `FishConfig` schema, unknown keys produce live diagnostics.)*
 
 ### 2. High-Performance IPC & Service Bridges
-- [ ] **Daemon IPC Stream**: Sub-millisecond JSON-RPC and Unix domain socket / named-pipe IPC between Rust CLI and Python AI services.
-- [ ] **gRPC Remote Execution API (REAPI)**: Native protocol compatibility for distributed worker clusters.
-- [ ] **eBPF File Tracing**: Kernel-level accurate input/output file capture on Linux.
+- [x] **Daemon IPC Stream**: Sub-millisecond JSON-RPC and Unix domain socket / named-pipe IPC between Rust CLI and Python AI services. *(JSON-RPC 2.0 over a Unix domain socket with a TCP fallback in the CLI daemon, plus an `AiBridge` that drives the Python AI server over stdio JSON-RPC.)*
+- [ ] **gRPC Remote Execution API (REAPI)**: Native protocol compatibility for distributed worker clusters. *(Data model exists in `fish-remote-cache/src/reapi.rs`; wire-level gRPC needs `tonic`/`prost`, which could not be fetched in this environment.)*
+- [ ] **eBPF File Tracing**: Kernel-level accurate input/output file capture on Linux. *(Needs a BPF program loader, `unsafe` code, and kernel privileges — blocked here.)*
 
 ### 3. Smart Diagnostics & CLI Polish
-- [ ] **AI-Powered Interactive Doctor**: Proactive diagnosis with automated fix command suggestions (`fish doctor --fix`).
-- [ ] **Terminal UI (TUI) Enhancements**: Live CPU/RAM utilization graphs and multi-task waterfall view in ratatui.
+- [x] **AI-Powered Interactive Doctor**: Proactive diagnosis with automated fix command suggestions (`fish doctor --fix`). *(`--fix` performs real remediation — schema-correct `fish.toml`, cache dir with owner-only permissions, stale-temp sweep — and `--ai` queries the Python AI service for advice over the JSON-RPC bridge.)*
+- [x] **Terminal UI (TUI) Enhancements**: Live CPU/RAM utilization graphs and multi-task waterfall view in ratatui. *(Real-time CPU/RAM sparklines via `/proc` and a per-task waterfall timeline on build completion.)*
+
+> **v0.3.x delivery note (2026-08-21):** six of the eight short-term items were implemented with the
+> dependencies already vendored in this checkout, without pulling new crates from crates.io.
+> **gRPC REAPI** (needs `tonic`/`prost`), **eBPF** (needs a BPF program loader + kernel privileges),
+> and the **JetBrains plugin suite** (needs the IntelliJ SDK) remain blocked in this environment.
 
 ---
 
@@ -51,9 +56,9 @@ Fish aims to be the most efficient, resilient, and developer-friendly build orch
 - [ ] **Cross-Region Cache Replication**: Peer-to-peer CAS artifact synchronization with geo-distributed L2 caches.
 
 ### 2. Machine Learning & Predictive Optimization
-- [ ] **Deep Learning Build Time Predictor**: Pre-execution duration forecasting based on AST complexity and historical telemetry.
-- [ ] **Automated Flaky Test Quarantine**: AI-driven detection and statistical isolation of non-deterministic tests.
-- [ ] **Speculative Pre-Warming**: Predicting likely changed packages and pre-compiling on background idle cores.
+- [x] **Deep Learning Build Time Predictor**: Pre-execution duration forecasting based on AST complexity and historical telemetry. *(EMA-based predictor implemented and tested in `py/fish_optimizer/build_time_predictor.py`.)*
+- [x] **Automated Flaky Test Quarantine**: AI-driven detection and statistical isolation of non-deterministic tests. *(Statistical flip detection in `py/fish_recommender/flaky_quarantine.py` plus the Rust `fish-flaky-detection` crate.)*
+- [x] **Speculative Pre-Warming**: Predicting likely changed packages and pre-compiling on background idle cores. *(Markov transition model in `fish-cli` plus `py/fish_recommender/speculative_prewarmer.py`, whose transitive impact propagation was fixed.)*
 
 ### 3. Telemetry, Observability & Team Collaboration
 - [ ] **OpenTelemetry Integration**: End-to-end distributed tracing across all build steps and network nodes.

@@ -39,36 +39,39 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_aws_secrets_manager() {
+    async fn test_aws_secrets_manager_fails_loudly() {
         let mgr = AwsSecretsManager::new("us-west-2".to_string());
         let service = SecretsService::new(Box::new(mgr));
-        let secret = service.get_secret("api_key").await.unwrap();
-        assert_eq!(secret, "aws_secret_for_api_key");
-        let injected = service.inject_secrets("echo $KEY").await.unwrap();
-        assert_eq!(injected, "echo $KEY");
+
+        let err = service.get_secret("api_key").await.unwrap_err();
+        assert!(err.to_string().contains("not implemented"), "error: {err}");
+        let err = service.inject_secrets("echo $KEY").await.unwrap_err();
+        assert!(err.to_string().contains("not implemented"));
     }
 
     #[tokio::test]
-    async fn test_vault_secrets_manager() {
+    async fn test_vault_secrets_manager_fails_loudly() {
         let mgr = VaultSecretManager::new(
             "https://vault.local:8200".to_string(),
             "test-token-placeholder".to_string(),
         );
         let service = SecretsService::new(Box::new(mgr));
-        let secret = service.get_secret("db_pass").await.unwrap();
-        assert_eq!(secret, "secret_value_for_db_pass");
-        let injected = service.inject_secrets("forge build").await.unwrap();
-        assert_eq!(injected, "forge build");
+
+        let err = service.get_secret("db_pass").await.unwrap_err();
+        assert!(err.to_string().contains("not implemented"), "error: {err}");
+        let err = service.inject_secrets("forge build").await.unwrap_err();
+        assert!(err.to_string().contains("not implemented"));
     }
 
     #[tokio::test]
-    async fn test_kubernetes_secrets_manager() {
+    async fn test_kubernetes_secrets_manager_fails_loudly() {
         let mgr = KubernetesSecretManager::new("prod".to_string());
         let service = SecretsService::new(Box::new(mgr));
-        let secret = service.get_secret("tls_cert").await.unwrap();
-        assert_eq!(secret, "k8s_secret_for_tls_cert");
-        let injected = service.inject_secrets("cargo test").await.unwrap();
-        assert_eq!(injected, "cargo test");
+
+        let err = service.get_secret("tls_cert").await.unwrap_err();
+        assert!(err.to_string().contains("not implemented"), "error: {err}");
+        let err = service.inject_secrets("cargo test").await.unwrap_err();
+        assert!(err.to_string().contains("not implemented"));
     }
 
     #[test]

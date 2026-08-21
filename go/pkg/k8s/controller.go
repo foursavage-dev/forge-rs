@@ -32,8 +32,12 @@ func (a *Autoscaler) CalculateDesiredReplicas(queuedTasks int, avgTaskTimeSec fl
 	if targetWaitSec <= 0 {
 		targetWaitSec = 10.0
 	}
+	// Little's law: to drain `queuedTasks` within `targetWaitSec`, the fleet
+	// must sustain `queuedTasks / targetWaitSec` tasks per second. Each worker
+	// finishes one task in `avgTaskTimeSec`, so the worker count is
+	// throughput * service time (both seconds; no /60 conversion).
 	requiredThroughput := float64(queuedTasks) / targetWaitSec
-	neededWorkers := int(math.Ceil(requiredThroughput * (avgTaskTimeSec / 60.0)))
+	neededWorkers := int(math.Ceil(requiredThroughput * avgTaskTimeSec))
 
 	if neededWorkers < a.spec.MinReplicas {
 		return a.spec.MinReplicas

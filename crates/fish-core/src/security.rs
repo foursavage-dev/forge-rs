@@ -64,14 +64,11 @@ impl SecurityPolicy {
     pub fn is_path_allowed(&self, path: &Path) -> bool {
         match self.level {
             SecurityLevel::AllowAll => true,
-            SecurityLevel::Strict => {
-                self.allowed_paths.is_empty()
-                    || self
-                        .allowed_paths
-                        .iter()
-                        .any(|allowed| path.starts_with(allowed))
-            }
-            SecurityLevel::Paranoid => self
+            // `Strict` and `Paranoid` both require an explicit allow-list.
+            // With no allowed paths configured, no path is allowed: this is
+            // deliberately fail-closed so a misconfigured policy can never
+            // silently admit arbitrary filesystem access.
+            SecurityLevel::Strict | SecurityLevel::Paranoid => self
                 .allowed_paths
                 .iter()
                 .any(|allowed| path.starts_with(allowed)),
@@ -350,11 +347,22 @@ impl InputValidator {
     }
 
     pub fn sanitize_path(path: &str) -> String {
-        path.replace("..", "")
-            .replace("\\", "/")
-            .replace("//", "/")
-            .trim_matches('/')
-            .to_string()
+        // Normalize a user-supplied path: convert backslashes, drop `.`
+        // components, and resolve `..` by popping the previous component.
+        // This is a normalization helper, not a security boundary by itself;
+        // combine it with `validate_path` for actual enforcement.
+        let normalized = path.replace('\\', "/");
+        let mut parts: Vec<&str> = Vec::new();
+        for component in normalized.split('/') {
+            match component {
+                "" | "." => {}
+                ".." => {
+                    parts.pop();
+                }
+                other => parts.push(other),
+            }
+        }
+        parts.join("/")
     }
 }
 
@@ -485,5 +493,25 @@ mod tests {
             InputValidator::sanitize_path("\\windows\\path"),
             "windows/path"
         );
+        // Regression: `..` inside a longer segment must not be stripped, and
+        // `..` past the root must not turn into an absolute path.
+        assert_eq!(InputValidator::sanitize_path("....//"), "....");
+        assert_eq!(InputValidator::sanitize_path("a/../../b"), "b");
+        assert_eq!(InputValidator::sanitize_path("a/./b/"), "a/b");
+    }
+
+    #[test]
+    fn strict_policy_without_allowed_paths_is_fail_closed() {
+        let policy = SecurityPolicy::new(SecurityLevel::Strict);
+        assert!(
+            !policy.is_path_allowed(Path::new("/anything")),
+            "an empty allow-list must not admit arbitrary paths"
+        );
+
+        let paranoid = SecurityPolicy::new(SecurityLevel::Paranoid);
+        assert!(!paranoid.is_path_allowed(Path::new("/anything")));
+
+        let allow_all = SecurityPolicy::new(SecurityLevel::AllowAll);
+        assert!(allow_all.is_path_allowed(Path::new("/anything")));
     }
 }

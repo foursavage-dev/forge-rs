@@ -106,9 +106,18 @@ impl fish_executor::TaskMiddleware for SuperOptMiddleware {
         if outcome.status == fish_executor::TaskStatus::Executed {
             for artifact in &task.artifacts {
                 if artifact.exists() && artifact.is_file() {
-                    let _ = crate::experimental::super_opt::SuperOptimizer::optimize_binary_simd(
+                    // Super-optimization is unimplemented; propagate the
+                    // failure instead of silently rewriting (or corrupting)
+                    // the artifact the build just produced.
+                    crate::experimental::super_opt::SuperOptimizer::optimize_binary_simd(
                         artifact, artifact,
-                    );
+                    )
+                    .map_err(|source| {
+                        fish_executor::ExecutorError::Record {
+                            command: artifact.display().to_string(),
+                            source,
+                        }
+                    })?;
                 }
             }
         }

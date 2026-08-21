@@ -12,6 +12,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Condvar, Mutex};
+use std::time::Duration;
 
 #[derive(Debug, Clone)]
 pub struct TestResult {
@@ -238,14 +239,25 @@ impl Benchmark {
         }
 
         let duration = start.elapsed();
-        let avg_duration = duration / self.iterations as u32;
+        // `iterations == 0` would divide by zero below; treat it as a no-op
+        // benchmark with zero throughput instead of panicking.
+        let avg_duration = if self.iterations == 0 {
+            Duration::ZERO
+        } else {
+            duration / u32::try_from(self.iterations).unwrap_or(u32::MAX)
+        };
+        let ops_per_second = if duration.is_zero() {
+            0.0
+        } else {
+            self.iterations as f64 / duration.as_secs_f64()
+        };
 
         BenchmarkResult {
             name: self.name.clone(),
             iterations: self.iterations,
             total_duration: duration,
             average_duration: avg_duration,
-            ops_per_second: self.iterations as f64 / duration.as_secs_f64(),
+            ops_per_second,
         }
     }
 }

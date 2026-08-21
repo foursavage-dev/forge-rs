@@ -22,7 +22,9 @@ impl Notifier for EmailNotifier {
                 "status": format!("{:?}", notification.status),
                 "timestamp": notification.timestamp
             });
-            let _ = client.post(webhook_url).json(&payload).send().await;
+            // Propagate delivery failures like the other notifiers instead of
+            // swallowing them and reporting a successful send.
+            client.post(webhook_url).json(&payload).send().await?;
         }
         Ok(())
     }

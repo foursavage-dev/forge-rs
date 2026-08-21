@@ -48,6 +48,19 @@ impl AstCacheIndex {
             }
         }
 
+        // Symbols present in the old index but absent from the new subtree
+        // list were removed; dependents referencing them must also be
+        // invalidated. A one-sided diff would silently miss deletions.
+        let new_names: std::collections::HashSet<&str> = new_subtrees
+            .iter()
+            .map(|s| s.symbol_name.as_str())
+            .collect();
+        for s in old_trees {
+            if !new_names.contains(s.symbol_name.as_str()) {
+                changed.push(s.symbol_name.clone());
+            }
+        }
+
         changed
     }
 }
@@ -93,5 +106,40 @@ mod tests {
 
         let changed = cache.compute_changed_symbols("src/lib.rs", &updated);
         assert_eq!(changed, vec!["calculate_tax".to_string()]);
+    }
+
+    #[test]
+    fn removed_symbols_are_reported_as_changed() {
+        let mut cache = AstCacheIndex::new();
+        cache.record_file_subtrees(
+            "src/lib.rs",
+            vec![
+                AstSubTree {
+                    symbol_name: "keep".to_string(),
+                    kind: "fn".to_string(),
+                    content_hash: "h1".to_string(),
+                    byte_range: (0, 10),
+                },
+                AstSubTree {
+                    symbol_name: "removed".to_string(),
+                    kind: "fn".to_string(),
+                    content_hash: "h2".to_string(),
+                    byte_range: (11, 20),
+                },
+            ],
+        );
+
+        // `removed` disappears from the new subtree list.
+        let changed = cache.compute_changed_symbols(
+            "src/lib.rs",
+            &[AstSubTree {
+                symbol_name: "keep".to_string(),
+                kind: "fn".to_string(),
+                content_hash: "h1".to_string(),
+                byte_range: (0, 10),
+            }],
+        );
+
+        assert_eq!(changed, vec!["removed".to_string()]);
     }
 }

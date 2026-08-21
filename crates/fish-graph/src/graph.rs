@@ -185,7 +185,11 @@ impl<T> BuildGraph<T> {
         while let Some(current) = queue.pop_front() {
             let dependents = self.dependents(current)?.to_vec();
             for dependent in dependents {
-                if self.state(dependent)? != TaskState::Cancelled {
+                // Only cancel work that is still active. Terminal states
+                // (Succeeded/Cached/Skipped/Failed) are left untouched so a
+                // dependent that already failed on its own keeps its `Failed`
+                // status instead of being silently downgraded to `Cancelled`.
+                if !self.state(dependent)?.is_terminal() {
                     self.set_state(dependent, TaskState::Cancelled)?;
                     queue.push_back(dependent);
                 }
@@ -554,6 +558,34 @@ mod tests {
         assert_eq!(graph.state(NodeId(1)), Ok(TaskState::Running));
         assert_eq!(graph.state(NodeId(2)), Ok(TaskState::Failed));
         assert_eq!(graph.state(NodeId(3)), Ok(TaskState::Cancelled));
+    }
+
+    #[test]
+    fn mark_failed_does_not_downgrade_an_already_failed_dependent() {
+        let mut graph = string_graph(&[(NodeId(0), NodeId(1))]);
+        graph.set_state(NodeId(1), TaskState::Failed).unwrap();
+
+        graph.mark_failed(NodeId(0)).unwrap();
+
+        assert_eq!(graph.state(NodeId(0)), Ok(TaskState::Failed));
+        assert_eq!(
+            graph.state(NodeId(1)),
+            Ok(TaskState::Failed),
+            "a dependent that failed on its own must keep its Failed status"
+        );
+    }
+
+    #[test]
+    fn mark_failed_leaves_completed_dependents_untouched() {
+        let mut graph = string_graph(&[(NodeId(0), NodeId(1))]);
+        for state in [TaskState::Succeeded, TaskState::Cached, TaskState::Skipped] {
+            graph.set_state(NodeId(1), state).unwrap();
+
+            graph.mark_failed(NodeId(0)).unwrap();
+
+            assert_eq!(graph.state(NodeId(1)), Ok(state));
+            graph.set_state(NodeId(0), TaskState::Pending).unwrap();
+        }
     }
 
     #[test]

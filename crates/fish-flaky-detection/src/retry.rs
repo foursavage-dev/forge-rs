@@ -17,7 +17,6 @@ impl Default for RetryPolicy {
 
 #[derive(Clone)]
 pub struct RetryExecutor {
-    #[allow(dead_code)]
     policy: RetryPolicy,
 }
 
@@ -28,9 +27,13 @@ impl RetryExecutor {
         }
     }
 
-    pub async fn retry(&self, _test_name: &str) -> Result<(), anyhow::Error> {
-        // Retry logic would go here
-        Ok(())
+    pub async fn retry(&self, test_name: &str) -> Result<(), anyhow::Error> {
+        // The retry execution is not implemented yet. Failing loudly prevents
+        // a caller from believing a flaky test was re-run when it was not.
+        Err(anyhow::anyhow!(
+            "test retry is not implemented yet (test `{test_name}`; policy allows {} retries)",
+            self.policy.max_retries
+        ))
     }
 }
 

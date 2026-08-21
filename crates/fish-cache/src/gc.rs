@@ -5,8 +5,12 @@ use std::time::{Duration, SystemTime};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EvictionPolicy {
+    /// Evict least-recently-modified entries first (LRU over file mtimes).
     Lru,
-    Lfu,
+    /// Evict the smallest entries first, keeping large artifacts alive for as
+    /// long as possible during a size-triggered collection.
+    SmallestFirst,
+    /// Only remove entries whose time-to-live has expired.
     TtlOnly,
 }
 
@@ -105,7 +109,9 @@ impl BackgroundCacheGc {
                     EvictionPolicy::Lru => {
                         file_entries.sort_by_key(|(_, _, mtime)| *mtime);
                     }
-                    EvictionPolicy::Lfu => {
+                    EvictionPolicy::SmallestFirst => {
+                        // Ascending size: the eviction loop below removes from
+                        // the front, i.e. smallest files first.
                         file_entries.sort_by_key(|(_, sz, _)| *sz);
                     }
                     EvictionPolicy::TtlOnly => {}
@@ -166,5 +172,34 @@ mod tests {
         assert_eq!(removed, 1);
         assert!(freed > 0);
         assert!(!file_path.exists());
+    }
+
+    #[test]
+    fn smallest_first_evicts_small_files_before_large_ones() {
+        let temp = tempdir().unwrap();
+
+        let small = temp.path().join("small.bin");
+        let medium = temp.path().join("medium.bin");
+        let large = temp.path().join("large.bin");
+        std::fs::write(&small, vec![0u8; 10]).unwrap();
+        std::fs::write(&medium, vec![0u8; 100]).unwrap();
+        std::fs::write(&large, vec![0u8; 120]).unwrap();
+
+        let config = GcConfig {
+            max_size_bytes: 200,
+            high_watermark_ratio: 0.90,
+            low_watermark_ratio: 0.70,
+            ttl: Duration::from_secs(365 * 86400), // TTL must not interfere
+            policy: EvictionPolicy::SmallestFirst,
+            ..GcConfig::default()
+        };
+        let gc = BackgroundCacheGc::new(temp.path().to_path_buf(), config);
+
+        gc.scan_and_evict();
+
+        // Total 230 > threshold 180; evicting 10 + 100 reaches 120 <= target 140.
+        assert!(!small.exists(), "smallest file evicted first");
+        assert!(!medium.exists(), "next smallest evicted to reach target");
+        assert!(large.exists(), "largest file survives");
     }
 }
