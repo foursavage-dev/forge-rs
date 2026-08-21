@@ -35,5 +35,15 @@ class TestPredictiveAlgorithms(unittest.TestCase):
         self.assertIn("app", impacted)
         self.assertIn("crates/fish-graph", impacted)
 
+    def test_speculative_prewarmer_propagates_transitively(self):
+        graph = {
+            "cli": ["app"],
+            "app": ["lib"],
+            "lib": ["core"],
+        }
+        prewarmer = SpeculativePrewarmer(graph)
+        impacted = prewarmer.find_dependent_targets(["core"])
+        self.assertEqual(impacted, ["app", "cli", "lib"])
+
 if __name__ == "__main__":
     unittest.main()
