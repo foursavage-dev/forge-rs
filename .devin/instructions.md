@@ -1,4 +1,4 @@
-﻿# Devin AI & Devin IDE Instructions for Fish
+# Devin AI & Devin IDE Instructions for Fish
 
 ## Project Summary
 Fish is a polyglot build orchestration system written in Rust 2024 with Go distributed networking services and Python AI optimization services.

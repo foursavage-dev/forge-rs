@@ -7,17 +7,19 @@ license.workspace = true
 description = "Parallel task scheduler for the Fish build tool"
 
 [dependencies]
-fish-executor = { path = "../fish-executor" }
-fish-graph = { path = "../fish-graph" }
+fish-executor = { workspace = true }
+fish-graph = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sysinfo = { version = "0.38", default-features = false, features = ["system"] }
 thiserror = { workspace = true }
-dashmap = { version = "6" }
+dashmap = { version = "6", features = ["rayon", "serde"] }
 anyhow = { workspace = true }
 crossbeam-channel = "0.5"
 jobserver = "0.1"
 notify = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "time"] }
+tracing = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

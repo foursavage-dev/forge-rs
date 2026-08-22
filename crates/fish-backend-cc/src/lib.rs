@@ -102,14 +102,21 @@ impl CcBackend {
             let label = format!("compile {}", source.display());
             let desc = spec.command_line();
 
-            let fingerprint_val = fingerprint::compute_source_fingerprint(
-                source,
-                &includes,
-                flags,
-                &self.compiler.version,
-                depfile.as_deref(),
-            )
-            .unwrap_or_else(|_| "no_fp".to_string());
+            let fingerprint_val = if !obj_path.exists() {
+                format!(
+                    "rebuild_{}",
+                    blake3::hash(source.to_string_lossy().as_bytes()).to_hex()
+                )
+            } else {
+                fingerprint::compute_source_fingerprint(
+                    source,
+                    &includes,
+                    flags,
+                    &self.compiler.version,
+                    depfile.as_deref(),
+                )
+                .unwrap_or_else(|_| "no_fp".to_string())
+            };
 
             let cache_entry = CacheEntry {
                 key: FingerprintUtils::format_cache_key("cc", &namespace, &config.name, stem),

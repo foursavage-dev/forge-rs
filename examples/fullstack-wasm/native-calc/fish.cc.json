@@ -1,0 +1,8 @@
+{
+  "name": "native-calc",
+  "language": "cpp",
+  "sources": ["calc.cpp"],
+  "includes": ["."],
+  "cxxflags": ["-std=c++17"],
+  "output_type": "executable"
+}

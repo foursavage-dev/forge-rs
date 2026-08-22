@@ -85,7 +85,7 @@ impl RustcInvocation {
             if let Ok(content) = std::fs::read(path) {
                 hasher.update(&content);
             } else {
-                hasher.update(path.to_string_lossy().as_bytes());
+                hasher.update(path.to_string_lossy().replace('\\', "/").as_bytes());
             }
         }
 
@@ -93,7 +93,7 @@ impl RustcInvocation {
             if let Ok(content) = std::fs::read(src) {
                 hasher.update(&content);
             } else {
-                hasher.update(src.to_string_lossy().as_bytes());
+                hasher.update(src.to_string_lossy().replace('\\', "/").as_bytes());
             }
         }
 

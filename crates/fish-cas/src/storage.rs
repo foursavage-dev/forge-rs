@@ -491,4 +491,44 @@ mod tests {
         assert_eq!(result.removed_count, 1);
         assert!(!storage.exists(&hash).await.unwrap());
     }
+
+    #[tokio::test]
+    async fn test_high_concurrency_cas_stress() {
+        let temp_dir = tempdir().unwrap();
+        let storage = std::sync::Arc::new(
+            CasStorage::new(
+                CasStorageConfig::local(temp_dir.path().join("cas"))
+                    .with_compression(CompressionAlgorithm::Zstd),
+            )
+            .await
+            .unwrap(),
+        );
+
+        let mut handles = Vec::new();
+        for worker_id in 0..16 {
+            let storage = std::sync::Arc::clone(&storage);
+            handles.push(tokio::spawn(async move {
+                for item in 0..8 {
+                    let payload = format!("worker_{worker_id}_payload_{item}").into_bytes();
+                    let artifact = Artifact::from_bytes(
+                        payload.clone(),
+                        "text/plain".to_string(),
+                        format!("worker_{worker_id}"),
+                    )
+                    .unwrap();
+
+                    let hash = artifact.hash().clone();
+                    storage.store(&artifact).await.unwrap();
+                    assert!(storage.exists(&hash).await.unwrap());
+
+                    let fetched = storage.retrieve(&hash).await.unwrap();
+                    assert_eq!(fetched.data, payload);
+                }
+            }));
+        }
+
+        for h in handles {
+            h.await.unwrap();
+        }
+    }
 }

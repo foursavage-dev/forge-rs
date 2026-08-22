@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "fish-build-orchestration",
   "displayName": "Fish Build Orchestration",
   "description": "IDE integration for Fish build orchestration system with DAG visualization and task runner",

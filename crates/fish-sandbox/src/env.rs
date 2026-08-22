@@ -10,6 +10,12 @@ pub enum EnvPolicy {
     Custom(HashMap<String, String>),
 }
 
+fn extend_env(env: &mut HashMap<String, String>, extra_vars: &HashMap<String, String>) {
+    for (k, v) in extra_vars {
+        env.insert(k.clone(), v.clone());
+    }
+}
+
 pub fn sanitize_env(
     policy: &EnvPolicy,
     extra_vars: &HashMap<String, String>,
@@ -17,9 +23,7 @@ pub fn sanitize_env(
     match policy {
         EnvPolicy::Inherit => {
             let mut env: HashMap<String, String> = std::env::vars().collect();
-            for (k, v) in extra_vars {
-                env.insert(k.clone(), v.clone());
-            }
+            extend_env(&mut env, extra_vars);
             env
         }
         EnvPolicy::Hermetic => {
@@ -69,17 +73,13 @@ pub fn sanitize_env(
                 }
             }
 
-            for (k, v) in extra_vars {
-                env.insert(k.clone(), v.clone());
-            }
+            extend_env(&mut env, extra_vars);
 
             env
         }
         EnvPolicy::Custom(custom) => {
             let mut env = custom.clone();
-            for (k, v) in extra_vars {
-                env.insert(k.clone(), v.clone());
-            }
+            extend_env(&mut env, extra_vars);
             env
         }
     }

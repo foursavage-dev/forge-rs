@@ -8,17 +8,18 @@ description = "Fish core library: project discovery and Cargo metadata integrati
 
 [dependencies]
 anyhow = { workspace = true }
-cargo_metadata = "0.23"
+cargo_metadata = { workspace = true }
 fish-graph = { workspace = true }
 thiserror = { workspace = true }
 spin = { workspace = true }
 toml = { workspace = true }
-tempfile = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 regex = { workspace = true }
 blake3 = { workspace = true }
-uuid = { version = "1.6", features = ["v4", "serde"] }
+uuid = { workspace = true }
+glob = { workspace = true }
+walkdir = { workspace = true }
+tempfile = { workspace = true }
 
 [dev-dependencies]
-tempfile = { workspace = true }

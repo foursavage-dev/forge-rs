@@ -61,36 +61,29 @@ impl WorkStealingScheduler {
         self
     }
 
-    /// Priority score used to order ready tasks: longest tail first, then
-    /// estimated weight. Ties are resolved deterministically by `NodeId`.
-    fn priority_score(&self, id: NodeId) -> u64 {
-        let tail_length = self.compute_tail_length(id) as u64;
+    fn compute_all_tail_lengths(&self) -> Vec<usize> {
+        let n = self.graph.len();
+        let mut tail_lengths = vec![0; n];
+        let topo = self.graph.topological_order();
+        for &id in topo.iter().rev() {
+            let max_child = self
+                .graph
+                .dependents(id)
+                .unwrap_or_default()
+                .iter()
+                .map(|child| tail_lengths[child.index()] + 1)
+                .max()
+                .unwrap_or(0);
+            tail_lengths[id.index()] = max_child;
+        }
+        tail_lengths
+    }
+
+    fn priority_score(&self, id: NodeId, tail_lengths: &[usize]) -> u64 {
+        let tail_length = tail_lengths.get(id.index()).copied().unwrap_or(0) as u64;
         let task = &self.graph.node(id).expect("ready nodes exist").payload;
         let weight = self.heuristics.get_estimated_weight(task);
         tail_length * 1000 + weight
-    }
-
-    fn compute_tail_length(&self, node_id: NodeId) -> usize {
-        let mut max_depth = 0;
-        let mut stack = vec![(node_id, 0)];
-        let mut visited = std::collections::HashSet::new();
-
-        while let Some((id, depth)) = stack.pop() {
-            if visited.contains(&id) {
-                continue;
-            }
-            visited.insert(id);
-
-            max_depth = max_depth.max(depth);
-
-            if let Ok(dependents) = self.graph.dependents(id) {
-                for dep in dependents {
-                    stack.push((*dep, depth + 1));
-                }
-            }
-        }
-
-        max_depth
     }
 
     pub fn run(&mut self) -> Result<BuildSummary, SchedulerError> {
@@ -142,8 +135,14 @@ impl WorkStealingScheduler {
             // Dispatch every task whose dependencies have succeeded. `ready`
             // only returns `Pending` nodes, so marking them `Running` prevents
             // double dispatch.
+            let tail_lengths = self.compute_all_tail_lengths();
             let mut ready = self.graph.ready_nodes();
-            ready.sort_by_key(|id| (std::cmp::Reverse(self.priority_score(*id)), id.index()));
+            ready.sort_by_key(|id| {
+                (
+                    std::cmp::Reverse(self.priority_score(*id, &tail_lengths)),
+                    id.index(),
+                )
+            });
             for id in ready {
                 let task = self
                     .graph
@@ -234,7 +233,7 @@ impl WorkStealingScheduler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fish_executor::{CommandSpec, ExecutorError, ProcessExecutor};
+    use fish_executor::{CommandSpec, ExecutorError};
     use std::collections::HashSet;
     use std::sync::Arc;
 
@@ -277,7 +276,9 @@ mod tests {
             graph.add_node(task);
         }
 
-        let executor = Arc::new(ProcessExecutor::new(false));
+        let executor = Arc::new(SelectiveExecutor {
+            fail: HashSet::new(),
+        });
         let mut scheduler = WorkStealingScheduler::new(4, graph, executor);
 
         let result = scheduler.run();
@@ -290,15 +291,15 @@ mod tests {
 
     #[test]
     fn work_stealing_runs_transitive_dependencies() {
-        // a -> b -> c: the scheduler must keep dispatching newly unblocked
-        // tasks until the whole chain has run, not just the initial ready set.
         let graph = chain_graph(&["a", "b", "c"]);
-        let executor = Arc::new(ProcessExecutor::new(false));
+        let executor = Arc::new(SelectiveExecutor {
+            fail: HashSet::new(),
+        });
         let mut scheduler = WorkStealingScheduler::new(2, graph, executor);
 
         let summary = scheduler.run().unwrap();
         assert_eq!(summary.total, 3);
-        assert_eq!(summary.executed, 3, "every task in the chain must execute");
+        assert_eq!(summary.executed, 3);
         assert_eq!(summary.failed, 0);
     }
 
@@ -316,5 +317,45 @@ mod tests {
         assert_eq!(summary.failed, 1, "`b` fails");
         assert_eq!(summary.cancelled, 1, "`c` is cancelled");
         assert_eq!(summary.failures.len(), 1);
+    }
+
+    #[test]
+    fn test_work_stealing_diamond_fanout_stress() {
+        let mut graph = BuildGraph::new();
+        let root = graph.add_node(Task::new(
+            "root".to_string(),
+            "echo root".to_string(),
+            CommandSpec::new("echo").arg("root"),
+        ));
+
+        let mut mid_nodes = Vec::new();
+        for i in 0..64 {
+            let mid = graph.add_node(Task::new(
+                format!("mid_{i}"),
+                format!("echo mid_{i}"),
+                CommandSpec::new("echo").arg(format!("mid_{i}")),
+            ));
+            graph.add_dependency(root, mid).unwrap();
+            mid_nodes.push(mid);
+        }
+
+        let sink = graph.add_node(Task::new(
+            "sink".to_string(),
+            "echo sink".to_string(),
+            CommandSpec::new("echo").arg("sink"),
+        ));
+        for mid in mid_nodes {
+            graph.add_dependency(mid, sink).unwrap();
+        }
+
+        let executor = Arc::new(SelectiveExecutor {
+            fail: HashSet::new(),
+        });
+        let mut scheduler = WorkStealingScheduler::new(8, graph, executor);
+
+        let summary = scheduler.run().unwrap();
+        assert_eq!(summary.total, 66);
+        assert_eq!(summary.executed, 66);
+        assert_eq!(summary.failed, 0);
     }
 }

@@ -1,4 +1,4 @@
-﻿package com.fish.plugin
+package com.fish.plugin
 
 import com.intellij.openapi.util.IconLoader
 import javax.swing.Icon

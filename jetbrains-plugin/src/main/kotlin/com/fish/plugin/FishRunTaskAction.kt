@@ -1,4 +1,4 @@
-﻿package com.fish.plugin
+package com.fish.plugin
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler

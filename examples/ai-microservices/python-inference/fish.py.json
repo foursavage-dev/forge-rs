@@ -1,0 +1,14 @@
+{
+  "name": "python-inference",
+  "runner": "python",
+  "packaging": "standard",
+  "tasks": [
+    {
+      "name": "test",
+      "command": "python",
+      "args": ["app.py"],
+      "depends_on": []
+    }
+  ],
+  "source_dirs": ["."]
+}

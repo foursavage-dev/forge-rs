@@ -1,4 +1,4 @@
-﻿[workspace]
+[workspace]
 resolver = "2"
 members = [
     "crates/fish-core",
@@ -97,3 +97,95 @@ notify = "8"
 crossterm = "0.29"
 ratatui = { version = "0.30", default-features = false, features = ["crossterm"] }
 async-trait = "0.1"
+tokio = { version = "1", features = ["rt-multi-thread", "fs", "io-util", "time", "sync", "macros"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json", "registry"] }
+tracing-appender = "0.2"
+tracing-chrome = "0.7"
+tracing-flame = "0.2"
+
+uuid = { version = "1.10", features = ["v4", "serde"] }
+walkdir = "2"
+glob = "0.3"
+wait-timeout = "0.2"
+
+base64 = "0.23"
+sha2 = "0.11"
+ed25519 = "3.0"
+ed25519-dalek = "3.0"
+rand = "0.10"
+rand_core = "0.10"
+chrono = { version = "0.4", features = ["serde"] }
+spdx = "0.13"
+cyclonedx-bom = "0.8"
+serde_bytes = "0.11"
+fastrand = "2.5"
+handlebars = "6"
+memmap2 = "0.9"
+tar = "0.4"
+zstd = "0.13"
+actix-web = "4"
+actix-cors = "0.7"
+actix-files = "0.6"
+dashmap = { version = "6", features = ["rayon", "serde"] }
+parking_lot = "0.12"
+crossbeam-channel = "0.5"
+bollard = "0.21"
+criterion = { version = "0.8", features = ["html_reports"] }
+
+[workspace.metadata.tarpaulin]
+# Test coverage configuration
+out = ["Html", "Xml"]
+run-types = ["Tests", "Binaries"]
+branch-coverage = true
+line-coverage = true
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+dead_code = "warn"
+unused_imports = "warn"
+unused_variables = "warn"
+unused_mut = "warn"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"
+nursery = "warn"
+cargo = "warn"
+perf = "warn"
+style = "warn"
+suspicious = "warn"
+complexity = "warn"
+correctness = "warn"
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+unimplemented = "warn"
+todo = "warn"
+indexing_slicing = "warn"
+
+[profile.dev]
+opt-level = 1
+debug = 2
+split-debuginfo = "unpacked"
+incremental = true
+codegen-units = 256
+
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
+debug = false
+split-debuginfo = "off"
+
+[profile.bench]
+inherits = "release"
+debug = true
+lto = "fat"
+codegen-units = 1

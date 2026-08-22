@@ -162,8 +162,14 @@ impl TaskExecutor for ProcessExecutor {
                 });
             }
         };
-        let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
-        let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
+        let stdout = match String::from_utf8(output.stdout) {
+            Ok(s) => s,
+            Err(e) => String::from_utf8_lossy(&e.into_bytes()).into_owned(),
+        };
+        let stderr = match String::from_utf8(output.stderr) {
+            Ok(s) => s,
+            Err(e) => String::from_utf8_lossy(&e.into_bytes()).into_owned(),
+        };
         let status = if output.status.success() {
             TaskStatus::Executed
         } else {

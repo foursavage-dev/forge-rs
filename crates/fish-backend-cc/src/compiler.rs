@@ -3,6 +3,17 @@ use std::process::Command;
 
 use crate::config::{CcLanguage, CcOutputType};
 
+fn clean_path(path: &Path) -> String {
+    let s = path.to_string_lossy();
+    if let Some(stripped) = s.strip_prefix(r"\\?\") {
+        stripped.to_string()
+    } else if let Some(stripped) = s.strip_prefix(r"//?/") {
+        stripped.to_string()
+    } else {
+        s.to_string()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CompilerFamily {
     Gcc,
@@ -62,29 +73,32 @@ impl CcCompiler {
         depfile: Option<&Path>,
     ) -> (String, Vec<String>) {
         let mut args = Vec::new();
+        let src_clean = clean_path(source);
+        let out_clean = clean_path(output_object);
+
         match self.family {
             CompilerFamily::Msvc => {
                 args.push("/c".to_string());
-                args.push(source.to_string_lossy().to_string());
-                args.push(format!("/Fo{}", output_object.to_string_lossy()));
+                args.push(src_clean);
+                args.push(format!("/Fo{out_clean}"));
                 for inc in includes {
-                    args.push(format!("/I{}", inc.to_string_lossy()));
+                    args.push(format!("/I{}", clean_path(inc)));
                 }
                 args.extend(flags.iter().cloned());
             }
             _ => {
                 args.push("-c".to_string());
-                args.push(source.to_string_lossy().to_string());
+                args.push(src_clean);
                 args.push("-o".to_string());
-                args.push(output_object.to_string_lossy().to_string());
+                args.push(out_clean);
                 for inc in includes {
                     args.push("-I".to_string());
-                    args.push(inc.to_string_lossy().to_string());
+                    args.push(clean_path(inc));
                 }
                 if let Some(depfile) = depfile {
                     args.push("-MMD".to_string());
                     args.push("-MF".to_string());
-                    args.push(depfile.to_string_lossy().to_string());
+                    args.push(clean_path(depfile));
                 }
                 args.extend(flags.iter().cloned());
             }
@@ -100,37 +114,38 @@ impl CcCompiler {
         output_type: CcOutputType,
     ) -> (String, Vec<String>) {
         let mut args = Vec::new();
+        let out_clean = clean_path(output_path);
+
         match output_type {
             CcOutputType::Executable => match self.family {
                 CompilerFamily::Msvc => {
-                    args.push(format!("/Fe{}", output_path.to_string_lossy()));
+                    args.push(format!("/Fe{out_clean}"));
                     for obj in objects {
-                        args.push(obj.to_string_lossy().to_string());
+                        args.push(clean_path(obj));
                     }
                     args.extend(ldflags.iter().cloned());
                 }
                 _ => {
                     args.push("-o".to_string());
-                    args.push(output_path.to_string_lossy().to_string());
+                    args.push(out_clean);
                     for obj in objects {
-                        args.push(obj.to_string_lossy().to_string());
+                        args.push(clean_path(obj));
                     }
                     args.extend(ldflags.iter().cloned());
                 }
             },
             CcOutputType::StaticLib => match self.family {
                 CompilerFamily::Msvc => {
-                    let mut lib_args = vec!["/OUT:".to_string() + &output_path.to_string_lossy()];
+                    let mut lib_args = vec![format!("/OUT:{out_clean}")];
                     for obj in objects {
-                        lib_args.push(obj.to_string_lossy().to_string());
+                        lib_args.push(clean_path(obj));
                     }
                     return ("lib".to_string(), lib_args);
                 }
                 _ => {
-                    let mut ar_args =
-                        vec!["rcs".to_string(), output_path.to_string_lossy().to_string()];
+                    let mut ar_args = vec!["rcs".to_string(), out_clean];
                     for obj in objects {
-                        ar_args.push(obj.to_string_lossy().to_string());
+                        ar_args.push(clean_path(obj));
                     }
                     return ("ar".to_string(), ar_args);
                 }
@@ -138,18 +153,18 @@ impl CcCompiler {
             CcOutputType::SharedLib => match self.family {
                 CompilerFamily::Msvc => {
                     args.push("/LD".to_string());
-                    args.push(format!("/Fe{}", output_path.to_string_lossy()));
+                    args.push(format!("/Fe{out_clean}"));
                     for obj in objects {
-                        args.push(obj.to_string_lossy().to_string());
+                        args.push(clean_path(obj));
                     }
                     args.extend(ldflags.iter().cloned());
                 }
                 _ => {
                     args.push("-shared".to_string());
                     args.push("-o".to_string());
-                    args.push(output_path.to_string_lossy().to_string());
+                    args.push(out_clean);
                     for obj in objects {
-                        args.push(obj.to_string_lossy().to_string());
+                        args.push(clean_path(obj));
                     }
                     args.extend(ldflags.iter().cloned());
                 }
