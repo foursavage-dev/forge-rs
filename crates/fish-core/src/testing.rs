@@ -239,17 +239,18 @@ impl Benchmark {
         }
 
         let duration = start.elapsed();
-        // `iterations == 0` would divide by zero below; treat it as a no-op
-        // benchmark with zero throughput instead of panicking.
         let avg_duration = if self.iterations == 0 {
             Duration::ZERO
         } else {
             duration / u32::try_from(self.iterations).unwrap_or(u32::MAX)
         };
-        let ops_per_second = if duration.is_zero() {
+        let secs = duration.as_secs_f64();
+        let ops_per_second = if self.iterations == 0 {
             0.0
+        } else if secs == 0.0 {
+            self.iterations as f64 * 1_000_000_000.0
         } else {
-            self.iterations as f64 / duration.as_secs_f64()
+            self.iterations as f64 / secs
         };
 
         BenchmarkResult {
@@ -463,7 +464,7 @@ mod tests {
         let benchmark = Benchmark::new("simple_benchmark".to_string(), 1000);
 
         let result = benchmark.run(|| {
-            let _ = 1 + 1;
+            std::hint::black_box(1 + 1);
         });
 
         assert_eq!(result.iterations, 1000);
