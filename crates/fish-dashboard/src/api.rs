@@ -1,11 +1,11 @@
 #![forbid(unsafe_code)]
 
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder, web};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 
+use crate::flamegraph::FlamegraphGenerator;
 use crate::metrics::{BuildMetrics, MetricsStore};
-use crate::flamegraph::{FlamegraphData, FlamegraphGenerator};
 
 pub struct ApiState {
     pub metrics_store: Mutex<MetricsStore>,
@@ -16,6 +16,12 @@ impl ApiState {
         Self {
             metrics_store: Mutex::new(MetricsStore::new(100)),
         }
+    }
+}
+
+impl Default for ApiState {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -34,7 +40,7 @@ impl<T> ApiResponse<T> {
             error: None,
         }
     }
-    
+
     pub fn error(message: String) -> Self {
         Self {
             success: false,
@@ -53,27 +59,34 @@ pub async fn get_builds(state: web::Data<ApiState>) -> impl Responder {
 pub async fn get_build(state: web::Data<ApiState>, path: web::Path<String>) -> impl Responder {
     let build_id = path.into_inner();
     let store = state.metrics_store.lock().unwrap();
-    
+
     match store.get_build(&build_id) {
         Some(build) => HttpResponse::Ok().json(ApiResponse::success(build)),
-        None => HttpResponse::NotFound().json(ApiResponse::error("Build not found".to_string())),
+        None => {
+            HttpResponse::NotFound().json(ApiResponse::<()>::error("Build not found".to_string()))
+        }
     }
 }
 
 pub async fn get_flamegraph(state: web::Data<ApiState>, path: web::Path<String>) -> impl Responder {
     let build_id = path.into_inner();
     let store = state.metrics_store.lock().unwrap();
-    
+
     match store.get_build(&build_id) {
         Some(build) => {
             let fg = FlamegraphGenerator::from_build_metrics(build);
             HttpResponse::Ok().json(ApiResponse::success(fg))
         }
-        None => HttpResponse::NotFound().json(ApiResponse::error("Build not found".to_string())),
+        None => {
+            HttpResponse::NotFound().json(ApiResponse::<()>::error("Build not found".to_string()))
+        }
     }
 }
 
-pub async fn post_build(state: web::Data<ApiState>, metrics: web::Json<BuildMetrics>) -> impl Responder {
+pub async fn post_build(
+    state: web::Data<ApiState>,
+    metrics: web::Json<BuildMetrics>,
+) -> impl Responder {
     let mut store = state.metrics_store.lock().unwrap();
     store.add_build(metrics.into_inner());
     HttpResponse::Ok().json(ApiResponse::success("Build metrics stored".to_string()))
@@ -90,6 +103,6 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
             .route("/builds", web::get().to(get_builds))
             .route("/builds", web::post().to(post_build))
             .route("/builds/{id}", web::get().to(get_build))
-            .route("/builds/{id}/flamegraph", web::get().to(get_flamegraph))
+            .route("/builds/{id}/flamegraph", web::get().to(get_flamegraph)),
     );
 }

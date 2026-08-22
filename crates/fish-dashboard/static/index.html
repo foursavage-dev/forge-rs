@@ -1,456 +1,393 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forge Command Center</title>
+    <title>Fish Command Center & Live Telemetry</title>
     <style>
         :root {
-            --bg: #ffffff;
-            --bg-panel: #fafafa;
-            --text-main: #000000;
-            --text-muted: #666666;
-            --border: #e5e5e5;
-            --border-dark: #000000;
+            --bg-base: #090d16;
+            --bg-card: #111827;
+            --bg-hover: #1f2937;
+            --border-color: #374151;
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-purple: #a78bfa;
+            --accent-amber: #fbbf24;
+            --accent-red: #f87171;
         }
-
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            /* Ã‰p gÃ³c vuÃ´ng toÃ n bá»™ */
-            border-radius: 0 !important; 
-        }
-        
-        body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* Sidebar */
-        aside {
-            width: 260px;
-            background-color: var(--bg-panel);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 2rem 0;
-            z-index: 10;
-        }
-
-        .brand {
-            padding: 0 2rem;
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: -0.05em;
-            text-transform: uppercase;
-            margin-bottom: 3rem;
-            color: var(--text-main);
-        }
-
-        .nav-section { margin-bottom: 2.5rem; }
-        
-        .nav-label { 
-            padding: 0 2rem; 
-            font-size: 0.75rem; 
-            text-transform: uppercase; 
-            letter-spacing: 0.1em; 
-            color: var(--text-muted); 
-            margin-bottom: 1rem; 
-            font-weight: 700; 
-        }
-
-        .nav-item {
-            padding: 0.75rem 2rem;
-            display: block;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-item:hover, .nav-item.active {
-            color: var(--text-main);
-            background-color: #f0f0f0;
-            border-left-color: var(--text-main);
-        }
-
-        /* Main Content */
-        main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            background-color: var(--bg);
-        }
-
-        header {
-            padding: 2rem 2.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            background-color: var(--bg);
-            position: sticky; 
-            top: 0; 
-            z-index: 10;
-        }
-
-        .header-title { 
-            font-size: 1.5rem; 
-            font-weight: 700; 
-            letter-spacing: -0.025em; 
-        }
-        
-        .engine-status {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .badge {
-            padding: 0.25rem 0.75rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border: 1px solid var(--border-dark);
-            background: var(--bg);
-            color: var(--text-main);
-        }
-
-        .badge.dark {
-            background: var(--text-main);
-            color: var(--bg);
-        }
-
-        .content {
-            padding: 2.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2.5rem;
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .stat-card {
-            background-color: var(--bg-panel);
-            border: 1px solid var(--border);
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            transition: border-color 0.2s;
-        }
-
-        .stat-card:hover {
-            border-color: var(--border-dark);
-        }
-
-        .stat-title { 
-            color: var(--text-muted); 
-            font-size: 0.8rem; 
-            font-weight: 600; 
-            text-transform: uppercase; 
-            letter-spacing: 0.05em;
-            margin-bottom: 1rem; 
-        }
-        
-        .stat-value { 
-            font-size: 2.5rem; 
-            font-weight: 800; 
-            letter-spacing: -0.05em; 
-            margin-bottom: 0.5rem; 
-            color: var(--text-main);
-        }
-        
-        .stat-desc { 
-            font-size: 0.85rem; 
-            color: var(--text-muted); 
-        }
-
-        /* Terminals & Visualizations */
-        .panel-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 1.5rem;
-        }
-
-        @media (max-width: 1024px) {
-            .panel-grid { grid-template-columns: 1fr; }
-        }
-
-        .panel {
-            background-color: var(--bg);
-            border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .panel-header {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--bg-panel);
-            font-weight: 600;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .terminal {
-            background: #111111;
-            padding: 1.5rem;
-            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
-            font-size: 0.85rem;
-            line-height: 1.6;
-            height: 400px;
-            overflow-y: auto;
-            color: #e5e5e5;
-        }
-
-        .log-line { margin-bottom: 0.25rem; display: flex; gap: 1rem; }
-        .log-time { color: #666; min-width: 85px; }
-        .log-msg { color: #ccc; }
-        .log-highlight { color: #fff; font-weight: bold; }
-        .log-alert { background-color: #fff; color: #000; padding: 0 4px; }
-
-        /* Dark Arts List */
-        .engines-list {
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .engine-item {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .engine-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-        
-        .engine-name { 
-            font-weight: 700; 
-            font-size: 0.95rem; 
-        }
-        
-        .engine-status-text { 
-            font-size: 0.7rem; 
-            font-weight: 700; 
-            border: 1px solid var(--border-dark); 
-            padding: 0.15rem 0.4rem; 
-            text-transform: uppercase;
-        }
-        
-        .engine-desc { 
-            font-size: 0.85rem; 
-            color: var(--text-muted); 
-            line-height: 1.5; 
-        }
-        
-        .progress-bar { 
-            width: 100%; 
-            height: 4px; 
-            background: var(--border); 
-            margin-top: 0.5rem; 
-        }
-        
-        .progress-fill { 
-            height: 100%; 
-            background: var(--text-main); 
-            transition: width 0.5s; 
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-panel); border-left: 1px solid var(--border); }
-        ::-webkit-scrollbar-thumb { background: #ccc; border: 1px solid var(--bg-panel); }
-        ::-webkit-scrollbar-thumb:hover { background: #999; }
-        
-        .terminal::-webkit-scrollbar-track { background: #111; border-left: none; }
-        .terminal::-webkit-scrollbar-thumb { background: #333; border: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-base); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
+        header { background-color: var(--bg-card); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .brand { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
+        .brand span { color: var(--accent-blue); }
+        .badge { background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .header-controls { display: flex; align-items: center; gap: 1rem; }
+        select.lang-select { background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.85rem; cursor: pointer; outline: none; }
+        main { flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 2rem; }
+        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
+        .card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .card-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+        .card-value { font-size: 1.8rem; font-weight: 700; color: var(--text-primary); }
+        .card-meta { font-size: 0.8rem; color: var(--text-secondary); }
+        .section { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+        .section-title { font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+        .graph-controls { display: flex; align-items: center; gap: 0.5rem; }
+        .graph-btn { background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+        .graph-btn:hover { background: #374151; }
+        .graph-input { background: var(--bg-base); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.85rem; outline: none; }
+        .graph-wrapper { position: relative; width: 100%; height: 480px; background: #0c1220; border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; }
+        svg.dag-canvas { width: 100%; height: 100%; cursor: grab; }
+        svg.dag-canvas:active { cursor: grabbing; }
+        .node-rect { rx: 8; ry: 8; fill: #1f2937; stroke: #4b5563; stroke-width: 1.5; transition: all 0.2s ease; cursor: pointer; }
+        .node-rect:hover, .node-rect.selected { stroke: var(--accent-blue); fill: #1e293b; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4)); }
+        .node-rect.critical { stroke: var(--accent-amber); }
+        .node-text { fill: var(--text-primary); font-size: 12px; font-weight: 600; pointer-events: none; text-anchor: middle; dominant-baseline: central; }
+        .edge-line { stroke: #4b5563; stroke-width: 1.5; fill: none; transition: stroke 0.2s; }
+        .edge-line.active { stroke: var(--accent-blue); stroke-width: 2.5; }
+        .build-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .build-table th, .build-table td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .build-table th { color: var(--text-secondary); font-weight: 600; font-size: 0.85rem; }
+        .status-badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+        .status-success { background: rgba(52, 211, 153, 0.15); color: var(--accent-green); }
+        .status-failed { background: rgba(248, 113, 113, 0.15); color: var(--accent-red); }
     </style>
 </head>
 <body>
-
-    <aside>
-        <div class="brand">Forge</div>
-
-        <div class="nav-section">
-            <div class="nav-label">Overview</div>
-            <a href="#" class="nav-item active">Dashboard</a>
-            <a href="#" class="nav-item">Build Graph</a>
-            <a href="#" class="nav-item">Cache Explorer</a>
-            <a href="#" class="nav-item">Workers</a>
+    <header>
+        <div class="brand">
+            Fish <span>Command Center</span>
+            <span class="badge">v0.3.0</span>
         </div>
-
-        <div class="nav-section">
-            <div class="nav-label">Telemetry</div>
-            <a href="#" class="nav-item">Flamegraphs</a>
-            <a href="#" class="nav-item">Metrics & Logs</a>
-            <a href="#" class="nav-item">Security Scans</a>
+        <div class="header-controls">
+            <select class="lang-select" id="langSelect" onchange="changeLanguage(this.value)">
+                <option value="en">English (EN)</option>
+                <option value="vi">Tiếng Việt (VI)</option>
+                <option value="zh-Hans">简体中文 (ZH-CN)</option>
+                <option value="zh-Hant">繁體中文 (ZH-TW)</option>
+                <option value="ja">日本語 (JA)</option>
+            </select>
         </div>
-    </aside>
+    </header>
 
     <main>
-        <header>
-            <div class="header-title">Overview</div>
-            <div class="engine-status">
-                <div class="badge">Engine: v0.3.0</div>
-                <div class="badge">Workers: 8/8</div>
-                <div class="badge dark">Dark Arts: Enabled</div>
+        <div class="grid-stats">
+            <div class="card">
+                <div class="card-title" id="lbl-cache-size">Cache Size On Disk</div>
+                <div class="card-value" id="stat-cache-size" style="color: var(--accent-green);">12.4 MB</div>
+                <div class="card-meta" id="lbl-cas-meta">Sub-millisecond CAS lookup</div>
             </div>
-        </header>
+            <div class="card">
+                <div class="card-title" id="lbl-total-pkg">Total Packages</div>
+                <div class="card-value" id="stat-pkg-count">36</div>
+                <div class="card-meta" id="lbl-dag-nodes">Monorepo DAG Nodes</div>
+            </div>
+            <div class="card">
+                <div class="card-title" id="lbl-hit-rate">Cache Hit Rate</div>
+                <div class="card-value" id="stat-hit-rate" style="color: var(--accent-blue);">94.8%</div>
+                <div class="card-meta" id="lbl-hit-meta">Tiered L1/L2 Cache</div>
+            </div>
+            <div class="card">
+                <div class="card-title" id="lbl-parallelism">Parallel Workers</div>
+                <div class="card-value" id="stat-workers">8</div>
+                <div class="card-meta" id="lbl-worker-meta">Jobserver Work-Stealing</div>
+            </div>
+        </div>
 
-        <div class="content">
-            <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-title">Cache Hit Ratio</div>
-                    <div class="stat-value">98.2%</div>
-                    <div class="stat-desc">Across 12,450 CAS records</div>
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span id="lbl-dag-title">Interactive Dependency Graph (DAG)</span>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-title">Speculative Hits</div>
-                    <div class="stat-value" id="spec-hits">1,402</div>
-                    <div class="stat-desc">Markov-Chain Pre-Compilations</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-title">Avg Build Time</div>
-                    <div class="stat-value">145ms</div>
-                    <div class="stat-desc">-85% vs Cargo baseline</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-title">Super-Opt Speedup</div>
-                    <div class="stat-value">4.5x</div>
-                    <div class="stat-desc">AVX-512 Injected Blocks</div>
+                <div class="graph-controls">
+                    <input type="text" class="graph-input" id="nodeSearch" placeholder="Filter packages..." oninput="filterNodes(this.value)">
+                    <button class="graph-btn" onclick="resetGraphView()" id="btn-reset-view">Reset View</button>
+                    <button class="graph-btn" onclick="toggleLayout()" id="btn-toggle-layout">Toggle Layout</button>
                 </div>
             </div>
-
-            <!-- Complex Panels -->
-            <div class="panel-grid">
-                
-                <!-- Terminal Output -->
-                <div class="panel">
-                    <div class="panel-header">
-                        <div>Live Execution Stream</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Auto-scroll: ON</div>
-                    </div>
-                    <div class="terminal" id="terminal">
-                        <div class="log-line"><span class="log-time">[14:02:45.001]</span> <span class="log-msg">Fish engine initialized. Workspace root detected: /home/user/fish</span></div>
-                        <div class="log-line"><span class="log-time">[14:02:45.012]</span> <span class="log-msg">Loaded 34 crates into DAG. 100% Cache integrity verified.</span></div>
-                        <div class="log-line"><span class="log-time">[14:02:48.550]</span> <span class="log-msg">[Predictive] Detected edit pattern: fish-core -> fish-cli. Triggering speculative warmup for fish-scheduler.</span></div>
-                        <div class="log-line"><span class="log-time">[14:02:49.120]</span> <span class="log-msg">Speculative compile finished in 12ms. Cached under hash: a7f8b9...</span></div>
-                        <div class="log-line"><span class="log-time">[14:03:01.442]</span> <span class="log-highlight">[HotPatch] File saved: src/experimental/super_opt.rs</span></div>
-                        <div class="log-line"><span class="log-time">[14:03:01.445]</span> <span class="log-msg">[HotPatch] Computing binary delta against PID 4091...</span></div>
-                        <div class="log-line"><span class="log-time">[14:03:01.458]</span> <span class="log-highlight">[HotPatch] Injected Trampoline JMP into Memory. 1 Relocation in 57Âµs.</span></div>
-                        <div class="log-line"><span class="log-time">[14:03:05.881]</span> <span class="log-msg">[Micro-JIT] Synthesizing Abstract Syntax Tree...</span></div>
-                        <div class="log-line"><span class="log-time">[14:03:05.881]</span> <span class="log-msg">[Micro-JIT] Emitted 16 bytes of x86_64 opcodes at 0x7FFF_DEAD_BEE0 (45ns)</span></div>
-                    </div>
-                </div>
-
-                <!-- Experimental Engines Status -->
-                <div class="panel">
-                    <div class="panel-header">
-                        <div>Dark-Arts Engines</div>
-                    </div>
-                    <div class="engines-list">
-                        <div class="engine-item">
-                            <div class="engine-header">
-                                <div class="engine-name">Markov Predictive</div>
-                                <div class="engine-status-text">Active</div>
-                            </div>
-                            <div class="engine-desc">Confidence Threshold: 35%. Predicting next package modification...</div>
-                            <div class="progress-bar"><div class="progress-fill" style="width: 82%;"></div></div>
-                        </div>
-
-                        <div class="engine-item">
-                            <div class="engine-header">
-                                <div class="engine-name">ML Work-Stealing</div>
-                                <div class="engine-status-text">Active</div>
-                            </div>
-                            <div class="engine-desc">Greedy LPT + Critical Path Priority. 0 starved threads.</div>
-                            <div class="progress-bar"><div class="progress-fill" style="width: 100%;"></div></div>
-                        </div>
-
-                        <div class="engine-item">
-                            <div class="engine-header">
-                                <div class="engine-name">Live Hot-Patching</div>
-                                <div class="engine-status-text">Standby</div>
-                            </div>
-                            <div class="engine-desc">Monitoring for file saves. Trampoline injector loaded.</div>
-                        </div>
-
-                        <div class="engine-item">
-                            <div class="engine-header">
-                                <div class="engine-name">Super-Optimizer</div>
-                                <div class="engine-status-text">Active</div>
-                            </div>
-                            <div class="engine-desc">Target: AVX-512. Hot loop vectorization ready.</div>
-                        </div>
-                    </div>
-                </div>
-
+            <div class="graph-wrapper" id="graphContainer">
+                <svg class="dag-canvas" id="dagSvg"></svg>
             </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title" id="lbl-history-title">Recent Build Executions</div>
+            </div>
+            <table class="build-table">
+                <thead>
+                    <tr>
+                        <th id="th-build-id">Build ID</th>
+                        <th id="th-target">Target</th>
+                        <th id="th-status">Status</th>
+                        <th id="th-duration">Duration</th>
+                        <th id="th-cache-hits">Cache Hits</th>
+                    </tr>
+                </thead>
+                <tbody id="buildTableBody">
+                    <tr>
+                        <td>#bld-9821</td>
+                        <td>fish-cli (release)</td>
+                        <td><span class="status-badge status-success">SUCCESS</span></td>
+                        <td>0.48s</td>
+                        <td>34 / 36 (94.4%)</td>
+                    </tr>
+                    <tr>
+                        <td>#bld-9820</td>
+                        <td>workspace:test</td>
+                        <td><span class="status-badge status-success">SUCCESS</span></td>
+                        <td>1.12s</td>
+                        <td>36 / 36 (100%)</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </main>
 
     <script>
-        // Simulate live terminal activity
-        const terminal = document.getElementById('terminal');
-        const specHitsElement = document.getElementById('spec-hits');
-        let specHits = 1402;
-
-        const logMessages = [
-            '<span class="log-msg">[Scheduler] Work-stealing rebalanced 4 tasks from Worker-2 to Worker-7.</span>',
-            '<span class="log-msg">[Cache] Sub-millisecond CAS lookup hit for forge-graph: 0.14ms.</span>',
-            '<span class="log-highlight">[Super-Opt] Basic block vectorized. 8 loops rewritten to AVX-512.</span>',
-            '<span class="log-alert">[Security]</span> <span class="log-msg">Dependency scan complete: 0 vulnerabilities found.</span>',
-            '<span class="log-msg">[Micro-JIT] Executed dynamically compiled function in 400ns.</span>',
-            '<span class="log-msg">[VFS] Streamed 14MB of artifacts via kernel-bypass DMA.</span>'
-        ];
-
-        function addLog() {
-            const now = new Date();
-            const timeStr = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}]`;
-            
-            const msg = logMessages[Math.floor(Math.random() * logMessages.length)];
-            const div = document.createElement('div');
-            div.className = 'log-line';
-            div.innerHTML = `<span class="log-time">${timeStr}</span> ${msg}`;
-            
-            terminal.appendChild(div);
-            terminal.scrollTop = terminal.scrollHeight;
-
-            if (msg.includes('Speculative')) {
-                specHits++;
-                specHitsElement.innerText = specHits.toLocaleString();
+        const i18n = {
+            en: {
+                cacheSize: "Cache Size On Disk",
+                casMeta: "Sub-millisecond CAS lookup",
+                totalPkg: "Total Packages",
+                dagNodes: "Monorepo DAG Nodes",
+                hitRate: "Cache Hit Rate",
+                hitMeta: "Tiered L1/L2 Cache",
+                parallelism: "Parallel Workers",
+                workerMeta: "Jobserver Work-Stealing",
+                dagTitle: "Interactive Dependency Graph (DAG)",
+                filterPlaceholder: "Filter packages...",
+                resetView: "Reset View",
+                toggleLayout: "Toggle Layout",
+                historyTitle: "Recent Build Executions",
+                buildId: "Build ID",
+                target: "Target",
+                status: "Status",
+                duration: "Duration",
+                cacheHits: "Cache Hits"
+            },
+            vi: {
+                cacheSize: "Dung Lượng Cache Đĩa",
+                casMeta: "Truy vấn CAS dưới 1 mili-giây",
+                totalPkg: "Tổng Số Gói (Packages)",
+                dagNodes: "Nút Đồ Thị Monorepo DAG",
+                hitRate: "Tỷ Lệ Trúng Cache",
+                hitMeta: "Cache Phân Tầng L1/L2",
+                parallelism: "Luồng Xử Lý Song Song",
+                workerMeta: "Điều Phối Jobserver Chase-Lev",
+                dagTitle: "Biểu Đồ Phụ Thuộc Tương Tác (DAG)",
+                filterPlaceholder: "Lọc tên gói...",
+                resetView: "Đặt Lại Góc Nhìn",
+                toggleLayout: "Đổi Bố Cục",
+                historyTitle: "Lịch Sử Các Lần Build Gần Đây",
+                buildId: "Mã Lần Build",
+                target: "Mục Tiêu",
+                status: "Trạng Thái",
+                duration: "Thời Gian",
+                cacheHits: "Trúng Cache"
+            },
+            "zh-Hans": {
+                cacheSize: "磁盘缓存大小",
+                casMeta: "亚毫秒级 CAS 查询",
+                totalPkg: "包总数",
+                dagNodes: "Monorepo DAG 节点",
+                hitRate: "缓存命中率",
+                hitMeta: "分层 L1/L2 缓存",
+                parallelism: "并发工作线程",
+                workerMeta: "Jobserver 任务窃取调度",
+                dagTitle: "交互式依赖拓扑图 (DAG)",
+                filterPlaceholder: "过滤包名称...",
+                resetView: "重置视图",
+                toggleLayout: "切换布局",
+                historyTitle: "近期构建记录",
+                buildId: "构建 ID",
+                target: "目标",
+                status: "状态",
+                duration: "耗时",
+                cacheHits: "缓存命中"
+            },
+            "zh-Hant": {
+                cacheSize: "磁碟快取大小",
+                casMeta: "亞毫秒級 CAS 查詢",
+                totalPkg: "套件總數",
+                dagNodes: "Monorepo DAG 節點",
+                hitRate: "快取命中率",
+                hitMeta: "分層 L1/L2 快取",
+                parallelism: "並發工作執行緒",
+                workerMeta: "Jobserver 任務竊取調度",
+                dagTitle: "互動式依賴拓撲圖 (DAG)",
+                filterPlaceholder: "篩選套件名稱...",
+                resetView: "重設檢視",
+                toggleLayout: "切換佈局",
+                historyTitle: "近期構建記錄",
+                buildId: "構建 ID",
+                target: "目標",
+                status: "狀態",
+                duration: "耗時",
+                cacheHits: "快取命中"
+            },
+            ja: {
+                cacheSize: "ディスクキャッシュ容量",
+                casMeta: "ミリ秒未満の CAS 検索",
+                totalPkg: "総パッケージ数",
+                dagNodes: "Monorepo DAG ノード",
+                hitRate: "キャッシュヒット率",
+                hitMeta: "階層型 L1/L2 キャッシュ",
+                parallelism: "並列ワーカー数",
+                workerMeta: "Jobserver ワークスティーリング",
+                dagTitle: "インタラクティブ依存グラフ (DAG)",
+                filterPlaceholder: "パッケージを検索...",
+                resetView: "表示をリセット",
+                toggleLayout: "レイアウト切替",
+                historyTitle: "最近のビルド実行履歴",
+                buildId: "ビルド ID",
+                target: "ターゲット",
+                status: "ステータス",
+                duration: "所要時間",
+                cacheHits: "キャッシュヒット"
             }
+        };
 
-            // Random delay between 1.5s and 5s
-            setTimeout(addLog, 1500 + Math.random() * 3500);
+        function changeLanguage(lang) {
+            const t = i18n[lang] || i18n.en;
+            document.getElementById('lbl-cache-size').innerText = t.cacheSize;
+            document.getElementById('lbl-cas-meta').innerText = t.casMeta;
+            document.getElementById('lbl-total-pkg').innerText = t.totalPkg;
+            document.getElementById('lbl-dag-nodes').innerText = t.dagNodes;
+            document.getElementById('lbl-hit-rate').innerText = t.hitRate;
+            document.getElementById('lbl-hit-meta').innerText = t.hitMeta;
+            document.getElementById('lbl-parallelism').innerText = t.parallelism;
+            document.getElementById('lbl-worker-meta').innerText = t.workerMeta;
+            document.getElementById('lbl-dag-title').innerText = t.dagTitle;
+            document.getElementById('nodeSearch').placeholder = t.filterPlaceholder;
+            document.getElementById('btn-reset-view').innerText = t.resetView;
+            document.getElementById('btn-toggle-layout').innerText = t.toggleLayout;
+            document.getElementById('lbl-history-title').innerText = t.historyTitle;
+            document.getElementById('th-build-id').innerText = t.buildId;
+            document.getElementById('th-target').innerText = t.target;
+            document.getElementById('th-status').innerText = t.status;
+            document.getElementById('th-duration').innerText = t.duration;
+            document.getElementById('th-cache-hits').innerText = t.cacheHits;
         }
 
-        setTimeout(addLog, 2000);
+        const nodes = [
+            { id: "fish-core", x: 100, y: 150 },
+            { id: "fish-graph", x: 100, y: 270 },
+            { id: "fish-cas", x: 300, y: 80 },
+            { id: "fish-cache", x: 300, y: 190 },
+            { id: "fish-executor", x: 300, y: 300 },
+            { id: "fish-scheduler", x: 500, y: 220 },
+            { id: "fish-cli", x: 700, y: 220 }
+        ];
+
+        const edges = [
+            { from: "fish-core", to: "fish-cas" },
+            { from: "fish-core", to: "fish-cache" },
+            { from: "fish-graph", to: "fish-scheduler" },
+            { from: "fish-executor", to: "fish-scheduler" },
+            { from: "fish-cache", to: "fish-scheduler" },
+            { from: "fish-scheduler", to: "fish-cli" }
+        ];
+
+        function renderDag() {
+            const svg = document.getElementById('dagSvg');
+            svg.innerHTML = '';
+
+            const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+            defs.innerHTML = `
+                <marker id="arrow" viewBox="0 0 10 10" refX="15" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#4b5563" />
+                </marker>
+            `;
+            svg.appendChild(defs);
+
+            edges.forEach(e => {
+                const src = nodes.find(n => n.id === e.from);
+                const dst = nodes.find(n => n.id === e.to);
+                if (src && dst) {
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    const d = `M ${src.x + 60} ${src.y + 20} C ${src.x + 120} ${src.y + 20}, ${dst.x - 60} ${dst.y + 20}, ${dst.x - 60} ${dst.y + 20}`;
+                    line.setAttribute("d", d);
+                    line.setAttribute("class", "edge-line");
+                    line.setAttribute("marker-end", "url(#arrow)");
+                    svg.appendChild(line);
+                }
+            });
+
+            nodes.forEach(n => {
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("x", n.x - 60);
+                rect.setAttribute("y", n.y);
+                rect.setAttribute("width", "120");
+                rect.setAttribute("height", "40");
+                rect.setAttribute("class", "node-rect" + (n.id === "fish-cli" ? " critical" : ""));
+
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", n.x);
+                text.setAttribute("y", n.y + 20);
+                text.setAttribute("class", "node-text");
+                text.textContent = n.id;
+
+                g.appendChild(rect);
+                g.appendChild(text);
+                svg.appendChild(g);
+            });
+        }
+
+        function filterNodes(query) {
+            const q = query.toLowerCase().trim();
+            document.querySelectorAll('.node-rect').forEach(rect => {
+                const parent = rect.parentElement;
+                const text = parent.querySelector('text').textContent.toLowerCase();
+                if (!q || text.includes(q)) {
+                    rect.style.opacity = '1';
+                } else {
+                    rect.style.opacity = '0.2';
+                }
+            });
+        }
+
+        function resetGraphView() {
+            document.getElementById('nodeSearch').value = '';
+            filterNodes('');
+        }
+
+        function toggleLayout() {
+            nodes.forEach(n => {
+                const temp = n.x;
+                n.x = n.y * 1.6;
+                n.y = temp * 0.6;
+            });
+            renderDag();
+        }
+
+        window.onload = function() {
+            renderDag();
+            fetch('/api/builds')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.data && data.data.length > 0) {
+                        const tbody = document.getElementById('buildTableBody');
+                        tbody.innerHTML = '';
+                        data.data.forEach(b => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>#${b.id.substring(0, 8)}</td>
+                                <td>${b.target || 'workspace'}</td>
+                                <td><span class="status-badge status-${b.success ? 'success' : 'failed'}">${b.success ? 'SUCCESS' : 'FAILED'}</span></td>
+                                <td>${(b.duration_ms / 1000).toFixed(2)}s</td>
+                                <td>${b.cache_hits || 0}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+                })
+                .catch(() => {});
+        };
     </script>
 </body>
 </html>
-

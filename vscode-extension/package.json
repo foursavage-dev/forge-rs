@@ -49,6 +49,21 @@
         "command": "fish.watch",
         "title": "Fish: Toggle Watch Mode",
         "icon": "$(eye)"
+      },
+      {
+        "command": "fish.openDashboard",
+        "title": "Fish: Open Web Dashboard",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "fish.runDoctor",
+        "title": "Fish: Run Doctor Diagnostics",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "fish.quickMenu",
+        "title": "Fish: Quick Actions Menu",
+        "icon": "$(sparkle)"
       }
     ],
     "viewsContainers": {

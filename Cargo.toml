@@ -35,6 +35,7 @@ members = [
     "crates/fish-templates",
     "crates/fish-cli",
     "crates/fish-installer",
+    "crates/fish-dashboard",
 ]
 
 [workspace.package]
@@ -79,6 +80,7 @@ fish-docker-builder = { path = "crates/fish-docker-builder", version = "0.3.0" }
 fish-secrets = { path = "crates/fish-secrets", version = "0.3.0" }
 fish-incremental = { path = "crates/fish-incremental", version = "0.3.0" }
 fish-templates = { path = "crates/fish-templates", version = "0.3.0" }
+fish-dashboard = { path = "crates/fish-dashboard", version = "0.3.0" }
 
 cargo_metadata = "0.23"
 thiserror = "2"

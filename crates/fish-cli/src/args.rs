@@ -55,6 +55,7 @@ pub enum Command {
     SuperOpt(SuperOptArgs),
     Plugin(PluginArgs),
     Fix(FixArgs),
+    #[command(alias = "dashboard")]
     Ui(UiArgs),
     Query(QueryArgs),
     Daemon(DaemonArgs),
