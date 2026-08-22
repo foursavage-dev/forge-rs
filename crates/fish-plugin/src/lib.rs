@@ -10,17 +10,22 @@ use fish_executor::{CacheEntry, CommandSpec, Task};
 use fish_graph::BuildGraph;
 
 pub mod manifest;
+pub mod marketplace;
 pub mod rule;
 pub mod scripting;
 pub mod starlark_parser;
 pub mod wasm;
 pub mod wasm_sandbox;
 
+pub use marketplace::{
+    PluginMarketplace, PluginMetadata, PluginSignature, RegistryConfig, SearchQuery,
+};
 pub use rule::{PluginRulesManifest, RuleSpec};
 pub use starlark_parser::StarlarkRulesParser;
 pub use wasm::{
     WasmCapabilities, WasmExecutionResult, WasmPluginEngine, WasmPluginManifest, WasmPluginRegistry,
 };
+pub use wasm_sandbox::{WasmPluginConfig, WasmPluginSandbox, WasmValue};
 
 #[derive(Debug, Error)]
 pub enum PluginError {

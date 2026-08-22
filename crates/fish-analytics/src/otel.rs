@@ -78,14 +78,14 @@ static SPAN_COUNTER: AtomicU64 = AtomicU64::new(1);
 
 #[derive(Debug, Clone)]
 pub struct ActiveSpanBuilder {
-    trace_id: String,
-    span_id: String,
-    parent_span_id: Option<String>,
-    name: String,
-    kind: SpanKind,
-    start_time_unix_nano: u128,
-    attributes: HashMap<String, AttributeValue>,
-    events: Vec<SpanEvent>,
+    pub trace_id: String,
+    pub span_id: String,
+    pub parent_span_id: Option<String>,
+    pub name: String,
+    pub kind: SpanKind,
+    pub start_time_unix_nano: u128,
+    pub attributes: HashMap<String, AttributeValue>,
+    pub events: Vec<SpanEvent>,
 }
 
 impl ActiveSpanBuilder {
@@ -470,6 +470,238 @@ impl OtelTracer {
     }
 }
 
+/// OpenTelemetry Exporter - handles end-to-end distributed tracing across build steps and network nodes
+#[derive(Debug, Clone)]
+pub struct OtelExporter {
+    endpoint: String,
+    tracer: OtelTracer,
+    batch_size: usize,
+    headers: HashMap<String, String>,
+}
+
+impl OtelExporter {
+    pub fn new(endpoint: impl Into<String>, service_name: impl Into<String>) -> Self {
+        Self {
+            endpoint: endpoint.into(),
+            tracer: OtelTracer::new(service_name),
+            batch_size: 100,
+            headers: HashMap::new(),
+        }
+    }
+
+    pub fn with_headers(mut self, headers: HashMap<String, String>) -> Self {
+        self.headers = headers;
+        self
+    }
+
+    pub fn with_batch_size(mut self, batch_size: usize) -> Self {
+        self.batch_size = batch_size;
+        self
+    }
+
+    pub fn tracer(&self) -> &OtelTracer {
+        &self.tracer
+    }
+
+    pub fn endpoint(&self) -> &str {
+        &self.endpoint
+    }
+
+    /// Create a root span for a build execution
+    pub fn start_build_trace(&self, build_id: &str, packages: usize) -> ActiveSpanBuilder {
+        self.tracer
+            .start_span(format!("build.{}", build_id))
+            .with_attribute("build.id", build_id)
+            .with_attribute("build.packages", packages)
+            .with_attribute("service.name", self.tracer.service_name().to_string())
+    }
+
+    /// Create a span for a task execution
+    pub fn start_task_span(
+        &self,
+        task_name: &str,
+        parent_span_id: Option<&str>,
+        toolchain: &str,
+    ) -> ActiveSpanBuilder {
+        let mut builder = self
+            .tracer
+            .start_span(format!("task.{}", task_name))
+            .with_attribute("task.name", task_name)
+            .with_attribute("task.toolchain", toolchain)
+            .with_kind(SpanKind::Internal);
+
+        if let Some(parent) = parent_span_id {
+            builder = builder.with_parent(parent);
+        }
+
+        builder
+    }
+
+    /// Create a span for remote execution
+    pub fn start_remote_span(
+        &self,
+        worker_id: &str,
+        task_id: &str,
+        parent_span_id: Option<&str>,
+    ) -> ActiveSpanBuilder {
+        let mut builder = self
+            .tracer
+            .start_span(format!("remote.{}.{}", worker_id, task_id))
+            .with_attribute("remote.worker_id", worker_id)
+            .with_attribute("remote.task_id", task_id)
+            .with_kind(SpanKind::Client);
+
+        if let Some(parent) = parent_span_id {
+            builder = builder.with_parent(parent);
+        }
+
+        builder
+    }
+
+    /// Create a span for cache operations
+    pub fn start_cache_span(
+        &self,
+        operation: &str,
+        cache_key: &str,
+        parent_span_id: Option<&str>,
+    ) -> ActiveSpanBuilder {
+        let mut builder = self
+            .tracer
+            .start_span(format!("cache.{}", operation))
+            .with_attribute("cache.operation", operation)
+            .with_attribute("cache.key", cache_key)
+            .with_kind(SpanKind::Internal);
+
+        if let Some(parent) = parent_span_id {
+            builder = builder.with_parent(parent);
+        }
+
+        builder
+    }
+
+    /// Export spans to OTLP endpoint (simulated - writes to buffer for testing)
+    pub fn export(&self) -> Result<serde_json::Value, String> {
+        let payload = self.tracer.to_otlp_json();
+        // In production, this would POST to self.endpoint
+        // For now, return payload for verification
+        Ok(payload)
+    }
+
+    /// Export spans in batches
+    pub fn export_batched(&self) -> Vec<serde_json::Value> {
+        let all_spans = self.tracer.spans();
+        let mut batches = Vec::new();
+
+        for chunk in all_spans.chunks(self.batch_size) {
+            let batch_tracer = OtelTracer::with_trace_id(
+                self.tracer.service_name(),
+                self.tracer.trace_id(),
+            );
+            batch_tracer.record_spans(chunk.to_vec());
+            batches.push(batch_tracer.to_otlp_json());
+        }
+
+        batches
+    }
+
+    /// Generate W3C Trace Context headers for propagation across network nodes
+    pub fn inject_context(&self, span: &OtelSpan) -> HashMap<String, String> {
+        let mut headers = self.headers.clone();
+        headers.insert(
+            "traceparent".to_string(),
+            format!("00-{}-{}-01", span.trace_id, span.span_id),
+        );
+        headers.insert(
+            "tracestate".to_string(),
+            format!("fish=t:{}", span.trace_id),
+        );
+        headers
+    }
+
+    /// Extract trace context from headers (for server side)
+    pub fn extract_context(headers: &HashMap<String, String>) -> Option<(String, String)> {
+        if let Some(traceparent) = headers.get("traceparent") {
+            // Format: 00-trace_id-span_id-flags
+            let parts: Vec<&str> = traceparent.split('-').collect();
+            if parts.len() == 4 {
+                return Some((parts[1].to_string(), parts[2].to_string()));
+            }
+        }
+        None
+    }
+
+    /// Create distributed trace that spans multiple nodes
+    pub fn create_distributed_trace(
+        &self,
+        root_name: &str,
+        nodes: Vec<&str>,
+    ) -> Vec<OtelSpan> {
+        let root_builder = self.tracer.start_span(root_name);
+        let root_span_id = root_builder.span_id.clone();
+        let root_span = root_builder.finish(true, None);
+        self.tracer.record_span(root_span.clone());
+
+        let mut spans = vec![root_span];
+
+        for node in nodes {
+            let child_builder = self
+                .tracer
+                .start_span(format!("{}:{}", root_name, node))
+                .with_parent(&root_span_id)
+                .with_attribute("node.id", node)
+                .with_kind(SpanKind::Client);
+
+            let child_span = child_builder.finish(true, None);
+            self.tracer.record_span(child_span.clone());
+            spans.push(child_span);
+        }
+
+        spans
+    }
+
+    /// Record build DAG execution as trace
+    pub fn record_dag_execution(
+        &self,
+        dag_id: &str,
+        tasks: &[(String, String, bool)], // (task_name, toolchain, cache_hit)
+    ) -> Vec<OtelSpan> {
+        let root_builder = self
+            .tracer
+            .start_span(format!("dag.{}", dag_id))
+            .with_attribute("dag.id", dag_id)
+            .with_attribute("dag.task_count", tasks.len());
+
+        let root_id = root_builder.span_id.clone();
+        let root_span = root_builder.finish(true, None);
+        self.tracer.record_span(root_span.clone());
+
+        let mut spans = vec![root_span];
+
+        for (task_name, toolchain, cache_hit) in tasks {
+            let mut builder = self
+                .tracer
+                .start_span(format!("task.{}", task_name))
+                .with_parent(&root_id)
+                .with_attribute("task.name", task_name.clone())
+                .with_attribute("task.toolchain", toolchain.clone())
+                .with_attribute("cache.hit", *cache_hit);
+
+            if *cache_hit {
+                builder.add_event("cache_hit", HashMap::new());
+            } else {
+                builder.add_event("cache_miss", HashMap::new());
+                builder.add_event("jobserver_token_acquired", HashMap::new());
+            }
+
+            let span = builder.finish(true, None);
+            self.tracer.record_span(span.clone());
+            spans.push(span);
+        }
+
+        spans
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -508,5 +740,66 @@ mod tests {
         let chrome_json = tracer.to_chrome_trace_json();
         assert!(chrome_json["traceEvents"].is_array());
         assert_eq!(chrome_json["traceEvents"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_otel_exporter_end_to_end_tracing() {
+        let exporter = OtelExporter::new("http://localhost:4317", "fish-build");
+
+        // Simulate build with 3 tasks
+        let tasks = vec![
+            ("compile_core".to_string(), "rust".to_string(), false),
+            ("compile_cli".to_string(), "rust".to_string(), true),
+            ("test_core".to_string(), "rust".to_string(), false),
+        ];
+
+        let spans = exporter.record_dag_execution("build-123", &tasks);
+        assert_eq!(spans.len(), 4); // root + 3 tasks
+
+        let payload = exporter.export().unwrap();
+        assert!(payload["resourceSpans"].is_array());
+
+        let batches = exporter.export_batched();
+        assert!(!batches.is_empty());
+    }
+
+    #[test]
+    fn test_distributed_tracing_across_nodes() {
+        let exporter = OtelExporter::new("http://localhost:4317", "fish-coordinator");
+
+        let nodes = vec!["worker-1", "worker-2", "cache-server"];
+        let spans = exporter.create_distributed_trace("distributed_build", nodes);
+
+        assert_eq!(spans.len(), 4); // root + 3 nodes
+
+        // Test context propagation
+        let root_span = &spans[0];
+        let headers = exporter.inject_context(root_span);
+        assert!(headers.contains_key("traceparent"));
+        assert!(headers.contains_key("tracestate"));
+
+        let extracted = OtelExporter::extract_context(&headers).unwrap();
+        assert_eq!(extracted.0, root_span.trace_id);
+        assert_eq!(extracted.1, root_span.span_id);
+    }
+
+    #[test]
+    fn test_task_and_cache_spans() {
+        let exporter = OtelExporter::new("http://localhost:4317", "fish-build");
+
+        let build_span = exporter.start_build_trace("build-456", 10);
+        let build_span_id = build_span.span_id.clone();
+        let build_otel = build_span.finish(true, None);
+        exporter.tracer().record_span(build_otel);
+
+        let task_span = exporter.start_task_span("compile", Some(&build_span_id), "rust");
+        let task_otel = task_span.finish(true, None);
+        exporter.tracer().record_span(task_otel);
+
+        let cache_span = exporter.start_cache_span("get", "abc123", Some(&build_span_id));
+        let cache_otel = cache_span.finish(true, None);
+        exporter.tracer().record_span(cache_otel);
+
+        assert_eq!(exporter.tracer().span_count(), 3);
     }
 }
