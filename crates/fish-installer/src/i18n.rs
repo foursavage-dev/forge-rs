@@ -89,7 +89,7 @@ impl Messages {
                 uninstall_confirm: "Are you sure you want to uninstall Fish? (y/N):",
                 uninstall_complete: "Fish has been successfully uninstalled.",
                 uninstall_path_removed: "Removed Fish from User PATH environment variable.",
-                next_steps: "Open a new terminal and run 'forge --help' to start building!",
+                next_steps: "Open a new terminal and run 'fish --help' to start building!",
                 press_enter_to_exit: "Press Enter to exit...",
             },
             Language::Vi => Self {
@@ -108,7 +108,7 @@ impl Messages {
                 uninstall_confirm: "Bạn có chắc chắn muốn gỡ cài đặt Fish? (y/N):",
                 uninstall_complete: "Fish đã được gỡ cài đặt hoàn toàn.",
                 uninstall_path_removed: "Đã xóa Fish khỏi biến môi trường PATH của người dùng.",
-                next_steps: "Hãy mở cửa sổ Terminal mới và gõ lệnh 'forge --help' để bắt đầu!",
+                next_steps: "Hãy mở cửa sổ Terminal mới và gõ lệnh 'fish --help' để bắt đầu!",
                 press_enter_to_exit: "Nhấn Enter để thoát...",
             },
             Language::ZhCn => Self {
@@ -127,7 +127,7 @@ impl Messages {
                 uninstall_confirm: "您确定要卸载 Fish 吗？(y/N):",
                 uninstall_complete: "Fish 已成功卸载。",
                 uninstall_path_removed: "已从用户 PATH 环境变量中移除 Fish。",
-                next_steps: "打开新的终端并运行 'forge --help' 即可开始！",
+                next_steps: "打开新的终端并运行 'fish --help' 即可开始！",
                 press_enter_to_exit: "按回车键退出...",
             },
             Language::ZhTw => Self {
@@ -146,7 +146,7 @@ impl Messages {
                 uninstall_confirm: "您確定要解除安裝 Fish 嗎？(y/N):",
                 uninstall_complete: "Fish 已成功解除安裝。",
                 uninstall_path_removed: "已從使用者 PATH 環境變數中移除 Fish。",
-                next_steps: "開啟新的終端機並執行 'forge --help' 即可開始！",
+                next_steps: "開啟新的終端機並執行 'fish --help' 即可開始！",
                 press_enter_to_exit: "按 Enter 鍵結束...",
             },
             Language::Ja => Self {
@@ -165,7 +165,7 @@ impl Messages {
                 uninstall_confirm: "Fish をアンインストールしてもよろしいですか？ (y/N):",
                 uninstall_complete: "Fish のアンインストールが完了しました。",
                 uninstall_path_removed: "ユーザー PATH 環境変数から Fish を削除しました。",
-                next_steps: "新しいターミナルを開き、'forge --help' を実行して開始してください！",
+                next_steps: "新しいターミナルを開き、'fish --help' を実行して開始してください！",
                 press_enter_to_exit: "Enter キーを押して終了します...",
             },
         }

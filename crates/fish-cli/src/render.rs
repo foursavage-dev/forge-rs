@@ -327,7 +327,7 @@ pub fn print_graph_json(project: &Project, graph: &BuildGraph<PackageId>) {
 }
 
 pub fn print_graph_dot(project: &Project, graph: &BuildGraph<PackageId>) {
-    println!("digraph forge {{");
+    println!("digraph fish {{");
     println!("    rankdir=BT;");
 
     let mut edges = vec![];

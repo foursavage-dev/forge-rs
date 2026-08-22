@@ -184,7 +184,7 @@ fn main() -> ExitCode {
                 },
                 _ => {
                     eprintln!(
-                        "error: no forge project discovered at {}",
+                        "error: no fish project discovered at {}",
                         start_dir.display()
                     );
                     ExitCode::FAILURE

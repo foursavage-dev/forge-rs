@@ -8,7 +8,7 @@ fn fish() -> Command {
 }
 
 fn run(command: &mut Command) -> Output {
-    command.output().expect("failed to spawn forge")
+    command.output().expect("failed to spawn fish")
 }
 
 fn stdout(output: &Output) -> String {
@@ -311,18 +311,18 @@ fn fish_toml_sets_worker_count_and_disable_flag_wins() {
         dir.path().join("fish.toml"),
         "backend = \"rust\"\njobs = 1\nno_cache = true\n",
     )
-    .expect("write forge.toml");
+    .expect("write fish.toml");
 
     let output = run(fish().arg("build").current_dir(dir.path()));
     assert!(output.status.success(), "stderr: {}", stderr(&output));
     let text = stdout(&output);
     assert!(
         text.contains("Workers:   1"),
-        "forge.toml jobs=1 is applied: {text}"
+        "fish.toml jobs=1 is applied: {text}"
     );
     assert!(
         text.contains("Cached:    0"),
-        "forge.toml no_cache=true disables the cache: {text}"
+        "fish.toml no_cache=true disables the cache: {text}"
     );
 
     let second = run(fish().arg("build").current_dir(dir.path()));
@@ -333,7 +333,7 @@ fn fish_toml_sets_worker_count_and_disable_flag_wins() {
 #[test]
 fn invalid_fish_toml_is_a_clear_error() {
     let dir = workspace_fixture();
-    fs::write(dir.path().join("fish.toml"), "not = [valid toml").expect("write forge.toml");
+    fs::write(dir.path().join("fish.toml"), "not = [valid toml").expect("write fish.toml");
 
     let output = run(fish().arg("build").current_dir(dir.path()));
     assert!(!output.status.success());
@@ -572,7 +572,7 @@ fn affected_builds_only_changed_packages_and_their_dependents() {
 
     let root = dir.path().to_path_buf();
     fs::write(dir.path().join(".gitignore"), "target/\n").expect("gitignore");
-    // `forge graph` runs cargo metadata, which writes Cargo.lock; commit it
+    // `fish graph` runs cargo metadata, which writes Cargo.lock; commit it
     // so it does not show up as an untracked workspace-level change later.
     let graph = run(fish().arg("graph").current_dir(dir.path()));
     assert!(graph.status.success(), "graph must load the workspace");

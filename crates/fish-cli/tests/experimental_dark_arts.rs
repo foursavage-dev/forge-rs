@@ -38,7 +38,7 @@ fn stderr(output: &Output) -> String {
 }
 
 fn run(cmd: &mut Command) -> Output {
-    cmd.output().expect("failed to execute forge binary")
+    cmd.output().expect("failed to execute fish binary")
 }
 
 #[test]

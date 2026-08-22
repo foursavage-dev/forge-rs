@@ -18,7 +18,7 @@ pub fn run_plugin(args: PluginArgs) -> ExitCode {
         crate::args::PluginAction::List => {
             let plugins = backends::list_script_plugins(&start_dir);
             if plugins.is_empty() {
-                println!("No script plugins found in .forge/plugins/");
+                println!("No script plugins found in .fish/plugins/");
             } else {
                 println!("Available script plugins:");
                 for plugin in &plugins {

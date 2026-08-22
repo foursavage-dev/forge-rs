@@ -108,10 +108,10 @@ impl IncrementalAnalyzer {
 
             suggestions.push(OptimizationSuggestion {
                 title: "Use DAG-aware Incremental affected builds".to_string(),
-                description: "This project spans multiple languages. Running `forge affected` restricts build execution strictly to packages with invalidated inputs.".to_string(),
+                description: "This project spans multiple languages. Running `fish affected` restricts build execution strictly to packages with invalidated inputs.".to_string(),
                 priority: SuggestionPriority::Medium,
                 estimated_impact: "Reduces cross-ecosystem build times by 40-75%".to_string(),
-                action_command: Some("forge affected".to_string()),
+                action_command: Some("fish affected".to_string()),
             });
         }
 

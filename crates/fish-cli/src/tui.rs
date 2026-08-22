@@ -133,7 +133,7 @@ impl TuiDashboard {
 
                 let header_text = vec![Line::from(vec![
                     Span::styled(
-                        "FORGE BUILD DASHBOARD ",
+                        "FISH BUILD DASHBOARD ",
                         Style::default()
                             .fg(Color::Cyan)
                             .add_modifier(Modifier::BOLD),

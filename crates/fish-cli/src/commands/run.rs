@@ -73,7 +73,7 @@ pub fn run_run(args: RunArgs) -> ExitCode {
             .filter(|t| t.kind.iter().any(|k| k.to_string() == "bin"))
             .collect();
         if bin_targets.is_empty() {
-            eprintln!("error: a bin target must be available for `forge run`");
+            eprintln!("error: a bin target must be available for `fish run`");
             return ExitCode::FAILURE;
         }
     }

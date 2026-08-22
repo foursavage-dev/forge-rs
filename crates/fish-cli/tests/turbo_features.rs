@@ -7,7 +7,7 @@ fn fish() -> Command {
 }
 
 fn run(command: &mut Command) -> Output {
-    command.output().expect("failed to spawn forge")
+    command.output().expect("failed to spawn fish")
 }
 
 fn stdout(output: &Output) -> String {

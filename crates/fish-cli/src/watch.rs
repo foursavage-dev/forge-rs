@@ -36,8 +36,8 @@ pub fn is_relevant_path(path: &Path) -> bool {
         || path_str.contains("\\build\\")
         || path_str.contains("/.git/")
         || path_str.contains("\\.git\\")
-        || path_str.contains("/.forge/")
-        || path_str.contains("\\.forge\\")
+        || path_str.contains("/.fish/")
+        || path_str.contains("\\.fish\\")
     {
         return false;
     }
@@ -51,7 +51,7 @@ pub fn is_relevant_path(path: &Path) -> bool {
             || file_name == "Cargo.lock"
             || file_name == "fish.toml"
             || file_name == "fish.cc.json"
-            || file_name == "forge.go.json"
+            || file_name == "fish.go.json"
             || file_name == "go.mod"
             || file_name == "go.sum"
         {
@@ -186,7 +186,7 @@ mod tests {
         assert!(!is_relevant_path(Path::new("target/debug/app.exe")));
         assert!(!is_relevant_path(Path::new("build/output.o")));
         assert!(!is_relevant_path(Path::new(".git/HEAD")));
-        assert!(!is_relevant_path(Path::new(".forge/cache/123.bin")));
+        assert!(!is_relevant_path(Path::new(".fish/cache/123.bin")));
         assert!(!is_relevant_path(Path::new("src/main.rs.tmp")));
         assert!(!is_relevant_path(Path::new("src/.#main.rs")));
     }

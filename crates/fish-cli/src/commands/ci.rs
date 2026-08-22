@@ -66,8 +66,8 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                     match generator.generate_workflow(&matrix) {
                         Ok(workflow) => {
                             std::fs::create_dir_all(".github/workflows").ok();
-                            match std::fs::write(".github/workflows/forge.yml", workflow) {
-                                Ok(_) => println!("✓ Created .github/workflows/forge.yml"),
+                            match std::fs::write(".github/workflows/fish.yml", workflow) {
+                                Ok(_) => println!("✓ Created .github/workflows/fish.yml"),
                                 Err(e) => {
                                     eprintln!(
                                         "error: failed to write GitHub Actions workflow: {}",
@@ -155,7 +155,7 @@ pub fn run_ci(args: CiArgs) -> ExitCode {
                 }
                 CIPlatform::All => {
                     let platforms = vec![
-                        (CIPlatform::GitHubActions, ".github/workflows/forge.yml"),
+                        (CIPlatform::GitHubActions, ".github/workflows/fish.yml"),
                         (CIPlatform::GitLabCI, ".gitlab-ci.yml"),
                         (CIPlatform::CircleCI, ".circleci/config.yml"),
                         (CIPlatform::BitbucketPipelines, "bitbucket-pipelines.yml"),

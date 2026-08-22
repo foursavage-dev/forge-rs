@@ -18,7 +18,7 @@ fn stderr(output: &Output) -> String {
 
 #[test]
 fn test_fish_fix_runs_clean_on_healthy_project() {
-    let output = fish().arg("fix").output().expect("failed to run forge fix");
+    let output = fish().arg("fix").output().expect("failed to run fish fix");
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
     let text = stdout(&output);
@@ -54,7 +54,7 @@ fn main() {
         .arg("--path")
         .arg(dir.path())
         .output()
-        .expect("failed to run forge fix");
+        .expect("failed to run fish fix");
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
     let text = stdout(&output);
@@ -71,7 +71,7 @@ fn test_fish_ui_help_and_arguments() {
         .arg("ui")
         .arg("--help")
         .output()
-        .expect("failed to run forge ui --help");
+        .expect("failed to run fish ui --help");
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
     let text = stdout(&output);
