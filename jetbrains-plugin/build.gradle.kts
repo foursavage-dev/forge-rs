@@ -1,11 +1,11 @@
-﻿plugins {
+plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.22"
     id("org.jetbrains.intellij") version "1.17.2"
 }
 
 group = "com.fish"
-version = "0.3.0"
+version = "0.4.0"
 
 repositories {
     mavenCentral()

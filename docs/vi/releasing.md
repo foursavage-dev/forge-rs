@@ -15,8 +15,8 @@ Tài liệu này hướng dẫn quy trình phát hành phiên bản mới của 
    Ghi nhận toàn bộ tính năng mới và bản sửa lỗi trong `CHANGELOG.md`.
 4. **Tạo Git Tag**:
    ```bash
-   git tag -a v0.3.0 -m "Release v0.3.0"
-   git push origin v0.3.0
+   git tag -a v0.4.0 -m "Release v0.4.0"
+   git push origin v0.4.0
    ```
 5. **Đóng gói & Phát hành**:
    - Đăng tải crates lên crates.io

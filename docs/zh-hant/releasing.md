@@ -15,8 +15,8 @@
    在 `CHANGELOG.md` 中記錄新增功能與修復。
 4. **打 Git 標籤**:
    ```bash
-   git tag -a v0.3.0 -m "Release v0.3.0"
-   git push origin v0.3.0
+   git tag -a v0.4.0 -m "Release v0.4.0"
+   git push origin v0.4.0
    ```
 5. **產物分發**:
    - 發布 crates 到 crates.io

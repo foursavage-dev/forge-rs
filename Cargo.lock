@@ -991,7 +991,7 @@ checksum = "d45db016d36b838f563236e9193d0ee6ce38f3f68b6c94e914b4929c96bbb890"
 
 [[package]]
 name = "fish-analytics"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1005,7 +1005,7 @@ dependencies = [
 
 [[package]]
 name = "fish-backend-cc"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "fish-cache",
@@ -1023,7 +1023,7 @@ dependencies = [
 
 [[package]]
 name = "fish-backend-dart"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "fish-cache",
@@ -1040,7 +1040,7 @@ dependencies = [
 
 [[package]]
 name = "fish-backend-docker"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1058,7 +1058,7 @@ dependencies = [
 
 [[package]]
 name = "fish-backend-dotnet"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "fish-cache",
@@ -1075,7 +1075,7 @@ dependencies = [
 
 [[package]]
 name = "fish-backend-go"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "fish-cache",
@@ -1093,7 +1093,7 @@ dependencies = [
 
 [[package]]
 name = "fish-backend-java"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "fish-cache",
@@ -1110,7 +1110,7 @@ dependencies = [
 
 [[package]]
 name = "fish-backend-py"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "fish-cache",
@@ -1129,7 +1129,7 @@ dependencies = [
 
 [[package]]
 name = "fish-backend-rust"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "cargo_metadata",
@@ -1146,7 +1146,7 @@ dependencies = [
 
 [[package]]
 name = "fish-backend-swift"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "fish-cache",
@@ -1163,7 +1163,7 @@ dependencies = [
 
 [[package]]
 name = "fish-backend-ts"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "fish-cache",
@@ -1181,7 +1181,7 @@ dependencies = [
 
 [[package]]
 name = "fish-backend-zig"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "fish-cache",
@@ -1198,7 +1198,7 @@ dependencies = [
 
 [[package]]
 name = "fish-cache"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "criterion",
@@ -1218,7 +1218,7 @@ dependencies = [
 
 [[package]]
 name = "fish-cas"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "blake3",
@@ -1237,7 +1237,7 @@ dependencies = [
 
 [[package]]
 name = "fish-ci-generator"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "fish-core",
  "fish-graph",
@@ -1249,7 +1249,7 @@ dependencies = [
 
 [[package]]
 name = "fish-cli"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1299,7 +1299,7 @@ dependencies = [
 
 [[package]]
 name = "fish-core"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "blake3",
@@ -1319,7 +1319,7 @@ dependencies = [
 
 [[package]]
 name = "fish-dashboard"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "chrono",
  "fish-cache",
@@ -1336,7 +1336,7 @@ dependencies = [
 
 [[package]]
 name = "fish-docker-builder"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "blake3",
@@ -1350,7 +1350,7 @@ dependencies = [
 
 [[package]]
 name = "fish-executor"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "fastrand",
  "nix",
@@ -1362,7 +1362,7 @@ dependencies = [
 
 [[package]]
 name = "fish-flaky-detection"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1375,14 +1375,14 @@ dependencies = [
 
 [[package]]
 name = "fish-graph"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "thiserror",
 ]
 
 [[package]]
 name = "fish-incremental"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "chrono",
@@ -1397,7 +1397,7 @@ dependencies = [
 
 [[package]]
 name = "fish-installer"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1411,7 +1411,7 @@ dependencies = [
 
 [[package]]
 name = "fish-multiplatform"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "fish-ci-generator",
  "fish-core",
@@ -1423,7 +1423,7 @@ dependencies = [
 
 [[package]]
 name = "fish-notifications"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1438,7 +1438,7 @@ dependencies = [
 
 [[package]]
 name = "fish-plugin"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "blake3",
  "fish-cache",
@@ -1454,7 +1454,7 @@ dependencies = [
 
 [[package]]
 name = "fish-remote-cache"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
@@ -1471,7 +1471,7 @@ dependencies = [
 
 [[package]]
 name = "fish-sandbox"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "fish-core",
  "fish-executor",
@@ -1483,7 +1483,7 @@ dependencies = [
 
 [[package]]
 name = "fish-scheduler"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "criterion",
@@ -1504,7 +1504,7 @@ dependencies = [
 
 [[package]]
 name = "fish-secrets"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1517,7 +1517,7 @@ dependencies = [
 
 [[package]]
 name = "fish-security"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1534,7 +1534,7 @@ dependencies = [
 
 [[package]]
 name = "fish-signing"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
@@ -1559,7 +1559,7 @@ dependencies = [
 
 [[package]]
 name = "fish-templates"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "fish-core",
@@ -1572,7 +1572,7 @@ dependencies = [
 
 [[package]]
 name = "fish-worker"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "base64 0.23.1",

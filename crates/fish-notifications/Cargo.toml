@@ -1,10 +1,9 @@
 [package]
 name = "fish-notifications"
-version = "0.3.0"
-edition = "2024"
-authors = ["Foursavage Dev <foursavage@proton.me>"]
-license = "MIT"
-repository = "https://github.com/requla11/fish"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 description = "Build notification system for Fish"
 keywords = ["notifications", "slack", "discord", "email"]
 categories = ["development-tools"]

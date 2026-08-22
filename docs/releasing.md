@@ -15,8 +15,8 @@ This document outlines the standard release lifecycle and checklist for Fish.
    Document all new features, fixes, and breaking changes in `CHANGELOG.md`.
 4. **Git Tagging**:
    ```bash
-   git tag -a v0.3.0 -m "Release v0.3.0"
-   git push origin v0.3.0
+   git tag -a v0.4.0 -m "Release v0.4.0"
+   git push origin v0.4.0
    ```
 5. **Artifact Publishing**:
    - Publish crates to crates.io

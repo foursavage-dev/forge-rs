@@ -89,7 +89,7 @@ mod tests {
 
     #[test]
     fn test_slsa_provenance_generation() {
-        let doc = SlsaGenerator::generate_v1("output.bin", "abc123blake3hash", "0.3.0");
+        let doc = SlsaGenerator::generate_v1("output.bin", "abc123blake3hash", "0.4.0");
         assert_eq!(doc.doc_type, "https://in-toto.io/Statement/v1");
         assert_eq!(doc.subject.len(), 1);
         assert_eq!(doc.subject[0].name, "output.bin");

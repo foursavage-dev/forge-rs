@@ -2,7 +2,7 @@
   "name": "fish-build-orchestration",
   "displayName": "Fish Build Orchestration",
   "description": "IDE integration for Fish build orchestration system with DAG visualization and task runner",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "requla11",
   "engines": {
     "vscode": "^1.75.0"
