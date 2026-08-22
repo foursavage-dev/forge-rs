@@ -182,10 +182,36 @@ impl PolyglotGraphBuilder {
                         .and_then(|n| n.to_str())
                         .unwrap_or("app")
                         .to_string();
+                    let mut sources = Vec::new();
+                    if let Ok(entries) = std::fs::read_dir(dir) {
+                        for entry in entries.flatten() {
+                            let p = entry.path();
+                            let is_cc = p
+                                .extension()
+                                .is_some_and(|e| e == "cpp" || e == "cc" || e == "cxx" || e == "c");
+                            if is_cc && let Some(n) = p.file_name().and_then(|n| n.to_str()) {
+                                sources.push(n.to_string());
+                            }
+                        }
+                    }
+                    if sources.is_empty()
+                        && dir.join("src").exists()
+                        && let Ok(entries) = std::fs::read_dir(dir.join("src"))
+                    {
+                        for entry in entries.flatten() {
+                            let p = entry.path();
+                            let is_cc = p
+                                .extension()
+                                .is_some_and(|e| e == "cpp" || e == "cc" || e == "cxx" || e == "c");
+                            if is_cc && let Some(n) = p.file_name().and_then(|n| n.to_str()) {
+                                sources.push(format!("src/{n}"));
+                            }
+                        }
+                    }
                     CcProjectConfig {
                         name,
                         language: CcLanguage::Cpp,
-                        sources: vec![],
+                        sources,
                         includes: vec!["include".to_string()],
                         cflags: vec![],
                         cxxflags: vec![],
