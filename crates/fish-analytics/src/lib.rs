@@ -8,10 +8,15 @@
 pub mod aggregator;
 pub mod dashboard;
 pub mod metrics;
+pub mod otel;
 
 pub use aggregator::MetricsAggregator;
 pub use dashboard::{AnalyticsDashboard, DashboardConfig};
 pub use metrics::{BuildMetrics, CacheMetrics};
+pub use otel::{
+    ActiveSpanBuilder, AttributeValue, OtelSpan, OtelTracer, SpanEvent, SpanKind, SpanStatus,
+    StatusCode,
+};
 
 use std::path::Path;
 

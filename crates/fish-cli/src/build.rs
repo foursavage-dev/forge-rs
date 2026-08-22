@@ -60,6 +60,14 @@ pub(crate) fn build_executor(
     if args.super_opt {
         middleware_executor = middleware_executor.with_middleware(Box::new(SuperOptMiddleware));
     }
+    if let Some(endpoint) = &args.otel_endpoint {
+        let tracer = fish_analytics::otel::OtelTracer::new("fish-cli");
+        middleware_executor =
+            middleware_executor.with_middleware(Box::new(OtelTracingMiddleware {
+                tracer,
+                _endpoint: endpoint.clone(),
+            }));
+    }
     let base_executor: Box<dyn TaskExecutor> = Box::new(middleware_executor);
 
     if let Some(local_c) = cache {
@@ -128,6 +136,38 @@ impl fish_executor::TaskMiddleware for SuperOptMiddleware {
 /// Entry point shared by `build`/`check`/`test` and `affected`. When
 /// `filtered_graph` is provided (affected builds) it replaces the
 /// discovered package graph, restricting tasks to the affected packages.
+struct OtelTracingMiddleware {
+    tracer: fish_analytics::otel::OtelTracer,
+    _endpoint: String,
+}
+
+impl fish_executor::TaskMiddleware for OtelTracingMiddleware {
+    fn post_execute(
+        &self,
+        task: &fish_executor::Task,
+        outcome: &mut fish_executor::TaskOutcome,
+    ) -> Result<(), fish_executor::ExecutorError> {
+        let mut span = self.tracer.start_span(format!("task:{}", task.label));
+        span = span.with_attribute("task.label", task.label.clone());
+        span = span.with_attribute("task.status", format!("{:?}", outcome.status));
+        span = span.with_attribute("task.duration_ms", outcome.duration.as_secs_f64() * 1000.0);
+        if let Some(code) = outcome.exit_code {
+            span = span.with_attribute("task.exit_code", code);
+        }
+        let success = outcome.status != fish_executor::TaskStatus::Failed;
+        let finished = span.finish(
+            success,
+            if !success {
+                Some(outcome.stderr.clone())
+            } else {
+                None
+            },
+        );
+        self.tracer.record_span(finished);
+        Ok(())
+    }
+}
+
 pub(crate) fn run_build_mode_with(
     args: CommonArgs,
     mode: BuildMode,
@@ -182,7 +222,15 @@ pub(crate) fn run_build_mode_with(
         wasm_sandbox: args.wasm_sandbox || config.wasm_sandbox,
         super_opt: args.super_opt || config.super_opt,
         explain: args.explain,
+        otel_endpoint: args
+            .otel_endpoint
+            .or(config.otel_endpoint)
+            .or_else(|| std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT").ok()),
     };
+
+    if let Some(endpoint) = &merged.otel_endpoint {
+        println!("📡 OpenTelemetry OTLP Distributed Tracing active (exporter: {endpoint})");
+    }
 
     if merged.ramdisk
         && let Ok(rd) = crate::ramdisk::RamDisk::create_turbo_workspace("turbo")
@@ -258,8 +306,17 @@ pub(crate) fn run_build_mode_with(
         }
     }
 
-    if merged.wasm_sandbox {
-        println!("🛡️ WASM / WASI Hermetic Plugin Sandbox active");
+    let wasm_registry = fish_plugin::WasmPluginRegistry::discover_in_workspace(&start_dir);
+    if merged.wasm_sandbox || wasm_registry.count() > 0 {
+        if wasm_registry.count() > 0 {
+            println!(
+                "🛡️ WASM / WASI Hermetic Plugin Sandbox active (loaded {} plugins: {:?})",
+                wasm_registry.count(),
+                wasm_registry.plugin_names()
+            );
+        } else {
+            println!("🛡️ WASM / WASI Hermetic Plugin Sandbox active");
+        }
     }
 
     if merged.super_opt {

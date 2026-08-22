@@ -98,6 +98,33 @@ pub fn handle_api_request(
                 }
             }
         }
+        ("GET", "/api/traces") => {
+            let store = state.metrics_store.lock().unwrap();
+            let builds = store.get_all_builds();
+            let traces: Vec<serde_json::Value> = builds
+                .iter()
+                .map(|b| {
+                    serde_json::json!({
+                        "build_id": b.build_id,
+                        "project_name": b.project_name,
+                        "duration_ms": b.duration_ms.unwrap_or(0),
+                        "status": format!("{:?}", b.status),
+                        "tasks": b.tasks.iter().map(|t| {
+                            serde_json::json!({
+                                "task_id": t.task_id,
+                                "description": t.description,
+                                "duration_ms": t.duration_ms.unwrap_or(0),
+                                "cache_hit": t.cache_hit,
+                                "status": format!("{:?}", t.status)
+                            })
+                        }).collect::<Vec<_>>()
+                    })
+                })
+                .collect();
+            let res = ApiResponse::success(traces);
+            let json = serde_json::to_vec(&res).unwrap_or_default();
+            (200, "application/json", json)
+        }
         ("GET", p) if p.starts_with("/api/builds/") => {
             let id = &p["/api/builds/".len()..];
             let store = state.metrics_store.lock().unwrap();

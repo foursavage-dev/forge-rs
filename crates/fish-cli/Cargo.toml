@@ -35,6 +35,7 @@ fish-remote-cache = { workspace = true }
 fish-plugin = { workspace = true }
 fish-sandbox = { workspace = true }
 fish-incremental = { workspace = true }
+fish-analytics = { workspace = true }
 cargo_metadata = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

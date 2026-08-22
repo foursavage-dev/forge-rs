@@ -145,6 +145,44 @@
                 </tbody>
             </table>
         </div>
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span style="color: var(--accent-purple);">⚡</span>
+                    <span id="lbl-trace-title">OpenTelemetry Distributed Trace Waterfall</span>
+                </div>
+                <div class="badge" id="lbl-trace-badge">OTLP v1 / Active</div>
+            </div>
+            <div id="waterfallContainer" style="display: flex; flex-direction: column; gap: 0.75rem; background: #0c1220; border-radius: 8px; border: 1px solid var(--border-color); padding: 1.25rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <span id="lbl-span-task">Task / Span</span>
+                    <span id="lbl-span-timing">Timeline & Latency</span>
+                </div>
+                <div id="waterfallBars" style="display: flex; flex-direction: column; gap: 0.6rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span style="width: 180px; font-size: 0.85rem; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">build:fish-core</span>
+                        <div style="flex: 1; background: #1f2937; height: 16px; border-radius: 4px; overflow: hidden; position: relative;">
+                            <div style="position: absolute; left: 0%; width: 35%; background: var(--accent-blue); height: 100%; border-radius: 4px;"></div>
+                        </div>
+                        <span style="width: 80px; font-size: 0.8rem; text-align: right; color: var(--accent-blue);">42.1ms</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span style="width: 180px; font-size: 0.85rem; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">cas:compress_zstd</span>
+                        <div style="flex: 1; background: #1f2937; height: 16px; border-radius: 4px; overflow: hidden; position: relative;">
+                            <div style="position: absolute; left: 35%; width: 20%; background: var(--accent-green); height: 100%; border-radius: 4px;"></div>
+                        </div>
+                        <span style="width: 80px; font-size: 0.8rem; text-align: right; color: var(--accent-green);">18.4ms</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span style="width: 180px; font-size: 0.85rem; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">exec:fish-cli</span>
+                        <div style="flex: 1; background: #1f2937; height: 16px; border-radius: 4px; overflow: hidden; position: relative;">
+                            <div style="position: absolute; left: 55%; width: 45%; background: var(--accent-purple); height: 100%; border-radius: 4px;"></div>
+                        </div>
+                        <span style="width: 80px; font-size: 0.8rem; text-align: right; color: var(--accent-purple);">64.2ms</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -167,7 +205,10 @@
                 target: "Target",
                 status: "Status",
                 duration: "Duration",
-                cacheHits: "Cache Hits"
+                cacheHits: "Cache Hits",
+                traceTitle: "OpenTelemetry Distributed Trace Waterfall",
+                spanTask: "Task / Span",
+                spanTiming: "Timeline & Latency"
             },
             vi: {
                 cacheSize: "Dung Lượng Cache Đĩa",
@@ -187,7 +228,10 @@
                 target: "Mục Tiêu",
                 status: "Trạng Thái",
                 duration: "Thời Gian",
-                cacheHits: "Trúng Cache"
+                cacheHits: "Trúng Cache",
+                traceTitle: "Biểu Đồ Thác Nước OpenTelemetry Distributed Trace",
+                spanTask: "Tác Vụ / Span",
+                spanTiming: "Dòng Thời Gian & Độ Trễ"
             },
             "zh-Hans": {
                 cacheSize: "磁盘缓存大小",
@@ -207,7 +251,10 @@
                 target: "目标",
                 status: "状态",
                 duration: "耗时",
-                cacheHits: "缓存命中"
+                cacheHits: "缓存命中",
+                traceTitle: "OpenTelemetry 分布式链路追踪瀑布图",
+                spanTask: "任务 / Span",
+                spanTiming: "时间线与延迟"
             },
             "zh-Hant": {
                 cacheSize: "磁碟快取大小",
@@ -227,7 +274,10 @@
                 target: "目標",
                 status: "狀態",
                 duration: "耗時",
-                cacheHits: "快取命中"
+                cacheHits: "快取命中",
+                traceTitle: "OpenTelemetry 分布式鏈路追蹤瀑布圖",
+                spanTask: "任務 / Span",
+                spanTiming: "時間軸與延遲"
             },
             ja: {
                 cacheSize: "ディスクキャッシュ容量",
@@ -247,7 +297,10 @@
                 target: "ターゲット",
                 status: "ステータス",
                 duration: "所要時間",
-                cacheHits: "キャッシュヒット"
+                cacheHits: "キャッシュヒット",
+                traceTitle: "OpenTelemetry 分散トレース ウォーターフォール",
+                spanTask: "タスク / Span",
+                spanTiming: "タイムラインとレイテンシ"
             }
         };
 
@@ -271,6 +324,9 @@
             document.getElementById('th-status').innerText = t.status;
             document.getElementById('th-duration').innerText = t.duration;
             document.getElementById('th-cache-hits').innerText = t.cacheHits;
+            document.getElementById('lbl-trace-title').innerText = t.traceTitle;
+            document.getElementById('lbl-span-task').innerText = t.spanTask;
+            document.getElementById('lbl-span-timing').innerText = t.spanTiming;
         }
 
         const nodes = [

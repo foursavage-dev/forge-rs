@@ -353,6 +353,8 @@ pub struct CommonArgs {
     pub super_opt: bool,
     #[arg(long = "explain")]
     pub explain: bool,
+    #[arg(long = "otel-endpoint")]
+    pub otel_endpoint: Option<String>,
 }
 
 #[derive(Debug, Args)]

@@ -34,29 +34,54 @@ jobs:
               - 'Cargo.lock'
 
   fish:
-    name: Fish builds Fish
+    name: Fish builds Fish (${{ matrix.os }})
     needs: changes
     if: ${{ needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Bootstrap Fish
-        run: cargo build -p fish-cli
+      - name: Bootstrap Fish CLI
+        run: cargo build -p fish-cli --release
 
-      - name: Fish build
-        run: ./target/debug/fish build
+      - name: Fish Target Algebra Build (//...)
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            ./target/release/fish.exe build //...
+          else
+            ./target/release/fish build //...
+          fi
 
-      - name: Fish check
-        run: ./target/debug/fish check --no-cache
+      - name: Fish Zero-Config Test Suite
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            ./target/release/fish.exe test --no-cache
+          else
+            ./target/release/fish test --no-cache
+          fi
 
-      - name: Fish test
-        run: ./target/debug/fish test --no-cache
+      - name: Fish DAG Graph Export
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            ./target/release/fish.exe graph --format dot
+          else
+            ./target/release/fish graph --format dot
+          fi
 
-      - name: Fish graph
-        run: ./target/debug/fish graph --format dot
-
-      - name: Fish run
-        run: ./target/debug/fish run -p fish-cli --bin fish -- --version
+      - name: Fish Doctor Self-Diagnostic
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            ./target/release/fish.exe doctor
+          else
+            ./target/release/fish doctor
+          fi

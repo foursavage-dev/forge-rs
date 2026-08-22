@@ -100,6 +100,8 @@ pub struct FishConfig {
     pub wasm_sandbox: bool,
     #[serde(default)]
     pub super_opt: bool,
+    #[serde(default)]
+    pub otel_endpoint: Option<String>,
 }
 
 impl FishConfig {

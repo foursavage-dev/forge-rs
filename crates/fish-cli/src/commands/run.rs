@@ -108,6 +108,7 @@ pub fn run_run(args: RunArgs) -> ExitCode {
         wasm_sandbox: false,
         super_opt: false,
         explain: false,
+        otel_endpoint: None,
     };
 
     let build_status = crate::run_build_mode(common_args, BuildMode::Build);

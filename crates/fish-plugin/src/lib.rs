@@ -13,10 +13,14 @@ pub mod manifest;
 pub mod rule;
 pub mod scripting;
 pub mod starlark_parser;
+pub mod wasm;
 pub mod wasm_sandbox;
 
 pub use rule::{PluginRulesManifest, RuleSpec};
 pub use starlark_parser::StarlarkRulesParser;
+pub use wasm::{
+    WasmCapabilities, WasmExecutionResult, WasmPluginEngine, WasmPluginManifest, WasmPluginRegistry,
+};
 
 #[derive(Debug, Error)]
 pub enum PluginError {
