@@ -1,8 +1,7 @@
 #![forbid(unsafe_code)]
 
-use actix_web::{HttpResponse, Responder, web};
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use crate::flamegraph::FlamegraphGenerator;
 use crate::metrics::{BuildMetrics, MetricsStore};
@@ -50,59 +49,75 @@ impl<T> ApiResponse<T> {
     }
 }
 
-pub async fn get_builds(state: web::Data<ApiState>) -> impl Responder {
-    let store = state.metrics_store.lock().unwrap();
-    let builds = store.get_all_builds();
-    HttpResponse::Ok().json(ApiResponse::success(builds))
-}
-
-pub async fn get_build(state: web::Data<ApiState>, path: web::Path<String>) -> impl Responder {
-    let build_id = path.into_inner();
-    let store = state.metrics_store.lock().unwrap();
-
-    match store.get_build(&build_id) {
-        Some(build) => HttpResponse::Ok().json(ApiResponse::success(build)),
-        None => {
-            HttpResponse::NotFound().json(ApiResponse::<()>::error("Build not found".to_string()))
+pub fn handle_api_request(
+    state: &Arc<ApiState>,
+    method: &str,
+    path: &str,
+    body: &[u8],
+) -> (u16, &'static str, Vec<u8>) {
+    match (method, path) {
+        ("GET", "/api/health") => {
+            let res = ApiResponse::success("OK".to_string());
+            let json = serde_json::to_vec(&res).unwrap_or_default();
+            (200, "application/json", json)
+        }
+        ("GET", "/api/builds") => {
+            let store = state.metrics_store.lock().unwrap();
+            let builds = store.get_all_builds();
+            let res = ApiResponse::success(builds);
+            let json = serde_json::to_vec(&res).unwrap_or_default();
+            (200, "application/json", json)
+        }
+        ("POST", "/api/builds") => {
+            if let Ok(metrics) = serde_json::from_slice::<BuildMetrics>(body) {
+                let mut store = state.metrics_store.lock().unwrap();
+                store.add_build(metrics);
+                let res = ApiResponse::success("Build metrics stored".to_string());
+                let json = serde_json::to_vec(&res).unwrap_or_default();
+                (200, "application/json", json)
+            } else {
+                let res = ApiResponse::<()>::error("Invalid JSON body".to_string());
+                let json = serde_json::to_vec(&res).unwrap_or_default();
+                (400, "application/json", json)
+            }
+        }
+        ("GET", p) if p.starts_with("/api/builds/") && p.ends_with("/flamegraph") => {
+            let id = &p["/api/builds/".len()..p.len() - "/flamegraph".len()];
+            let store = state.metrics_store.lock().unwrap();
+            match store.get_build(id) {
+                Some(build) => {
+                    let fg = FlamegraphGenerator::from_build_metrics(build);
+                    let res = ApiResponse::success(fg);
+                    let json = serde_json::to_vec(&res).unwrap_or_default();
+                    (200, "application/json", json)
+                }
+                None => {
+                    let res = ApiResponse::<()>::error("Build not found".to_string());
+                    let json = serde_json::to_vec(&res).unwrap_or_default();
+                    (404, "application/json", json)
+                }
+            }
+        }
+        ("GET", p) if p.starts_with("/api/builds/") => {
+            let id = &p["/api/builds/".len()..];
+            let store = state.metrics_store.lock().unwrap();
+            match store.get_build(id) {
+                Some(build) => {
+                    let res = ApiResponse::success(build);
+                    let json = serde_json::to_vec(&res).unwrap_or_default();
+                    (200, "application/json", json)
+                }
+                None => {
+                    let res = ApiResponse::<()>::error("Build not found".to_string());
+                    let json = serde_json::to_vec(&res).unwrap_or_default();
+                    (404, "application/json", json)
+                }
+            }
+        }
+        _ => {
+            let res = ApiResponse::<()>::error("Not found".to_string());
+            let json = serde_json::to_vec(&res).unwrap_or_default();
+            (404, "application/json", json)
         }
     }
-}
-
-pub async fn get_flamegraph(state: web::Data<ApiState>, path: web::Path<String>) -> impl Responder {
-    let build_id = path.into_inner();
-    let store = state.metrics_store.lock().unwrap();
-
-    match store.get_build(&build_id) {
-        Some(build) => {
-            let fg = FlamegraphGenerator::from_build_metrics(build);
-            HttpResponse::Ok().json(ApiResponse::success(fg))
-        }
-        None => {
-            HttpResponse::NotFound().json(ApiResponse::<()>::error("Build not found".to_string()))
-        }
-    }
-}
-
-pub async fn post_build(
-    state: web::Data<ApiState>,
-    metrics: web::Json<BuildMetrics>,
-) -> impl Responder {
-    let mut store = state.metrics_store.lock().unwrap();
-    store.add_build(metrics.into_inner());
-    HttpResponse::Ok().json(ApiResponse::success("Build metrics stored".to_string()))
-}
-
-pub async fn get_health() -> impl Responder {
-    HttpResponse::Ok().json(ApiResponse::success("OK".to_string()))
-}
-
-pub fn configure_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-        web::scope("/api")
-            .route("/health", web::get().to(get_health))
-            .route("/builds", web::get().to(get_builds))
-            .route("/builds", web::post().to(post_build))
-            .route("/builds/{id}", web::get().to(get_build))
-            .route("/builds/{id}/flamegraph", web::get().to(get_flamegraph)),
-    );
 }
