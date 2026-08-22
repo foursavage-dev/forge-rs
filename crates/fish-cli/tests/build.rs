@@ -407,7 +407,7 @@ fn build_typescript_project_succeeds() {
     fs::create_dir(dir.path().join("src")).expect("mkdir src");
     fs::write(
         dir.path().join("src").join("index.ts"),
-        "console.log('forge ts');",
+        "console.log('fish ts');",
     )
     .expect("write index.ts");
 
@@ -443,7 +443,7 @@ fn build_python_project_succeeds() {
     fs::create_dir(dir.path().join("src")).expect("mkdir src");
     fs::write(
         dir.path().join("src").join("main.py"),
-        "print('forge python')",
+        "print('fish python')",
     )
     .expect("write main.py");
 
@@ -458,7 +458,7 @@ fn build_python_project_succeeds() {
 #[test]
 fn build_custom_rules_project_succeeds() {
     let dir = tempfile::tempdir().expect("tempdir");
-    let forgefile = r#"{
+    let fishfile = r#"{
         "name": "custom-rule-app",
         "rules": [
             {
@@ -475,7 +475,7 @@ fn build_custom_rules_project_succeeds() {
             }
         ]
     }"#;
-    fs::write(dir.path().join("Fishfile.json"), forgefile).expect("write Fishfile.json");
+    fs::write(dir.path().join("Fishfile.json"), fishfile).expect("write Fishfile.json");
 
     let output = run(fish().arg("build").current_dir(dir.path()));
     assert!(output.status.success(), "stderr: {}", stderr(&output));

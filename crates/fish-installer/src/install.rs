@@ -29,7 +29,7 @@ pub fn get_default_install_dir() -> PathBuf {
 }
 
 pub fn find_source_fish_binary() -> Option<PathBuf> {
-    let binary_name = if cfg!(windows) { "forge.exe" } else { "fish" };
+    let binary_name = if cfg!(windows) { "fish.exe" } else { "fish" };
 
     if let Ok(exe_path) = std::env::current_exe()
         && let Some(parent) = exe_path.parent()
@@ -64,7 +64,7 @@ pub fn perform_installation(target_dir: &Path, source_binary: Option<&Path>) -> 
     fs::create_dir_all(target_dir)
         .map_err(|e| format!("Failed to create installation directory: {e}"))?;
 
-    let target_binary_name = if cfg!(windows) { "forge.exe" } else { "fish" };
+    let target_binary_name = if cfg!(windows) { "fish.exe" } else { "fish" };
     let destination_file = target_dir.join(target_binary_name);
 
     if let Some(src) = source_binary {
@@ -79,7 +79,7 @@ pub fn perform_installation(target_dir: &Path, source_binary: Option<&Path>) -> 
         }
     } else if let Ok(current_exe) = std::env::current_exe()
         && let Some(name) = current_exe.file_name()
-        && (name.to_string_lossy().eq_ignore_ascii_case("forge.exe")
+        && (name.to_string_lossy().eq_ignore_ascii_case("fish.exe")
             || name.to_string_lossy() == "fish")
         && current_exe != destination_file
     {
@@ -134,7 +134,7 @@ pub fn perform_installation(target_dir: &Path, source_binary: Option<&Path>) -> 
 pub fn perform_uninstallation(target_dir: &Path) -> Result<(), String> {
     let _ = path_env::remove_dir_from_user_path(target_dir);
 
-    let target_binary_name = if cfg!(windows) { "forge.exe" } else { "fish" };
+    let target_binary_name = if cfg!(windows) { "fish.exe" } else { "fish" };
     let binary_path = target_dir.join(target_binary_name);
     if binary_path.exists() {
         let _ = fs::remove_file(binary_path);

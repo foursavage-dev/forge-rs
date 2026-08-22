@@ -4,7 +4,6 @@ debug
 target
 build
 .fish
-.forge
 
 .vscode/node_modules/
 .vscode/out/

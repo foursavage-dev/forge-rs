@@ -198,7 +198,7 @@ mod tests {
     #[test]
     fn test_plugin_task_graph_generation() {
         let dir = tempdir().unwrap();
-        let forgefile = r#"{
+        let fishfile = r#"{
             "name": "custom-engine",
             "rules": [
                 {
@@ -215,7 +215,7 @@ mod tests {
                 }
             ]
         }"#;
-        fs::write(dir.path().join("Fishfile.json"), forgefile).unwrap();
+        fs::write(dir.path().join("Fishfile.json"), fishfile).unwrap();
 
         let manifest = PluginRulesManifest::discover_or_load(dir.path()).unwrap();
         let backend = PluginBackend::new();

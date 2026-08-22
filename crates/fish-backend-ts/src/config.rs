@@ -81,10 +81,6 @@ impl TsProjectConfig {
         if fish_ts_path.exists() {
             return Self::from_fish_file(&fish_ts_path);
         }
-        let forge_ts_path = root.join("forge.ts.json");
-        if forge_ts_path.exists() {
-            return Self::from_fish_file(&forge_ts_path);
-        }
 
         let pkg_path = root.join("package.json");
         if !pkg_path.exists() {

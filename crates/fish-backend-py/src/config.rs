@@ -107,10 +107,6 @@ impl PyProjectConfig {
         if fish_py_path.exists() {
             return Self::from_fish_file(&fish_py_path);
         }
-        let forge_py_path = root.join("forge.py.json");
-        if forge_py_path.exists() {
-            return Self::from_fish_file(&forge_py_path);
-        }
 
         let pyproject_path = root.join("pyproject.toml");
         let name = if pyproject_path.exists() {

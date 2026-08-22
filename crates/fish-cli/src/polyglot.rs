@@ -134,7 +134,7 @@ impl PolyglotGraphBuilder {
                     .map_err(|e| anyhow::anyhow!(e.to_string()))
             }
             EcosystemType::Go => {
-                let config_path = dir.join("forge.go.json");
+                let config_path = dir.join("fish.go.json");
                 let config = if config_path.exists() {
                     GoProjectConfig::from_file(&config_path)?
                 } else {

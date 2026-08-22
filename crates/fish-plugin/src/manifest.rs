@@ -16,9 +16,7 @@ impl PluginRulesManifest {
             "fish.rules.json",
             "fish.plugin.json",
             "BUILD.fish",
-            "BUILD.forge",
             "BUILD.bazel",
-            "forge.rules.json",
         ] {
             let p = root.join(candidate);
             if p.exists() {

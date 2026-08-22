@@ -327,9 +327,7 @@ pub(crate) fn run_build_mode_with(
         || start_dir.join("Fishfile.json").exists()
         || start_dir.join("fish.rules.json").exists()
         || start_dir.join("BUILD.fish").exists()
-        || start_dir.join("BUILD.forge").exists()
         || start_dir.join("BUILD.bazel").exists()
-        || start_dir.join("forge.rules.json").exists()
     {
         if crate::backends::has_script_plugins(&start_dir) {
             let plugins = crate::backends::list_script_plugins(&start_dir);
@@ -352,26 +350,23 @@ pub(crate) fn run_build_mode_with(
         println!("ℹ️  Script plugins are available. Use 'fish plugin' commands to manage them.");
     }
 
-    if start_dir.join("fish.cc.json").exists() || start_dir.join("forge.cc.json").exists() {
+    if start_dir.join("fish.cc.json").exists() {
         return crate::backends::run_cc_build(&start_dir, &merged);
     }
 
     if start_dir.join("fish.go.json").exists()
-        || start_dir.join("forge.go.json").exists()
         || (start_dir.join("go.mod").exists() && !start_dir.join("Cargo.toml").exists())
     {
         return crate::backends::run_go_build(&start_dir, &merged);
     }
 
     if start_dir.join("fish.ts.json").exists()
-        || start_dir.join("forge.ts.json").exists()
         || (start_dir.join("package.json").exists() && !start_dir.join("Cargo.toml").exists())
     {
         return crate::backends::run_ts_build(&start_dir, &merged);
     }
 
     if start_dir.join("fish.py.json").exists()
-        || start_dir.join("forge.py.json").exists()
         || (start_dir.join("pyproject.toml").exists() && !start_dir.join("Cargo.toml").exists())
     {
         return crate::backends::run_py_build(&start_dir, &merged);

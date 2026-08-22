@@ -8,7 +8,7 @@ use fish_scheduler::Scheduler;
 #[test]
 fn plugin_rules_execute_end_to_end_in_scheduler() {
     let dir = tempdir().unwrap();
-    let forgefile = r#"{
+    let fishfile = r#"{
         "name": "proto-pipeline",
         "rules": [
             {
@@ -25,7 +25,7 @@ fn plugin_rules_execute_end_to_end_in_scheduler() {
             }
         ]
     }"#;
-    fs::write(dir.path().join("forge.rules.json"), forgefile).unwrap();
+    fs::write(dir.path().join("fish.rules.json"), fishfile).unwrap();
 
     let manifest = PluginRulesManifest::discover_or_load(dir.path()).unwrap();
     let backend = PluginBackend::new();

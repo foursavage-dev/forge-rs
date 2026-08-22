@@ -57,12 +57,12 @@ pub(crate) fn run_cc_build(start_dir: &Path, args: &CommonArgs) -> ExitCode {
 
 pub(crate) fn run_go_build(start_dir: &Path, args: &CommonArgs) -> ExitCode {
     let start_dir = utils::plain_path(start_dir);
-    let config_path = start_dir.join("forge.go.json");
+    let config_path = start_dir.join("fish.go.json");
     let config = if config_path.exists() {
         match GoProjectConfig::from_file(&config_path) {
             Ok(cfg) => cfg,
             Err(err) => {
-                eprintln!("error: failed to read `forge.go.json`: {err}");
+                eprintln!("error: failed to read `fish.go.json`: {err}");
                 return ExitCode::FAILURE;
             }
         }
