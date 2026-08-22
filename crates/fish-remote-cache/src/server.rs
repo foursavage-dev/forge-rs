@@ -87,7 +87,7 @@ impl RemoteCacheServer {
         self.running.store(false, Ordering::SeqCst);
     }
 
-    pub fn start_background(&self) -> std::io::Result<JoinHandle<()>> {
+    pub fn start_background(&self) -> std::io::Result<(String, JoinHandle<()>)> {
         let listener = TcpListener::bind(&self.addr)?;
         let local_addr = listener.local_addr()?.to_string();
         let auth_token = self.auth_token.clone();
@@ -121,7 +121,7 @@ impl RemoteCacheServer {
                         });
                     }
                     Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                        thread::sleep(Duration::from_millis(10));
+                        thread::sleep(Duration::from_millis(5));
                     }
                     Err(_) => {
                         break;
@@ -130,8 +130,7 @@ impl RemoteCacheServer {
             }
         });
 
-        let _ = local_addr;
-        Ok(handle)
+        Ok((local_addr, handle))
     }
 
     pub fn run_blocking(&self) -> std::io::Result<()> {

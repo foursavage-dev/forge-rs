@@ -103,7 +103,10 @@ impl CcBackend {
             let desc = spec.command_line();
 
             let fingerprint_val = if !obj_path.exists() {
-                format!("rebuild_{}", blake3::hash(source.to_string_lossy().as_bytes()).to_hex())
+                format!(
+                    "rebuild_{}",
+                    blake3::hash(source.to_string_lossy().as_bytes()).to_hex()
+                )
             } else {
                 fingerprint::compute_source_fingerprint(
                     source,

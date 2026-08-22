@@ -248,7 +248,6 @@ impl<I: TaskExecutor> TaskExecutor for CompositeCachingExecutor<I> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::net::TcpListener;
     use std::thread;
     use std::time::Duration;
     use tempfile::tempdir;
@@ -274,18 +273,9 @@ mod tests {
         dir: Option<std::path::PathBuf>,
     ) -> (RemoteCacheServer, String, std::thread::JoinHandle<()>) {
         for _ in 0..10 {
-            let addr = match TcpListener::bind("127.0.0.1:0") {
-                Ok(l) => {
-                    let a = l.local_addr().unwrap().to_string();
-                    drop(l);
-                    thread::sleep(Duration::from_millis(15));
-                    a
-                }
-                Err(_) => continue,
-            };
-            let server = RemoteCacheServer::new(&addr, token.clone(), dir.clone());
-            if let Ok(handle) = server.start_background() {
-                thread::sleep(Duration::from_millis(50));
+            let server = RemoteCacheServer::new("127.0.0.1:0", token.clone(), dir.clone());
+            if let Ok((addr, handle)) = server.start_background() {
+                thread::sleep(Duration::from_millis(20));
                 let client = TcpRemoteCacheClient::new(&addr, token.clone());
                 if token.is_some() || client.ping().is_ok() {
                     return (server, addr, handle);
@@ -379,7 +369,7 @@ mod tests {
         let mut handle2_opt = None;
         for _ in 0..10 {
             let s = RemoteCacheServer::new(&addr, None, Some(temp.path().to_path_buf()));
-            if let Ok(h) = s.start_background() {
+            if let Ok((_, h)) = s.start_background() {
                 restarted_opt = Some(s);
                 handle2_opt = Some(h);
                 break;
