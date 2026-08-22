@@ -17,21 +17,27 @@ pub fn resolve_start_dir(path: Option<&Path>) -> Result<PathBuf, String> {
             let str_val = path.to_string_lossy();
             if str_val == "//..." || str_val == "//" || str_val == "." {
                 workspace_root
+            } else if str_val.starts_with(':') {
+                workspace_root
             } else if let Some(stripped) = str_val.strip_prefix("//") {
                 let target_path = stripped
                     .split(':')
                     .next()
                     .unwrap_or(stripped)
                     .trim_end_matches("/...");
-                let resolved = workspace_root.join(target_path);
-                if resolved.exists() {
-                    resolved
+                if target_path.is_empty() || target_path == "." {
+                    workspace_root
                 } else {
-                    let crates_candidate = workspace_root.join("crates").join(target_path);
-                    if crates_candidate.exists() {
-                        crates_candidate
-                    } else {
+                    let resolved = workspace_root.join(target_path);
+                    if resolved.exists() {
                         resolved
+                    } else {
+                        let crates_candidate = workspace_root.join("crates").join(target_path);
+                        if crates_candidate.exists() {
+                            crates_candidate
+                        } else {
+                            resolved
+                        }
                     }
                 }
             } else if path.is_file() {
@@ -58,19 +64,30 @@ pub fn resolve_start_dir(path: Option<&Path>) -> Result<PathBuf, String> {
 }
 
 fn find_workspace_root(start: &Path) -> Option<PathBuf> {
+    let mut top_root = None;
     let mut curr = Some(start);
     while let Some(dir) = curr {
-        if dir.join("fish.toml").exists()
+        if dir.join(".git").exists()
+            || dir.join("fish.toml").exists()
             || dir.join("fish.yaml").exists()
-            || dir.join("Cargo.toml").exists()
-            || dir.join("package.json").exists()
-            || dir.join("go.mod").exists()
         {
             return Some(dir.to_path_buf());
         }
+        if let Ok(content) = std::fs::read_to_string(dir.join("Cargo.toml")) {
+            if content.contains("[workspace]") {
+                return Some(dir.to_path_buf());
+            }
+            if top_root.is_none() {
+                top_root = Some(dir.to_path_buf());
+            }
+        } else if (dir.join("package.json").exists() || dir.join("go.mod").exists())
+            && top_root.is_none()
+        {
+            top_root = Some(dir.to_path_buf());
+        }
         curr = dir.parent();
     }
-    None
+    top_root
 }
 
 /// Returns a plain path representation, stripping Windows UNC prefix if present.
