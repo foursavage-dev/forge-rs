@@ -40,7 +40,44 @@ use utils::resolve_start_dir;
 // Import all argument types from args module
 use args::CacheServerArgs;
 
+fn init_logging() {
+    use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
+
+    let filter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("fish=info,warn"));
+
+    // Enable profiling if RUST_PROFILE environment variable is set
+    if std::env::var("RUST_PROFILE").is_ok() {
+        let (chrome_layer, _guard) = tracing_chrome::ChromeLayerBuilder::new()
+            .include_args(true)
+            .build();
+
+        tracing_subscriber::registry()
+            .with(filter)
+            .with(chrome_layer)
+            .with(
+                fmt::layer()
+                    .with_target(true)
+                    .with_thread_ids(true)
+                    .with_line_number(true),
+            )
+            .init();
+    } else {
+        tracing_subscriber::registry()
+            .with(filter)
+            .with(
+                fmt::layer()
+                    .with_target(true)
+                    .with_thread_ids(true)
+                    .with_line_number(true),
+            )
+            .init();
+    }
+}
+
 fn main() -> ExitCode {
+    init_logging();
+
     let cli = Cli::parse();
 
     // Enable experimental features if flag is set

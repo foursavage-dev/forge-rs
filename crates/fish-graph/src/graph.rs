@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 
 use crate::error::GraphError;
 use crate::state::TaskState;
@@ -76,18 +76,22 @@ impl<T> BuildGraph<T> {
     }
 
     pub fn merge_subgraph(&mut self, other: BuildGraph<T>) -> HashMap<NodeId, NodeId> {
-        let mut id_map = HashMap::new();
-        for (other_idx, node) in other.nodes.into_iter().enumerate() {
-            let old_id = NodeId(other_idx);
+        let other_len = other.nodes.len();
+        let mut new_ids = Vec::with_capacity(other_len);
+        for node in other.nodes {
             let new_id = self.add_node(node.payload);
-            id_map.insert(old_id, new_id);
+            new_ids.push(new_id);
         }
         for (dep_idx, deps) in other.deps.into_iter().enumerate() {
-            let dependent = id_map[&NodeId(dep_idx)];
+            let dependent = new_ids[dep_idx];
             for dep in deps {
-                let dependency = id_map[&dep];
+                let dependency = new_ids[dep.0];
                 let _ = self.add_dependency(dependency, dependent);
             }
+        }
+        let mut id_map = HashMap::with_capacity(other_len);
+        for (old_idx, &new_id) in new_ids.iter().enumerate() {
+            id_map.insert(NodeId(old_idx), new_id);
         }
         id_map
     }
@@ -199,19 +203,19 @@ impl<T> BuildGraph<T> {
     }
 
     pub fn topological_order(&self) -> Vec<NodeId> {
+        let n = self.nodes.len();
         let mut indegree: Vec<usize> = self.deps.iter().map(Vec::len).collect();
-        let mut ready: VecDeque<NodeId> = self
-            .deps
-            .iter()
-            .enumerate()
-            .filter(|(_, deps)| deps.is_empty())
-            .map(|(index, _)| NodeId(index))
-            .collect();
+        let mut ready: VecDeque<NodeId> = VecDeque::with_capacity(n);
+        for (index, deps) in self.deps.iter().enumerate() {
+            if deps.is_empty() {
+                ready.push_back(NodeId(index));
+            }
+        }
 
-        let mut order = Vec::with_capacity(self.nodes.len());
+        let mut order = Vec::with_capacity(n);
         while let Some(id) = ready.pop_front() {
             order.push(id);
-            if let Ok(dependents) = self.dependents(id) {
+            if let Some(dependents) = self.dependents.get(id.0) {
                 for dependent in dependents {
                     indegree[dependent.0] -= 1;
                     if indegree[dependent.0] == 0 {
@@ -261,22 +265,22 @@ impl<T> BuildGraph<T> {
     }
 
     pub fn affected_nodes(&self, changed: &[NodeId]) -> Vec<NodeId> {
+        let n = self.nodes.len();
         let mut affected = Vec::new();
-        let mut seen: HashSet<NodeId> = HashSet::new();
+        let mut seen = vec![false; n];
         let mut queue = VecDeque::new();
         for id in changed {
-            if self.node(*id).is_none() {
-                continue;
-            }
-            if seen.insert(*id) {
+            if id.0 < n && !seen[id.0] {
+                seen[id.0] = true;
                 queue.push_back(*id);
             }
         }
         while let Some(id) = queue.pop_front() {
             affected.push(id);
-            if let Ok(dependents) = self.dependents(id) {
+            if let Some(dependents) = self.dependents.get(id.0) {
                 for dependent in dependents {
-                    if seen.insert(*dependent) {
+                    if dependent.0 < n && !seen[dependent.0] {
+                        seen[dependent.0] = true;
                         queue.push_back(*dependent);
                     }
                 }
@@ -345,17 +349,18 @@ impl<T> BuildGraph<T> {
     }
 
     fn reaches(&self, from: NodeId, to: NodeId) -> bool {
-        let mut seen: HashSet<NodeId> = HashSet::new();
+        let n = self.nodes.len();
+        let mut seen = vec![false; n];
         let mut queue = VecDeque::from([from]);
         while let Some(id) = queue.pop_front() {
             if id == to {
                 return true;
             }
-            if !seen.insert(id) {
-                continue;
-            }
-            if let Ok(dependents) = self.dependents(id) {
-                queue.extend(dependents.iter().copied());
+            if id.0 < n && !seen[id.0] {
+                seen[id.0] = true;
+                if let Some(dependents) = self.dependents.get(id.0) {
+                    queue.extend(dependents.iter().copied());
+                }
             }
         }
         false

@@ -16,7 +16,6 @@ pub use resource_governor::{KernelResourceGovernor, MemoryPressureLevel};
 pub use watcher::FsWatcherDaemon;
 
 use std::cmp::Reverse;
-use std::collections::HashMap;
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
@@ -188,41 +187,38 @@ impl BuildSummary {
     }
 
     pub fn critical_path(&self, graph: &BuildGraph<Task>) -> (Duration, Vec<String>) {
-        let timing_map: HashMap<NodeId, Duration> = self
-            .timings
-            .iter()
-            .map(|t| (t.node_id, t.duration))
-            .collect();
+        let n = graph.len();
+        let mut timing_vec = vec![Duration::ZERO; n];
+        for t in &self.timings {
+            if t.node_id.index() < n {
+                timing_vec[t.node_id.index()] = t.duration;
+            }
+        }
 
         let topo = graph.topological_order();
-        let mut longest_to: HashMap<NodeId, Duration> = HashMap::new();
-        let mut predecessor: HashMap<NodeId, Option<NodeId>> = HashMap::new();
+        let mut longest_to = vec![Duration::ZERO; n];
+        let mut predecessor = vec![None; n];
 
         for &id in &topo {
-            let own = timing_map.get(&id).copied().unwrap_or(Duration::ZERO);
+            let idx = id.index();
+            let own = timing_vec[idx];
             let (best_pred, best_cost) = graph
                 .deps(id)
                 .unwrap_or_default()
                 .iter()
-                .filter_map(|dep| longest_to.get(dep).map(|cost| (Some(*dep), *cost)))
+                .map(|dep| (Some(*dep), longest_to[dep.index()]))
                 .max_by_key(|(_, cost)| *cost)
                 .unwrap_or((None, Duration::ZERO));
-            longest_to.insert(id, best_cost + own);
-            predecessor.insert(id, best_pred);
+            longest_to[idx] = best_cost + own;
+            predecessor[idx] = best_pred;
         }
 
-        // Selecting the maximum over a `HashMap` is nondeterministic when
-        // several nodes share the same total cost. Iterate in a stable order
-        // (ascending `NodeId`) so ties resolve to the lowest-index node and
-        // the reported path is reproducible across runs.
-        let mut entries: Vec<(&NodeId, &Duration)> = longest_to.iter().collect();
-        entries.sort_by_key(|(id, _)| id.index());
         let mut end = NodeId::from(0);
         let mut total = Duration::ZERO;
-        for (&id, &cost) in entries {
+        for (idx, &cost) in longest_to.iter().enumerate() {
             if cost > total {
                 total = cost;
-                end = id;
+                end = NodeId::from(idx);
             }
         }
 
@@ -232,7 +228,11 @@ impl BuildSummary {
             if let Some(node) = graph.node(id) {
                 path.push(node.payload.label.clone());
             }
-            current = predecessor.get(&id).copied().flatten();
+            current = if id.index() < n {
+                predecessor[id.index()]
+            } else {
+                None
+            };
         }
         path.reverse();
         (total, path)
@@ -353,6 +353,12 @@ impl Scheduler {
         E: TaskExecutor,
         G: FnMut(&Task, &TaskOutcome),
     {
+        tracing::info!(
+            workers = self.workers,
+            total_tasks = graph.len(),
+            "Starting build execution"
+        );
+
         graph.validate()?;
         graph.reset_states();
         let tail = critical_path_tails(graph);
@@ -430,6 +436,15 @@ impl Scheduler {
                     in_flight += 1;
                     let worker_id = free_workers.pop().unwrap_or(0);
                     let task_start_offset = start.elapsed();
+
+                    tracing::debug!(
+                        task_id = id.index(),
+                        task_label = %task.label,
+                        worker_id,
+                        in_flight,
+                        "Dispatching task to worker"
+                    );
+
                     let _ = task_tx.send((id, task, worker_id, task_start_offset));
                 }
 
@@ -444,6 +459,15 @@ impl Scheduler {
                 let (id, outcome, worker_id, task_start_offset) =
                     rx.recv().map_err(|_| SchedulerError::Stalled)?;
                 free_workers.push(worker_id);
+
+                tracing::debug!(
+                    task_id = id.index(),
+                    status = ?outcome.status,
+                    duration_ms = outcome.duration.as_millis(),
+                    worker_id,
+                    "Task completed"
+                );
+
                 process_completion(
                     graph,
                     &mut in_flight,
@@ -457,6 +481,15 @@ impl Scheduler {
                 )?;
                 while let Ok((id, outcome, worker_id, task_start_offset)) = rx.try_recv() {
                     free_workers.push(worker_id);
+
+                    tracing::debug!(
+                        task_id = id.index(),
+                        status = ?outcome.status,
+                        duration_ms = outcome.duration.as_millis(),
+                        worker_id,
+                        "Task completed (batch)"
+                    );
+
                     process_completion(
                         graph,
                         &mut in_flight,
@@ -474,13 +507,20 @@ impl Scheduler {
         });
 
         result?;
-        Ok(BuildSummary::from_graph(
-            graph,
-            start.elapsed(),
-            self.workers,
-            failures,
-            timings,
-        ))
+
+        let summary =
+            BuildSummary::from_graph(graph, start.elapsed(), self.workers, failures, timings);
+
+        tracing::info!(
+            total = summary.total,
+            executed = summary.executed,
+            cached = summary.cached,
+            failed = summary.failed,
+            duration_sec = summary.duration.as_secs_f64(),
+            "Build execution completed"
+        );
+
+        Ok(summary)
     }
 }
 

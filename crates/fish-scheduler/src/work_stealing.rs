@@ -61,36 +61,29 @@ impl WorkStealingScheduler {
         self
     }
 
-    /// Priority score used to order ready tasks: longest tail first, then
-    /// estimated weight. Ties are resolved deterministically by `NodeId`.
-    fn priority_score(&self, id: NodeId) -> u64 {
-        let tail_length = self.compute_tail_length(id) as u64;
+    fn compute_all_tail_lengths(&self) -> Vec<usize> {
+        let n = self.graph.len();
+        let mut tail_lengths = vec![0; n];
+        let topo = self.graph.topological_order();
+        for &id in topo.iter().rev() {
+            let max_child = self
+                .graph
+                .dependents(id)
+                .unwrap_or_default()
+                .iter()
+                .map(|child| tail_lengths[child.index()] + 1)
+                .max()
+                .unwrap_or(0);
+            tail_lengths[id.index()] = max_child;
+        }
+        tail_lengths
+    }
+
+    fn priority_score(&self, id: NodeId, tail_lengths: &[usize]) -> u64 {
+        let tail_length = tail_lengths.get(id.index()).copied().unwrap_or(0) as u64;
         let task = &self.graph.node(id).expect("ready nodes exist").payload;
         let weight = self.heuristics.get_estimated_weight(task);
         tail_length * 1000 + weight
-    }
-
-    fn compute_tail_length(&self, node_id: NodeId) -> usize {
-        let mut max_depth = 0;
-        let mut stack = vec![(node_id, 0)];
-        let mut visited = std::collections::HashSet::new();
-
-        while let Some((id, depth)) = stack.pop() {
-            if visited.contains(&id) {
-                continue;
-            }
-            visited.insert(id);
-
-            max_depth = max_depth.max(depth);
-
-            if let Ok(dependents) = self.graph.dependents(id) {
-                for dep in dependents {
-                    stack.push((*dep, depth + 1));
-                }
-            }
-        }
-
-        max_depth
     }
 
     pub fn run(&mut self) -> Result<BuildSummary, SchedulerError> {
@@ -142,8 +135,14 @@ impl WorkStealingScheduler {
             // Dispatch every task whose dependencies have succeeded. `ready`
             // only returns `Pending` nodes, so marking them `Running` prevents
             // double dispatch.
+            let tail_lengths = self.compute_all_tail_lengths();
             let mut ready = self.graph.ready_nodes();
-            ready.sort_by_key(|id| (std::cmp::Reverse(self.priority_score(*id)), id.index()));
+            ready.sort_by_key(|id| {
+                (
+                    std::cmp::Reverse(self.priority_score(*id, &tail_lengths)),
+                    id.index(),
+                )
+            });
             for id in ready {
                 let task = self
                     .graph

@@ -70,7 +70,7 @@ impl fmt::Display for CacheError {
 
 impl std::error::Error for CacheError {}
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct FingerprintRecord {
     fingerprint: String,
 
@@ -156,6 +156,7 @@ pub struct LocalCache {
     stats: Arc<CacheStats>,
     cas_enabled: bool,
     buffer_pool: Arc<BufferPool>,
+    memory_cache: Arc<dashmap::DashMap<String, FingerprintRecord>>,
 }
 
 impl LocalCache {
@@ -176,6 +177,7 @@ impl LocalCache {
             stats: Arc::new(CacheStats::default()),
             cas_enabled: false,
             buffer_pool: Arc::new(BufferPool::new()),
+            memory_cache: Arc::new(dashmap::DashMap::new()),
         })
     }
 
@@ -253,6 +255,7 @@ impl LocalCache {
             artifact_hash,
             key: Some(key.to_string()),
         };
+        self.memory_cache.insert(key.to_string(), record.clone());
         let payload = serde_json::to_vec(&record).expect("a fingerprint record always serializes");
         let tmp = unique_tmp_path(&path);
         fs::write(&tmp, payload).map_err(|source| CacheError::Write {
@@ -330,9 +333,19 @@ impl LocalCache {
 
     fn read_record(&self, key: &str) -> Result<Option<FingerprintRecord>, CacheError> {
         let path = self.fingerprint_path(key);
+        if !path.exists() {
+            self.memory_cache.remove(key);
+            return Ok(None);
+        }
+        if let Some(record) = self.memory_cache.get(key) {
+            return Ok(Some(record.value().clone()));
+        }
         let bytes = match fs::read(&path) {
             Ok(bytes) => bytes,
-            Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                self.memory_cache.remove(key);
+                return Ok(None);
+            }
             Err(source) => {
                 return Err(CacheError::Read {
                     key: key.to_string(),
@@ -341,7 +354,11 @@ impl LocalCache {
             }
         };
 
-        Ok(serde_json::from_slice(&bytes).ok())
+        let record: Option<FingerprintRecord> = serde_json::from_slice(&bytes).ok();
+        if let Some(ref r) = record {
+            self.memory_cache.insert(key.to_string(), r.clone());
+        }
+        Ok(record)
     }
 
     /// Enumerates every fingerprint record on disk, skipping corrupt files.
@@ -580,6 +597,7 @@ impl LocalCache {
             }
         }
 
+        self.memory_cache.clear();
         Ok(report)
     }
 

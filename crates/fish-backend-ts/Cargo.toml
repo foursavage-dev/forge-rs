@@ -7,13 +7,15 @@ license.workspace = true
 description = "TypeScript and JavaScript build backend for Fish"
 
 [dependencies]
-blake3 = "1"
-serde = { version = "1", features = ["derive"] }
+blake3 = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
 fish-core = { workspace = true }
 fish-executor = { workspace = true }
 fish-graph = { workspace = true }
 thiserror = { workspace = true }
+glob = { workspace = true }
+regex = { workspace = true }
 
 [dev-dependencies]
 fish-cache = { workspace = true }

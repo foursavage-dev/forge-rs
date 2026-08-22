@@ -7,16 +7,16 @@ license.workspace = true
 description = "Dart/Flutter backend for the Fish build tool"
 
 [dependencies]
-blake3 = "1"
-fish-core = { path = "../fish-core" }
-fish-executor = { path = "../fish-executor" }
-fish-graph = { path = "../fish-graph" }
+blake3 = { workspace = true }
+fish-core = { workspace = true }
+fish-executor = { workspace = true }
+fish-graph = { workspace = true }
 thiserror = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 toml = { workspace = true }
 
 [dev-dependencies]
-fish-cache = { path = "../fish-cache" }
-fish-scheduler = { path = "../fish-scheduler" }
-tempfile = "3"
+fish-cache = { workspace = true }
+fish-scheduler = { workspace = true }
+tempfile = { workspace = true }

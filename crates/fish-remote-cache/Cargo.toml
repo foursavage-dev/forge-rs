@@ -8,15 +8,15 @@ description = "Remote build cache client and tiered L1/L2 caching for Fish"
 
 [dependencies]
 anyhow = { workspace = true }
-base64 = "0.23"
-blake3 = "1"
-serde = { version = "1", features = ["derive"] }
+base64 = { workspace = true }
+blake3 = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
-tar = "0.4"
+tar = { workspace = true }
 fish-cache = { workspace = true }
 fish-executor = { workspace = true }
 thiserror = { workspace = true }
-zstd = "0.13"
+zstd = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

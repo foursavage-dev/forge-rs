@@ -1,5 +1,18 @@
 [build]
-jobs = 2
+incremental = true
 
 [resolver]
 incompatible-rust-versions = "fallback"
+
+[target.'cfg(windows)']
+rustflags = [
+    "-C", "link-arg=/OPT:REF",
+    "-C", "link-arg=/OPT:ICF",
+    "-C", "target-feature=+crt-static",
+]
+
+[target.'cfg(not(windows))']
+rustflags = [
+    "-C", "link-arg=-Wl,--gc-sections",
+    "-C", "link-arg=-Wl,--strip-all",
+]

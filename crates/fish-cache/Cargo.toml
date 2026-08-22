@@ -8,21 +8,22 @@ description = "Content-addressed task fingerprint cache for the Fish build tool"
 
 [dependencies]
 anyhow = { workspace = true }
-fish-executor = { path = "../fish-executor" }
-fish-cas = { path = "../fish-cas" }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+fish-executor = { workspace = true }
+fish-cas = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 thiserror = { workspace = true }
-tokio = { version = "1", features = ["fs", "io-util", "rt-multi-thread", "sync"] }
+tokio = { workspace = true, features = ["fs", "io-util", "rt-multi-thread", "sync"] }
 spin = { workspace = true }
-dashmap = { version = "6", features = ["rayon", "serde"] }
-parking_lot = { version = "0.12" }
-crossbeam-channel = { version = "0.5" }
+dashmap = { workspace = true }
+parking_lot = { workspace = true }
+crossbeam-channel = { workspace = true }
+memmap2 = { workspace = true }
 
 [dev-dependencies]
-tempfile = "3"
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-criterion = { version = "0.8", features = ["html_reports"] }
+tempfile = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+criterion = { workspace = true }
 
 [[bench]]
 name = "cache_performance"
